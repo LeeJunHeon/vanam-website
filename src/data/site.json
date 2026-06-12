@@ -29,7 +29,9 @@
       ],
       "ctaHeading": "Thin-film solutions, built together",
       "ctaBodyHtml": "Get in touch about custom thin-film R&D, analysis and measurement, and foundry services.",
-      "ctaButton": "Contact us →"
+      "ctaButton": "Contact us →",
+      "metaTitle": "VANAM — Next-generation semiconductor thin films",
+      "metaDescription": "VanaM (반암) develops next-generation semiconductor thin films via eco-friendly vacuum deposition — custom R&D, analysis, and an urban micro foundry in Seoul."
     },
     "technology": {
       "heroTitle": {
@@ -76,7 +78,9 @@
       "materialsHeading": "Materials Library",
       "alsoAvailable": "Also available: PLD, MOCVD, and process big-data collection.",
       "servicesHeading": "Services",
-      "applicationsHeading": "Applications"
+      "applicationsHeading": "Applications",
+      "metaTitle": "Technology | VANAM",
+      "metaDescription": "VANAM's thin-film technology: energy-responsive films, PVD/ALD/PLD/MOCVD deposition, an oxide-nitride-metal library, plus R&D, analysis and foundry services."
     },
     "about": {
       "heroTitle": {
@@ -110,7 +114,9 @@
       "heroTitle": "In the press",
       "heroSubtitleHtml": "Coverage of VanaM's thin-film materials, products, and milestones.",
       "footnote": "External links open the original articles. Dates and full text will be added as the news archive is migrated.",
-      "eyebrow": "News"
+      "eyebrow": "News",
+      "metaTitle": "News | VanaM",
+      "metaDescription": "News and press coverage of VanaM (반암) — semiconductor thin-film materials, VM1, investment, and exhibitions."
     },
     "contact": {
       "metaTitle": "Contact | VANAM",
@@ -174,7 +180,9 @@
       ],
       "ctaHeading": "함께 만들 박막 솔루션",
       "ctaBodyHtml": "맞춤형 박막 R&D · 분석/측정 · 파운드리 서비스에 대해 문의해 주세요.",
-      "ctaButton": "문의하기 →"
+      "ctaButton": "문의하기 →",
+      "metaTitle": "VANAM — 차세대 반도체 박막 소재",
+      "metaDescription": "반암(VanaM)은 친환경 진공 증착으로 차세대 반도체 박막을 개발합니다. 맞춤형 R&D, 분석·측정, 도심형 마이크로 파운드리를 제공합니다."
     },
     "technology": {
       "heroTitle": {
@@ -221,7 +229,9 @@
       "materialsHeading": "소재 라이브러리",
       "alsoAvailable": "PLD, MOCVD 및 공정 빅데이터 수집도 제공합니다.",
       "servicesHeading": "서비스",
-      "applicationsHeading": "응용 분야"
+      "applicationsHeading": "응용 분야",
+      "metaTitle": "기술·솔루션 | VANAM",
+      "metaDescription": "반암의 박막 기술: 에너지 감응형 박막, PVD/ALD/PLD/MOCVD 증착, 산화물·질화물·금속 소재 라이브러리, R&D·분석·파운드리 서비스."
     },
     "about": {
       "metaTitle": "회사 소개 | VANAM",
@@ -255,7 +265,9 @@
       "eyebrow": "뉴스",
       "heroTitle": "언론 속 반암",
       "heroSubtitleHtml": "반암의 박막 소재, 제품, 주요 성과에 대한 보도입니다.",
-      "footnote": "외부 링크는 원문 기사로 연결됩니다. 게재일과 본문은 뉴스 아카이브 이관과 함께 추가될 예정입니다."
+      "footnote": "외부 링크는 원문 기사로 연결됩니다. 게재일과 본문은 뉴스 아카이브 이관과 함께 추가될 예정입니다.",
+      "metaTitle": "뉴스 | VANAM",
+      "metaDescription": "반암(VanaM) 관련 보도 — 반도체 박막 소재, VM1, 투자 유치, 전시회 소식."
     },
     "contact": {
       "metaTitle": "문의하기 | VANAM",

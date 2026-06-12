@@ -4,10 +4,9 @@ import { getCollection } from 'astro:content';
 import siteData from '../../data/site.json';
 const locale = Astro.currentLocale ?? 'en';
 const site = siteData[locale] ?? siteData.en;
-const title = "News | VanaM";
-const description = "News and press coverage of VanaM (반암) — semiconductor thin-film materials, VM1, investment, and exhibitions.";
-
 const copy = site.news;
+const title = copy.metaTitle;
+const description = copy.metaDescription;
 const news = (await getCollection('news')).sort((a, b) => a.data.order - b.data.order);
 ---
 <BaseLayout title={title} description={description}>

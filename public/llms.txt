@@ -1,10 +1,12 @@
 # VanaM Inc. (VanaM / 반암)
 
-> VanaM ("VANA Materials LAB.") is a Korea-based deep-tech startup that develops and manufactures next-generation semiconductor thin films, based on a proprietary, eco-friendly vacuum deposition process. Brand promise: "Thin Films, All Around." Founded 2022, headquartered in Yeongdeungpo-gu, Seoul. Operates an urban micro foundry for thin-film R&D and small-scale production.
+> VanaM ("VANA Materials LAB.") is a Korea-based deep-tech startup that develops and manufactures next-generation semiconductor thin films, based on a proprietary, eco-friendly vacuum deposition process. Brand promise: "Thin Films, All Around." Founded 2022, headquartered in Yeongdeungpo-gu, Seoul. Operates an urban micro foundry (도심형 마이크로 파운드리) for thin-film R&D and small-scale production.
+
+Site languages: English (default) and Korean (한국어, under /ko). Full-context file: https://vanam.co.kr/llms-full.txt
 
 ## What VanaM does
-- World-first ultra-sensitive, energy-responsive semiconductor thin film (product: VM1) that senses and switches in response to thermal or electrical energy.
-- Eco-friendly vacuum deposition: no toxic organic materials or gases (ESG-aligned).
+- World-first ultra-sensitive, energy-responsive semiconductor thin film (product: VM1 / 에너지 감응형 반도체 박막) that senses and switches in response to thermal or electrical energy.
+- Eco-friendly vacuum deposition (친환경 진공 증착): no toxic organic materials or gases (ESG-aligned).
 - Cost- and facility-light process: simple process, circuit simplification, no fine patterning or high-class cleanroom required.
 - Process data (plasma wavelength, residual gas) captured for machine-learning-based performance prediction and process optimization.
 
@@ -14,8 +16,8 @@
 - ALD oxides: Al2O3, HfO2, ZrO2, HZO, ZnO, TiO2, In2O3, Ga2O3, SnO2, SnO. Metals: Pt, Ru.
 
 ## Services
-- Customized thin-film deposition service.
-- Material analysis & measurement.
+- Customized thin-film deposition service (증착 서비스).
+- Material analysis & measurement (소재 분석).
 - Thin-film R&D service (simulation, commercial viability testing, ML prediction models).
 - IP / patent package (core IP analysis, IP portfolio construction, technology transfer mediation).
 - Urban Micro Foundry package (semi-cleanroom-level urban fab design & construction).
@@ -23,11 +25,23 @@
 ## Target applications
 Quantum computing, A.I. semiconductors, power electronics, glass substrate, advanced materials. Product applications include fire detectors, protection circuits, and neuromorphic semiconductors.
 
+## History
+- 2022: Founded VanaM Inc.; selected for the Initial Startup Package pilot R&D (Ministry of SMEs and Startups); named top company at the 10th Kibo Venture Camp (KOTEC).
+- 2023: Began an urban semiconductor pilot line in Yeongdeungpo, Seoul; established a corporate-affiliated research institute.
+- 2024: Selected as a Deep-Tech Startup, System Semiconductor Division (Ministry of SMEs and Startups).
+- 2025: SelectUSA 2025 — 2nd place, Open Tech Pitching (National Harbor, MD); NextCorps Luminate Accelerator, Cohort 8 (Rochester, NY); PEN CIS US-APAC Venture Summit 2025.
+
+## Global activity
+CES 2024, CES 2025, AWS Startup Growth Program, KIEEME Summer Conference, NANO Korea 2024, HKTDC Hong Kong Electronics Fair, SEDEX (COEX, Seoul), Electronica 2024 (Munich), MRS Fall Meeting (Boston).
+
+## Collaboration
+KIST, Seoul National University, Korea University, Hanyang University, Inha University, University of Cambridge, IBK, KIBO, Amazon (AWS), RayVac.
+
 ## Pages
-- [About](https://vanam.co.kr/about): Company, vision, team, history, achievements, collaboration.
-- [Technology](https://vanam.co.kr/technology): Core technology, materials, services, applications.
-- [News](https://vanam.co.kr/news): Press coverage and announcements.
-- [Contact](https://vanam.co.kr/contact): Partnership, supply, and technical inquiries.
+- [About](https://vanam.co.kr/about) · [한국어](https://vanam.co.kr/ko/about): Company, vision, team, history, achievements, collaboration.
+- [Technology](https://vanam.co.kr/technology) · [한국어](https://vanam.co.kr/ko/technology): Core technology, materials, services, applications.
+- [News](https://vanam.co.kr/news) · [한국어](https://vanam.co.kr/ko/news): Press coverage and announcements.
+- [Contact](https://vanam.co.kr/contact) · [한국어](https://vanam.co.kr/ko/contact): Partnership, supply, and technical inquiries; FAQ.
 
 ## Contact
 - Email: hello@vanam.co.kr
@@ -38,4 +52,4 @@ Quantum computing, A.I. semiconductors, power electronics, glass substrate, adva
 
 ## Notes
 - Market: B2B (advanced materials / semiconductor).
-- Primary content language: English, with Korean press coverage.
+- Primary content language: English, with Korean (한국어) pages under /ko and Korean press coverage.

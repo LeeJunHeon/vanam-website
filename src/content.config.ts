@@ -32,9 +32,7 @@ const news = defineCollection({
 });
 
 // 3. HISTORY ───────────────────────────
-// items(영문) 가 정본. summaryKo 는 index 의 한글 축약 출력 보존용.
-// ⚠️ TODO(표현 통일): 현재 index 는 summaryKo(한글), about 은 items(영문)를 사용한다.
-//    추후 둘을 한 가지 언어/표현으로 통일할지는 미정 — 결정되면 한쪽 필드로 합칠 것.
+// items/items_ko = about 연혁 항목(EN/KO), summary_en/summaryKo = home 한 줄 요약(EN/KO).
 const history = defineCollection({
   loader: file('src/content/history.json'),
   schema: z.object({

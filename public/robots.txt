@@ -4,11 +4,21 @@ Allow: /
 # AI 크롤러 명시 허용 (AEO/GEO)
 User-agent: GPTBot
 Allow: /
+User-agent: OAI-SearchBot
+Allow: /
+User-agent: ChatGPT-User
+Allow: /
 User-agent: ClaudeBot
+Allow: /
+User-agent: Claude-SearchBot
 Allow: /
 User-agent: PerplexityBot
 Allow: /
 User-agent: Google-Extended
 Allow: /
+
+# AI 컨텍스트 파일 (GEO/AEO)
+# llms: https://vanam.co.kr/llms.txt
+# llms-full: https://vanam.co.kr/llms-full.txt
 
 Sitemap: https://vanam.co.kr/sitemap-index.xml

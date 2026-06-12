@@ -1,13 +1,14 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getCollection } from 'astro:content';
+import { getRelativeLocaleUrl } from 'astro:i18n';
 import siteData from '../../data/site.json';
 const locale = Astro.currentLocale ?? 'en';
+const lhref = (p) => getRelativeLocaleUrl(locale, p);
 const site = siteData[locale] ?? siteData.en;
-const title = "Technology | VANAM";
-const description = "VANAM's thin-film technology: energy-responsive films, PVD/ALD/PLD/MOCVD deposition, an oxide-nitride-metal library, plus R&D, analysis and foundry services.";
-
 const tech = site.technology;
+const title = tech.metaTitle;
+const description = tech.metaDescription;
 const valueProps = tech.valueProps;
 
 // materials 컬렉션에서 system 별로 category→formula[] 그룹을 재구성.
@@ -131,7 +132,7 @@ const catLabel = locale === 'ko'
       <div class="v-reveal">
         <h2 class="text-3xl font-bold text-white md:text-4xl">{tech.ctaHeading}</h2>
         <p class="mx-auto mt-4 max-w-xl text-base text-white/60" set:html={tech.ctaBodyHtml}></p>
-        <a href="/contact" class="mt-8 inline-flex items-center gap-2 rounded-lg bg-[#1EBBF0] px-7 py-3 font-semibold text-[#06222C] transition hover:brightness-110">{tech.ctaButton}</a>
+        <a href={lhref('/contact')} class="mt-8 inline-flex items-center gap-2 rounded-lg bg-[#1EBBF0] px-7 py-3 font-semibold text-[#06222C] transition hover:brightness-110">{tech.ctaButton}</a>
       </div>
     </div>
   </section>

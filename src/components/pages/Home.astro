@@ -1,12 +1,16 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getCollection } from 'astro:content';
+import { getRelativeLocaleUrl } from 'astro:i18n';
 import siteData from '../../data/site.json';
 
 const locale = Astro.currentLocale ?? 'en';
+const lhref = (p) => getRelativeLocaleUrl(locale, p);
 const site = siteData[locale] ?? siteData.en;
 const home = site.home;
 const pillars = home.pillars;
+const title = home.metaTitle;
+const description = home.metaDescription;
 
 // 홈 큐레이션 소재: home 값이 있는 행만, home 순서대로.
 const materials = (await getCollection('materials'))
@@ -14,12 +18,11 @@ const materials = (await getCollection('materials'))
   .sort((a, b) => a.data.home - b.data.home)
   .map((m) => m.data.formula);
 
-// history: about 과 동일 컬렉션을 참조. 단 출력은 한글 축약본(summaryKo)을 사용해 현 화면을 보존.
-// ⚠️ TODO(표현 통일): about(영문 items) 과 표현을 통일할지는 추후 결정 (content.config.ts 주석 참고).
+// history: home은 한 줄 요약(locale별 summary_en/summaryKo), about은 항목 목록(items/items_ko) 사용.
 const history = (await getCollection('history')).sort((a, b) => a.data.order - b.data.order);
 ---
 
-<BaseLayout>
+<BaseLayout title={title} description={description}>
   <section class="relative flex min-h-[88vh] items-center overflow-hidden px-6">
     <div class="vn-grid absolute inset-0"></div>
     <div class="vn-glow-a absolute -left-20 -top-24 h-[420px] w-[480px] rounded-full"></div>
@@ -29,8 +32,8 @@ const history = (await getCollection('history')).sort((a, b) => a.data.order - b
       <h1 class="text-5xl font-bold leading-[1.05] tracking-tight text-white sm:text-7xl">{home.heroTitle.line1}<br />{home.heroTitle.line2}</h1>
       <p class="mt-6 max-w-xl text-lg leading-relaxed text-white/60">{home.heroSubtitle.line1}<br />{home.heroSubtitle.line2}</p>
       <div class="mt-9 flex flex-wrap gap-4">
-        <a href="/technology" class="rounded-full bg-[#1EBBF0] px-6 py-3 text-sm font-semibold text-[#04212E] transition hover:bg-[#5fd0f5]">{home.heroCtaPrimary}</a>
-        <a href="/contact" class="rounded-full border border-white/25 px-6 py-3 text-sm font-medium text-white/85 transition hover:border-white hover:text-white">{home.heroCtaSecondary}</a>
+        <a href={lhref('/technology')} class="rounded-full bg-[#1EBBF0] px-6 py-3 text-sm font-semibold text-[#04212E] transition hover:bg-[#5fd0f5]">{home.heroCtaPrimary}</a>
+        <a href={lhref('/contact')} class="rounded-full border border-white/25 px-6 py-3 text-sm font-medium text-white/85 transition hover:border-white hover:text-white">{home.heroCtaSecondary}</a>
       </div>
     </div>
     <div class="vn-bounce absolute bottom-7 left-1/2 flex -translate-x-1/2 flex-col items-center gap-1">
@@ -82,7 +85,7 @@ const history = (await getCollection('history')).sort((a, b) => a.data.order - b
     <div class="relative overflow-hidden rounded-3xl border border-[#1EBBF0]/20 bg-[#0C1320] px-8 py-14 text-center">
       <h2 class="text-2xl font-semibold text-white sm:text-3xl">{home.ctaHeading}</h2>
       <p class="mx-auto mt-4 max-w-xl text-white/60" set:html={home.ctaBodyHtml}></p>
-      <a href="/contact" class="mt-8 inline-block rounded-full bg-[#1EBBF0] px-7 py-3 text-sm font-semibold text-[#04212E] transition hover:bg-[#5fd0f5]">{home.ctaButton}</a>
+      <a href={lhref('/contact')} class="mt-8 inline-block rounded-full bg-[#1EBBF0] px-7 py-3 text-sm font-semibold text-[#04212E] transition hover:bg-[#5fd0f5]">{home.ctaButton}</a>
     </div>
   </section>
 </BaseLayout>

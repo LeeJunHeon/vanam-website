@@ -1,0 +1,87 @@
+# VanaM Inc. — Full Context (VanaM / VANAM / 반암)
+
+This file consolidates the core content of https://vanam.co.kr for AI answer engines.
+Languages: English (default, no prefix) and Korean (한국어, under /ko/). Brand slogan kept in English on both: "Thin Films, All Around."
+
+## Company overview
+VanaM Inc. ("VANA Materials LAB.", Korean name 반암) is a Korea-based deep-tech startup founded in 2022, headquartered in Yeongdeungpo-gu, Seoul. It develops and manufactures next-generation semiconductor thin films that have yet to be commercialized, built on proprietary technology and core IP and powered by an eco-friendly vacuum deposition process (친환경 진공 증착). The company operates an urban micro foundry (도심형 마이크로 파운드리) — a semi-cleanroom-level urban fab enabling rapid thin-film R&D and small-scale production close to its partners.
+
+Vision: "Connect the next world with semiconductor materials" — localizing (국산화) new materials and components, and leading the industry.
+
+Team: Ph.D.-level semiconductor researchers, IP & patent attorneys, and facility engineers, combining expertise across thin-film materials, intellectual property, and fab construction.
+
+## Core technology
+- World-first multifunctional, energy-responsive thin film (에너지 감응형 박막). The flagship film, VM1, is an ultra-sensitive, energy-responsive semiconductor thin film that senses and switches in response to thermal or electrical energy. High-crystalline thin-film deposition source technology adds sensing and switching functions, enabling system simplification and higher accuracy versus conventional designs.
+- Eco-friendly by design: vacuum deposition with no toxic organic materials or gases — ESG-aligned manufacturing.
+- Cost competitive: simple process, low production cost, and circuit simplification reduce total cost.
+- Low facility investment: no fine patterning or high-class cleanroom required to reach production.
+- VanaM builds special deposition instruments that capture process data (e.g., plasma wavelength, residual gas) for machine-learning-based performance prediction and process optimization.
+
+## Deposition methods
+PVD (Sputter, Evaporator), ALD, PLD, MOCVD. Process big-data collection is also available.
+
+## Materials library
+Special thin films and process conditions unavailable in conventional fabs — across oxides, nitrides, and metals (산화물·질화물·금속).
+- PVD / Sputter & Evaporator:
+  - Oxide: VO2, V2O5, TiO2, Ta2O5, HfO2, ZnO, ITO, IGZO
+  - Nitride: TiN, AlN, AlScN, SiNx
+  - Metal: Au, Pt, Ag, Al, Ti, Cr, Ni, Bi, Mo, Hf, Sc, W
+- ALD:
+  - Oxide: Al2O3, HfO2, ZrO2, HZO, ZnO, TiO2, In2O3, Ga2O3, SnO2, SnO
+  - Metal: Pt, Ru
+
+## Services
+1. Deposition Service (증착 서비스): customized thin-film deposition across PVD (Sputter, Evaporator), ALD, PLD, and MOCVD.
+2. Material Analysis (소재 분석): characterization and measurement of material properties and structure with advanced equipment.
+3. R&D Service (R&D 서비스): thin-film simulation, commercial viability testing, and ML-based process prediction.
+4. IP / Patent Package (IP·특허 패키지): core IP analysis, IP portfolio construction, and technology transfer mediation.
+5. Urban Micro Foundry (도심형 마이크로 파운드리): direct design and construction of a semi-cleanroom-level urban fab.
+
+## Target applications
+Quantum computing, A.I. semiconductors, power electronics, glass substrate, advanced materials. Product-level applications include fire detectors, protection circuits, and neuromorphic semiconductors. PoC is in progress with R&D partners across these emerging fields.
+
+## History
+- 2022: Founded VanaM Inc.; selected for the Initial Startup Package pilot R&D (Ministry of SMEs and Startups); named top company at the 10th Kibo Venture Camp (KOTEC).
+- 2023: Began an urban semiconductor pilot line in Yeongdeungpo, Seoul; established a corporate-affiliated research institute.
+- 2024: Selected as a Deep-Tech Startup, System Semiconductor Division (Ministry of SMEs and Startups).
+- 2025: SelectUSA 2025 — 2nd place, Open Tech Pitching (National Harbor, MD); NextCorps Luminate Accelerator, Cohort 8 (Rochester, NY); PEN CIS US-APAC Venture Summit 2025.
+
+## Global activity (exhibitions, conferences, accelerators)
+CES 2024, CES 2025, AWS Startup Growth Program, KIEEME Summer Conference, NANO Korea 2024, HKTDC Hong Kong Electronics Fair, SEDEX (COEX, Seoul), Electronica 2024 (Munich), MRS Fall Meeting (Boston).
+
+## Collaboration / partners
+KIST, Seoul National University, Korea University, Hanyang University, Inha University, University of Cambridge, IBK, KIBO, Amazon (AWS), RayVac.
+
+## Selected press
+- "VanaM introduces energy-responsive semiconductor thin film 'VM1' at CES 2024 — essential for applications such as fire detectors and protection circuits." (Korean coverage)
+- "[Korea Univ. startup package 2022] VanaM Co., Ltd. — leading the thin-film semiconductor market."
+- "VanaM unveils energy-responsive thin-film material 'VM1' in Hong Kong."
+- "Semiconductor materials & components startup 'VanaM' raises a KRW 0.7 billion seed round."
+- "[Seeing the future of semiconductors ⑧] VanaM."
+
+## FAQ
+Q: What deposition methods do you offer?
+A: PVD (sputter, evaporator) and ALD, plus PLD and MOCVD — customized thin-film deposition, including special films and process conditions that are hard to achieve in conventional production lines.
+
+Q: Which materials do you work with?
+A: A broad library across oxides, nitrides, and metals — including oxides such as VO2, HfO2, IGZO; nitrides such as TiN, AlN; and metals such as Pt, Ru — that are difficult to handle in conventional fabs.
+
+Q: What about eco-friendliness and ESG?
+A: A vacuum deposition process with no toxic organic materials or gases, minimizing environmental impact for ESG-aligned manufacturing.
+
+Q: What fields is it applied to?
+A: Quantum computing, AI semiconductors, power electronics, glass substrates, advanced materials, fire detectors, protection circuits, neuromorphic semiconductors, and more.
+
+Q: What services do you provide?
+A: Customized deposition, material analysis, R&D services, an IP/patent package, and construction of an urban micro foundry.
+
+Q: Where are you and how can we reach you?
+A: 21-1 Dosin-ro 4-gil, Yeongdeungpo-gu, Seoul (07377). Email hello@vanam.co.kr or call +82-2-6951-0922; replies within 1–2 business days of a form submission.
+
+## Contact
+- Email: hello@vanam.co.kr
+- Phone: +82-2-6951-0922
+- Address: (07377) 21-1 Dosin-ro 4-gil, Yeongdeungpo-gu, Seoul, Korea
+- LinkedIn: https://www.linkedin.com/in/vanam-inc-62395132b/
+- YouTube: https://www.youtube.com/@VanaMaterials
+- Website: https://vanam.co.kr (English) / https://vanam.co.kr/ko (한국어)
