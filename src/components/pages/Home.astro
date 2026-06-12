@@ -1,0 +1,108 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+import siteData from '../../data/site.json';
+
+const locale = Astro.currentLocale ?? 'en';
+const site = siteData[locale] ?? siteData.en;
+const home = site.home;
+const pillars = home.pillars;
+
+// 홈 큐레이션 소재: home 값이 있는 행만, home 순서대로.
+const materials = (await getCollection('materials'))
+  .filter((m) => m.data.home != null)
+  .sort((a, b) => a.data.home - b.data.home)
+  .map((m) => m.data.formula);
+
+// history: about 과 동일 컬렉션을 참조. 단 출력은 한글 축약본(summaryKo)을 사용해 현 화면을 보존.
+// ⚠️ TODO(표현 통일): about(영문 items) 과 표현을 통일할지는 추후 결정 (content.config.ts 주석 참고).
+const history = (await getCollection('history')).sort((a, b) => a.data.order - b.data.order);
+---
+
+<BaseLayout>
+  <section class="relative flex min-h-[88vh] items-center overflow-hidden px-6">
+    <div class="vn-grid absolute inset-0"></div>
+    <div class="vn-glow-a absolute -left-20 -top-24 h-[420px] w-[480px] rounded-full"></div>
+    <div class="vn-glow-b absolute -bottom-32 -right-16 h-[380px] w-[420px] rounded-full"></div>
+    <div class="relative mx-auto w-full max-w-6xl">
+      <p class="mb-5 font-mono text-xs tracking-[0.25em] text-[#1EBBF0]">VANA&nbsp;MATERIALS&nbsp;LAB.</p>
+      <h1 class="text-5xl font-bold leading-[1.05] tracking-tight text-white sm:text-7xl">{home.heroTitle.line1}<br />{home.heroTitle.line2}</h1>
+      <p class="mt-6 max-w-xl text-lg leading-relaxed text-white/60">{home.heroSubtitle.line1}<br />{home.heroSubtitle.line2}</p>
+      <div class="mt-9 flex flex-wrap gap-4">
+        <a href="/technology" class="rounded-full bg-[#1EBBF0] px-6 py-3 text-sm font-semibold text-[#04212E] transition hover:bg-[#5fd0f5]">{home.heroCtaPrimary}</a>
+        <a href="/contact" class="rounded-full border border-white/25 px-6 py-3 text-sm font-medium text-white/85 transition hover:border-white hover:text-white">{home.heroCtaSecondary}</a>
+      </div>
+    </div>
+    <div class="vn-bounce absolute bottom-7 left-1/2 flex -translate-x-1/2 flex-col items-center gap-1">
+      <span class="font-mono text-[10px] tracking-widest text-white/50">SCROLL</span>
+      <span class="text-white/60">↓</span>
+    </div>
+  </section>
+
+  <section class="v-reveal mx-auto max-w-6xl px-6 py-20">
+    <p class="mb-3 font-mono text-xs tracking-[0.16em] text-[#1EBBF0]">01 / VISION</p>
+    <h2 class="mb-5 text-3xl font-semibold text-white">Company Vision</h2>
+    <p class="max-w-2xl text-base leading-relaxed text-white/65">{home.visionBody}</p>
+  </section>
+
+  <section class="v-reveal mx-auto max-w-6xl px-6 py-12">
+    <p class="mb-6 font-mono text-xs tracking-[0.16em] text-[#1EBBF0]">02 / CORE TECHNOLOGIES</p>
+    <div class="grid gap-5 sm:grid-cols-3">
+      {pillars.map((p) => (
+        <div class="rounded-2xl border border-white/10 bg-white/[0.035] p-6 transition hover:border-[#1EBBF0]/50">
+          <h3 class="text-lg font-medium text-white">{p.title}</h3>
+          <p class="mt-3 text-sm leading-relaxed text-white/55">{p.desc}</p>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <section class="v-reveal mx-auto max-w-6xl px-6 py-12">
+    <p class="mb-5 font-mono text-xs tracking-[0.16em] text-[#1EBBF0]">03 / MATERIALS</p>
+    <div class="flex flex-wrap gap-2">
+      {materials.map((m) => (
+        <span class="rounded-md border border-[#1EBBF0]/25 bg-[#1EBBF0]/[0.08] px-3 py-1.5 font-mono text-sm text-[#9BDDF5]">{m}</span>
+      ))}
+    </div>
+  </section>
+
+  <section class="v-reveal mx-auto max-w-6xl px-6 py-12">
+    <p class="mb-6 font-mono text-xs tracking-[0.16em] text-[#1EBBF0]">04 / HISTORY</p>
+    <div class="divide-y divide-white/10">
+      {history.map((h) => (
+        <div class="flex gap-5 py-4">
+          <span class="w-14 shrink-0 font-mono text-sm text-[#1EBBF0]">{h.data.year}</span>
+          <span class="text-sm text-white/70">{h.data.summaryKo}</span>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <section class="v-reveal mx-auto max-w-6xl px-6 py-16">
+    <div class="relative overflow-hidden rounded-3xl border border-[#1EBBF0]/20 bg-[#0C1320] px-8 py-14 text-center">
+      <h2 class="text-2xl font-semibold text-white sm:text-3xl">{home.ctaHeading}</h2>
+      <p class="mx-auto mt-4 max-w-xl text-white/60" set:html={home.ctaBodyHtml}></p>
+      <a href="/contact" class="mt-8 inline-block rounded-full bg-[#1EBBF0] px-7 py-3 text-sm font-semibold text-[#04212E] transition hover:bg-[#5fd0f5]">{home.ctaButton}</a>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .vn-grid {
+    background-image:
+      linear-gradient(rgba(30,187,240,0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(30,187,240,0.06) 1px, transparent 1px);
+    background-size: 42px 42px;
+    -webkit-mask-image: radial-gradient(ellipse 70% 60% at 25% 20%, #000 35%, transparent 100%);
+    mask-image: radial-gradient(ellipse 70% 60% at 25% 20%, #000 35%, transparent 100%);
+  }
+  .vn-glow-a { background: radial-gradient(circle, rgba(30,187,240,0.20), transparent 70%); animation: vnDriftA 14s ease-in-out infinite; }
+  .vn-glow-b { background: radial-gradient(circle, rgba(90,80,220,0.15), transparent 70%); animation: vnDriftB 16s ease-in-out infinite; }
+  @keyframes vnDriftA { 0%,100% { transform: translate(0,0); } 50% { transform: translate(46px,26px); } }
+  @keyframes vnDriftB { 0%,100% { transform: translate(0,0); } 50% { transform: translate(-38px,-20px); } }
+  .vn-bounce { animation: vnBounce 1.8s ease-in-out infinite; }
+  @keyframes vnBounce { 0%,100% { transform: translate(-50%,0); opacity: .7; } 50% { transform: translate(-50%,7px); opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) {
+    .vn-glow-a, .vn-glow-b, .vn-bounce { animation: none; }
+  }
+</style>

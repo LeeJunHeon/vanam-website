@@ -1,55 +1,196 @@
 {
-  "home": {
-    "heroTitle": { "line1": "Thin Films,", "line2": "All Around" },
-    "heroSubtitle": { "line1": "친환경 진공 증착 기술로 만드는", "line2": "차세대 반도체 박막 소재" },
-    "heroCtaPrimary": "기술 살펴보기 →",
-    "heroCtaSecondary": "문의하기",
-    "visionBody": "VanaM은 혁신적인 증착 소스 기술과 핵심 IP를 기반으로, 아직 상용화되지 않은 차세대 박막 소재를 개발합니다. AI 반도체·양자컴퓨팅·전력반도체 등 딥테크 분야에 필요한 신소재 박막을 만들고, 서울에 친환경 마이크로 파운드리를 구축하고 있습니다.",
-    "pillars": [
-      { "title": "Customized R&D", "desc": "기존 공정으로 구현하기 어려운 특수 박막과 증착 공정 조건을 맞춤형으로 개발합니다." },
-      { "title": "Analysis & Measurements", "desc": "박막 물성 분석과 측정으로 공정 최적화와 신뢰성 검증을 지원합니다." },
-      { "title": "Simulation for Materials", "desc": "소재 시뮬레이션으로 박막 설계와 공정 개발의 시행착오를 줄입니다." }
-    ],
-    "ctaHeading": "함께 만들 박막 솔루션",
-    "ctaBodyHtml": "맞춤형 박막 R&D · 분석/측정 · 파운드리 서비스에 대해 문의해 주세요.",
-    "ctaButton": "문의하기 →"
-  },
-  "technology": {
-    "heroTitle": { "line1": "Next-generation thin film,", "line2": "on emerging technology" },
-    "heroSubtitle": "VanaM delivers process technology and deposition solutions that go beyond simple manufacturing — minimizing the cost and time of early-stage R&D, with special deposition instruments that capture process data for machine-learning-based performance prediction and optimization.",
-    "valueProps": [
-      { "h": "World-first energy-responsive thin film", "d": "Commercializing an ultra-sensitive, energy-responsive semiconductor thin film (VM1) that senses and switches in response to thermal or electrical energy." },
-      { "h": "Eco-friendly by design", "d": "Vacuum deposition with no toxic organic materials or gases — ESG-aligned manufacturing." },
-      { "h": "Cost competitive", "d": "Simple process, low production cost, and circuit simplification reduce total cost." },
-      { "h": "Low facility investment", "d": "No fine patterning or high-class cleanroom required to reach production." }
-    ],
-    "coreTechBody": "A high-crystalline thin-film deposition source technology that adds sensing and switching functions in response to thermal or electrical energy — enabling system simplification and higher accuracy versus conventional designs.",
-    "materialsLibraryDesc": "Special thin films and process conditions unavailable in conventional fabs — across oxides, nitrides, and metals.",
-    "applications": ["Quantum Computing", "A.I. Semiconductors", "Power Electronics", "Glass Substrate", "Advanced Materials", "Fire Detector", "Protection Circuit", "Neuromorphic Semiconductor"],
-    "applicationsDesc": "PoC in progress with R&D partners across emerging fields.",
-    "ctaHeading": "Have a thin-film challenge?",
-    "ctaBodyHtml": "Tell us your target material or process — we'll help you get there faster.",
-    "ctaButton": "Talk to us"
-  },
-  "about": {
-    "heroTitle": { "line1": "Thin Films,", "line2": "All Around" },
-    "heroSubtitle": "VanaM is a deep-tech startup developing and manufacturing next-generation semiconductor thin films that have yet to be commercialized — built on proprietary technology and core IP, powered by an eco-friendly vacuum deposition process.",
-    "companyP1": "We possess innovative proprietary technology and core IP for producing high-performance semiconductor thin films, based on an eco-friendly vacuum deposition process.",
-    "companyP2": {
-      "before": "We have constructed an ",
-      "highlight": "urban micro foundry",
-      "after": " — a semi-cleanroom-level urban fab — enabling rapid thin-film R&D and small-scale production close to our partners."
+  "en": {
+    "home": {
+      "heroTitle": {
+        "line1": "Thin Films,",
+        "line2": "All Around"
+      },
+      "heroSubtitle": {
+        "line1": "친환경 진공 증착 기술로 만드는",
+        "line2": "차세대 반도체 박막 소재"
+      },
+      "heroCtaPrimary": "기술 살펴보기 →",
+      "heroCtaSecondary": "문의하기",
+      "visionBody": "VanaM은 혁신적인 증착 소스 기술과 핵심 IP를 기반으로, 아직 상용화되지 않은 차세대 박막 소재를 개발합니다. AI 반도체·양자컴퓨팅·전력반도체 등 딥테크 분야에 필요한 신소재 박막을 만들고, 서울에 친환경 마이크로 파운드리를 구축하고 있습니다.",
+      "pillars": [
+        {
+          "title": "Customized R&D",
+          "desc": "기존 공정으로 구현하기 어려운 특수 박막과 증착 공정 조건을 맞춤형으로 개발합니다."
+        },
+        {
+          "title": "Analysis & Measurements",
+          "desc": "박막 물성 분석과 측정으로 공정 최적화와 신뢰성 검증을 지원합니다."
+        },
+        {
+          "title": "Simulation for Materials",
+          "desc": "소재 시뮬레이션으로 박막 설계와 공정 개발의 시행착오를 줄입니다."
+        }
+      ],
+      "ctaHeading": "함께 만들 박막 솔루션",
+      "ctaBodyHtml": "맞춤형 박막 R&D · 분석/측정 · 파운드리 서비스에 대해 문의해 주세요.",
+      "ctaButton": "문의하기 →"
     },
-    "visionBody": "Connect the next world with semiconductor materials — localizing new materials and components, and leading the industry.",
-    "teamDesc": "Ph.D.-level semiconductor researchers, IP & patent attorneys, and facility engineers — combining deep expertise across thin-film materials, intellectual property, and fab construction.",
-    "globalActivityDesc": "Exhibitions, conferences, and accelerator programs worldwide.",
-    "ctaHeadingHtml": "Let's build what's next.",
-    "ctaBodyHtml": "Partnership, supply, or technical collaboration — we're ready to talk.",
-    "ctaButton": "Contact us"
+    "technology": {
+      "heroTitle": {
+        "line1": "Next-generation thin film,",
+        "line2": "on emerging technology"
+      },
+      "heroSubtitle": "VanaM delivers process technology and deposition solutions that go beyond simple manufacturing — minimizing the cost and time of early-stage R&D, with special deposition instruments that capture process data for machine-learning-based performance prediction and optimization.",
+      "valueProps": [
+        {
+          "h": "World-first energy-responsive thin film",
+          "d": "Commercializing an ultra-sensitive, energy-responsive semiconductor thin film (VM1) that senses and switches in response to thermal or electrical energy."
+        },
+        {
+          "h": "Eco-friendly by design",
+          "d": "Vacuum deposition with no toxic organic materials or gases — ESG-aligned manufacturing."
+        },
+        {
+          "h": "Cost competitive",
+          "d": "Simple process, low production cost, and circuit simplification reduce total cost."
+        },
+        {
+          "h": "Low facility investment",
+          "d": "No fine patterning or high-class cleanroom required to reach production."
+        }
+      ],
+      "coreTechBody": "A high-crystalline thin-film deposition source technology that adds sensing and switching functions in response to thermal or electrical energy — enabling system simplification and higher accuracy versus conventional designs.",
+      "materialsLibraryDesc": "Special thin films and process conditions unavailable in conventional fabs — across oxides, nitrides, and metals.",
+      "applications": [
+        "Quantum Computing",
+        "A.I. Semiconductors",
+        "Power Electronics",
+        "Glass Substrate",
+        "Advanced Materials",
+        "Fire Detector",
+        "Protection Circuit",
+        "Neuromorphic Semiconductor"
+      ],
+      "applicationsDesc": "PoC in progress with R&D partners across emerging fields.",
+      "ctaHeading": "Have a thin-film challenge?",
+      "ctaBodyHtml": "Tell us your target material or process — we'll help you get there faster.",
+      "ctaButton": "Talk to us"
+    },
+    "about": {
+      "heroTitle": {
+        "line1": "Thin Films,",
+        "line2": "All Around"
+      },
+      "heroSubtitle": "VanaM is a deep-tech startup developing and manufacturing next-generation semiconductor thin films that have yet to be commercialized — built on proprietary technology and core IP, powered by an eco-friendly vacuum deposition process.",
+      "companyP1": "We possess innovative proprietary technology and core IP for producing high-performance semiconductor thin films, based on an eco-friendly vacuum deposition process.",
+      "companyP2": {
+        "before": "We have constructed an ",
+        "highlight": "urban micro foundry",
+        "after": " — a semi-cleanroom-level urban fab — enabling rapid thin-film R&D and small-scale production close to our partners."
+      },
+      "visionBody": "Connect the next world with semiconductor materials — localizing new materials and components, and leading the industry.",
+      "teamDesc": "Ph.D.-level semiconductor researchers, IP & patent attorneys, and facility engineers — combining deep expertise across thin-film materials, intellectual property, and fab construction.",
+      "globalActivityDesc": "Exhibitions, conferences, and accelerator programs worldwide.",
+      "ctaHeadingHtml": "Let's build what's next.",
+      "ctaBodyHtml": "Partnership, supply, or technical collaboration — we're ready to talk.",
+      "ctaButton": "Contact us"
+    },
+    "news": {
+      "heroTitle": "In the press",
+      "heroSubtitleHtml": "Coverage of VanaM's thin-film materials, products, and milestones.",
+      "footnote": "External links open the original articles. Dates and full text will be added as the news archive is migrated."
+    }
   },
-  "news": {
-    "heroTitle": "In the press",
-    "heroSubtitleHtml": "Coverage of VanaM's thin-film materials, products, and milestones.",
-    "footnote": "External links open the original articles. Dates and full text will be added as the news archive is migrated."
+  "ko": {
+    "home": {
+      "heroTitle": {
+        "line1": "Thin Films,",
+        "line2": "All Around"
+      },
+      "heroSubtitle": {
+        "line1": "친환경 진공 증착 기술로 만드는",
+        "line2": "차세대 반도체 박막 소재"
+      },
+      "heroCtaPrimary": "기술 살펴보기 →",
+      "heroCtaSecondary": "문의하기",
+      "visionBody": "VanaM은 혁신적인 증착 소스 기술과 핵심 IP를 기반으로, 아직 상용화되지 않은 차세대 박막 소재를 개발합니다. AI 반도체·양자컴퓨팅·전력반도체 등 딥테크 분야에 필요한 신소재 박막을 만들고, 서울에 친환경 마이크로 파운드리를 구축하고 있습니다.",
+      "pillars": [
+        {
+          "title": "Customized R&D",
+          "desc": "기존 공정으로 구현하기 어려운 특수 박막과 증착 공정 조건을 맞춤형으로 개발합니다."
+        },
+        {
+          "title": "Analysis & Measurements",
+          "desc": "박막 물성 분석과 측정으로 공정 최적화와 신뢰성 검증을 지원합니다."
+        },
+        {
+          "title": "Simulation for Materials",
+          "desc": "소재 시뮬레이션으로 박막 설계와 공정 개발의 시행착오를 줄입니다."
+        }
+      ],
+      "ctaHeading": "함께 만들 박막 솔루션",
+      "ctaBodyHtml": "맞춤형 박막 R&D · 분석/측정 · 파운드리 서비스에 대해 문의해 주세요.",
+      "ctaButton": "문의하기 →"
+    },
+    "technology": {
+      "heroTitle": {
+        "line1": "Next-generation thin film,",
+        "line2": "on emerging technology"
+      },
+      "heroSubtitle": "VanaM delivers process technology and deposition solutions that go beyond simple manufacturing — minimizing the cost and time of early-stage R&D, with special deposition instruments that capture process data for machine-learning-based performance prediction and optimization.",
+      "valueProps": [
+        {
+          "h": "World-first energy-responsive thin film",
+          "d": "Commercializing an ultra-sensitive, energy-responsive semiconductor thin film (VM1) that senses and switches in response to thermal or electrical energy."
+        },
+        {
+          "h": "Eco-friendly by design",
+          "d": "Vacuum deposition with no toxic organic materials or gases — ESG-aligned manufacturing."
+        },
+        {
+          "h": "Cost competitive",
+          "d": "Simple process, low production cost, and circuit simplification reduce total cost."
+        },
+        {
+          "h": "Low facility investment",
+          "d": "No fine patterning or high-class cleanroom required to reach production."
+        }
+      ],
+      "coreTechBody": "A high-crystalline thin-film deposition source technology that adds sensing and switching functions in response to thermal or electrical energy — enabling system simplification and higher accuracy versus conventional designs.",
+      "materialsLibraryDesc": "Special thin films and process conditions unavailable in conventional fabs — across oxides, nitrides, and metals.",
+      "applications": [
+        "Quantum Computing",
+        "A.I. Semiconductors",
+        "Power Electronics",
+        "Glass Substrate",
+        "Advanced Materials",
+        "Fire Detector",
+        "Protection Circuit",
+        "Neuromorphic Semiconductor"
+      ],
+      "applicationsDesc": "PoC in progress with R&D partners across emerging fields.",
+      "ctaHeading": "Have a thin-film challenge?",
+      "ctaBodyHtml": "Tell us your target material or process — we'll help you get there faster.",
+      "ctaButton": "Talk to us"
+    },
+    "about": {
+      "heroTitle": {
+        "line1": "Thin Films,",
+        "line2": "All Around"
+      },
+      "heroSubtitle": "VanaM is a deep-tech startup developing and manufacturing next-generation semiconductor thin films that have yet to be commercialized — built on proprietary technology and core IP, powered by an eco-friendly vacuum deposition process.",
+      "companyP1": "We possess innovative proprietary technology and core IP for producing high-performance semiconductor thin films, based on an eco-friendly vacuum deposition process.",
+      "companyP2": {
+        "before": "We have constructed an ",
+        "highlight": "urban micro foundry",
+        "after": " — a semi-cleanroom-level urban fab — enabling rapid thin-film R&D and small-scale production close to our partners."
+      },
+      "visionBody": "Connect the next world with semiconductor materials — localizing new materials and components, and leading the industry.",
+      "teamDesc": "Ph.D.-level semiconductor researchers, IP & patent attorneys, and facility engineers — combining deep expertise across thin-film materials, intellectual property, and fab construction.",
+      "globalActivityDesc": "Exhibitions, conferences, and accelerator programs worldwide.",
+      "ctaHeadingHtml": "Let's build what's next.",
+      "ctaBodyHtml": "Partnership, supply, or technical collaboration — we're ready to talk.",
+      "ctaButton": "Contact us"
+    },
+    "news": {
+      "heroTitle": "In the press",
+      "heroSubtitleHtml": "Coverage of VanaM's thin-film materials, products, and milestones.",
+      "footnote": "External links open the original articles. Dates and full text will be added as the news archive is migrated."
+    }
   }
 }

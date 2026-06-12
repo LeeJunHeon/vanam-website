@@ -1,0 +1,133 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+import siteData from '../../data/site.json';
+const locale = Astro.currentLocale ?? 'en';
+const site = siteData[locale] ?? siteData.en;
+const title = "Technology | VANAM";
+const description = "VANAM's thin-film technology: energy-responsive films, PVD/ALD/PLD/MOCVD deposition, an oxide-nitride-metal library, plus R&D, analysis and foundry services.";
+
+const tech = site.technology;
+const valueProps = tech.valueProps;
+
+// materials 컬렉션에서 system 별로 category→formula[] 그룹을 재구성.
+// order 순으로 정렬해 기존 객체의 키/배열 순서를 그대로 보존한다.
+const allMaterials = (await getCollection('materials')).sort((a, b) => a.data.order - b.data.order);
+function groupBySystem(system) {
+  const groups = {};
+  for (const m of allMaterials) {
+    if (m.data.system !== system) continue;
+    (groups[m.data.category] ??= []).push(m.data.formula);
+  }
+  return groups;
+}
+const sputter = groupBySystem('sputter');
+const ald = groupBySystem('ald');
+
+const services = (await getCollection('services')).sort((a, b) => a.data.order - b.data.order);
+
+const applications = tech.applications;
+---
+<BaseLayout title={title} description={description}>
+
+  <section class="mx-auto max-w-6xl px-6 pt-28 pb-16 md:pt-36">
+    <div class="v-reveal">
+      <p class="text-sm font-medium uppercase tracking-[0.2em] text-[#1EBBF0]">Technology &amp; Solution</p>
+      <h1 class="mt-5 text-4xl font-bold leading-tight text-white md:text-6xl">{tech.heroTitle.line1}<br/>{tech.heroTitle.line2}</h1>
+      <p class="mt-6 max-w-2xl text-lg leading-relaxed text-white/60">{tech.heroSubtitle}</p>
+    </div>
+  </section>
+
+  <section class="mx-auto max-w-6xl px-6 py-16">
+    <h2 class="sr-only">Key advantages</h2>
+    <div class="grid gap-5 md:grid-cols-2">
+      {valueProps.map((v) => (
+        <div class="v-reveal rounded-2xl border border-white/10 bg-white/[0.03] p-7">
+          <h3 class="text-lg font-bold text-white">{v.h}</h3>
+          <p class="mt-3 text-base leading-relaxed text-white/60">{v.d}</p>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <section class="border-y border-white/10 bg-white/[0.02]">
+    <div class="mx-auto max-w-6xl px-6 py-20">
+      <div class="v-reveal max-w-3xl">
+        <p class="text-sm font-medium uppercase tracking-[0.2em] text-[#1EBBF0]">Core Technology</p>
+        <h2 class="mt-5 text-3xl font-bold leading-snug text-white">Multifunctional, energy-responsive thin film</h2>
+        <p class="mt-5 text-base leading-relaxed text-white/65">{tech.coreTechBody}</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="mx-auto max-w-6xl px-6 py-20">
+    <div class="v-reveal">
+      <h2 class="text-2xl font-bold text-white">Materials Library</h2>
+      <p class="mt-3 max-w-2xl text-base text-white/55">{tech.materialsLibraryDesc}</p>
+    </div>
+
+    <div class="mt-10 grid gap-6 lg:grid-cols-2">
+      <div class="v-reveal rounded-2xl border border-white/10 bg-white/[0.03] p-7">
+        <h3 class="text-lg font-bold text-[#1EBBF0]">PVD — Sputter &amp; Evaporator</h3>
+        {Object.entries(sputter).map(([group, items]) => (
+          <div class="mt-5">
+            <p class="text-xs font-semibold uppercase tracking-wider text-white/40">{group}</p>
+            <div class="mt-2 flex flex-wrap gap-2">
+              {items.map((m) => (<span class="rounded-md border border-white/10 bg-white/[0.04] px-2.5 py-1 text-sm text-white/75">{m}</span>))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div class="v-reveal rounded-2xl border border-white/10 bg-white/[0.03] p-7">
+        <h3 class="text-lg font-bold text-[#1EBBF0]">ALD</h3>
+        {Object.entries(ald).map(([group, items]) => (
+          <div class="mt-5">
+            <p class="text-xs font-semibold uppercase tracking-wider text-white/40">{group}</p>
+            <div class="mt-2 flex flex-wrap gap-2">
+              {items.map((m) => (<span class="rounded-md border border-white/10 bg-white/[0.04] px-2.5 py-1 text-sm text-white/75">{m}</span>))}
+            </div>
+          </div>
+        ))}
+        <p class="mt-6 text-xs text-white/35">Also available: PLD, MOCVD, and process big-data collection.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="border-t border-white/10 bg-white/[0.02]">
+    <div class="mx-auto max-w-6xl px-6 py-20">
+      <div class="v-reveal"><h2 class="text-2xl font-bold text-white">Services</h2></div>
+      <div class="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {services.map((s, i) => (
+          <div class="v-reveal rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+            <div class="text-sm font-bold text-[#1EBBF0]">0{i+1}</div>
+            <h3 class="mt-3 text-lg font-bold text-white">{s.data.title}</h3>
+            <p class="mt-2 text-sm leading-relaxed text-white/60">{s.data.description}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="mx-auto max-w-6xl px-6 py-20">
+    <div class="v-reveal">
+      <h2 class="text-2xl font-bold text-white">Applications</h2>
+      <p class="mt-3 text-base text-white/55">{tech.applicationsDesc}</p>
+    </div>
+    <div class="mt-8 flex flex-wrap gap-3">
+      {applications.map((a) => (
+        <span class="v-reveal rounded-full border border-[#1EBBF0]/30 bg-[#1EBBF0]/10 px-4 py-2 text-sm font-medium text-white/80">{a}</span>
+      ))}
+    </div>
+  </section>
+
+  <section class="border-t border-white/10">
+    <div class="mx-auto max-w-6xl px-6 py-24 text-center">
+      <div class="v-reveal">
+        <h2 class="text-3xl font-bold text-white md:text-4xl">{tech.ctaHeading}</h2>
+        <p class="mx-auto mt-4 max-w-xl text-base text-white/60" set:html={tech.ctaBodyHtml}></p>
+        <a href="/contact" class="mt-8 inline-flex items-center gap-2 rounded-lg bg-[#1EBBF0] px-7 py-3 font-semibold text-[#06222C] transition hover:brightness-110">{tech.ctaButton}</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

@@ -1,0 +1,131 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+import { Image } from 'astro:assets';
+import siteData from '../../data/site.json';
+const locale = Astro.currentLocale ?? 'en';
+const site = siteData[locale] ?? siteData.en;
+const title = "About | VANAM";
+const description = "VanaM(반암) is a deep-tech startup developing next-generation semiconductor thin films via eco-friendly vacuum deposition — vision, team, and history.";
+
+const about = site.about;
+
+// 파트너 로고 에셋 매핑: partners.json 의 logo 경로(/src/assets/partners/*.png) → ImageMetadata
+const partnerLogos = import.meta.glob<{ default: ImageMetadata }>('/src/assets/partners/*.png', { eager: true });
+
+const team = (await getCollection('team')).sort((a, b) => a.data.order - b.data.order);
+
+// history: items(영문) 정본을 사용. (index 는 같은 컬렉션의 summaryKo 한글본을 사용)
+const history = (await getCollection('history')).sort((a, b) => a.data.order - b.data.order);
+
+const achievements = (await getCollection('achievements')).sort((a, b) => a.data.order - b.data.order);
+
+const partners = (await getCollection('partners')).sort((a, b) => a.data.order - b.data.order);
+
+function initials(name){ const p = name.replace('Dr. ','').split(' '); return (p[0][0] + (p[1] ? p[1][0] : '')).toUpperCase(); }
+---
+<BaseLayout title={title} description={description}>
+
+  <section class="relative mx-auto max-w-6xl px-6 pt-28 pb-16 md:pt-36">
+    <div class="v-reveal">
+      <p class="text-sm font-medium uppercase tracking-[0.2em] text-[#1EBBF0]">About VANAM</p>
+      <h1 class="mt-5 text-4xl font-bold leading-tight text-white md:text-6xl">{about.heroTitle.line1}<br/>{about.heroTitle.line2}</h1>
+      <p class="mt-6 max-w-2xl text-lg leading-relaxed text-white/60">{about.heroSubtitle}</p>
+    </div>
+  </section>
+
+  <section class="mx-auto max-w-6xl px-6 py-16">
+    <div class="v-reveal grid gap-10 md:grid-cols-3">
+      <div class="md:col-span-1"><h2 class="text-2xl font-bold text-white">Company</h2></div>
+      <div class="md:col-span-2 space-y-5 text-base leading-relaxed text-white/65">
+        <p>{about.companyP1}</p>
+        <p>{about.companyP2.before}<span class="text-white">{about.companyP2.highlight}</span>{about.companyP2.after}</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="border-y border-white/10 bg-white/[0.02]">
+    <div class="mx-auto max-w-6xl px-6 py-20">
+      <div class="v-reveal max-w-3xl">
+        <p class="text-sm font-medium uppercase tracking-[0.2em] text-[#1EBBF0]">Vision</p>
+        <p class="mt-5 text-2xl font-semibold leading-snug text-white md:text-3xl">{about.visionBody}</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="mx-auto max-w-6xl px-6 py-20">
+    <div class="v-reveal">
+      <h2 class="text-2xl font-bold text-white">Team</h2>
+      <p class="mt-3 max-w-2xl text-base text-white/55">{about.teamDesc}</p>
+    </div>
+    <div class="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-6">
+      {team.map((member) => (
+        <div class="v-reveal rounded-xl border border-white/10 bg-white/[0.03] p-5 text-center">
+          <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#1EBBF0]/15 text-sm font-bold text-[#1EBBF0]">{initials(member.data.name)}</div>
+          <p class="mt-4 text-sm font-semibold text-white">{member.data.name}</p>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <section class="border-t border-white/10">
+    <div class="mx-auto max-w-6xl px-6 py-20">
+      <div class="v-reveal"><h2 class="text-2xl font-bold text-white">History</h2></div>
+      <div class="mt-12 space-y-12">
+        {history.map((h) => (
+          <div class="v-reveal grid gap-6 md:grid-cols-[120px_1fr]">
+            <div class="text-3xl font-bold text-[#1EBBF0]">{h.data.year}</div>
+            <ul class="space-y-3 border-l border-white/10 pl-6">
+              {h.data.items.map((it) => (
+                <li class="relative text-base text-white/70">
+                  <span class="absolute -left-[1.65rem] top-2 h-2 w-2 rounded-full bg-[#1EBBF0]"></span>
+                  {it}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="border-t border-white/10 bg-white/[0.02]">
+    <div class="mx-auto max-w-6xl px-6 py-20">
+      <div class="v-reveal">
+        <h2 class="text-2xl font-bold text-white">Global Activity</h2>
+        <p class="mt-3 text-base text-white/55">{about.globalActivityDesc}</p>
+      </div>
+      <div class="mt-8 flex flex-wrap gap-3">
+        {achievements.map((a) => (
+          <span class="v-reveal rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm text-white/70">{a.data.name}</span>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="mx-auto max-w-6xl px-6 py-20">
+    <div class="v-reveal"><h2 class="text-2xl font-bold text-white">Collaboration</h2></div>
+    <div class="v-reveal mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
+      {partners.map((p) => {
+        const logo = p.data.logo ? partnerLogos[p.data.logo]?.default : undefined;
+        return logo ? (
+          <div class="flex items-center justify-center rounded-lg border border-white/10 bg-white/90 px-4 py-5">
+            <Image src={logo} alt={p.data.name} class="max-h-10 w-auto" />
+          </div>
+        ) : (
+          <div class="flex items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] px-4 py-6 text-center text-sm font-medium text-white/60">{p.data.name}</div>
+        );
+      })}
+    </div>
+  </section>
+
+  <section class="border-t border-white/10">
+    <div class="mx-auto max-w-6xl px-6 py-24 text-center">
+      <div class="v-reveal">
+        <h2 class="text-3xl font-bold text-white md:text-4xl" set:html={about.ctaHeadingHtml}></h2>
+        <p class="mx-auto mt-4 max-w-xl text-base text-white/60" set:html={about.ctaBodyHtml}></p>
+        <a href="/contact" class="mt-8 inline-flex items-center gap-2 rounded-lg bg-[#1EBBF0] px-7 py-3 font-semibold text-[#06222C] transition hover:brightness-110">{about.ctaButton}</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
