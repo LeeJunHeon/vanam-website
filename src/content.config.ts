@@ -59,4 +59,40 @@ const materials = defineCollection({
   }),
 });
 
-export const collections = { team, news, history, materials };
+// ── B 방식 전환 2차: partners / achievements / services ──────────
+
+// 5. PARTNERS (collaboration) ──────────
+const partners = defineCollection({
+  loader: file('src/content/partners.json'),
+  schema: z.object({
+    name: z.string(),
+    logo: z.string().optional(),       // 로고 이미지 (※ 신규 수집 예정 — 현재 비움)
+    url: z.string().url().optional(),
+    kind: z.enum(['institute', 'university', 'company', 'finance']).optional(),
+    order: z.number().default(0),
+  }),
+});
+
+// 6. ACHIEVEMENTS (global activity) ────
+const achievements = defineCollection({
+  loader: file('src/content/achievements.json'),
+  schema: z.object({
+    name: z.string(),
+    year: z.string().optional(),
+    location: z.string().optional(),
+    kind: z.enum(['exhibition', 'conference', 'accelerator', 'award']).optional(),
+    order: z.number().default(0),
+  }),
+});
+
+// 7. SERVICES ──────────────────────────
+const services = defineCollection({
+  loader: file('src/content/services.json'),
+  schema: z.object({
+    title: z.string(),
+    description: z.string(),
+    order: z.number().default(0),
+  }),
+});
+
+export const collections = { team, news, history, materials, partners, achievements, services };

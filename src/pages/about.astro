@@ -9,9 +9,9 @@ const team = (await getCollection('team')).sort((a, b) => a.data.order - b.data.
 // history: items(영문) 정본을 사용. (index 는 같은 컬렉션의 summaryKo 한글본을 사용)
 const history = (await getCollection('history')).sort((a, b) => a.data.order - b.data.order);
 
-const achievements = ['CES 2024','AWS Startup Growth Program','NANO Korea 2024','HKTDC Hong Kong Electronics Fair','SEDEX (COEX, Seoul)','Electronica 2024 (Munich)','MRS Fall Meeting (Boston)','CES 2025'];
+const achievements = (await getCollection('achievements')).sort((a, b) => a.data.order - b.data.order);
 
-const partners = ['KIST','Seoul National Univ.','Korea Univ.','Hanyang Univ.','Inha Univ.','Univ. of Cambridge','IBK','KIBO','Amazon (AWS)','RayVac'];
+const partners = (await getCollection('partners')).sort((a, b) => a.data.order - b.data.order);
 
 function initials(name){ const p = name.replace('Dr. ','').split(' '); return (p[0][0] + (p[1] ? p[1][0] : '')).toUpperCase(); }
 ---
@@ -95,7 +95,7 @@ function initials(name){ const p = name.replace('Dr. ','').split(' '); return (p
       </div>
       <div class="mt-8 flex flex-wrap gap-3">
         {achievements.map((a) => (
-          <span class="v-reveal rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm text-white/70">{a}</span>
+          <span class="v-reveal rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm text-white/70">{a.data.name}</span>
         ))}
       </div>
     </div>
@@ -105,7 +105,7 @@ function initials(name){ const p = name.replace('Dr. ','').split(' '); return (p
     <div class="v-reveal"><h2 class="text-2xl font-bold text-white">Collaboration</h2></div>
     <div class="v-reveal mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
       {partners.map((p) => (
-        <div class="flex items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] px-4 py-6 text-center text-sm font-medium text-white/60">{p}</div>
+        <div class="flex items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] px-4 py-6 text-center text-sm font-medium text-white/60">{p.data.name}</div>
       ))}
     </div>
   </section>

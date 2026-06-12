@@ -1,0 +1,32 @@
+[
+  {
+    "id": "deposition",
+    "order": 1,
+    "title": "Deposition Service",
+    "description": "Customized thin-film deposition across PVD (Sputter, Evaporator), ALD, PLD, and MOCVD."
+  },
+  {
+    "id": "analysis",
+    "order": 2,
+    "title": "Material Analysis",
+    "description": "Characterization and measurement of material properties and structure with advanced equipment."
+  },
+  {
+    "id": "rnd",
+    "order": 3,
+    "title": "R&D Service",
+    "description": "Thin-film simulation, commercial viability testing, and ML-based process prediction."
+  },
+  {
+    "id": "ip-patent",
+    "order": 4,
+    "title": "IP / Patent Package",
+    "description": "Core IP analysis, IP portfolio construction, and technology transfer mediation."
+  },
+  {
+    "id": "urban-foundry",
+    "order": 5,
+    "title": "Urban Micro Foundry",
+    "description": "Direct design and construction of a semi-cleanroom-level urban fab."
+  }
+]

@@ -1,0 +1,12 @@
+[
+  { "id": "kist",      "name": "KIST",               "order": 1 },
+  { "id": "snu",       "name": "Seoul National Univ.", "order": 2 },
+  { "id": "korea-u",   "name": "Korea Univ.",         "order": 3 },
+  { "id": "hanyang-u", "name": "Hanyang Univ.",       "order": 4 },
+  { "id": "inha-u",    "name": "Inha Univ.",          "order": 5 },
+  { "id": "cambridge", "name": "Univ. of Cambridge",  "order": 6 },
+  { "id": "ibk",       "name": "IBK",                 "order": 7 },
+  { "id": "kibo",      "name": "KIBO",                "order": 8 },
+  { "id": "amazon",    "name": "Amazon (AWS)",        "order": 9 },
+  { "id": "rayvac",    "name": "RayVac",              "order": 10 }
+]

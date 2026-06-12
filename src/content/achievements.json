@@ -1,0 +1,10 @@
+[
+  { "id": "ces-2024",        "name": "CES 2024",                     "order": 1 },
+  { "id": "aws-growth",      "name": "AWS Startup Growth Program",   "order": 2 },
+  { "id": "nano-korea-2024", "name": "NANO Korea 2024",              "order": 3 },
+  { "id": "hktdc",           "name": "HKTDC Hong Kong Electronics Fair", "order": 4 },
+  { "id": "sedex",           "name": "SEDEX (COEX, Seoul)",          "order": 5 },
+  { "id": "electronica-2024","name": "Electronica 2024 (Munich)",    "order": 6 },
+  { "id": "mrs-fall",        "name": "MRS Fall Meeting (Boston)",     "order": 7 },
+  { "id": "ces-2025",        "name": "CES 2025",                     "order": 8 }
+]
