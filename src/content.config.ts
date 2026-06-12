@@ -39,8 +39,10 @@ const history = defineCollection({
   loader: file('src/content/history.json'),
   schema: z.object({
     year: z.string(),
-    items: z.array(z.string()),          // 정본 (about 에서 사용)
-    summaryKo: z.string().optional(),    // index 한글 축약본 (현 출력 보존용)
+    items: z.array(z.string()),          // 영문 연혁 항목 (about EN)
+    items_ko: z.array(z.string()).optional(), // 한글 연혁 항목 (about KO)
+    summary_en: z.string().optional(),   // 영문 한 줄 요약 (home EN)
+    summaryKo: z.string().optional(),    // 한글 한 줄 요약 (home KO)
     order: z.number().default(0),
   }),
 });
@@ -89,8 +91,10 @@ const achievements = defineCollection({
 const services = defineCollection({
   loader: file('src/content/services.json'),
   schema: z.object({
-    title: z.string(),
-    description: z.string(),
+    title: z.string(),                       // EN
+    description: z.string(),                 // EN
+    title_ko: z.string().optional(),         // KO
+    description_ko: z.string().optional(),   // KO
     order: z.number().default(0),
   }),
 });
@@ -101,8 +105,10 @@ const services = defineCollection({
 const faq = defineCollection({
   loader: file('src/content/faq.json'),
   schema: z.object({
-    question: z.string(),
-    answer: z.string(),               // 빈 값 허용 (미작성 placeholder)
+    question: z.string(),             // KO (원문)
+    answer: z.string(),               // KO — 빈 값 허용 (미작성 placeholder)
+    question_en: z.string().optional(), // EN
+    answer_en: z.string().optional(),   // EN
     published: z.boolean().default(true),
     order: z.number().default(0),
   }),

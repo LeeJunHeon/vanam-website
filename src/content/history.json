@@ -8,7 +8,13 @@
       "Selected for the Initial Startup Package pilot R&D (Ministry of SMEs and Startups)",
       "Named top company, 10th Kibo Venture Camp (KOTEC)"
     ],
-    "summaryKo": "VanaM 설립 · 초기창업패키지 선정 · 키보벤처캠프 최우수"
+    "summaryKo": "VanaM 설립 · 초기창업패키지 선정 · 키보벤처캠프 최우수",
+    "items_ko": [
+      "반암(VanaM) 설립",
+      "중소벤처기업부 초기창업패키지 시범 R&D 선정",
+      "기술보증기금 제10회 키보벤처캠프 최우수 기업 선정"
+    ],
+    "summary_en": "Founded VanaM · Initial Startup Package · Top at Kibo Venture Camp"
   },
   {
     "id": "2023",
@@ -18,7 +24,12 @@
       "Began an urban semiconductor pilot line in Yeongdeungpo, Seoul",
       "Established a corporate-affiliated research institute"
     ],
-    "summaryKo": "영등포 파일럿 라인 착공 · 부설연구소 설립 · 딥테크 선정"
+    "summaryKo": "영등포 파일럿 라인 착공 · 부설연구소 설립 · 딥테크 선정",
+    "items_ko": [
+      "서울 영등포 도심형 반도체 파일럿 라인 착공",
+      "기업부설연구소 설립"
+    ],
+    "summary_en": "Yeongdeungpo pilot line · Corporate R&D institute · Deep-Tech selection"
   },
   {
     "id": "2024",
@@ -27,7 +38,11 @@
     "items": [
       "Selected as a Deep-Tech Startup, System Semiconductor Division (Ministry of SMEs and Startups)"
     ],
-    "summaryKo": "CES 2024 · NANO Korea · Electronica Munich · MRS Boston"
+    "summaryKo": "CES 2024 · NANO Korea · Electronica Munich · MRS Boston",
+    "items_ko": [
+      "중소벤처기업부 딥테크 스타트업(시스템반도체 분야) 선정"
+    ],
+    "summary_en": "CES 2024 · NANO Korea · Electronica Munich · MRS Boston"
   },
   {
     "id": "2025",
@@ -38,6 +53,12 @@
       "NextCorps Luminate Accelerator, Cohort 8 (Rochester, NY)",
       "PEN CIS US-APAC Venture Summit 2025"
     ],
-    "summaryKo": "CES 2025 · SelectUSA 2025 피칭 2위 · Luminate Cohort 8"
+    "summaryKo": "CES 2025 · SelectUSA 2025 피칭 2위 · Luminate Cohort 8",
+    "items_ko": [
+      "SelectUSA 2025 오픈테크 피칭 2위 (미국 내셔널하버, MD)",
+      "NextCorps Luminate 액셀러레이터 8기 (미국 로체스터, NY)",
+      "PEN CIS US-APAC 벤처 서밋 2025"
+    ],
+    "summary_en": "CES 2025 · SelectUSA 2025 2nd place · Luminate Cohort 8"
   }
 ]

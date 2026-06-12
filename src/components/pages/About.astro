@@ -75,7 +75,7 @@ function initials(name){ const p = name.replace('Dr. ','').split(' '); return (p
           <div class="v-reveal grid gap-6 md:grid-cols-[120px_1fr]">
             <div class="text-3xl font-bold text-[#1EBBF0]">{h.data.year}</div>
             <ul class="space-y-3 border-l border-white/10 pl-6">
-              {h.data.items.map((it) => (
+              {(locale === 'ko' ? (h.data.items_ko ?? h.data.items) : h.data.items).map((it) => (
                 <li class="relative text-base text-white/70">
                   <span class="absolute -left-[1.65rem] top-2 h-2 w-2 rounded-full bg-[#1EBBF0]"></span>
                   {it}

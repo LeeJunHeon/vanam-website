@@ -41,7 +41,7 @@ const history = (await getCollection('history')).sort((a, b) => a.data.order - b
 
   <section class="v-reveal mx-auto max-w-6xl px-6 py-20">
     <p class="mb-3 font-mono text-xs tracking-[0.16em] text-[#1EBBF0]">01 / VISION</p>
-    <h2 class="mb-5 text-3xl font-semibold text-white">Company Vision</h2>
+    <h2 class="mb-5 text-3xl font-semibold text-white">{home.visionHeading}</h2>
     <p class="max-w-2xl text-base leading-relaxed text-white/65">{home.visionBody}</p>
   </section>
 
@@ -72,7 +72,7 @@ const history = (await getCollection('history')).sort((a, b) => a.data.order - b
       {history.map((h) => (
         <div class="flex gap-5 py-4">
           <span class="w-14 shrink-0 font-mono text-sm text-[#1EBBF0]">{h.data.year}</span>
-          <span class="text-sm text-white/70">{h.data.summaryKo}</span>
+          <span class="text-sm text-white/70">{locale === 'en' ? h.data.summary_en : h.data.summaryKo}</span>
         </div>
       ))}
     </div>

@@ -1,6 +1,10 @@
 ---
-// FAQPage JSON-LD. published:true 이고 answer가 비어있지 않은 항목만 포함.
+// FAQPage JSON-LD. published:true 이고 answer가 비어있지 않은 항목만 포함. locale별 언어.
 import { getCollection } from 'astro:content';
+
+const locale = Astro.currentLocale ?? 'en';
+const q = (f) => locale === 'en' ? (f.data.question_en ?? f.data.question) : f.data.question;
+const a = (f) => locale === 'en' ? (f.data.answer_en ?? f.data.answer) : f.data.answer;
 
 const faqs = (await getCollection('faq'))
   .filter((f) => f.data.published && f.data.answer.trim() !== '')
@@ -11,10 +15,10 @@ const schema = {
   "@type": "FAQPage",
   "mainEntity": faqs.map((f) => ({
     "@type": "Question",
-    "name": f.data.question,
+    "name": q(f),
     "acceptedAnswer": {
       "@type": "Answer",
-      "text": f.data.answer,
+      "text": a(f),
     },
   })),
 };

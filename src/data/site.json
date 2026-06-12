@@ -6,29 +6,30 @@
         "line2": "All Around"
       },
       "heroSubtitle": {
-        "line1": "친환경 진공 증착 기술로 만드는",
-        "line2": "차세대 반도체 박막 소재"
+        "line1": "Next-generation semiconductor thin films,",
+        "line2": "made by eco-friendly vacuum deposition"
       },
-      "heroCtaPrimary": "기술 살펴보기 →",
-      "heroCtaSecondary": "문의하기",
-      "visionBody": "VanaM은 혁신적인 증착 소스 기술과 핵심 IP를 기반으로, 아직 상용화되지 않은 차세대 박막 소재를 개발합니다. AI 반도체·양자컴퓨팅·전력반도체 등 딥테크 분야에 필요한 신소재 박막을 만들고, 서울에 친환경 마이크로 파운드리를 구축하고 있습니다.",
+      "heroCtaPrimary": "Explore the technology →",
+      "heroCtaSecondary": "Contact",
+      "visionHeading": "Company Vision",
+      "visionBody": "Built on innovative deposition-source technology and core IP, VanaM develops next-generation thin-film materials that have yet to be commercialized. We create new thin films for deep-tech fields such as AI semiconductors, quantum computing, and power electronics, and are building an eco-friendly micro foundry in Seoul.",
       "pillars": [
         {
           "title": "Customized R&D",
-          "desc": "기존 공정으로 구현하기 어려운 특수 박막과 증착 공정 조건을 맞춤형으로 개발합니다."
+          "desc": "We develop special thin films and deposition process conditions that are hard to achieve with conventional processes."
         },
         {
           "title": "Analysis & Measurements",
-          "desc": "박막 물성 분석과 측정으로 공정 최적화와 신뢰성 검증을 지원합니다."
+          "desc": "We support process optimization and reliability verification through thin-film property analysis and measurement."
         },
         {
           "title": "Simulation for Materials",
-          "desc": "소재 시뮬레이션으로 박막 설계와 공정 개발의 시행착오를 줄입니다."
+          "desc": "We reduce trial and error in thin-film design and process development through materials simulation."
         }
       ],
-      "ctaHeading": "함께 만들 박막 솔루션",
-      "ctaBodyHtml": "맞춤형 박막 R&D · 분석/측정 · 파운드리 서비스에 대해 문의해 주세요.",
-      "ctaButton": "문의하기 →"
+      "ctaHeading": "Thin-film solutions, built together",
+      "ctaBodyHtml": "Get in touch about custom thin-film R&D, analysis and measurement, and foundry services.",
+      "ctaButton": "Contact us →"
     },
     "technology": {
       "heroTitle": {
@@ -69,7 +70,13 @@
       "applicationsDesc": "PoC in progress with R&D partners across emerging fields.",
       "ctaHeading": "Have a thin-film challenge?",
       "ctaBodyHtml": "Tell us your target material or process — we'll help you get there faster.",
-      "ctaButton": "Talk to us"
+      "ctaButton": "Talk to us",
+      "keyAdvantages": "Key advantages",
+      "coreTechHeading": "Multifunctional, energy-responsive thin film",
+      "materialsHeading": "Materials Library",
+      "alsoAvailable": "Also available: PLD, MOCVD, and process big-data collection.",
+      "servicesHeading": "Services",
+      "applicationsHeading": "Applications"
     },
     "about": {
       "heroTitle": {
@@ -102,7 +109,39 @@
     "news": {
       "heroTitle": "In the press",
       "heroSubtitleHtml": "Coverage of VanaM's thin-film materials, products, and milestones.",
-      "footnote": "External links open the original articles. Dates and full text will be added as the news archive is migrated."
+      "footnote": "External links open the original articles. Dates and full text will be added as the news archive is migrated.",
+      "eyebrow": "News"
+    },
+    "contact": {
+      "metaTitle": "Contact | VANAM",
+      "metaDescription": "Get in touch with VanaM (반암) about thin-film materials — product and technical collaboration, quotes, and partnerships.",
+      "eyebrow": "Contact",
+      "heroTitle": {
+        "line1": "Tell us what",
+        "line2": "we'll build together"
+      },
+      "intro": "Thin-film applications, technical collaboration, supply inquiries — anything is welcome. We reply within 1–2 business days.",
+      "form": {
+        "name": "Name *",
+        "namePlaceholder": "John Doe",
+        "company": "Company / Affiliation",
+        "companyPlaceholder": "Company name",
+        "email": "Email *",
+        "emailPlaceholder": "you@company.com",
+        "phone": "Phone",
+        "phonePlaceholder": "+82 10-0000-0000",
+        "message": "Message *",
+        "messagePlaceholder": "Tell us how we can help.",
+        "honeypot": "Leave this field empty",
+        "submit": "Send message",
+        "sending": "Sending…",
+        "msgHoneypot": "Your inquiry has been received. Thank you.",
+        "msgDemo": "Demo mode: set an endpoint to actually send.",
+        "msgSuccess": "Your inquiry was sent successfully. Thank you!",
+        "msgError": "Sending failed. Please try again in a moment."
+      },
+      "faqEyebrow": "FAQ",
+      "faqHeading": "Frequently asked questions"
     }
   },
   "ko": {
@@ -117,18 +156,19 @@
       },
       "heroCtaPrimary": "기술 살펴보기 →",
       "heroCtaSecondary": "문의하기",
+      "visionHeading": "회사 비전",
       "visionBody": "VanaM은 혁신적인 증착 소스 기술과 핵심 IP를 기반으로, 아직 상용화되지 않은 차세대 박막 소재를 개발합니다. AI 반도체·양자컴퓨팅·전력반도체 등 딥테크 분야에 필요한 신소재 박막을 만들고, 서울에 친환경 마이크로 파운드리를 구축하고 있습니다.",
       "pillars": [
         {
-          "title": "Customized R&D",
+          "title": "맞춤형 R&D",
           "desc": "기존 공정으로 구현하기 어려운 특수 박막과 증착 공정 조건을 맞춤형으로 개발합니다."
         },
         {
-          "title": "Analysis & Measurements",
+          "title": "분석·측정",
           "desc": "박막 물성 분석과 측정으로 공정 최적화와 신뢰성 검증을 지원합니다."
         },
         {
-          "title": "Simulation for Materials",
+          "title": "소재 시뮬레이션",
           "desc": "소재 시뮬레이션으로 박막 설계와 공정 개발의 시행착오를 줄입니다."
         }
       ],
@@ -138,44 +178,50 @@
     },
     "technology": {
       "heroTitle": {
-        "line1": "Next-generation thin film,",
-        "line2": "on emerging technology"
+        "line1": "신기술을 구현하는",
+        "line2": "차세대 박막"
       },
-      "heroSubtitle": "VanaM delivers process technology and deposition solutions that go beyond simple manufacturing — minimizing the cost and time of early-stage R&D, with special deposition instruments that capture process data for machine-learning-based performance prediction and optimization.",
+      "heroSubtitle": "반암은 단순 제조를 넘어서는 공정 기술과 증착 솔루션을 제공합니다. 초기 R&D의 비용과 시간을 줄이고, 공정 데이터를 확보하는 특수 증착 장비로 머신러닝 기반 성능 예측과 공정 최적화를 지원합니다.",
       "valueProps": [
         {
-          "h": "World-first energy-responsive thin film",
-          "d": "Commercializing an ultra-sensitive, energy-responsive semiconductor thin film (VM1) that senses and switches in response to thermal or electrical energy."
+          "h": "세계 최초의 에너지 감응형 박막",
+          "d": "열·전기 에너지에 감응해 감지와 스위칭이 가능한 초고감도 에너지 감응형 반도체 박막(VM1)을 상용화합니다."
         },
         {
-          "h": "Eco-friendly by design",
-          "d": "Vacuum deposition with no toxic organic materials or gases — ESG-aligned manufacturing."
+          "h": "설계부터 친환경",
+          "d": "유독성 유기물이나 가스를 사용하지 않는 진공 증착 — ESG 지향 제조."
         },
         {
-          "h": "Cost competitive",
-          "d": "Simple process, low production cost, and circuit simplification reduce total cost."
+          "h": "뛰어난 가격 경쟁력",
+          "d": "단순한 공정, 낮은 생산 비용, 회로 단순화로 총비용을 절감합니다."
         },
         {
-          "h": "Low facility investment",
-          "d": "No fine patterning or high-class cleanroom required to reach production."
+          "h": "낮은 설비 투자",
+          "d": "미세 패터닝이나 고등급 클린룸 없이도 양산에 도달할 수 있습니다."
         }
       ],
-      "coreTechBody": "A high-crystalline thin-film deposition source technology that adds sensing and switching functions in response to thermal or electrical energy — enabling system simplification and higher accuracy versus conventional designs.",
-      "materialsLibraryDesc": "Special thin films and process conditions unavailable in conventional fabs — across oxides, nitrides, and metals.",
+      "coreTechBody": "열·전기 에너지에 감응해 감지·스위칭 기능을 더하는 고결정성 박막 증착 소스 기술로, 기존 설계 대비 시스템을 단순화하고 정확도를 높입니다.",
+      "materialsLibraryDesc": "기존 양산 팹에서 다루기 어려운 특수 박막과 공정 조건 — 산화물·질화물·금속 전반.",
       "applications": [
-        "Quantum Computing",
-        "A.I. Semiconductors",
-        "Power Electronics",
-        "Glass Substrate",
-        "Advanced Materials",
-        "Fire Detector",
-        "Protection Circuit",
-        "Neuromorphic Semiconductor"
+        "양자컴퓨팅",
+        "AI 반도체",
+        "전력반도체",
+        "글래스 기판",
+        "첨단 소재",
+        "화재 감지기",
+        "보호 회로",
+        "뉴로모픽 반도체"
       ],
-      "applicationsDesc": "PoC in progress with R&D partners across emerging fields.",
-      "ctaHeading": "Have a thin-film challenge?",
-      "ctaBodyHtml": "Tell us your target material or process — we'll help you get there faster.",
-      "ctaButton": "Talk to us"
+      "applicationsDesc": "신기술 분야 R&D 파트너들과 PoC를 진행 중입니다.",
+      "ctaHeading": "박막 관련 과제가 있으신가요?",
+      "ctaBodyHtml": "목표 소재나 공정을 알려주세요 — 더 빠르게 도달하도록 돕겠습니다.",
+      "ctaButton": "문의하기",
+      "keyAdvantages": "핵심 강점",
+      "coreTechHeading": "다기능 에너지 감응형 박막",
+      "materialsHeading": "소재 라이브러리",
+      "alsoAvailable": "PLD, MOCVD 및 공정 빅데이터 수집도 제공합니다.",
+      "servicesHeading": "서비스",
+      "applicationsHeading": "응용 분야"
     },
     "about": {
       "metaTitle": "회사 소개 | VANAM",
@@ -206,9 +252,41 @@
       "collaborationHeading": "협력"
     },
     "news": {
-      "heroTitle": "In the press",
-      "heroSubtitleHtml": "Coverage of VanaM's thin-film materials, products, and milestones.",
-      "footnote": "External links open the original articles. Dates and full text will be added as the news archive is migrated."
+      "eyebrow": "뉴스",
+      "heroTitle": "언론 속 반암",
+      "heroSubtitleHtml": "반암의 박막 소재, 제품, 주요 성과에 대한 보도입니다.",
+      "footnote": "외부 링크는 원문 기사로 연결됩니다. 게재일과 본문은 뉴스 아카이브 이관과 함께 추가될 예정입니다."
+    },
+    "contact": {
+      "metaTitle": "문의하기 | VANAM",
+      "metaDescription": "VanaM(반암) 박막 소재 기술 문의. 제품·기술 협업, 견적, 파트너십 문의를 남겨주세요.",
+      "eyebrow": "문의",
+      "heroTitle": {
+        "line1": "함께 만들어갈",
+        "line2": "이야기를 들려주세요"
+      },
+      "intro": "박막 소재 적용, 기술 협업, 공급 문의 등 무엇이든 좋습니다. 영업일 기준 1–2일 내에 회신드립니다.",
+      "form": {
+        "name": "이름 *",
+        "namePlaceholder": "홍길동",
+        "company": "회사 / 소속",
+        "companyPlaceholder": "회사명",
+        "email": "이메일 *",
+        "emailPlaceholder": "you@company.com",
+        "phone": "연락처",
+        "phonePlaceholder": "010-0000-0000",
+        "message": "문의 내용 *",
+        "messagePlaceholder": "문의하실 내용을 자유롭게 적어주세요.",
+        "honeypot": "이 칸은 비워두세요",
+        "submit": "문의 보내기",
+        "sending": "보내는 중…",
+        "msgHoneypot": "문의가 접수되었습니다. 감사합니다.",
+        "msgDemo": "데모 모드: 엔드포인트를 설정하면 실제로 전송됩니다.",
+        "msgSuccess": "문의가 정상적으로 접수되었습니다. 감사합니다!",
+        "msgError": "전송에 실패했습니다. 잠시 후 다시 시도해주세요."
+      },
+      "faqEyebrow": "FAQ",
+      "faqHeading": "자주 묻는 질문"
     }
   }
 }
