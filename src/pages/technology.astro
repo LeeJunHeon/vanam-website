@@ -1,15 +1,12 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { getCollection } from 'astro:content';
+import site from '../data/site.json';
 const title = "Technology | VANAM";
 const description = "VANAM's core thin-film technology: energy-responsive semiconductor thin films, PVD/ALD/PLD/MOCVD deposition, a broad oxide-nitride-metal materials library, and R&D, analysis, and urban micro-foundry services.";
 
-const valueProps = [
-  { h: "World-first energy-responsive thin film", d: "Commercializing an ultra-sensitive, energy-responsive semiconductor thin film (VM1) that senses and switches in response to thermal or electrical energy." },
-  { h: "Eco-friendly by design", d: "Vacuum deposition with no toxic organic materials or gases — ESG-aligned manufacturing." },
-  { h: "Cost competitive", d: "Simple process, low production cost, and circuit simplification reduce total cost." },
-  { h: "Low facility investment", d: "No fine patterning or high-class cleanroom required to reach production." },
-];
+const tech = site.technology;
+const valueProps = tech.valueProps;
 
 // materials 컬렉션에서 system 별로 category→formula[] 그룹을 재구성.
 // order 순으로 정렬해 기존 객체의 키/배열 순서를 그대로 보존한다.
@@ -27,7 +24,7 @@ const ald = groupBySystem('ald');
 
 const services = (await getCollection('services')).sort((a, b) => a.data.order - b.data.order);
 
-const applications = ['Quantum Computing','A.I. Semiconductors','Power Electronics','Glass Substrate','Advanced Materials','Fire Detector','Protection Circuit','Neuromorphic Semiconductor'];
+const applications = tech.applications;
 ---
 <BaseLayout title={title} description={description}>
   <script is:inline>document.documentElement.classList.add('reveal-on')</script>
@@ -35,10 +32,8 @@ const applications = ['Quantum Computing','A.I. Semiconductors','Power Electroni
   <section class="mx-auto max-w-6xl px-6 pt-28 pb-16 md:pt-36">
     <div class="v-reveal">
       <p class="text-sm font-medium uppercase tracking-[0.2em] text-[#1EBBF0]">Technology &amp; Solution</p>
-      <h1 class="mt-5 text-4xl font-bold leading-tight text-white md:text-6xl">Next-generation thin film,<br/>on emerging technology</h1>
-      <p class="mt-6 max-w-2xl text-lg leading-relaxed text-white/60">
-        VanaM delivers process technology and deposition solutions that go beyond simple manufacturing — minimizing the cost and time of early-stage R&amp;D, with special deposition instruments that capture process data for machine-learning-based performance prediction and optimization.
-      </p>
+      <h1 class="mt-5 text-4xl font-bold leading-tight text-white md:text-6xl">{tech.heroTitle.line1}<br/>{tech.heroTitle.line2}</h1>
+      <p class="mt-6 max-w-2xl text-lg leading-relaxed text-white/60">{tech.heroSubtitle}</p>
     </div>
   </section>
 
@@ -58,9 +53,7 @@ const applications = ['Quantum Computing','A.I. Semiconductors','Power Electroni
       <div class="v-reveal max-w-3xl">
         <p class="text-sm font-medium uppercase tracking-[0.2em] text-[#1EBBF0]">Core Technology</p>
         <h2 class="mt-5 text-3xl font-bold leading-snug text-white">Multifunctional, energy-responsive thin film</h2>
-        <p class="mt-5 text-base leading-relaxed text-white/65">
-          A high-crystalline thin-film deposition source technology that adds sensing and switching functions in response to thermal or electrical energy — enabling system simplification and higher accuracy versus conventional designs.
-        </p>
+        <p class="mt-5 text-base leading-relaxed text-white/65">{tech.coreTechBody}</p>
       </div>
     </div>
   </section>
@@ -68,7 +61,7 @@ const applications = ['Quantum Computing','A.I. Semiconductors','Power Electroni
   <section class="mx-auto max-w-6xl px-6 py-20">
     <div class="v-reveal">
       <h2 class="text-2xl font-bold text-white">Materials Library</h2>
-      <p class="mt-3 max-w-2xl text-base text-white/55">Special thin films and process conditions unavailable in conventional fabs — across oxides, nitrides, and metals.</p>
+      <p class="mt-3 max-w-2xl text-base text-white/55">{tech.materialsLibraryDesc}</p>
     </div>
 
     <div class="mt-10 grid gap-6 lg:grid-cols-2">
@@ -117,7 +110,7 @@ const applications = ['Quantum Computing','A.I. Semiconductors','Power Electroni
   <section class="mx-auto max-w-6xl px-6 py-20">
     <div class="v-reveal">
       <h2 class="text-2xl font-bold text-white">Applications</h2>
-      <p class="mt-3 text-base text-white/55">PoC in progress with R&amp;D partners across emerging fields.</p>
+      <p class="mt-3 text-base text-white/55">{tech.applicationsDesc}</p>
     </div>
     <div class="mt-8 flex flex-wrap gap-3">
       {applications.map((a) => (
@@ -129,9 +122,9 @@ const applications = ['Quantum Computing','A.I. Semiconductors','Power Electroni
   <section class="border-t border-white/10">
     <div class="mx-auto max-w-6xl px-6 py-24 text-center">
       <div class="v-reveal">
-        <h2 class="text-3xl font-bold text-white md:text-4xl">Have a thin-film challenge?</h2>
-        <p class="mx-auto mt-4 max-w-xl text-base text-white/60">Tell us your target material or process — we'll help you get there faster.</p>
-        <a href="/contact" class="mt-8 inline-flex items-center gap-2 rounded-lg bg-[#1EBBF0] px-7 py-3 font-semibold text-[#06222C] transition hover:brightness-110">Talk to us</a>
+        <h2 class="text-3xl font-bold text-white md:text-4xl">{tech.ctaHeading}</h2>
+        <p class="mx-auto mt-4 max-w-xl text-base text-white/60" set:html={tech.ctaBodyHtml}></p>
+        <a href="/contact" class="mt-8 inline-flex items-center gap-2 rounded-lg bg-[#1EBBF0] px-7 py-3 font-semibold text-[#06222C] transition hover:brightness-110">{tech.ctaButton}</a>
       </div>
     </div>
   </section>

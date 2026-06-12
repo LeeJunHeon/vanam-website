@@ -1,9 +1,11 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { getCollection } from 'astro:content';
+import site from '../data/site.json';
 const title = "News | VanaM";
 const description = "News and press coverage of VanaM (반암) — semiconductor thin-film materials, VM1, investment, and exhibitions.";
 
+const copy = site.news;
 const news = (await getCollection('news')).sort((a, b) => a.data.order - b.data.order);
 ---
 <BaseLayout title={title} description={description}>
@@ -12,10 +14,8 @@ const news = (await getCollection('news')).sort((a, b) => a.data.order - b.data.
   <section class="mx-auto max-w-5xl px-6 pt-28 pb-12 md:pt-36">
     <div class="v-reveal">
       <p class="text-sm font-medium uppercase tracking-[0.2em] text-[#1EBBF0]">News</p>
-      <h1 class="mt-5 text-4xl font-bold leading-tight text-white md:text-6xl">In the press</h1>
-      <p class="mt-6 max-w-2xl text-lg leading-relaxed text-white/60">
-        Coverage of VanaM's thin-film materials, products, and milestones.
-      </p>
+      <h1 class="mt-5 text-4xl font-bold leading-tight text-white md:text-6xl">{copy.heroTitle}</h1>
+      <p class="mt-6 max-w-2xl text-lg leading-relaxed text-white/60" set:html={copy.heroSubtitleHtml}></p>
     </div>
   </section>
 
@@ -31,9 +31,7 @@ const news = (await getCollection('news')).sort((a, b) => a.data.order - b.data.
       ))}
     </div>
 
-    <p class="v-reveal mt-10 text-sm text-white/35">
-      External links open the original articles. Dates and full text will be added as the news archive is migrated.
-    </p>
+    <p class="v-reveal mt-10 text-sm text-white/35">{copy.footnote}</p>
   </section>
 </BaseLayout>
 

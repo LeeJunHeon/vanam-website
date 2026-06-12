@@ -1,8 +1,11 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { getCollection } from 'astro:content';
+import site from '../data/site.json';
 const title = "About | VANAM";
 const description = "VanaM(반암) is a deep-tech startup developing next-generation semiconductor thin films via an eco-friendly vacuum deposition process. Vision, team, history, and collaborations.";
+
+const about = site.about;
 
 const team = (await getCollection('team')).sort((a, b) => a.data.order - b.data.order);
 
@@ -21,10 +24,8 @@ function initials(name){ const p = name.replace('Dr. ','').split(' '); return (p
   <section class="relative mx-auto max-w-6xl px-6 pt-28 pb-16 md:pt-36">
     <div class="v-reveal">
       <p class="text-sm font-medium uppercase tracking-[0.2em] text-[#1EBBF0]">About VANAM</p>
-      <h1 class="mt-5 text-4xl font-bold leading-tight text-white md:text-6xl">Thin Films,<br/>All Around</h1>
-      <p class="mt-6 max-w-2xl text-lg leading-relaxed text-white/60">
-        VanaM is a deep-tech startup developing and manufacturing next-generation semiconductor thin films that have yet to be commercialized — built on proprietary technology and core IP, powered by an eco-friendly vacuum deposition process.
-      </p>
+      <h1 class="mt-5 text-4xl font-bold leading-tight text-white md:text-6xl">{about.heroTitle.line1}<br/>{about.heroTitle.line2}</h1>
+      <p class="mt-6 max-w-2xl text-lg leading-relaxed text-white/60">{about.heroSubtitle}</p>
     </div>
   </section>
 
@@ -32,8 +33,8 @@ function initials(name){ const p = name.replace('Dr. ','').split(' '); return (p
     <div class="v-reveal grid gap-10 md:grid-cols-3">
       <div class="md:col-span-1"><h2 class="text-2xl font-bold text-white">Company</h2></div>
       <div class="md:col-span-2 space-y-5 text-base leading-relaxed text-white/65">
-        <p>We possess innovative proprietary technology and core IP for producing high-performance semiconductor thin films, based on an eco-friendly vacuum deposition process.</p>
-        <p>We have constructed an <span class="text-white">urban micro foundry</span> — a semi-cleanroom-level urban fab — enabling rapid thin-film R&amp;D and small-scale production close to our partners.</p>
+        <p>{about.companyP1}</p>
+        <p>{about.companyP2.before}<span class="text-white">{about.companyP2.highlight}</span>{about.companyP2.after}</p>
       </div>
     </div>
   </section>
@@ -42,9 +43,7 @@ function initials(name){ const p = name.replace('Dr. ','').split(' '); return (p
     <div class="mx-auto max-w-6xl px-6 py-20">
       <div class="v-reveal max-w-3xl">
         <p class="text-sm font-medium uppercase tracking-[0.2em] text-[#1EBBF0]">Vision</p>
-        <p class="mt-5 text-2xl font-semibold leading-snug text-white md:text-3xl">
-          Connect the next world with semiconductor materials — localizing new materials and components, and leading the industry.
-        </p>
+        <p class="mt-5 text-2xl font-semibold leading-snug text-white md:text-3xl">{about.visionBody}</p>
       </div>
     </div>
   </section>
@@ -52,9 +51,7 @@ function initials(name){ const p = name.replace('Dr. ','').split(' '); return (p
   <section class="mx-auto max-w-6xl px-6 py-20">
     <div class="v-reveal">
       <h2 class="text-2xl font-bold text-white">Team</h2>
-      <p class="mt-3 max-w-2xl text-base text-white/55">
-        Ph.D.-level semiconductor researchers, IP &amp; patent attorneys, and facility engineers — combining deep expertise across thin-film materials, intellectual property, and fab construction.
-      </p>
+      <p class="mt-3 max-w-2xl text-base text-white/55">{about.teamDesc}</p>
     </div>
     <div class="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-6">
       {team.map((member) => (
@@ -91,7 +88,7 @@ function initials(name){ const p = name.replace('Dr. ','').split(' '); return (p
     <div class="mx-auto max-w-6xl px-6 py-20">
       <div class="v-reveal">
         <h2 class="text-2xl font-bold text-white">Global Activity</h2>
-        <p class="mt-3 text-base text-white/55">Exhibitions, conferences, and accelerator programs worldwide.</p>
+        <p class="mt-3 text-base text-white/55">{about.globalActivityDesc}</p>
       </div>
       <div class="mt-8 flex flex-wrap gap-3">
         {achievements.map((a) => (
@@ -113,9 +110,9 @@ function initials(name){ const p = name.replace('Dr. ','').split(' '); return (p
   <section class="border-t border-white/10">
     <div class="mx-auto max-w-6xl px-6 py-24 text-center">
       <div class="v-reveal">
-        <h2 class="text-3xl font-bold text-white md:text-4xl">Let's build what's next.</h2>
-        <p class="mx-auto mt-4 max-w-xl text-base text-white/60">Partnership, supply, or technical collaboration — we're ready to talk.</p>
-        <a href="/contact" class="mt-8 inline-flex items-center gap-2 rounded-lg bg-[#1EBBF0] px-7 py-3 font-semibold text-[#06222C] transition hover:brightness-110">Contact us</a>
+        <h2 class="text-3xl font-bold text-white md:text-4xl" set:html={about.ctaHeadingHtml}></h2>
+        <p class="mx-auto mt-4 max-w-xl text-base text-white/60" set:html={about.ctaBodyHtml}></p>
+        <a href="/contact" class="mt-8 inline-flex items-center gap-2 rounded-lg bg-[#1EBBF0] px-7 py-3 font-semibold text-[#06222C] transition hover:brightness-110">{about.ctaButton}</a>
       </div>
     </div>
   </section>

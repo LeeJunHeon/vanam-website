@@ -1,12 +1,10 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { getCollection } from 'astro:content';
+import site from '../data/site.json';
 
-const pillars = [
-  { title: 'Customized R&D', desc: '기존 공정으로 구현하기 어려운 특수 박막과 증착 공정 조건을 맞춤형으로 개발합니다.' },
-  { title: 'Analysis & Measurements', desc: '박막 물성 분석과 측정으로 공정 최적화와 신뢰성 검증을 지원합니다.' },
-  { title: 'Simulation for Materials', desc: '소재 시뮬레이션으로 박막 설계와 공정 개발의 시행착오를 줄입니다.' },
-];
+const home = site.home;
+const pillars = home.pillars;
 
 // 홈 큐레이션 소재: home 값이 있는 행만, home 순서대로.
 const materials = (await getCollection('materials'))
@@ -26,11 +24,11 @@ const history = (await getCollection('history')).sort((a, b) => a.data.order - b
     <div class="vn-glow-b absolute -bottom-32 -right-16 h-[380px] w-[420px] rounded-full"></div>
     <div class="relative mx-auto w-full max-w-6xl">
       <p class="mb-5 font-mono text-xs tracking-[0.25em] text-[#1EBBF0]">VANA&nbsp;MATERIALS&nbsp;LAB.</p>
-      <h1 class="text-5xl font-bold leading-[1.05] tracking-tight text-white sm:text-7xl">Thin Films,<br />All Around</h1>
-      <p class="mt-6 max-w-xl text-lg leading-relaxed text-white/60">친환경 진공 증착 기술로 만드는<br />차세대 반도체 박막 소재</p>
+      <h1 class="text-5xl font-bold leading-[1.05] tracking-tight text-white sm:text-7xl">{home.heroTitle.line1}<br />{home.heroTitle.line2}</h1>
+      <p class="mt-6 max-w-xl text-lg leading-relaxed text-white/60">{home.heroSubtitle.line1}<br />{home.heroSubtitle.line2}</p>
       <div class="mt-9 flex flex-wrap gap-4">
-        <a href="/technology" class="rounded-full bg-[#1EBBF0] px-6 py-3 text-sm font-semibold text-[#04212E] transition hover:bg-[#5fd0f5]">기술 살펴보기 →</a>
-        <a href="/contact" class="rounded-full border border-white/25 px-6 py-3 text-sm font-medium text-white/85 transition hover:border-white hover:text-white">문의하기</a>
+        <a href="/technology" class="rounded-full bg-[#1EBBF0] px-6 py-3 text-sm font-semibold text-[#04212E] transition hover:bg-[#5fd0f5]">{home.heroCtaPrimary}</a>
+        <a href="/contact" class="rounded-full border border-white/25 px-6 py-3 text-sm font-medium text-white/85 transition hover:border-white hover:text-white">{home.heroCtaSecondary}</a>
       </div>
     </div>
     <div class="vn-bounce absolute bottom-7 left-1/2 flex -translate-x-1/2 flex-col items-center gap-1">
@@ -42,7 +40,7 @@ const history = (await getCollection('history')).sort((a, b) => a.data.order - b
   <section class="vn-reveal mx-auto max-w-6xl px-6 py-20">
     <p class="mb-3 font-mono text-xs tracking-[0.16em] text-[#1EBBF0]">01 / VISION</p>
     <h2 class="mb-5 text-3xl font-semibold text-white">Company Vision</h2>
-    <p class="max-w-2xl text-base leading-relaxed text-white/65">VanaM은 혁신적인 증착 소스 기술과 핵심 IP를 기반으로, 아직 상용화되지 않은 차세대 박막 소재를 개발합니다. AI 반도체·양자컴퓨팅·전력반도체 등 딥테크 분야에 필요한 신소재 박막을 만들고, 서울에 친환경 마이크로 파운드리를 구축하고 있습니다.</p>
+    <p class="max-w-2xl text-base leading-relaxed text-white/65">{home.visionBody}</p>
   </section>
 
   <section class="vn-reveal mx-auto max-w-6xl px-6 py-12">
@@ -80,9 +78,9 @@ const history = (await getCollection('history')).sort((a, b) => a.data.order - b
 
   <section class="vn-reveal mx-auto max-w-6xl px-6 py-16">
     <div class="relative overflow-hidden rounded-3xl border border-[#1EBBF0]/20 bg-[#0C1320] px-8 py-14 text-center">
-      <h2 class="text-2xl font-semibold text-white sm:text-3xl">함께 만들 박막 솔루션</h2>
-      <p class="mx-auto mt-4 max-w-xl text-white/60">맞춤형 박막 R&D · 분석/측정 · 파운드리 서비스에 대해 문의해 주세요.</p>
-      <a href="/contact" class="mt-8 inline-block rounded-full bg-[#1EBBF0] px-7 py-3 text-sm font-semibold text-[#04212E] transition hover:bg-[#5fd0f5]">문의하기 →</a>
+      <h2 class="text-2xl font-semibold text-white sm:text-3xl">{home.ctaHeading}</h2>
+      <p class="mx-auto mt-4 max-w-xl text-white/60" set:html={home.ctaBodyHtml}></p>
+      <a href="/contact" class="mt-8 inline-block rounded-full bg-[#1EBBF0] px-7 py-3 text-sm font-semibold text-[#04212E] transition hover:bg-[#5fd0f5]">{home.ctaButton}</a>
     </div>
   </section>
 </BaseLayout>
