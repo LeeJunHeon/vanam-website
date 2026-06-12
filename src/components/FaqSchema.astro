@@ -1,0 +1,22 @@
+---
+// FAQPage JSON-LD. published:true 이고 answer가 비어있지 않은 항목만 포함.
+import { getCollection } from 'astro:content';
+
+const faqs = (await getCollection('faq'))
+  .filter((f) => f.data.published && f.data.answer.trim() !== '')
+  .sort((a, b) => a.data.order - b.data.order);
+
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": faqs.map((f) => ({
+    "@type": "Question",
+    "name": f.data.question,
+    "acceptedAnswer": {
+      "@type": "Answer",
+      "text": f.data.answer,
+    },
+  })),
+};
+---
+{faqs.length > 0 && <script type="application/ld+json" set:html={JSON.stringify(schema)} />}

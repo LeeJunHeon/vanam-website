@@ -95,4 +95,17 @@ const services = defineCollection({
   }),
 });
 
-export const collections = { team, news, history, materials, partners, achievements, services };
+// 8. FAQ ───────────────────────────────
+// 근거(사이트/콘텐츠 데이터)가 있는 답만 작성. 운영 정보처럼 근거 없는 항목은
+// answer를 빈 문자열로 두고 published:false 로 표시(렌더·JSON-LD에서 제외).
+const faq = defineCollection({
+  loader: file('src/content/faq.json'),
+  schema: z.object({
+    question: z.string(),
+    answer: z.string(),               // 빈 값 허용 (미작성 placeholder)
+    published: z.boolean().default(true),
+    order: z.number().default(0),
+  }),
+});
+
+export const collections = { team, news, history, materials, partners, achievements, services, faq };
