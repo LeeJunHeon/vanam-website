@@ -1,0 +1,151 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+const title = "Technology | VANAM";
+const description = "VANAM's core thin-film technology: energy-responsive semiconductor thin films, PVD/ALD/PLD/MOCVD deposition, a broad oxide-nitride-metal materials library, and R&D, analysis, and urban micro-foundry services.";
+
+const valueProps = [
+  { h: "World-first energy-responsive thin film", d: "Commercializing an ultra-sensitive, energy-responsive semiconductor thin film (VM1) that senses and switches in response to thermal or electrical energy." },
+  { h: "Eco-friendly by design", d: "Vacuum deposition with no toxic organic materials or gases — ESG-aligned manufacturing." },
+  { h: "Cost competitive", d: "Simple process, low production cost, and circuit simplification reduce total cost." },
+  { h: "Low facility investment", d: "No fine patterning or high-class cleanroom required to reach production." },
+];
+
+const sputter = {
+  Oxide: ['VO₂','V₂O₅','TiO₂','Ta₂O₅','HfO₂','ZnO','ITO','IGZO'],
+  Nitride: ['TiN','AlN','AlScN','SiNₓ'],
+  Metal: ['Au','Pt','Ag','Al','Ti','Cr','Ni','Bi','Mo','Hf','Sc','W'],
+};
+const ald = {
+  Oxide: ['Al₂O₃','HfO₂','ZrO₂','HZO','ZnO','TiO₂','In₂O₃','Ga₂O₃','SnO₂','SnO'],
+  Metal: ['Pt','Ru'],
+};
+
+const services = [
+  { h: "Deposition Service", d: "Customized thin-film deposition across PVD (Sputter, Evaporator), ALD, PLD, and MOCVD." },
+  { h: "Material Analysis", d: "Characterization and measurement of material properties and structure with advanced equipment." },
+  { h: "R&D Service", d: "Thin-film simulation, commercial viability testing, and ML-based process prediction." },
+  { h: "IP / Patent Package", d: "Core IP analysis, IP portfolio construction, and technology transfer mediation." },
+  { h: "Urban Micro Foundry", d: "Direct design and construction of a semi-cleanroom-level urban fab." },
+];
+
+const applications = ['Quantum Computing','A.I. Semiconductors','Power Electronics','Glass Substrate','Advanced Materials','Fire Detector','Protection Circuit','Neuromorphic Semiconductor'];
+---
+<BaseLayout title={title} description={description}>
+  <script is:inline>document.documentElement.classList.add('reveal-on')</script>
+
+  <section class="mx-auto max-w-6xl px-6 pt-28 pb-16 md:pt-36">
+    <div class="v-reveal">
+      <p class="text-sm font-medium uppercase tracking-[0.2em] text-[#1EBBF0]">Technology &amp; Solution</p>
+      <h1 class="mt-5 text-4xl font-bold leading-tight text-white md:text-6xl">Next-generation thin film,<br/>on emerging technology</h1>
+      <p class="mt-6 max-w-2xl text-lg leading-relaxed text-white/60">
+        VanaM delivers process technology and deposition solutions that go beyond simple manufacturing — minimizing the cost and time of early-stage R&amp;D, with special deposition instruments that capture process data for machine-learning-based performance prediction and optimization.
+      </p>
+    </div>
+  </section>
+
+  <section class="mx-auto max-w-6xl px-6 py-16">
+    <div class="grid gap-5 md:grid-cols-2">
+      {valueProps.map((v) => (
+        <div class="v-reveal rounded-2xl border border-white/10 bg-white/[0.03] p-7">
+          <h3 class="text-lg font-bold text-white">{v.h}</h3>
+          <p class="mt-3 text-base leading-relaxed text-white/60">{v.d}</p>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <section class="border-y border-white/10 bg-white/[0.02]">
+    <div class="mx-auto max-w-6xl px-6 py-20">
+      <div class="v-reveal max-w-3xl">
+        <p class="text-sm font-medium uppercase tracking-[0.2em] text-[#1EBBF0]">Core Technology</p>
+        <h2 class="mt-5 text-3xl font-bold leading-snug text-white">Multifunctional, energy-responsive thin film</h2>
+        <p class="mt-5 text-base leading-relaxed text-white/65">
+          A high-crystalline thin-film deposition source technology that adds sensing and switching functions in response to thermal or electrical energy — enabling system simplification and higher accuracy versus conventional designs.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="mx-auto max-w-6xl px-6 py-20">
+    <div class="v-reveal">
+      <h2 class="text-2xl font-bold text-white">Materials Library</h2>
+      <p class="mt-3 max-w-2xl text-base text-white/55">Special thin films and process conditions unavailable in conventional fabs — across oxides, nitrides, and metals.</p>
+    </div>
+
+    <div class="mt-10 grid gap-6 lg:grid-cols-2">
+      <div class="v-reveal rounded-2xl border border-white/10 bg-white/[0.03] p-7">
+        <h3 class="text-lg font-bold text-[#1EBBF0]">PVD — Sputter &amp; Evaporator</h3>
+        {Object.entries(sputter).map(([group, items]) => (
+          <div class="mt-5">
+            <p class="text-xs font-semibold uppercase tracking-wider text-white/40">{group}</p>
+            <div class="mt-2 flex flex-wrap gap-2">
+              {items.map((m) => (<span class="rounded-md border border-white/10 bg-white/[0.04] px-2.5 py-1 text-sm text-white/75">{m}</span>))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div class="v-reveal rounded-2xl border border-white/10 bg-white/[0.03] p-7">
+        <h3 class="text-lg font-bold text-[#1EBBF0]">ALD</h3>
+        {Object.entries(ald).map(([group, items]) => (
+          <div class="mt-5">
+            <p class="text-xs font-semibold uppercase tracking-wider text-white/40">{group}</p>
+            <div class="mt-2 flex flex-wrap gap-2">
+              {items.map((m) => (<span class="rounded-md border border-white/10 bg-white/[0.04] px-2.5 py-1 text-sm text-white/75">{m}</span>))}
+            </div>
+          </div>
+        ))}
+        <p class="mt-6 text-xs text-white/35">Also available: PLD, MOCVD, and process big-data collection.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="border-t border-white/10 bg-white/[0.02]">
+    <div class="mx-auto max-w-6xl px-6 py-20">
+      <div class="v-reveal"><h2 class="text-2xl font-bold text-white">Services</h2></div>
+      <div class="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {services.map((s, i) => (
+          <div class="v-reveal rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+            <div class="text-sm font-bold text-[#1EBBF0]">0{i+1}</div>
+            <h3 class="mt-3 text-lg font-bold text-white">{s.h}</h3>
+            <p class="mt-2 text-sm leading-relaxed text-white/60">{s.d}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="mx-auto max-w-6xl px-6 py-20">
+    <div class="v-reveal">
+      <h2 class="text-2xl font-bold text-white">Applications</h2>
+      <p class="mt-3 text-base text-white/55">PoC in progress with R&amp;D partners across emerging fields.</p>
+    </div>
+    <div class="mt-8 flex flex-wrap gap-3">
+      {applications.map((a) => (
+        <span class="v-reveal rounded-full border border-[#1EBBF0]/30 bg-[#1EBBF0]/10 px-4 py-2 text-sm font-medium text-white/80">{a}</span>
+      ))}
+    </div>
+  </section>
+
+  <section class="border-t border-white/10">
+    <div class="mx-auto max-w-6xl px-6 py-24 text-center">
+      <div class="v-reveal">
+        <h2 class="text-3xl font-bold text-white md:text-4xl">Have a thin-film challenge?</h2>
+        <p class="mx-auto mt-4 max-w-xl text-base text-white/60">Tell us your target material or process — we'll help you get there faster.</p>
+        <a href="/contact" class="mt-8 inline-flex items-center gap-2 rounded-lg bg-[#1EBBF0] px-7 py-3 font-semibold text-[#06222C] transition hover:brightness-110">Talk to us</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .v-reveal { opacity: 1; transform: none; }
+  .reveal-on .v-reveal { opacity: 0; transform: translateY(28px); transition: opacity .7s ease, transform .7s ease; }
+  .reveal-on .v-reveal.is-visible { opacity: 1; transform: none; }
+</style>
+<script>
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('is-visible'); obs.unobserve(e.target); } });
+  }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+  document.querySelectorAll('.v-reveal').forEach((el) => obs.observe(el));
+</script>

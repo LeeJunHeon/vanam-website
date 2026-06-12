@@ -1,0 +1,26 @@
+▶ VANAM build 20260611-175354
+
+> site@0.0.1 build
+> astro build
+
+17:53:54 [types] Generated 12ms
+17:53:54 [build] output: "static"
+17:53:54 [build] mode: "static"
+17:53:54 [build] directory: /Users/elon/vanam-renewal/site/dist/
+17:53:54 [build] Collecting build info...
+17:53:54 [build] ✓ Completed in 23ms.
+17:53:54 [build] Building static entrypoints...
+17:53:55 [vite] ✓ built in 314ms
+17:53:55 [vite] ✓ built in 6ms
+17:53:55 [build] Rearranging server assets...
+
+ generating static routes 
+17:53:55   ├─ /contact/index.html (+5ms) 
+17:53:55   ├─ /index.html (+1ms) 
+17:53:55 ✓ Completed in 14ms.
+
+17:53:55 [build] ✓ Completed in 356ms.
+17:53:55 [@astrojs/sitemap] `sitemap-index.xml` created at `dist`
+17:53:55 [build] 2 page(s) built in 383ms
+17:53:55 [build] Complete!
+✅ BUILD OK (20260611-175354)

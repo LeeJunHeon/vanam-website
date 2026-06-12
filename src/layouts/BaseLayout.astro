@@ -1,0 +1,51 @@
+---
+import '../styles/global.css';
+const { title = 'VANAM — 차세대 반도체 박막 소재', description = 'VANA Materials LAB. 친환경 진공 증착 기반 차세대 반도체 박막 소재·공정 기술 기업.' } = Astro.props;
+const nav = [
+  { href: '/', label: 'Home' },
+  { href: '/about', label: 'About' },
+  { href: '/technology', label: 'Technology' },
+  { href: '/news', label: 'News' },
+  { href: '/contact', label: 'Contact' },
+];
+---
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href="https://vanam.co.kr/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content="https://vanam.co.kr/" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+  </head>
+  <body class="min-h-screen bg-[#0A0E13] text-white/90 antialiased" style="font-family: Pretendard, system-ui, sans-serif;">
+    <header class="sticky top-0 z-50 border-b border-white/10 bg-[#0A0E13]/80 backdrop-blur">
+      <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+        <a href="/" class="text-lg font-bold tracking-wide text-white">VANAM</a>
+        <nav class="flex items-center gap-5 text-sm text-white/60">
+          {nav.map((item) => (
+            <a href={item.href} class="transition hover:text-white">{item.label}</a>
+          ))}
+        </nav>
+      </div>
+    </header>
+    <main>
+      <slot />
+    </main>
+    <footer class="mt-24 border-t border-white/10">
+      <div class="mx-auto max-w-6xl px-6 py-12 text-sm text-white/45">
+        <p class="font-semibold text-white/70">VANAM INC.</p>
+        <p class="mt-1">VANA Materials LAB. — 차세대 반도체 박막 소재·공정</p>
+        <p class="mt-1">Seoul, Yeongdeungpo-gu · hello@vanam.co.kr</p>
+        <p class="mt-4 text-white/30">© 2026 VANAM INC. All rights reserved.</p>
+      </div>
+    </footer>
+  </body>
+</html>

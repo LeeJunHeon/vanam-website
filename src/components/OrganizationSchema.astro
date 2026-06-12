@@ -1,0 +1,29 @@
+---
+// Organization JSON-LD. logo URL만 확인되면 교체.
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "VanaM Inc.",
+  "alternateName": ["VANAM", "반암"],
+  "url": "https://vanam.co.kr",
+  "logo": "https://vanam.co.kr/logo.png",
+  "slogan": "Thin Films, All Around",
+  "description": "Developer and manufacturer of next-generation semiconductor thin films based on an eco-friendly vacuum deposition process.",
+  "foundingDate": "2022",
+  "email": "hello@vanam.co.kr",
+  "telephone": "+82-2-6951-0922",
+  "address": {
+    "@type": "PostalAddress",
+    "addressCountry": "KR",
+    "addressRegion": "Seoul",
+    "addressLocality": "Yeongdeungpo-gu",
+    "streetAddress": "21-1 Dosin-ro 4-gil",
+    "postalCode": "07377"
+  },
+  "sameAs": [
+    "https://www.linkedin.com/in/vanam-inc-62395132b/",
+    "https://www.youtube.com/@VanaMaterials"
+  ]
+};
+---
+<script type="application/ld+json" set:html={JSON.stringify(schema)} />

@@ -1,0 +1,41 @@
+# VanaM Inc. (VanaM / 반암)
+
+> VanaM ("VANA Materials LAB.") is a Korea-based deep-tech startup that develops and manufactures next-generation semiconductor thin films, based on a proprietary, eco-friendly vacuum deposition process. Brand promise: "Thin Films, All Around." Founded 2022, headquartered in Yeongdeungpo-gu, Seoul. Operates an urban micro foundry for thin-film R&D and small-scale production.
+
+## What VanaM does
+- World-first ultra-sensitive, energy-responsive semiconductor thin film (product: VM1) that senses and switches in response to thermal or electrical energy.
+- Eco-friendly vacuum deposition: no toxic organic materials or gases (ESG-aligned).
+- Cost- and facility-light process: simple process, circuit simplification, no fine patterning or high-class cleanroom required.
+- Process data (plasma wavelength, residual gas) captured for machine-learning-based performance prediction and process optimization.
+
+## Deposition & materials capability
+- Methods: PVD (Sputter, Evaporator), ALD, PLD, MOCVD.
+- Sputter oxides: VO2, V2O5, TiO2, Ta2O5, HfO2, ZnO, ITO, IGZO. Nitrides: TiN, AlN, AlScN, SiNx. Metals: Au, Pt, Ag, Al, Ti, Cr, Ni, Bi, Mo, Hf, Sc, W.
+- ALD oxides: Al2O3, HfO2, ZrO2, HZO, ZnO, TiO2, In2O3, Ga2O3, SnO2, SnO. Metals: Pt, Ru.
+
+## Services
+- Customized thin-film deposition service.
+- Material analysis & measurement.
+- Thin-film R&D service (simulation, commercial viability testing, ML prediction models).
+- IP / patent package (core IP analysis, IP portfolio construction, technology transfer mediation).
+- Urban Micro Foundry package (semi-cleanroom-level urban fab design & construction).
+
+## Target applications
+Quantum computing, A.I. semiconductors, power electronics, glass substrate, advanced materials. Product applications include fire detectors, protection circuits, and neuromorphic semiconductors.
+
+## Pages
+- [About](https://vanam.co.kr/about): Company, vision, team, history, achievements, collaboration.
+- [Technology](https://vanam.co.kr/technology): Core technology, materials, services, applications.
+- [News](https://vanam.co.kr/news): Press coverage and announcements.
+- [Contact](https://vanam.co.kr/contact): Partnership, supply, and technical inquiries.
+
+## Contact
+- Email: hello@vanam.co.kr
+- Phone: +82-2-6951-0922
+- Address: (07377) 21-1 Dosin-ro 4-gil, Yeongdeungpo-gu, Seoul, Korea
+- LinkedIn: https://www.linkedin.com/in/vanam-inc-62395132b/
+- YouTube: https://www.youtube.com/@VanaMaterials
+
+## Notes
+- Market: B2B (advanced materials / semiconductor).
+- Primary content language: English, with Korean press coverage.
