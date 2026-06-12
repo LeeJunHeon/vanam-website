@@ -34,7 +34,7 @@ const nav = [
     <OrganizationSchema />
     {/* 스크롤 등장(reveal) 효과 — 전 페이지 공통, 단일 소스.
         JS 없으면 reveal-on 미적용 → .v-reveal 기본 노출(콘텐츠 안 숨음). */}
-    <script is:inline>document.documentElement.classList.add('reveal-on')</script>
+    <script is:inline>document.documentElement.classList.add('reveal-on', 'nav-js')</script>
     <style is:global>
       .v-reveal { opacity: 1; transform: none; }
       .reveal-on .v-reveal { opacity: 0; transform: translateY(28px); transition: opacity .7s ease, transform .7s ease; }
@@ -42,18 +42,46 @@ const nav = [
       @media (prefers-reduced-motion: reduce) {
         .reveal-on .v-reveal { opacity: 1; transform: none; transition: none; }
       }
+
+      /* 모바일 햄버거 메뉴 — JS 없으면 메뉴 기본 노출(접근 보장), JS 있으면 토글.
+         데스크톱(md↑)은 가로 내비만 노출(아래 마크업의 hidden md:flex / md:hidden로 처리). */
+      #nav-toggle { display: none; }
+      .nav-js #mobile-nav { display: none; }
+      @media (max-width: 767px) {
+        .nav-js #nav-toggle { display: inline-flex; }
+        .nav-js #mobile-nav.is-open { display: block; }
+      }
+      #nav-toggle .nav-icon-close { display: none; }
+      #nav-toggle[aria-expanded="true"] .nav-icon-open { display: none; }
+      #nav-toggle[aria-expanded="true"] .nav-icon-close { display: block; }
     </style>
   </head>
   <body class="min-h-screen bg-[#0A0E13] text-white/90 antialiased" style="font-family: Pretendard, system-ui, sans-serif;">
     <header class="sticky top-0 z-50 border-b border-white/10 bg-[#0A0E13]/80 backdrop-blur">
       <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <a href="/" class="text-lg font-bold tracking-wide text-white">VANAM</a>
-        <nav class="flex items-center gap-5 text-sm text-white/60">
+        <nav class="hidden items-center gap-5 text-sm text-white/60 md:flex" aria-label="주 메뉴">
           {nav.map((item) => (
             <a href={item.href} class="transition hover:text-white">{item.label}</a>
           ))}
         </nav>
+        <button
+          id="nav-toggle"
+          type="button"
+          aria-label="메뉴 열기"
+          aria-expanded="false"
+          aria-controls="mobile-nav"
+          class="-mr-2 items-center justify-center rounded-md p-2 text-white/70 transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1EBBF0]"
+        >
+          <svg class="nav-icon-open h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+          <svg class="nav-icon-close h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
       </div>
+      <nav id="mobile-nav" aria-label="모바일 메뉴" class="border-t border-white/10 px-6 pb-3 md:hidden">
+        {nav.map((item) => (
+          <a href={item.href} class="block py-3 text-base text-white/70 transition hover:text-white">{item.label}</a>
+        ))}
+      </nav>
     </header>
     <main>
       <slot />
@@ -73,6 +101,21 @@ const nav = [
         entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('is-visible'); obs.unobserve(e.target); } });
       }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
       document.querySelectorAll('.v-reveal').forEach((el) => obs.observe(el));
+    </script>
+    <script>
+      // 모바일 햄버거 메뉴 토글 (전 페이지 공통, 바닐라 JS)
+      const navToggle = document.getElementById('nav-toggle');
+      const mobileNav = document.getElementById('mobile-nav');
+      if (navToggle && mobileNav) {
+        const setNavOpen = (open) => {
+          mobileNav.classList.toggle('is-open', open);
+          navToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+          navToggle.setAttribute('aria-label', open ? '메뉴 닫기' : '메뉴 열기');
+        };
+        navToggle.addEventListener('click', () => setNavOpen(!mobileNav.classList.contains('is-open')));
+        mobileNav.querySelectorAll('a').forEach((link) => link.addEventListener('click', () => setNavOpen(false)));
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setNavOpen(false); });
+      }
     </script>
   </body>
 </html>
