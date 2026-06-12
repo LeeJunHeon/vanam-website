@@ -4,7 +4,7 @@ import { getCollection } from 'astro:content';
 import { Image } from 'astro:assets';
 import site from '../data/site.json';
 const title = "About | VANAM";
-const description = "VanaM(반암) is a deep-tech startup developing next-generation semiconductor thin films via an eco-friendly vacuum deposition process. Vision, team, history, and collaborations.";
+const description = "VanaM(반암) is a deep-tech startup developing next-generation semiconductor thin films via eco-friendly vacuum deposition — vision, team, and history.";
 
 const about = site.about;
 
@@ -23,7 +23,6 @@ const partners = (await getCollection('partners')).sort((a, b) => a.data.order -
 function initials(name){ const p = name.replace('Dr. ','').split(' '); return (p[0][0] + (p[1] ? p[1][0] : '')).toUpperCase(); }
 ---
 <BaseLayout title={title} description={description}>
-  <script is:inline>document.documentElement.classList.add('reveal-on')</script>
 
   <section class="relative mx-auto max-w-6xl px-6 pt-28 pb-16 md:pt-36">
     <div class="v-reveal">
@@ -128,15 +127,3 @@ function initials(name){ const p = name.replace('Dr. ','').split(' '); return (p
     </div>
   </section>
 </BaseLayout>
-
-<style>
-  .v-reveal { opacity: 1; transform: none; }
-  .reveal-on .v-reveal { opacity: 0; transform: translateY(28px); transition: opacity .7s ease, transform .7s ease; }
-  .reveal-on .v-reveal.is-visible { opacity: 1; transform: none; }
-</style>
-<script>
-  const obs = new IntersectionObserver((entries) => {
-    entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('is-visible'); obs.unobserve(e.target); } });
-  }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
-  document.querySelectorAll('.v-reveal').forEach((el) => obs.observe(el));
-</script>

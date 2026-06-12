@@ -37,13 +37,13 @@ const history = (await getCollection('history')).sort((a, b) => a.data.order - b
     </div>
   </section>
 
-  <section class="vn-reveal mx-auto max-w-6xl px-6 py-20">
+  <section class="v-reveal mx-auto max-w-6xl px-6 py-20">
     <p class="mb-3 font-mono text-xs tracking-[0.16em] text-[#1EBBF0]">01 / VISION</p>
     <h2 class="mb-5 text-3xl font-semibold text-white">Company Vision</h2>
     <p class="max-w-2xl text-base leading-relaxed text-white/65">{home.visionBody}</p>
   </section>
 
-  <section class="vn-reveal mx-auto max-w-6xl px-6 py-12">
+  <section class="v-reveal mx-auto max-w-6xl px-6 py-12">
     <p class="mb-6 font-mono text-xs tracking-[0.16em] text-[#1EBBF0]">02 / CORE TECHNOLOGIES</p>
     <div class="grid gap-5 sm:grid-cols-3">
       {pillars.map((p) => (
@@ -55,7 +55,7 @@ const history = (await getCollection('history')).sort((a, b) => a.data.order - b
     </div>
   </section>
 
-  <section class="vn-reveal mx-auto max-w-6xl px-6 py-12">
+  <section class="v-reveal mx-auto max-w-6xl px-6 py-12">
     <p class="mb-5 font-mono text-xs tracking-[0.16em] text-[#1EBBF0]">03 / MATERIALS</p>
     <div class="flex flex-wrap gap-2">
       {materials.map((m) => (
@@ -64,7 +64,7 @@ const history = (await getCollection('history')).sort((a, b) => a.data.order - b
     </div>
   </section>
 
-  <section class="vn-reveal mx-auto max-w-6xl px-6 py-12">
+  <section class="v-reveal mx-auto max-w-6xl px-6 py-12">
     <p class="mb-6 font-mono text-xs tracking-[0.16em] text-[#1EBBF0]">04 / HISTORY</p>
     <div class="divide-y divide-white/10">
       {history.map((h) => (
@@ -76,7 +76,7 @@ const history = (await getCollection('history')).sort((a, b) => a.data.order - b
     </div>
   </section>
 
-  <section class="vn-reveal mx-auto max-w-6xl px-6 py-16">
+  <section class="v-reveal mx-auto max-w-6xl px-6 py-16">
     <div class="relative overflow-hidden rounded-3xl border border-[#1EBBF0]/20 bg-[#0C1320] px-8 py-14 text-center">
       <h2 class="text-2xl font-semibold text-white sm:text-3xl">{home.ctaHeading}</h2>
       <p class="mx-auto mt-4 max-w-xl text-white/60" set:html={home.ctaBodyHtml}></p>
@@ -100,17 +100,7 @@ const history = (await getCollection('history')).sort((a, b) => a.data.order - b
   @keyframes vnDriftB { 0%,100% { transform: translate(0,0); } 50% { transform: translate(-38px,-20px); } }
   .vn-bounce { animation: vnBounce 1.8s ease-in-out infinite; }
   @keyframes vnBounce { 0%,100% { transform: translate(-50%,0); opacity: .7; } 50% { transform: translate(-50%,7px); opacity: 1; } }
-  .vn-reveal { opacity: 0; transform: translateY(28px); transition: opacity .7s ease, transform .7s ease; }
-  .vn-reveal.vn-in { opacity: 1; transform: none; }
   @media (prefers-reduced-motion: reduce) {
     .vn-glow-a, .vn-glow-b, .vn-bounce { animation: none; }
-    .vn-reveal { opacity: 1; transform: none; transition: none; }
   }
 </style>
-
-<script>
-  const io = new IntersectionObserver((entries) => {
-    entries.forEach((e) => { if (e.isIntersecting) e.target.classList.add('vn-in'); });
-  }, { threshold: 0.12 });
-  document.querySelectorAll('.vn-reveal').forEach((el) => io.observe(el));
-</script>
