@@ -15,7 +15,14 @@ pnpm-debug.log*
 
 # environment variables
 .env
+.env.*
 .env.production
+
+# build logs
+build-logs/
+
+# local claude settings
+.claude/settings.local.json
 
 # macOS-specific files
 .DS_Store
