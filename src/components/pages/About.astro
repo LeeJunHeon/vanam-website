@@ -5,10 +5,9 @@ import { Image } from 'astro:assets';
 import siteData from '../../data/site.json';
 const locale = Astro.currentLocale ?? 'en';
 const site = siteData[locale] ?? siteData.en;
-const title = "About | VANAM";
-const description = "VanaM(반암) is a deep-tech startup developing next-generation semiconductor thin films via eco-friendly vacuum deposition — vision, team, and history.";
-
 const about = site.about;
+const title = about.metaTitle;
+const description = about.metaDescription;
 
 // 파트너 로고 에셋 매핑: partners.json 의 logo 경로(/src/assets/partners/*.png) → ImageMetadata
 const partnerLogos = import.meta.glob<{ default: ImageMetadata }>('/src/assets/partners/*.png', { eager: true });
@@ -28,7 +27,7 @@ function initials(name){ const p = name.replace('Dr. ','').split(' '); return (p
 
   <section class="relative mx-auto max-w-6xl px-6 pt-28 pb-16 md:pt-36">
     <div class="v-reveal">
-      <p class="text-sm font-medium uppercase tracking-[0.2em] text-[#1EBBF0]">About VANAM</p>
+      <p class="text-sm font-medium uppercase tracking-[0.2em] text-[#1EBBF0]">{about.eyebrowAbout}</p>
       <h1 class="mt-5 text-4xl font-bold leading-tight text-white md:text-6xl">{about.heroTitle.line1}<br/>{about.heroTitle.line2}</h1>
       <p class="mt-6 max-w-2xl text-lg leading-relaxed text-white/60">{about.heroSubtitle}</p>
     </div>
@@ -36,7 +35,7 @@ function initials(name){ const p = name.replace('Dr. ','').split(' '); return (p
 
   <section class="mx-auto max-w-6xl px-6 py-16">
     <div class="v-reveal grid gap-10 md:grid-cols-3">
-      <div class="md:col-span-1"><h2 class="text-2xl font-bold text-white">Company</h2></div>
+      <div class="md:col-span-1"><h2 class="text-2xl font-bold text-white">{about.companyHeading}</h2></div>
       <div class="md:col-span-2 space-y-5 text-base leading-relaxed text-white/65">
         <p>{about.companyP1}</p>
         <p>{about.companyP2.before}<span class="text-white">{about.companyP2.highlight}</span>{about.companyP2.after}</p>
@@ -47,7 +46,7 @@ function initials(name){ const p = name.replace('Dr. ','').split(' '); return (p
   <section class="border-y border-white/10 bg-white/[0.02]">
     <div class="mx-auto max-w-6xl px-6 py-20">
       <div class="v-reveal max-w-3xl">
-        <p class="text-sm font-medium uppercase tracking-[0.2em] text-[#1EBBF0]">Vision</p>
+        <p class="text-sm font-medium uppercase tracking-[0.2em] text-[#1EBBF0]">{about.visionEyebrow}</p>
         <p class="mt-5 text-2xl font-semibold leading-snug text-white md:text-3xl">{about.visionBody}</p>
       </div>
     </div>
@@ -55,7 +54,7 @@ function initials(name){ const p = name.replace('Dr. ','').split(' '); return (p
 
   <section class="mx-auto max-w-6xl px-6 py-20">
     <div class="v-reveal">
-      <h2 class="text-2xl font-bold text-white">Team</h2>
+      <h2 class="text-2xl font-bold text-white">{about.teamHeading}</h2>
       <p class="mt-3 max-w-2xl text-base text-white/55">{about.teamDesc}</p>
     </div>
     <div class="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-6">
@@ -70,7 +69,7 @@ function initials(name){ const p = name.replace('Dr. ','').split(' '); return (p
 
   <section class="border-t border-white/10">
     <div class="mx-auto max-w-6xl px-6 py-20">
-      <div class="v-reveal"><h2 class="text-2xl font-bold text-white">History</h2></div>
+      <div class="v-reveal"><h2 class="text-2xl font-bold text-white">{about.historyHeading}</h2></div>
       <div class="mt-12 space-y-12">
         {history.map((h) => (
           <div class="v-reveal grid gap-6 md:grid-cols-[120px_1fr]">
@@ -92,7 +91,7 @@ function initials(name){ const p = name.replace('Dr. ','').split(' '); return (p
   <section class="border-t border-white/10 bg-white/[0.02]">
     <div class="mx-auto max-w-6xl px-6 py-20">
       <div class="v-reveal">
-        <h2 class="text-2xl font-bold text-white">Global Activity</h2>
+        <h2 class="text-2xl font-bold text-white">{about.globalActivityHeading}</h2>
         <p class="mt-3 text-base text-white/55">{about.globalActivityDesc}</p>
       </div>
       <div class="mt-8 flex flex-wrap gap-3">
@@ -104,7 +103,7 @@ function initials(name){ const p = name.replace('Dr. ','').split(' '); return (p
   </section>
 
   <section class="mx-auto max-w-6xl px-6 py-20">
-    <div class="v-reveal"><h2 class="text-2xl font-bold text-white">Collaboration</h2></div>
+    <div class="v-reveal"><h2 class="text-2xl font-bold text-white">{about.collaborationHeading}</h2></div>
     <div class="v-reveal mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
       {partners.map((p) => {
         const logo = p.data.logo ? partnerLogos[p.data.logo]?.default : undefined;

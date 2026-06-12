@@ -88,7 +88,16 @@
       "globalActivityDesc": "Exhibitions, conferences, and accelerator programs worldwide.",
       "ctaHeadingHtml": "Let's build what's next.",
       "ctaBodyHtml": "Partnership, supply, or technical collaboration — we're ready to talk.",
-      "ctaButton": "Contact us"
+      "ctaButton": "Contact us",
+      "metaTitle": "About | VANAM",
+      "metaDescription": "VanaM(반암) is a deep-tech startup developing next-generation semiconductor thin films via eco-friendly vacuum deposition — vision, team, and history.",
+      "eyebrowAbout": "About VANAM",
+      "companyHeading": "Company",
+      "visionEyebrow": "Vision",
+      "teamHeading": "Team",
+      "historyHeading": "History",
+      "globalActivityHeading": "Global Activity",
+      "collaborationHeading": "Collaboration"
     },
     "news": {
       "heroTitle": "In the press",
@@ -169,23 +178,32 @@
       "ctaButton": "Talk to us"
     },
     "about": {
+      "metaTitle": "회사 소개 | VANAM",
+      "metaDescription": "반암(VanaM)은 친환경 진공 증착으로 차세대 반도체 박막을 개발하는 딥테크 스타트업입니다. 비전, 팀, 연혁을 소개합니다.",
       "heroTitle": {
         "line1": "Thin Films,",
         "line2": "All Around"
       },
-      "heroSubtitle": "VanaM is a deep-tech startup developing and manufacturing next-generation semiconductor thin films that have yet to be commercialized — built on proprietary technology and core IP, powered by an eco-friendly vacuum deposition process.",
-      "companyP1": "We possess innovative proprietary technology and core IP for producing high-performance semiconductor thin films, based on an eco-friendly vacuum deposition process.",
+      "heroSubtitle": "반암(VanaM)은 친환경 진공 증착 공정과 독자 기술·핵심 IP를 바탕으로, 아직 상용화되지 않은 차세대 반도체 박막을 개발·제조하는 딥테크 스타트업입니다.",
+      "companyP1": "친환경 진공 증착 공정을 바탕으로 고성능 반도체 박막을 생산하는 데 필요한 혁신적인 독자 기술과 핵심 IP를 보유하고 있습니다.",
       "companyP2": {
-        "before": "We have constructed an ",
-        "highlight": "urban micro foundry",
-        "after": " — a semi-cleanroom-level urban fab — enabling rapid thin-film R&D and small-scale production close to our partners."
+        "before": "",
+        "highlight": "도심형 마이크로 파운드리",
+        "after": "를 구축해, 세미 클린룸급 도심형 팹에서 파트너와 가까운 곳에서 신속한 박막 R&D와 소규모 생산을 수행합니다."
       },
-      "visionBody": "Connect the next world with semiconductor materials — localizing new materials and components, and leading the industry.",
-      "teamDesc": "Ph.D.-level semiconductor researchers, IP & patent attorneys, and facility engineers — combining deep expertise across thin-film materials, intellectual property, and fab construction.",
-      "globalActivityDesc": "Exhibitions, conferences, and accelerator programs worldwide.",
-      "ctaHeadingHtml": "Let's build what's next.",
-      "ctaBodyHtml": "Partnership, supply, or technical collaboration — we're ready to talk.",
-      "ctaButton": "Contact us"
+      "visionBody": "반도체 소재로 다음 세상을 연결합니다 — 신소재·부품을 국산화하고 산업을 선도합니다.",
+      "teamDesc": "박막 소재, 지식재산(IP), 설비 구축 분야의 박사급 반도체 연구진과 IP·특허 변리사, 설비 엔지니어가 모여 깊이 있는 전문성을 결합합니다.",
+      "globalActivityDesc": "전 세계 전시회, 학술대회, 액셀러레이터 프로그램에 참가합니다.",
+      "ctaHeadingHtml": "함께 다음을 만들어 갑니다.",
+      "ctaBodyHtml": "파트너십, 공급, 기술 협력 — 언제든 편하게 문의해 주세요.",
+      "ctaButton": "문의하기",
+      "eyebrowAbout": "회사 소개",
+      "companyHeading": "회사 개요",
+      "visionEyebrow": "비전",
+      "teamHeading": "팀",
+      "historyHeading": "연혁",
+      "globalActivityHeading": "글로벌 활동",
+      "collaborationHeading": "협력"
     },
     "news": {
       "heroTitle": "In the press",
