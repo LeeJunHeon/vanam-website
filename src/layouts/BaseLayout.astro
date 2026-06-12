@@ -1,6 +1,9 @@
 ---
 import '../styles/global.css';
+import OrganizationSchema from '../components/OrganizationSchema.astro';
 const { title = 'VANAM — 차세대 반도체 박막 소재', description = 'VANA Materials LAB. 친환경 진공 증착 기반 차세대 반도체 박막 소재·공정 기술 기업.' } = Astro.props;
+// 각 페이지의 실제 경로를 절대 URL로 (canonical / og:url)
+const canonicalURL = new URL(Astro.url.pathname, Astro.site).href;
 const nav = [
   { href: '/', label: 'Home' },
   { href: '/about', label: 'About' },
@@ -16,14 +19,15 @@ const nav = [
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     <meta name="description" content={description} />
-    <link rel="canonical" href="https://vanam.co.kr/" />
+    <link rel="canonical" href={canonicalURL} />
     <meta property="og:type" content="website" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
-    <meta property="og:url" content="https://vanam.co.kr/" />
+    <meta property="og:url" content={canonicalURL} />
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="preconnect" href="https://cdn.jsdelivr.net" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+    <OrganizationSchema />
   </head>
   <body class="min-h-screen bg-[#0A0E13] text-white/90 antialiased" style="font-family: Pretendard, system-ui, sans-serif;">
     <header class="sticky top-0 z-50 border-b border-white/10 bg-[#0A0E13]/80 backdrop-blur">
