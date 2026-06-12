@@ -1,18 +1,22 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
 
 const pillars = [
   { title: 'Customized R&D', desc: '기존 공정으로 구현하기 어려운 특수 박막과 증착 공정 조건을 맞춤형으로 개발합니다.' },
   { title: 'Analysis & Measurements', desc: '박막 물성 분석과 측정으로 공정 최적화와 신뢰성 검증을 지원합니다.' },
   { title: 'Simulation for Materials', desc: '소재 시뮬레이션으로 박막 설계와 공정 개발의 시행착오를 줄입니다.' },
 ];
-const materials = ['VO₂','V₂O₅','TiO₂','Ta₂O₅','HfO₂','ZnO','ITO','IGZO','TiN','AlN','Al₂O₃','ZrO₂','HZO'];
-const history = [
-  { y: '2022', t: 'VanaM 설립 · 초기창업패키지 선정 · 키보벤처캠프 최우수' },
-  { y: '2023', t: '영등포 파일럿 라인 착공 · 부설연구소 설립 · 딥테크 선정' },
-  { y: '2024', t: 'CES 2024 · NANO Korea · Electronica Munich · MRS Boston' },
-  { y: '2025', t: 'CES 2025 · SelectUSA 2025 피칭 2위 · Luminate Cohort 8' },
-];
+
+// 홈 큐레이션 소재: home 값이 있는 행만, home 순서대로.
+const materials = (await getCollection('materials'))
+  .filter((m) => m.data.home != null)
+  .sort((a, b) => a.data.home - b.data.home)
+  .map((m) => m.data.formula);
+
+// history: about 과 동일 컬렉션을 참조. 단 출력은 한글 축약본(summaryKo)을 사용해 현 화면을 보존.
+// ⚠️ TODO(표현 통일): about(영문 items) 과 표현을 통일할지는 추후 결정 (content.config.ts 주석 참고).
+const history = (await getCollection('history')).sort((a, b) => a.data.order - b.data.order);
 ---
 
 <BaseLayout>
@@ -67,8 +71,8 @@ const history = [
     <div class="divide-y divide-white/10">
       {history.map((h) => (
         <div class="flex gap-5 py-4">
-          <span class="w-14 shrink-0 font-mono text-sm text-[#1EBBF0]">{h.y}</span>
-          <span class="text-sm text-white/70">{h.t}</span>
+          <span class="w-14 shrink-0 font-mono text-sm text-[#1EBBF0]">{h.data.year}</span>
+          <span class="text-sm text-white/70">{h.data.summaryKo}</span>
         </div>
       ))}
     </div>

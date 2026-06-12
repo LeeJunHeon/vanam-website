@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
 const title = "Technology | VANAM";
 const description = "VANAM's core thin-film technology: energy-responsive semiconductor thin films, PVD/ALD/PLD/MOCVD deposition, a broad oxide-nitride-metal materials library, and R&D, analysis, and urban micro-foundry services.";
 
@@ -10,15 +11,19 @@ const valueProps = [
   { h: "Low facility investment", d: "No fine patterning or high-class cleanroom required to reach production." },
 ];
 
-const sputter = {
-  Oxide: ['VO₂','V₂O₅','TiO₂','Ta₂O₅','HfO₂','ZnO','ITO','IGZO'],
-  Nitride: ['TiN','AlN','AlScN','SiNₓ'],
-  Metal: ['Au','Pt','Ag','Al','Ti','Cr','Ni','Bi','Mo','Hf','Sc','W'],
-};
-const ald = {
-  Oxide: ['Al₂O₃','HfO₂','ZrO₂','HZO','ZnO','TiO₂','In₂O₃','Ga₂O₃','SnO₂','SnO'],
-  Metal: ['Pt','Ru'],
-};
+// materials 컬렉션에서 system 별로 category→formula[] 그룹을 재구성.
+// order 순으로 정렬해 기존 객체의 키/배열 순서를 그대로 보존한다.
+const allMaterials = (await getCollection('materials')).sort((a, b) => a.data.order - b.data.order);
+function groupBySystem(system) {
+  const groups = {};
+  for (const m of allMaterials) {
+    if (m.data.system !== system) continue;
+    (groups[m.data.category] ??= []).push(m.data.formula);
+  }
+  return groups;
+}
+const sputter = groupBySystem('sputter');
+const ald = groupBySystem('ald');
 
 const services = [
   { h: "Deposition Service", d: "Customized thin-film deposition across PVD (Sputter, Evaporator), ALD, PLD, and MOCVD." },

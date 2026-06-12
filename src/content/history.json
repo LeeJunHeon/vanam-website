@@ -1,0 +1,43 @@
+[
+  {
+    "id": "2022",
+    "year": "2022",
+    "order": 1,
+    "items": [
+      "Established VanaM Inc.",
+      "Selected for the Initial Startup Package pilot R&D (Ministry of SMEs and Startups)",
+      "Named top company, 10th Kibo Venture Camp (KOTEC)"
+    ],
+    "summaryKo": "VanaM 설립 · 초기창업패키지 선정 · 키보벤처캠프 최우수"
+  },
+  {
+    "id": "2023",
+    "year": "2023",
+    "order": 2,
+    "items": [
+      "Began an urban semiconductor pilot line in Yeongdeungpo, Seoul",
+      "Established a corporate-affiliated research institute"
+    ],
+    "summaryKo": "영등포 파일럿 라인 착공 · 부설연구소 설립 · 딥테크 선정"
+  },
+  {
+    "id": "2024",
+    "year": "2024",
+    "order": 3,
+    "items": [
+      "Selected as a Deep-Tech Startup, System Semiconductor Division (Ministry of SMEs and Startups)"
+    ],
+    "summaryKo": "CES 2024 · NANO Korea · Electronica Munich · MRS Boston"
+  },
+  {
+    "id": "2025",
+    "year": "2025",
+    "order": 4,
+    "items": [
+      "SelectUSA 2025 — 2nd place, Open Tech Pitching (National Harbor, MD)",
+      "NextCorps Luminate Accelerator, Cohort 8 (Rochester, NY)",
+      "PEN CIS US-APAC Venture Summit 2025"
+    ],
+    "summaryKo": "CES 2025 · SelectUSA 2025 피칭 2위 · Luminate Cohort 8"
+  }
+]

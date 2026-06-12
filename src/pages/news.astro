@@ -1,15 +1,10 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
 const title = "News | VanaM";
 const description = "News and press coverage of VanaM (반암) — semiconductor thin-film materials, VM1, investment, and exhibitions.";
 
-const news = [
-  { title: `반암, CES 2024서 에너지 민감형 반도체 박막 'VM1' 소개해... "화재 감지기·보호 회로 등 응용 분야에 필수적"`, url: 'https://vanam.co.kr/?kboard_content_redirect=3', tag: 'Press' },
-  { title: `[고려대 초창패 2022] 반암주식회사 "박막형 반도체 시장 주도"`, url: 'https://vanam.co.kr/?kboard_content_redirect=4', tag: 'Press' },
-  { title: `반암, 홍콩서 에너지 감응형 박막 소재 'VM1' 공개`, url: 'https://vanam.co.kr/?kboard_content_redirect=5', tag: 'Press' },
-  { title: `반도체 소재∙부품 스타트업 '반암', 7억 원 규모 시드 투자 유치`, url: 'https://vanam.co.kr/?kboard_content_redirect=17', tag: 'Investment' },
-  { title: `[반도체의 내일을 본다⑧] 반암`, url: 'https://vanam.co.kr/?kboard_content_redirect=18', tag: 'Feature' },
-];
+const news = (await getCollection('news')).sort((a, b) => a.data.order - b.data.order);
 ---
 <BaseLayout title={title} description={description}>
   <script is:inline>document.documentElement.classList.add('reveal-on')</script>
@@ -27,10 +22,10 @@ const news = [
   <section class="mx-auto max-w-5xl px-6 pb-24">
     <div class="space-y-4">
       {news.map((n) => (
-        <a href={n.url} target="_blank" rel="noopener noreferrer"
+        <a href={n.data.url} target="_blank" rel="noopener noreferrer"
            class="v-reveal group flex items-start gap-5 rounded-2xl border border-white/10 bg-white/[0.03] p-6 transition hover:border-[#1EBBF0]/40 hover:bg-white/[0.05]">
-          <span class="mt-1 shrink-0 rounded-full border border-[#1EBBF0]/30 bg-[#1EBBF0]/10 px-3 py-1 text-xs font-semibold text-[#1EBBF0]">{n.tag}</span>
-          <span class="flex-1 text-base font-medium leading-relaxed text-white/85 group-hover:text-white">{n.title}</span>
+          <span class="mt-1 shrink-0 rounded-full border border-[#1EBBF0]/30 bg-[#1EBBF0]/10 px-3 py-1 text-xs font-semibold text-[#1EBBF0]">{n.data.tag}</span>
+          <span class="flex-1 text-base font-medium leading-relaxed text-white/85 group-hover:text-white">{n.data.title}</span>
           <svg class="mt-1 h-5 w-5 shrink-0 text-white/30 transition group-hover:text-[#1EBBF0]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg>
         </a>
       ))}

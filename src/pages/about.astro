@@ -1,16 +1,13 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
 const title = "About | VANAM";
 const description = "VanaM(반암) is a deep-tech startup developing next-generation semiconductor thin films via an eco-friendly vacuum deposition process. Vision, team, history, and collaborations.";
 
-const team = ['Dr. SD HAN','Dr. WY CHOI','Dr. S AYACHI','Dr. HK SONG','DH YU','BH LEE'];
+const team = (await getCollection('team')).sort((a, b) => a.data.order - b.data.order);
 
-const history = [
-  { year: '2022', items: ['Established VanaM Inc.','Selected for the Initial Startup Package pilot R&D (Ministry of SMEs and Startups)','Named top company, 10th Kibo Venture Camp (KOTEC)'] },
-  { year: '2023', items: ['Began an urban semiconductor pilot line in Yeongdeungpo, Seoul','Established a corporate-affiliated research institute'] },
-  { year: '2024', items: ['Selected as a Deep-Tech Startup, System Semiconductor Division (Ministry of SMEs and Startups)'] },
-  { year: '2025', items: ['SelectUSA 2025 — 2nd place, Open Tech Pitching (National Harbor, MD)','NextCorps Luminate Accelerator, Cohort 8 (Rochester, NY)','PEN CIS US-APAC Venture Summit 2025'] },
-];
+// history: items(영문) 정본을 사용. (index 는 같은 컬렉션의 summaryKo 한글본을 사용)
+const history = (await getCollection('history')).sort((a, b) => a.data.order - b.data.order);
 
 const achievements = ['CES 2024','AWS Startup Growth Program','NANO Korea 2024','HKTDC Hong Kong Electronics Fair','SEDEX (COEX, Seoul)','Electronica 2024 (Munich)','MRS Fall Meeting (Boston)','CES 2025'];
 
@@ -60,10 +57,10 @@ function initials(name){ const p = name.replace('Dr. ','').split(' '); return (p
       </p>
     </div>
     <div class="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-6">
-      {team.map((name) => (
+      {team.map((member) => (
         <div class="v-reveal rounded-xl border border-white/10 bg-white/[0.03] p-5 text-center">
-          <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#1EBBF0]/15 text-sm font-bold text-[#1EBBF0]">{initials(name)}</div>
-          <p class="mt-4 text-sm font-semibold text-white">{name}</p>
+          <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#1EBBF0]/15 text-sm font-bold text-[#1EBBF0]">{initials(member.data.name)}</div>
+          <p class="mt-4 text-sm font-semibold text-white">{member.data.name}</p>
         </div>
       ))}
     </div>
@@ -75,9 +72,9 @@ function initials(name){ const p = name.replace('Dr. ','').split(' '); return (p
       <div class="mt-12 space-y-12">
         {history.map((h) => (
           <div class="v-reveal grid gap-6 md:grid-cols-[120px_1fr]">
-            <div class="text-3xl font-bold text-[#1EBBF0]">{h.year}</div>
+            <div class="text-3xl font-bold text-[#1EBBF0]">{h.data.year}</div>
             <ul class="space-y-3 border-l border-white/10 pl-6">
-              {h.items.map((it) => (
+              {h.data.items.map((it) => (
                 <li class="relative text-base text-white/70">
                   <span class="absolute -left-[1.65rem] top-2 h-2 w-2 rounded-full bg-[#1EBBF0]"></span>
                   {it}
