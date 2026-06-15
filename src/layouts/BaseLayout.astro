@@ -44,15 +44,18 @@ const breadcrumbSchema = (cleanPath !== '/' && crumbLabels[cleanPath]) ? {
 } : null;
 // 내비/햄버거 aria 라벨 (스크린리더용 — locale별)
 const ui = currentLocale === 'ko'
-  ? { mainMenu: '주 메뉴', mobileMenu: '모바일 메뉴', lang: '언어 선택', openMenu: '메뉴 열기', closeMenu: '메뉴 닫기' }
-  : { mainMenu: 'Main menu', mobileMenu: 'Mobile menu', lang: 'Language', openMenu: 'Open menu', closeMenu: 'Close menu' };
+  ? { mainMenu: '주 메뉴', mobileMenu: '모바일 메뉴', lang: '언어 선택', openMenu: '메뉴 열기', closeMenu: '메뉴 닫기',
+      tagline: 'VANA Materials LAB. — 차세대 반도체 박막 소재·공정' }
+  : { mainMenu: 'Main menu', mobileMenu: 'Mobile menu', lang: 'Language', openMenu: 'Open menu', closeMenu: 'Close menu',
+      tagline: 'VANA Materials LAB. — Next-generation semiconductor thin films & processes' };
 const nav = [
-  { href: '/', label: 'Home' },
-  { href: '/about', label: 'About' },
-  { href: '/technology', label: 'Technology' },
-  { href: '/news', label: 'News' },
-  { href: '/contact', label: 'Contact' },
+  { href: '/', label: 'Home', labelKo: '홈' },
+  { href: '/about', label: 'About', labelKo: '회사소개' },
+  { href: '/technology', label: 'Technology', labelKo: '기술' },
+  { href: '/news', label: 'News', labelKo: '뉴스' },
+  { href: '/contact', label: 'Contact', labelKo: '문의' },
 ];
+const navLabel = (item) => currentLocale === 'ko' ? item.labelKo : item.label;
 ---
 <!doctype html>
 <html lang={currentLocale}>
@@ -110,7 +113,7 @@ const nav = [
         <div class="flex items-center gap-5">
           <nav class="hidden items-center gap-5 text-sm text-white/60 md:flex" aria-label={ui.mainMenu}>
             {nav.map((item) => (
-              <a href={localizedHref(item.href)} class="transition hover:text-white">{item.label}</a>
+              <a href={localizedHref(item.href)} class="transition hover:text-white">{navLabel(item)}</a>
             ))}
           </nav>
           <div class="hidden items-center gap-1.5 text-xs font-medium md:flex" aria-label={ui.lang}>
@@ -135,7 +138,7 @@ const nav = [
       </div>
       <nav id="mobile-nav" aria-label={ui.mobileMenu} class="border-t border-white/10 px-6 pb-3 md:hidden">
         {nav.map((item) => (
-          <a href={localizedHref(item.href)} class="block py-3 text-base text-white/70 transition hover:text-white">{item.label}</a>
+          <a href={localizedHref(item.href)} class="block py-3 text-base text-white/70 transition hover:text-white">{navLabel(item)}</a>
         ))}
         <div class="mt-2 flex items-center gap-4 border-t border-white/10 pt-3 text-base" aria-label={ui.lang}>
           <a href={enPath} hreflang="en" class={currentLocale === 'en' ? 'text-[#1EBBF0]' : 'text-white/70 transition hover:text-white'}>EN</a>
@@ -149,10 +152,10 @@ const nav = [
     <footer class="mt-24 border-t border-white/10">
       <div class="mx-auto max-w-6xl px-6 py-12 text-sm text-white/45">
         <p class="font-semibold text-white/70">VANAM INC.</p>
-        <p class="mt-1">VANA Materials LAB. — 차세대 반도체 박막 소재·공정</p>
+        <p class="mt-1">{ui.tagline}</p>
         <p class="mt-1">(07377) 21-1 Dosin-ro 4-gil, Yeongdeungpo-gu, Seoul</p>
         <p class="mt-1">hello@vanam.co.kr · 02-6951-0922</p>
-        <p class="mt-4 text-white/30">© 2026 VANAM INC. All rights reserved.</p>
+        <p class="mt-4 text-white/55">© 2026 VANAM INC. All rights reserved.</p>
       </div>
     </footer>
     <script>

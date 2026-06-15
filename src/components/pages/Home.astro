@@ -50,6 +50,7 @@ const history = (await getCollection('history')).sort((a, b) => a.data.order - b
 
   <section class="v-reveal mx-auto max-w-6xl px-6 py-12">
     <p class="mb-6 font-mono text-xs tracking-[0.16em] text-[#1EBBF0]">02 / CORE TECHNOLOGIES</p>
+    <h2 class="sr-only">{locale === 'ko' ? '핵심 기술' : 'Core technologies'}</h2>
     <div class="grid gap-5 sm:grid-cols-3">
       {pillars.map((p) => (
         <div class="rounded-2xl border border-white/10 bg-white/[0.035] p-6 transition hover:border-[#1EBBF0]/50">
@@ -62,6 +63,7 @@ const history = (await getCollection('history')).sort((a, b) => a.data.order - b
 
   <section class="v-reveal mx-auto max-w-6xl px-6 py-12">
     <p class="mb-5 font-mono text-xs tracking-[0.16em] text-[#1EBBF0]">03 / MATERIALS</p>
+    <h2 class="sr-only">{locale === 'ko' ? '소재' : 'Materials'}</h2>
     <div class="flex flex-wrap gap-2">
       {materials.map((m) => (
         <span class="rounded-md border border-[#1EBBF0]/25 bg-[#1EBBF0]/[0.08] px-3 py-1.5 font-mono text-sm text-[#9BDDF5]">{m}</span>
@@ -71,6 +73,7 @@ const history = (await getCollection('history')).sort((a, b) => a.data.order - b
 
   <section class="v-reveal mx-auto max-w-6xl px-6 py-12">
     <p class="mb-6 font-mono text-xs tracking-[0.16em] text-[#1EBBF0]">04 / HISTORY</p>
+    <h2 class="sr-only">{locale === 'ko' ? '연혁' : 'History'}</h2>
     <div class="divide-y divide-white/10">
       {history.map((h) => (
         <div class="flex gap-5 py-4">

@@ -31,7 +31,7 @@ const faqA = (x) => locale === 'en' ? (x.data.answer_en ?? x.data.answer) : x.da
       data-msg-error={f.msgError}
       data-label-send={f.submit}
       data-label-sending={f.sending}>
-      <!-- 허니팟: 사람에게는 보이지 않음(스팸 차단) -->
+      <!-- Honeypot: hidden from humans (spam trap) -->
       <div class="absolute left-[-9999px]" aria-hidden="true">
         <label>{f.honeypot}
           <input type="text" name="vanam_hp_email" tabindex="-1" autocomplete="off" />
@@ -104,19 +104,19 @@ const faqA = (x) => locale === 'en' ? (x.data.answer_en ?? x.data.answer) : x.da
 </BaseLayout>
 
 <script>
-  // === 폼 전송 엔드포인트 ===
-  // 아래 셋 중 하나로 채우세요. 비워두면 데모 모드로 동작합니다.
-  //  1) Formspree:        "https://formspree.io/f/XXXXXXX"
-  //  2) 서버리스 함수(권장): "/api/contact"  ← 웹훅을 서버측에 숨겨 안전
-  //  3) 기존 PHP 호스트 포워더: "https://vanam.co.kr/contact-forward.php"
-  // ⚠️ Google Chat 웹훅 URL을 이 클라이언트 코드에 직접 넣지 마세요(노출됨).
+  // === Form submission endpoint ===
+  // Set one of the following; leave empty to run in demo mode.
+  //  1) Formspree:            "https://formspree.io/f/XXXXXXX"
+  //  2) Serverless function (recommended): "/api/contact"  (hide the webhook server-side)
+  //  3) Existing PHP forwarder: "https://vanam.co.kr/contact-forward.php"
+  // WARNING: never put a Google Chat webhook URL directly in this client code (it would be exposed).
   const FORM_ENDPOINT = "";
 
   const form = document.getElementById("contact-form");
   const statusEl = document.getElementById("form-status");
   const btn = document.getElementById("submit-btn");
   const label = document.getElementById("submit-label");
-  const M = form ? form.dataset : {};  // locale별 메시지(data-* 속성)
+  const M = form ? form.dataset : {};  // per-locale messages (data-* attributes)
 
   function setStatus(msg, ok) {
     statusEl.textContent = msg;
@@ -126,7 +126,7 @@ const faqA = (x) => locale === 'en' ? (x.data.answer_en ?? x.data.answer) : x.da
   form?.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    // 허니팟이 채워졌으면 봇 → 조용히 성공처럼 처리
+    // Honeypot filled → bot: silently fake success
     if (form.vanam_hp_email && form.vanam_hp_email.value.trim() !== "") {
       setStatus(M.msgHoneypot, true);
       form.reset();
@@ -137,7 +137,7 @@ const faqA = (x) => locale === 'en' ? (x.data.answer_en ?? x.data.answer) : x.da
     delete data.vanam_hp_email;
 
     if (!FORM_ENDPOINT) {
-      console.log("[contact] FORM_ENDPOINT 미설정. 전송 데이터:", data);
+      console.log("[contact] FORM_ENDPOINT not set. Payload:", data);
       setStatus(M.msgDemo, true);
       return;
     }

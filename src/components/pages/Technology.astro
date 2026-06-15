@@ -77,7 +77,7 @@ const catLabel = locale === 'ko'
         <h3 class="text-lg font-bold text-[#1EBBF0]">PVD — Sputter &amp; Evaporator</h3>
         {Object.entries(sputter).map(([group, items]) => (
           <div class="mt-5">
-            <p class="text-xs font-semibold uppercase tracking-wider text-white/40">{catLabel[group]}</p>
+            <p class="text-xs font-semibold uppercase tracking-wider text-white/55">{catLabel[group]}</p>
             <div class="mt-2 flex flex-wrap gap-2">
               {items.map((m) => (<span class="rounded-md border border-white/10 bg-white/[0.04] px-2.5 py-1 text-sm text-white/75">{m}</span>))}
             </div>
@@ -89,13 +89,13 @@ const catLabel = locale === 'ko'
         <h3 class="text-lg font-bold text-[#1EBBF0]">ALD</h3>
         {Object.entries(ald).map(([group, items]) => (
           <div class="mt-5">
-            <p class="text-xs font-semibold uppercase tracking-wider text-white/40">{catLabel[group]}</p>
+            <p class="text-xs font-semibold uppercase tracking-wider text-white/55">{catLabel[group]}</p>
             <div class="mt-2 flex flex-wrap gap-2">
               {items.map((m) => (<span class="rounded-md border border-white/10 bg-white/[0.04] px-2.5 py-1 text-sm text-white/75">{m}</span>))}
             </div>
           </div>
         ))}
-        <p class="mt-6 text-xs text-white/35">{tech.alsoAvailable}</p>
+        <p class="mt-6 text-xs text-white/55">{tech.alsoAvailable}</p>
       </div>
     </div>
   </section>
