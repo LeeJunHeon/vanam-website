@@ -78,7 +78,18 @@ const navLabel = (item) => currentLocale === 'ko' ? item.labelKo : item.label;
         <meta property="og:image" content="https://vanam.co.kr/<이미지>" /> */}
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="preconnect" href="https://cdn.jsdelivr.net" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+    {/* Pretendard: 렌더 블로킹 회피(media=print → onload 시 all로 전환), 폰트는 swap으로 표시.
+        JS 비활성 시 noscript로 동기 로드해 폰트 보장. family·결과는 기존과 동일(static, 'Pretendard'). */}
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css"
+      media="print"
+      onload="this.media='all'"
+    />
+    <noscript>
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+    </noscript>
     <OrganizationSchema />
     <script type="application/ld+json" set:html={JSON.stringify(websiteSchema)} />
     {breadcrumbSchema && <script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />}
@@ -106,7 +117,7 @@ const navLabel = (item) => currentLocale === 'ko' ? item.labelKo : item.label;
       #nav-toggle[aria-expanded="true"] .nav-icon-close { display: block; }
     </style>
   </head>
-  <body class="min-h-screen bg-[#0A0E13] text-white/90 antialiased" style="font-family: Pretendard, system-ui, sans-serif;">
+  <body class="min-h-screen bg-[#0A0E13] text-white/90 antialiased">
     <header class="sticky top-0 z-50 border-b border-white/10 bg-[#0A0E13]/80 backdrop-blur">
       <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <a href={localizedHref('/')} class="text-lg font-bold tracking-wide text-white">VANAM</a>

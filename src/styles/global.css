@@ -1,1 +1,6 @@
 @import "tailwindcss";
+
+/* 본문 폰트 — 기존 BaseLayout body 인라인 style에서 이전 (렌더 결과 동일). */
+body {
+  font-family: Pretendard, system-ui, sans-serif;
+}
