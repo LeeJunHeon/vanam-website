@@ -32,7 +32,7 @@ const catalog = (await getCollection('products'))
       data-total={c.total}
       data-vat={s.vatIncluded}
       data-checkout={c.checkout}
-      data-coming={c.comingSoon}
+      data-checkout-url={`${base}/checkout`}
       data-continue={c.continueShopping}
       data-shop-url={`${base}/shop`}>
       <p class="text-white/50">…</p>
@@ -101,10 +101,11 @@ const catalog = (await getCollection('products'))
         <p class="text-sm text-white/50">${M.total} <span class="ml-1 text-xs text-white/30">(${M.vat})</span></p>
         <p class="text-3xl font-bold text-white">₩${won(total)}</p>
       </div>
-      <div class="mt-8 flex flex-wrap items-center gap-4">
-        <button type="button" disabled
-          class="inline-flex cursor-not-allowed items-center gap-2 rounded-lg bg-[#1EBBF0] px-7 py-3 font-semibold text-[#06222C] opacity-50">${M.checkout}</button>
-        <p class="text-sm text-white/40">${M.coming}</p>
+      <div class="mt-8">
+        <a href="${M.checkoutUrl}"
+          class="inline-flex items-center gap-2 rounded-lg bg-[#1EBBF0] px-7 py-3 font-semibold text-[#06222C] transition hover:brightness-110">${M.checkout}
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
       </div>
       <a href="${M.shopUrl}" class="mt-6 inline-block text-sm text-white/50 transition hover:text-[#1EBBF0]">← ${M.continue}</a>`;
   }
