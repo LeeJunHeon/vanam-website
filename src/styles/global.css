@@ -1,5 +1,34 @@
 @import "tailwindcss";
 
+/* ─────────────────────────────────────────────────────────────
+   브라우저 기본 UI를 다크로 (⚠️ 전역 규칙 — 새 폼도 자동 적용)
+
+   select 드롭다운 · 스크롤바 · 숫자 스피너 · 날짜 선택기 등은
+   페이지 CSS가 아니라 "브라우저가" 그린다. 따라서 배경색만 어둡게
+   칠해도 이 요소들은 흰 바탕으로 뜬다.
+   color-scheme 으로 브라우저에 "이 페이지는 다크"라고 알려줘야 한다.
+
+   과거에 select 드롭다운이 하얗게 뜨는 문제를 폼마다 개별로 고쳤는데,
+   새 폼을 만들 때마다 재발했다. 그래서 전역으로 올린다.
+   ───────────────────────────────────────────────────────────── */
+:root {
+  color-scheme: dark;
+}
+
+/* 일부 브라우저는 select 팝업 색을 위 선언만으로 따르지 않아 명시한다 */
+select {
+  color-scheme: dark;
+}
+option {
+  background-color: #0f141a;
+  color: #ffffff;
+}
+optgroup {
+  background-color: #0f141a;
+  color: #1ebbf0;
+  font-weight: 600;
+}
+
 /* 본문 폰트 — 기존 BaseLayout body 인라인 style에서 이전 (렌더 결과 동일). */
 body {
   font-family: Pretendard, system-ui, sans-serif;

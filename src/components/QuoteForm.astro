@@ -156,13 +156,6 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-[#1EBBF0
   </div>
 </section>
 
-<style is:global>
-  /* 네이티브 select 팝업은 페이지 CSS가 아니라 브라우저가 그리므로 다크로 명시 지정 */
-  #quote-form select { color-scheme: dark; }
-  #quote-form option { background-color: #0F141A; color: #FFFFFF; }
-  #quote-form optgroup { background-color: #0F141A; color: #1EBBF0; font-weight: 600; }
-</style>
-
 <script>
   const form = document.getElementById("quote-form") as HTMLFormElement | null;
   const statusEl = document.getElementById("quote-status")!;
