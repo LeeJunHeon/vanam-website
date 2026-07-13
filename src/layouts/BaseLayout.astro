@@ -65,6 +65,8 @@ const navLabel = (item) => currentLocale === 'ko' ? item.labelKo : item.label;
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonicalURL} />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="alternate" hreflang="en" href={enHref} />
     <link rel="alternate" hreflang="ko" href={koHref} />
     <link rel="alternate" hreflang="x-default" href={enHref} />
@@ -74,9 +76,12 @@ const navLabel = (item) => currentLocale === 'ko' ? item.labelKo : item.label;
     <meta property="og:url" content={canonicalURL} />
     <meta property="og:site_name" content="VanaM" />
     <meta property="og:locale" content={ogLocale} />
-    {/* og:image: 실제 OG/로고 이미지가 준비되면 아래에 추가할 것 —
-        <meta property="og:image" content="https://vanam.co.kr/<이미지>" /> */}
+    <meta property="og:image" content={new URL('/og.png', Astro.site).href} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="VanaM — VANA Materials Lab" />
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content={new URL('/og.png', Astro.site).href} />
     <link rel="preconnect" href="https://cdn.jsdelivr.net" />
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
     {/* Pretendard: 렌더 블로킹 회피(media=print → onload 시 all로 전환), 폰트는 swap으로 표시.
