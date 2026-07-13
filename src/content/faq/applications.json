@@ -1,0 +1,8 @@
+{
+  "order": 4,
+  "published": true,
+  "question": "어떤 분야에 응용되나요?",
+  "answer": "양자컴퓨팅, AI 반도체, 전력반도체, 글래스 기판, 첨단 소재, 화재 감지기, 보호 회로, 뉴로모픽 반도체 등 다양한 신기술 분야에 적용됩니다.",
+  "question_en": "What fields is it applied to?",
+  "answer_en": "Quantum computing, AI semiconductors, power electronics, glass substrates, advanced materials, fire detectors, protection circuits, neuromorphic semiconductors, and more."
+}

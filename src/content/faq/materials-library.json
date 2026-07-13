@@ -1,0 +1,8 @@
+{
+  "order": 2,
+  "published": true,
+  "question": "어떤 소재를 다루나요?",
+  "answer": "산화물(Oxide)·질화물(Nitride)·금속(Metal) 박막을 폭넓게 다룹니다. 산화물 VO₂·HfO₂·IGZO, 질화물 TiN·AlN, 금속 Pt·Ru 등 기존 팹에서 다루기 어려운 소재 라이브러리를 제공합니다.",
+  "question_en": "Which materials do you work with?",
+  "answer_en": "A broad library across oxides, nitrides, and metals — including oxides such as VO₂, HfO₂, IGZO; nitrides such as TiN, AlN; and metals such as Pt, Ru — that are difficult to handle in conventional fabs."
+}

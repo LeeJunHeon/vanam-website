@@ -29,3 +29,6 @@ build-logs/
 
 # jetbrains setting folder
 .idea/
+
+# cloudflare 로컬 개발 캐시
+.wrangler/

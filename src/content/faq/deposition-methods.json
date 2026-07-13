@@ -1,0 +1,8 @@
+{
+  "order": 1,
+  "published": true,
+  "question": "어떤 박막 증착 방식을 제공하나요?",
+  "answer": "PVD(스퍼터·증발기)와 ALD를 중심으로, PLD·MOCVD까지 맞춤형 박막 증착을 제공합니다. 기존 양산 공정에서 구현하기 어려운 특수 박막과 공정 조건을 함께 개발합니다.",
+  "question_en": "What deposition methods do you offer?",
+  "answer_en": "We focus on PVD (sputter, evaporator) and ALD, and also offer PLD and MOCVD — customized thin-film deposition, including special films and process conditions that are hard to achieve in conventional production lines."
+}
