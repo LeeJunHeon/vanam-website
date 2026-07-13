@@ -39,9 +39,16 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return json({ ok: false, error: 'invalid_email' }, 400);
   }
 
-  // 3) 유형별 필수: 견적 → 소재 / 기타 문의 → 문의 내용
+  // 3) 유형별 필수
+  //    견적(스토어 상품에서만 접수) → 상품 + 소재
+  //    기타 문의 → 문의 내용
   const material = str(body.material).slice(0, MAX);
   const message = str(body.message).slice(0, MAX);
+  const product = str(body.product).slice(0, MAX);
+  const productName = str(body.productName).slice(0, MAX) || product;
+  if (type === 'quote' && !product) {
+    return json({ ok: false, error: 'missing_product' }, 400);
+  }
   if (type === 'quote' && !material) {
     return json({ ok: false, error: 'missing_material' }, 400);
   }
@@ -68,6 +75,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const details = str(body.details).slice(0, MAX);
     text = [
       '📩 *새 견적 요청*',
+      `상품: ${productName} (${product})`,
       who,
       `소재: ${material} | 방식: ${method || dash} | 기판: ${substrate || dash}`,
       `두께: ${thickness || dash} | 수량: ${quantity || dash} | 납기: ${deadline || dash}`,
