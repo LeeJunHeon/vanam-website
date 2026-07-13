@@ -108,7 +108,12 @@
       "teamHeading": "Team",
       "historyHeading": "History",
       "globalActivityHeading": "Global Activity",
-      "collaborationHeading": "Collaboration"
+      "collaborationHeading": "Collaboration",
+      "certHeading": "Patents & Certifications",
+      "certSub": "Core IP and certifications underpinning our thin-film technology. Click to view larger.",
+      "certClose": "Close",
+      "certPrev": "Previous",
+      "certNext": "Next"
     },
     "news": {
       "heroTitle": "In the press",
@@ -337,7 +342,12 @@
       "teamHeading": "팀",
       "historyHeading": "연혁",
       "globalActivityHeading": "글로벌 활동",
-      "collaborationHeading": "협력"
+      "collaborationHeading": "협력",
+      "certHeading": "특허 · 인증",
+      "certSub": "반암의 박막 기술을 뒷받침하는 핵심 IP와 인증입니다. 클릭하면 크게 볼 수 있습니다.",
+      "certClose": "닫기",
+      "certPrev": "이전",
+      "certNext": "다음"
     },
     "news": {
       "eyebrow": "뉴스",

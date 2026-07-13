@@ -1,0 +1,143 @@
+---
+// 특허·인증서 갤러리. 썸네일을 누르면 라이트박스(전체화면)로 확대된다.
+// 좌우 화살표 / 키보드(←→, Esc) / 배경 클릭으로 조작.
+import { getCollection } from 'astro:content';
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
+const { heading, subheading, closeLabel, prevLabel, nextLabel } = Astro.props;
+const locale = Astro.currentLocale ?? 'en';
+const isKo = locale === 'ko';
+
+const certImages = import.meta.glob<{ default: ImageMetadata }>(
+  '/src/assets/certificates/*.{png,jpg,jpeg,webp,avif}',
+  { eager: true },
+);
+
+const certs = (await getCollection('certificates'))
+  .filter((c) => c.data.published && certImages[c.data.image])
+  .sort((a, b) => a.data.order - b.data.order);
+
+const label = (c) => (isKo ? c.data.name : (c.data.name_en ?? c.data.name));
+const kindLabel = (k: string) =>
+  isKo ? (k === 'patent' ? '특허' : '인증') : (k === 'patent' ? 'Patent' : 'Certification');
+---
+
+{certs.length > 0 && (
+  <section class="border-t border-white/10">
+    <div class="mx-auto max-w-6xl px-6 py-20">
+      <div class="v-reveal">
+        <h2 class="text-2xl font-bold text-white">{heading}</h2>
+        {subheading && <p class="mt-3 text-base text-white/55">{subheading}</p>}
+      </div>
+
+      <ul class="mt-10 grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-5">
+        {certs.map((c, i) => {
+          const img = certImages[c.data.image].default;
+          return (
+            <li class="v-reveal">
+              <button type="button" class="cert-thumb group block w-full text-left" data-index={i}
+                aria-label={`${label(c)} — ${isKo ? '크게 보기' : 'view larger'}`}>
+                <div class="overflow-hidden rounded-lg border border-white/10 bg-white transition group-hover:border-[#1EBBF0]">
+                  <Image src={img} alt={label(c)} width={420} height={594}
+                    class="h-auto w-full object-contain transition duration-500 group-hover:scale-[1.03]" />
+                </div>
+                <p class="mt-3 text-xs font-medium uppercase tracking-widest text-[#1EBBF0]">{kindLabel(c.data.kind)}</p>
+                <p class="mt-1 line-clamp-2 text-sm leading-snug text-white/70 transition group-hover:text-white">{label(c)}</p>
+                {c.data.number && <p class="mt-1 text-xs text-white/35">{c.data.number}</p>}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+
+    <!-- 라이트박스 -->
+    <div id="cert-lightbox" hidden
+      class="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm"
+      role="dialog" aria-modal="true" aria-label={heading}>
+      <button type="button" id="cert-close" aria-label={closeLabel}
+        class="absolute right-4 top-4 z-10 rounded-lg border border-white/20 px-3 py-1.5 text-sm text-white/70 transition hover:border-white/50 hover:text-white">✕</button>
+
+      <button type="button" id="cert-prev" aria-label={prevLabel}
+        class="absolute left-2 z-10 rounded-full border border-white/20 bg-black/40 p-3 text-white/70 transition hover:border-white/50 hover:text-white md:left-6">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <button type="button" id="cert-next" aria-label={nextLabel}
+        class="absolute right-2 z-10 rounded-full border border-white/20 bg-black/40 p-3 text-white/70 transition hover:border-white/50 hover:text-white md:right-6">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+
+      <figure class="flex max-h-full max-w-4xl flex-col items-center">
+        <img id="cert-img" src="" alt="" class="max-h-[78vh] w-auto rounded-lg bg-white object-contain shadow-2xl" />
+        <figcaption class="mt-4 text-center">
+          <p id="cert-caption" class="text-base font-medium text-white"></p>
+          <p id="cert-meta" class="mt-1 text-sm text-white/50"></p>
+        </figcaption>
+      </figure>
+    </div>
+
+    <!-- 라이트박스용 원본 이미지 목록 -->
+    <script type="application/json" id="cert-data" is:inline set:html={JSON.stringify(
+      certs.map((c) => ({
+        src: certImages[c.data.image].default.src,
+        name: label(c),
+        meta: [kindLabel(c.data.kind), c.data.number, c.data.date].filter(Boolean).join(' · '),
+      }))
+    )}></script>
+  </section>
+)}
+
+<script>
+  type Cert = { src: string; name: string; meta: string };
+
+  const box = document.getElementById('cert-lightbox');
+  const dataEl = document.getElementById('cert-data');
+  if (box && dataEl) {
+    const certs: Cert[] = JSON.parse(dataEl.textContent ?? '[]');
+    const imgEl = document.getElementById('cert-img') as HTMLImageElement;
+    const capEl = document.getElementById('cert-caption')!;
+    const metaEl = document.getElementById('cert-meta')!;
+    let i = 0;
+
+    function show(n: number) {
+      i = (n + certs.length) % certs.length;
+      const c = certs[i];
+      imgEl.src = c.src;
+      imgEl.alt = c.name;
+      capEl.textContent = c.name;
+      metaEl.textContent = c.meta;
+    }
+
+    function open(n: number) {
+      show(n);
+      box!.hidden = false;
+      document.body.style.overflow = 'hidden';
+      (document.getElementById('cert-close') as HTMLButtonElement)?.focus();
+    }
+    function close() {
+      box!.hidden = true;
+      document.body.style.overflow = '';
+    }
+
+    document.querySelectorAll<HTMLButtonElement>('.cert-thumb').forEach((b) =>
+      b.addEventListener('click', () => open(Number(b.dataset.index))),
+    );
+    document.getElementById('cert-close')?.addEventListener('click', close);
+    document.getElementById('cert-prev')?.addEventListener('click', () => show(i - 1));
+    document.getElementById('cert-next')?.addEventListener('click', () => show(i + 1));
+
+    // 배경(이미지 바깥) 클릭 시 닫기
+    box.addEventListener('click', (e) => {
+      if (e.target === box) close();
+    });
+
+    // 키보드: Esc 닫기 / ← → 이동
+    document.addEventListener('keydown', (e) => {
+      if (box!.hidden) return;
+      if (e.key === 'Escape') close();
+      else if (e.key === 'ArrowLeft') show(i - 1);
+      else if (e.key === 'ArrowRight') show(i + 1);
+    });
+  }
+</script>

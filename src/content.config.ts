@@ -144,4 +144,20 @@ const products = defineCollection({
   }),
 });
 
-export const collections = { team, news, history, materials, partners, achievements, services, faq, products };
+// 10. CERTIFICATES ────────────────────
+// 특허증·인증서. 이미지를 클릭하면 확대(라이트박스)로 볼 수 있다.
+const certificates = defineCollection({
+  loader: glob({ pattern: '*.json', base: './src/content/certificates' }),
+  schema: z.object({
+    name: z.string(),                    // KO 명칭
+    name_en: opt(z.string()),
+    kind: z.enum(['patent', 'certification']).default('patent'),
+    number: opt(z.string()),             // 등록/확인 번호
+    date: opt(z.string()),               // 등록일
+    image: z.string(),                   // 증서 이미지 (Keystatic 업로드)
+    published: z.boolean().default(true),
+    order: z.number().default(0),
+  }),
+});
+
+export const collections = { team, news, history, materials, partners, achievements, services, faq, products, certificates };

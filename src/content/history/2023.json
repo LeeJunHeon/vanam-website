@@ -2,13 +2,15 @@
   "year": "2023",
   "order": 2,
   "items": [
-    "Began an urban semiconductor pilot line in Yeongdeungpo, Seoul",
-    "Established a corporate-affiliated research institute"
+    "Commenced the construction of a pilot line for an urban semiconductor plant in Yeongdeungpo, Seoul",
+    "Established a corporate-affiliated research institute and appointed a specialized general manager",
+    "Selected as a Deep-Tech Startup (System Semiconductor Division) by the Ministry of SMEs and Startups"
   ],
-  "summaryKo": "영등포 파일럿 라인 착공 · 부설연구소 설립 · 딥테크 선정",
   "items_ko": [
-    "서울 영등포 도심형 반도체 파일럿 라인 착공",
-    "기업부설연구소 설립"
+    "서울 영등포 도심형 반도체 공장 파일럿 라인 착공",
+    "기업부설연구소 설립 및 전문 연구소장 선임",
+    "중소벤처기업부 딥테크 스타트업(시스템반도체 분야) 선정"
   ],
-  "summary_en": "Yeongdeungpo pilot line · Corporate R&D institute · Deep-Tech selection"
+  "summary_en": "Yeongdeungpo pilot line · Corporate R&D institute · Deep-Tech selection",
+  "summaryKo": "영등포 파일럿 라인 착공 · 기업부설연구소 설립 · 딥테크 스타트업 선정"
 }

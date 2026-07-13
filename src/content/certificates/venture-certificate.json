@@ -1,0 +1,10 @@
+{
+  "name": "벤처기업 확인서",
+  "name_en": "Venture Business Certificate",
+  "kind": "certification",
+  "number": "",
+  "date": "",
+  "image": "/src/assets/certificates/venture-certificate.jpg",
+  "published": true,
+  "order": 1
+}

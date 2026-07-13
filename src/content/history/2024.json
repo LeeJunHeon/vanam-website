@@ -2,11 +2,23 @@
   "year": "2024",
   "order": 3,
   "items": [
-    "Selected as a Deep-Tech Startup, System Semiconductor Division (Ministry of SMEs and Startups)"
+    "CES 2024 Exhibition, AWS Startup Growth Program",
+    "Summer Conference of the Korean Institute of Electrical and Electronic Material Engineers",
+    "NANO Korea 2024",
+    "HKTDC Hong Kong Electronics Fair (Autumn Edition)",
+    "SEDEX (Semiconductor Exhibition) in Coex, Seoul",
+    "Electronica 2024 in Munich, Germany",
+    "MRS Fall Meeting & Exhibit in Boston, Massachusetts"
   ],
-  "summaryKo": "CES 2024 · NANO Korea · Electronica Munich · MRS Boston",
   "items_ko": [
-    "중소벤처기업부 딥테크 스타트업(시스템반도체 분야) 선정"
+    "CES 2024 전시, AWS 스타트업 그로스 프로그램 참여",
+    "한국전기전자재료학회 하계학술대회 참가",
+    "NANO Korea 2024 참가",
+    "HKTDC 홍콩 추계 전자전 참가",
+    "SEDEX 반도체대전 (서울 코엑스) 참가",
+    "Electronica 2024 (독일 뮌헨) 참가",
+    "MRS 추계학술대회 및 전시 (미국 보스턴) 참가"
   ],
-  "summary_en": "CES 2024 · NANO Korea · Electronica Munich · MRS Boston"
+  "summary_en": "CES 2024 · NANO Korea · Electronica Munich · MRS Boston",
+  "summaryKo": "CES 2024 · NANO Korea · Electronica 뮌헨 · MRS 보스턴"
 }

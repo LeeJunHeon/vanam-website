@@ -12,13 +12,47 @@ export default config({
     brand: { name: 'VANAM 콘텐츠 관리' },
     navigation: {
       '콘텐츠': ['news', 'team', 'faq'],
-      '회사 정보': ['history', 'achievements', 'partners'],
+      '회사 정보': ['history', 'achievements', 'partners', 'certificates'],
       '기술 데이터': ['services', 'materials'],
       '스토어': ['products'],
     },
   },
 
   collections: {
+    // ── 특허·인증서 ────────────────────────────────────
+    certificates: collection({
+      label: '특허·인증서',
+      path: 'src/content/certificates/*',
+      format: { data: 'json' },
+      slugField: 'name',
+      columns: ['kind', 'number', 'order'],
+      schema: {
+        name: fields.slug({
+          name: { label: '명칭 (한글)', validation: { isRequired: true } },
+          slug: { label: '파일 ID (영문/숫자)', description: '예: patent-10-1234567' },
+        }),
+        name_en: fields.text({ label: '명칭 (영문)' }),
+        kind: fields.select({
+          label: '종류',
+          options: [
+            { label: '특허', value: 'patent' },
+            { label: '인증서', value: 'certification' },
+          ],
+          defaultValue: 'patent',
+        }),
+        number: fields.text({ label: '등록·확인 번호', description: '예: 10-2663966' }),
+        date: fields.text({ label: '등록일', description: '예: 2024-05-02' }),
+        image: fields.image({
+          label: '증서 이미지',
+          directory: 'src/assets/certificates',
+          publicPath: '/src/assets/certificates/',
+          validation: { isRequired: true },
+        }),
+        published: fields.checkbox({ label: '사이트에 공개', defaultValue: true }),
+        order: fields.integer({ label: '표시 순서', defaultValue: 99, validation: { isRequired: true } }),
+      },
+    }),
+
     // ── 스토어 상품 ────────────────────────────────────
     products: collection({
       label: '스토어 상품',

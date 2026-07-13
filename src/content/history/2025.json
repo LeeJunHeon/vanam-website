@@ -2,15 +2,17 @@
   "year": "2025",
   "order": 4,
   "items": [
-    "SelectUSA 2025 — 2nd place, Open Tech Pitching (National Harbor, MD)",
-    "NextCorps Luminate Accelerator, Cohort 8 (Rochester, NY)",
-    "PEN CIS US-APAC Venture Summit 2025"
+    "CES 2025 Exhibition",
+    "PEN CIS US-APAC Venture Summit 2025",
+    "NextCorps Luminate Accelerator Cohort 8, Rochester, NY, USA",
+    "SelectUSA 2025, National Harbor, MD, USA (2nd place in Open Tech Pitching Session 1)"
   ],
-  "summaryKo": "CES 2025 · SelectUSA 2025 피칭 2위 · Luminate Cohort 8",
   "items_ko": [
-    "SelectUSA 2025 오픈테크 피칭 2위 (미국 내셔널하버, MD)",
-    "NextCorps Luminate 액셀러레이터 8기 (미국 로체스터, NY)",
-    "PEN CIS US-APAC 벤처 서밋 2025"
+    "CES 2025 전시 참가",
+    "PEN CIS US-APAC 벤처 서밋 2025 참가",
+    "NextCorps Luminate 액셀러레이터 8기 선정 (미국 로체스터, NY)",
+    "SelectUSA 2025 (미국 내셔널하버, MD) — 오픈테크 피칭 세션 1 2위"
   ],
-  "summary_en": "CES 2025 · SelectUSA 2025 2nd place · Luminate Cohort 8"
+  "summary_en": "CES 2025 · SelectUSA 2025 2nd place · Luminate Cohort 8",
+  "summaryKo": "CES 2025 · SelectUSA 2025 피칭 2위 · Luminate 8기 선정"
 }

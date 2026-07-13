@@ -3,14 +3,14 @@
   "order": 1,
   "items": [
     "Established VanaM Inc.",
-    "Selected for the Initial Startup Package pilot R&D (Ministry of SMEs and Startups)",
-    "Named top company, 10th Kibo Venture Camp (KOTEC)"
+    "Selected for the initial startup package pilot R&D project by the Ministry of SMEs and Startups",
+    "Named the top company in the 10th Kibo Venture Camp by Korea Technology Finance Corporation"
   ],
-  "summaryKo": "VanaM 설립 · 초기창업패키지 선정 · 키보벤처캠프 최우수",
   "items_ko": [
-    "반암(VanaM) 설립",
-    "중소벤처기업부 초기창업패키지 시범 R&D 선정",
+    "반암(VanaM) 주식회사 설립",
+    "중소벤처기업부 초기창업패키지 시범 R&D 사업 선정",
     "기술보증기금 제10회 키보벤처캠프 최우수 기업 선정"
   ],
-  "summary_en": "Founded VanaM · Initial Startup Package · Top at Kibo Venture Camp"
+  "summary_en": "Founded VanaM · Initial Startup Package · Top at Kibo Venture Camp",
+  "summaryKo": "반암 설립 · 초기창업패키지 선정 · 키보벤처캠프 최우수"
 }

@@ -2,6 +2,8 @@
 import '../styles/global.css';
 import OrganizationSchema from '../components/OrganizationSchema.astro';
 import { getRelativeLocaleUrl, getAbsoluteLocaleUrl } from 'astro:i18n';
+import { Image } from 'astro:assets';
+import logo from '../assets/brand/logo.png';
 const { title = 'VANAM — 차세대 반도체 박막 소재', description = 'VANA Materials LAB. 친환경 진공 증착 기반 차세대 반도체 박막 소재·공정 기술 기업.' } = Astro.props;
 // 각 페이지의 실제 경로를 절대 URL로 (canonical / og:url)
 const canonicalURL = new URL(Astro.url.pathname, Astro.site).href;
@@ -126,7 +128,9 @@ const navLabel = (item) => currentLocale === 'ko' ? item.labelKo : item.label;
   <body class="min-h-screen bg-[#0A0E13] text-white/90 antialiased">
     <header class="sticky top-0 z-50 border-b border-white/10 bg-[#0A0E13]/80 backdrop-blur">
       <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        <a href={localizedHref('/')} class="text-lg font-bold tracking-wide text-white">VANAM</a>
+        <a href={localizedHref('/')} class="shrink-0" aria-label="VANAM">
+          <Image src={logo} alt="VANAM — VANA Materials LAB." width={200} height={50} class="h-9 w-auto md:h-10" loading="eager" />
+        </a>
         <div class="flex items-center gap-5">
           <nav class="hidden items-center gap-5 text-sm text-white/60 md:flex" aria-label={ui.mainMenu}>
             {nav.map((item) => (
