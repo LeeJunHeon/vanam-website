@@ -7,7 +7,14 @@ const site = siteData[locale] ?? siteData.en;
 const copy = site.news;
 const title = copy.metaTitle;
 const description = copy.metaDescription;
-const news = (await getCollection('news')).sort((a, b) => a.data.order - b.data.order);
+const news = (await getCollection('news')).sort((a, b) => {
+  // 게재일(date) 최신순 정렬, 날짜가 같거나 없으면 order(작을수록 위)로 보조 정렬
+  const da = a.data.date?.valueOf() ?? 0;
+  const db = b.data.date?.valueOf() ?? 0;
+  return db - da || a.data.order - b.data.order;
+});
+const fmtDate = (d) =>
+  d.toLocaleDateString(locale === 'ko' ? 'ko-KR' : 'en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' });
 ---
 <BaseLayout title={title} description={description}>
 
@@ -25,7 +32,14 @@ const news = (await getCollection('news')).sort((a, b) => a.data.order - b.data.
         <a href={n.data.url} target="_blank" rel="noopener noreferrer"
            class="v-reveal group flex items-start gap-5 rounded-2xl border border-white/10 bg-white/[0.03] p-6 transition hover:border-[#1EBBF0]/40 hover:bg-white/[0.05]">
           <span class="mt-1 shrink-0 rounded-full border border-[#1EBBF0]/30 bg-[#1EBBF0]/10 px-3 py-1 text-xs font-semibold text-[#1EBBF0]">{n.data.tag}</span>
-          <span class="flex-1 text-base font-medium leading-relaxed text-white/85 group-hover:text-white">{n.data.title}</span>
+          <span class="flex-1">
+            <span class="block text-base font-medium leading-relaxed text-white/85 group-hover:text-white">{n.data.title}</span>
+            {(n.data.outlet || n.data.date) && (
+              <span class="mt-1.5 block text-xs text-white/45">
+                {n.data.outlet}{n.data.outlet && n.data.date && ' · '}{n.data.date && fmtDate(n.data.date)}
+              </span>
+            )}
+          </span>
           <svg class="mt-1 h-5 w-5 shrink-0 text-white/30 transition group-hover:text-[#1EBBF0]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg>
           <span class="sr-only">(새 창에서 열림)</span>
         </a>
