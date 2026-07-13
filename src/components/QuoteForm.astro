@@ -1,6 +1,7 @@
 ---
-// 견적가 상품 전용 견적 요청 모달.
-// 상품 상세 페이지에서만 렌더되며, 네이티브 <dialog>로 열린다(Esc·포커스 트랩 기본 제공).
+// 견적가 상품 전용 견적 요청 폼.
+// 상품 상세 페이지의 한 섹션으로 들어간다(모달 아님). 위쪽 "견적 요청" 버튼이 여기로 스크롤한다.
+// #quote 앵커가 있으므로 메일·광고에서 폼으로 바로 링크할 수 있다.
 import { getCollection } from 'astro:content';
 import siteData from '../data/site.json';
 
@@ -27,23 +28,13 @@ const labelClass = 'block text-sm font-medium text-white/80';
 const legendClass = 'text-sm font-medium uppercase tracking-widest text-[#1EBBF0]';
 ---
 
-<dialog id="quote-modal" aria-labelledby="quote-modal-title"
-  class="w-[min(46rem,calc(100vw-2rem))] rounded-2xl border border-white/10 bg-[#0F141A] p-0 text-white backdrop:bg-black/70 backdrop:backdrop-blur-sm">
-  <div class="flex items-start justify-between gap-6 border-b border-white/10 px-6 py-5 md:px-8">
-    <div class="min-w-0">
-      <h2 id="quote-modal-title" class="text-xl font-bold text-white">{q.title}</h2>
-      <p class="mt-1 truncate text-sm text-white/50">
-        <span class="text-white/30">{q.productLabel}</span> · {productName}
-      </p>
-    </div>
-    <button type="button" id="quote-close" aria-label={q.close}
-      class="shrink-0 rounded-lg border border-white/10 px-3 py-1.5 text-sm text-white/60 transition hover:border-white/30 hover:text-white">✕</button>
-  </div>
+<section id="quote" class="mt-20 scroll-mt-24 border-t border-white/10 pt-16">
+  <div class="max-w-3xl">
+    <p class="text-sm font-medium uppercase tracking-widest text-[#1EBBF0]">{q.title}</p>
+    <h2 class="mt-4 text-3xl font-bold leading-tight text-white">{productName}</h2>
+    <p class="mt-4 text-base leading-relaxed text-white/60">{q.intro}</p>
 
-  <div class="max-h-[70vh] overflow-y-auto px-6 py-6 md:px-8">
-    <p class="text-sm leading-relaxed text-white/60">{q.intro}</p>
-
-    <form id="quote-form" class="mt-8 space-y-10"
+    <form id="quote-form" class="mt-12 space-y-12"
       data-product={product.id}
       data-product-name={productName}
       data-msg-honeypot={c.msgHoneypot}
@@ -52,6 +43,7 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-[#1EBBF0
       data-msg-required={c.msgRequired}
       data-label-send={q.submit}
       data-label-sending={c.sending}>
+      <!-- Honeypot: hidden from humans (spam trap) -->
       <div class="absolute left-[-9999px]" aria-hidden="true">
         <label>{c.honeypot}
           <input type="text" name="vanam_hp_email" tabindex="-1" autocomplete="off" />
@@ -60,7 +52,7 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-[#1EBBF0
 
       <fieldset>
         <legend class={legendClass}>{c.sectionContact}</legend>
-        <div class="mt-5 grid gap-5 md:grid-cols-2">
+        <div class="mt-6 grid gap-6 md:grid-cols-2">
           <div>
             <label for="q-name" class={labelClass}>{c.name}</label>
             <input id="q-name" name="name" type="text" required class={inputClass} placeholder={c.namePlaceholder} />
@@ -82,8 +74,8 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-[#1EBBF0
 
       <fieldset>
         <legend class={legendClass}>{q.sectionSpec}</legend>
-        <div class="mt-5 space-y-5">
-          <div class="grid gap-5 md:grid-cols-2">
+        <div class="mt-6 space-y-6">
+          <div class="grid gap-6 md:grid-cols-2">
             <div>
               <label for="q-material" class={labelClass}>{q.material}</label>
               <select id="q-material" name="material" required class={inputClass}>
@@ -105,12 +97,13 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-[#1EBBF0
             </div>
           </div>
 
+          <!-- 소재에서 "기타"를 고를 때만 노출 -->
           <div id="q-other-wrap" hidden>
             <label for="q-material-other" class={labelClass}>{q.materialOtherLabel}</label>
             <input id="q-material-other" name="materialOther" type="text" class={inputClass} placeholder={q.materialOtherPlaceholder} />
           </div>
 
-          <div class="grid gap-5 md:grid-cols-2">
+          <div class="grid gap-6 md:grid-cols-2">
             <div>
               <label for="q-substrate" class={labelClass}>{q.substrate}</label>
               <input id="q-substrate" name="substrate" type="text" class={inputClass} placeholder={q.substratePlaceholder} />
@@ -125,8 +118,8 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-[#1EBBF0
 
       <fieldset>
         <legend class={legendClass}>{q.sectionSchedule}</legend>
-        <div class="mt-5 space-y-5">
-          <div class="grid gap-5 md:grid-cols-2">
+        <div class="mt-6 space-y-6">
+          <div class="grid gap-6 md:grid-cols-2">
             <div>
               <label for="q-quantity" class={labelClass}>{q.quantity}</label>
               <input id="q-quantity" name="quantity" type="text" class={inputClass} placeholder={q.quantityPlaceholder} />
@@ -138,13 +131,13 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-[#1EBBF0
           </div>
           <div>
             <label for="q-details" class={labelClass}>{q.details}</label>
-            <textarea id="q-details" name="details" rows="4" class={`${inputClass} resize-y`} placeholder={q.detailsPlaceholder}></textarea>
+            <textarea id="q-details" name="details" rows="5" class={`${inputClass} resize-y`} placeholder={q.detailsPlaceholder}></textarea>
             <p class="mt-2 text-xs leading-relaxed text-white/40">{q.attachmentNote}</p>
           </div>
         </div>
       </fieldset>
 
-      <div class="space-y-5 border-t border-white/10 pt-6">
+      <div class="space-y-6 border-t border-white/10 pt-8">
         <label class="flex cursor-pointer items-start gap-3 text-sm text-white/70">
           <input type="checkbox" name="privacy" required value="agreed"
             class="mt-0.5 size-4 shrink-0 rounded border-white/20 bg-white/[0.03] accent-[#1EBBF0]" />
@@ -161,22 +154,16 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-[#1EBBF0
       </div>
     </form>
   </div>
-</dialog>
+</section>
 
 <style is:global>
-  /* 네이티브 select 팝업은 브라우저가 그리므로 다크로 명시 지정 */
+  /* 네이티브 select 팝업은 페이지 CSS가 아니라 브라우저가 그리므로 다크로 명시 지정 */
   #quote-form select { color-scheme: dark; }
   #quote-form option { background-color: #0F141A; color: #FFFFFF; }
   #quote-form optgroup { background-color: #0F141A; color: #1EBBF0; font-weight: 600; }
-  #quote-modal[open] { animation: quote-in 0.18s ease-out; }
-  @keyframes quote-in {
-    from { opacity: 0; transform: translateY(8px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
 </style>
 
 <script>
-  const modal = document.getElementById("quote-modal") as HTMLDialogElement | null;
   const form = document.getElementById("quote-form") as HTMLFormElement | null;
   const statusEl = document.getElementById("quote-status")!;
   const btn = document.getElementById("quote-submit") as HTMLButtonElement;
@@ -191,21 +178,17 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-[#1EBBF0
     statusEl.style.color = ok ? "#1EBBF0" : "#FF6B6B";
   }
 
-  // 열기: 상품 상세의 "견적 요청" 버튼 (data-open-quote)
+  // 상단 "견적 요청" 버튼 → 폼으로 부드럽게 스크롤 + 첫 칸에 포커스
   document.querySelectorAll("[data-open-quote]").forEach((el) =>
-    el.addEventListener("click", () => {
-      setStatus("", true);
-      modal?.showModal();
+    el.addEventListener("click", (e) => {
+      e.preventDefault();
+      const target = document.getElementById("quote");
+      target?.scrollIntoView({ behavior: "smooth", block: "start" });
+      setTimeout(() => (document.getElementById("q-name") as HTMLInputElement | null)?.focus({ preventScroll: true }), 500);
     }),
   );
 
-  // 닫기: X 버튼 · 배경 클릭 (Esc는 <dialog> 기본 동작)
-  document.getElementById("quote-close")?.addEventListener("click", () => modal?.close());
-  modal?.addEventListener("click", (e) => {
-    if (e.target === modal) modal.close();   // 바깥(백드롭) 클릭
-  });
-
-  // 소재 "기타" 선택 시 직접 입력 칸
+  // 소재 "기타" 선택 시 직접 입력 칸을 연다
   materialSel?.addEventListener("change", () => {
     const isOther = materialSel.value === "__other__";
     if (otherWrap) otherWrap.hidden = !isOther;
@@ -218,6 +201,7 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-[#1EBBF0
   form?.addEventListener("submit", async (e) => {
     e.preventDefault();
 
+    // 허니팟이 채워졌으면 봇 → 조용히 성공한 척
     const hp = form.elements.namedItem("vanam_hp_email") as HTMLInputElement | null;
     if (hp && hp.value.trim() !== "") {
       setStatus(M.msgHoneypot!, true);

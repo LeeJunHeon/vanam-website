@@ -3,7 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import { Image } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
 import siteData from '../../data/site.json';
-import QuoteModal from '../QuoteModal.astro';
+import QuoteForm from '../QuoteForm.astro';
 
 const { product } = Astro.props;
 const locale = Astro.currentLocale ?? 'en';
@@ -80,10 +80,10 @@ const won = (n: number) => new Intl.NumberFormat('ko-KR').format(n);
           </div>
         ) : (
           <div class="mt-8">
-            <button type="button" data-open-quote
+            <a href="#quote" data-open-quote
               class="inline-flex items-center gap-2 rounded-lg bg-[#1EBBF0] px-7 py-3 font-semibold text-[#06222C] transition hover:brightness-110">
-              {s.requestQuote} →
-            </button>
+              {s.requestQuote} ↓
+            </a>
           </div>
         )}
 
@@ -125,9 +125,9 @@ const won = (n: number) => new Intl.NumberFormat('ko-KR').format(n);
     {description && (
       <div class="mt-16 max-w-3xl whitespace-pre-line text-base leading-relaxed text-white/70">{description}</div>
     )}
-  </section>
 
-  {!isFixed && <QuoteModal product={product} productName={name} />}
+    {!isFixed && <QuoteForm product={product} productName={name} />}
+  </section>
 </BaseLayout>
 
 <script>
