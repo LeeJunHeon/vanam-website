@@ -145,14 +145,15 @@
         "msgSuccess": "Your inquiry was sent successfully. Thank you!",
         "msgError": "Sending failed. Please try again in a moment.",
         "sectionContact": "Contact",
-        "privacy": "I agree to the collection and use of my personal data for the purpose of handling this quote request. *",
+        "privacy": "I agree to the collection and use of my personal data for the purpose of handling this inquiry. *",
         "msgRequired": "Please fill in all required fields.",
         "submitQuote": "Request a quote",
         "msgSuccessQuote": "Your quote request was sent. We'll get back to you within 1–2 business days.",
         "type": "What can we help you with? *",
         "typeQuote": "Request a quote",
         "typeGeneral": "General inquiry",
-        "sectionMessage": "Your inquiry"
+        "sectionMessage": "Your inquiry",
+        "privacyQuote": "I agree to the collection and use of my personal data for the purpose of handling this quote request. *"
       },
       "faqEyebrow": "FAQ",
       "faqHeading": "Frequently asked questions"
@@ -331,14 +332,15 @@
         "msgSuccess": "문의가 정상적으로 접수되었습니다. 감사합니다!",
         "msgError": "전송에 실패했습니다. 잠시 후 다시 시도해주세요.",
         "sectionContact": "연락처",
-        "privacy": "견적 요청 처리를 위한 개인정보 수집·이용에 동의합니다. *",
+        "privacy": "문의 처리를 위한 개인정보 수집·이용에 동의합니다. *",
         "msgRequired": "필수 항목을 모두 입력해 주세요.",
         "submitQuote": "견적 요청하기",
         "msgSuccessQuote": "견적 요청이 전송되었습니다. 1~2 영업일 내에 회신드리겠습니다.",
         "type": "무엇을 도와드릴까요? *",
         "typeQuote": "견적 요청",
         "typeGeneral": "기타 문의",
-        "sectionMessage": "문의 내용"
+        "sectionMessage": "문의 내용",
+        "privacyQuote": "견적 요청 처리를 위한 개인정보 수집·이용에 동의합니다. *"
       },
       "faqEyebrow": "FAQ",
       "faqHeading": "자주 묻는 질문"

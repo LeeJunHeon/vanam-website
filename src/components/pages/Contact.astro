@@ -49,6 +49,8 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-[#1EBBF0
       data-msg-success-quote={f.msgSuccessQuote}
       data-msg-error={f.msgError}
       data-msg-required={f.msgRequired}
+      data-privacy={f.privacy}
+      data-privacy-quote={f.privacyQuote}
       data-label-send={f.submit}
       data-label-send-quote={f.submitQuote}
       data-label-sending={f.sending}>
@@ -172,7 +174,7 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-[#1EBBF0
         <label class="flex cursor-pointer items-start gap-3 text-sm text-white/70">
           <input type="checkbox" name="privacy" required value="agreed"
             class="mt-0.5 size-4 shrink-0 rounded border-white/20 bg-white/[0.03] accent-[#1EBBF0]" />
-          <span>{f.privacy}</span>
+          <span id="privacy-text">{f.privacyQuote}</span>
         </label>
 
         <div class="flex flex-wrap items-center gap-4">
@@ -238,6 +240,7 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-[#1EBBF0
   const otherWrap = document.getElementById("material-other-wrap") as HTMLElement | null;
   const otherInput = document.getElementById("materialOther") as HTMLInputElement | null;
   const messageEl = document.getElementById("message") as HTMLTextAreaElement | null;
+  const privacyText = document.getElementById("privacy-text");
   const M = form ? form.dataset : ({} as DOMStringMap);
 
   // 유형 전환: 해당 섹션만 노출하고, 숨은 필드의 required는 반드시 해제한다.
@@ -257,6 +260,8 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-[#1EBBF0
       if (otherInput) otherInput.required = false;
     }
     label.textContent = sendLabel();   // 견적 요청하기 / 문의 보내기
+    // 개인정보 동의 문구도 유형에 맞게 (견적 요청 처리 / 문의 처리)
+    if (privacyText) privacyText.textContent = isQuote() ? M.privacyQuote! : M.privacy!;
     setStatus("", true);
   }
   typeSel?.addEventListener("change", applyType);
