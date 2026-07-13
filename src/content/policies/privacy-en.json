@@ -1,0 +1,54 @@
+{
+  "kind": "privacy",
+  "lang": "en",
+  "order": 1,
+  "title": "Privacy Policy",
+  "updated": "2026-07-13",
+  "intro": "VANAM INC. (the \"Company\") complies with the Personal Information Protection Act of the Republic of Korea and establishes this Privacy Policy to protect users' personal information.",
+  "sections": [
+    {
+      "heading": "1. Purpose of Processing",
+      "body": "The Company processes personal information solely for the following purposes.\n\n· Receiving and responding to inquiries and quote requests\n· Order processing, payment, delivery and settlement\n· Issuing tax invoices and other transaction records\n· Customer support and dispute resolution"
+    },
+    {
+      "heading": "2. Personal Information Collected",
+      "body": "· Inquiries and quotes: name, email, phone, company, message\n· Orders and payment: purchaser and recipient name, phone, shipping address, email, payment details (method, approval number)\n· For tax invoices: business registration number, company name, representative name, contact email\n· Automatically collected: IP address, cookies, access time, usage records\n\nThe Company does not directly collect or store card numbers or account passwords. Such data is handled by the payment gateway."
+    },
+    {
+      "heading": "3. Retention Period",
+      "body": "Personal information is destroyed without delay once the purpose of processing is achieved, except where retention is required by law.\n\n· Records of contracts and withdrawal of subscription: 5 years\n· Records of payment and supply of goods: 5 years\n· Records of consumer complaints or disputes: 3 years\n· Records of electronic financial transactions: 5 years\n· Access logs: 3 months\n· Inquiry and quote records: 3 years after the purpose is achieved"
+    },
+    {
+      "heading": "4. Provision to Third Parties",
+      "body": "The Company does not provide personal information to third parties, except:\n\n· With the user's prior consent\n· When required by law through lawful procedures\n· When providing recipient details (name, phone, address) to the delivery carrier"
+    },
+    {
+      "heading": "5. Outsourcing of Processing",
+      "body": "The Company outsources the following processing tasks.\n\n· Payment processing: Toss Payments Co., Ltd.\n· Website hosting and infrastructure: Cloudflare, Inc.\n· Delivery: contracted courier\n\nData protection obligations are specified in each contract and compliance is supervised."
+    },
+    {
+      "heading": "6. Rights of Data Subjects",
+      "body": "Users may exercise the following rights at any time.\n\n· Request access to personal information\n· Request correction of errors\n· Request deletion\n· Request suspension of processing\n\nRequests may be made in writing or by email to the officer below, and the Company will act without delay."
+    },
+    {
+      "heading": "7. Destruction of Personal Information",
+      "body": "Personal information is destroyed without delay once the retention period expires or the purpose is achieved.\n\n· Electronic files: permanently deleted by irrecoverable means\n· Paper documents: shredded or incinerated"
+    },
+    {
+      "heading": "8. Security Measures",
+      "body": "· Minimising and training staff who handle personal information\n· Managing access rights to personal information\n· Encryption in transit (HTTPS)\n· Retention of access logs and prevention of tampering\n· Payment data is handled by the payment gateway and is not stored by the Company"
+    },
+    {
+      "heading": "9. Data Protection Officer",
+      "body": "· Name: {officerName}\n· Title: {officerTitle}\n· Email: {officerEmail}\n· Phone: {tel}"
+    },
+    {
+      "heading": "10. Remedies",
+      "body": "For assistance with privacy infringements, you may contact:\n\n· Personal Information Infringement Report Center (privacy.kisa.or.kr / 118)\n· Personal Information Dispute Mediation Committee (kopico.go.kr / 1833-6972)\n· Supreme Prosecutors' Office Cybercrime Division (spo.go.kr / 1301)\n· National Police Agency Cyber Bureau (ecrm.police.go.kr / 182)"
+    },
+    {
+      "heading": "11. Changes to This Policy",
+      "body": "This policy takes effect on the stated date. Any additions, deletions or amendments will be announced on the website at least 7 days before taking effect."
+    }
+  ]
+}

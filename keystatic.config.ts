@@ -3,7 +3,7 @@
 // - 저장 방식: 아래 storage 참고. local = 파일에 직접 저장(개발/사내 Mac mini용),
 //   배포 후 편집자가 웹에서 쓰려면 github 모드로 전환:
 //   storage: { kind: 'github', repo: { owner: 'LeeJunHeon', name: 'vanam-website' } }
-import { config, fields, collection } from '@keystatic/core';
+import { config, fields, collection, singleton } from '@keystatic/core';
 
 export default config({
   storage: { kind: 'local' },
@@ -15,10 +15,91 @@ export default config({
       '회사 정보': ['history', 'achievements', 'partners', 'certificates'],
       '기술 데이터': ['services', 'materials'],
       '스토어': ['products'],
+      '사업자·정책': ['company', 'policies'],
     },
   },
 
+  singletons: {
+    // ── 사업자 정보 (푸터·정책 문서에 자동 반영) ──────────
+    company: singleton({
+      label: '사업자 정보',
+      path: 'src/data/company',
+      format: { data: 'json' },
+      schema: {
+        nameKo: fields.text({ label: '상호 (국문)', description: '사업자등록증과 동일해야 합니다', validation: { isRequired: true } }),
+        nameEn: fields.text({ label: '상호 (영문)', validation: { isRequired: true } }),
+        ceoKo: fields.text({ label: '대표자 (국문)', validation: { isRequired: true } }),
+        ceoEn: fields.text({ label: '대표자 (영문)' }),
+        bizNo: fields.text({ label: '사업자등록번호', description: '예: 894-86-02635', validation: { isRequired: true } }),
+        mailOrderNo: fields.text({ label: '통신판매업 신고번호', description: '예: 2025-서울영등포-1534', validation: { isRequired: true } }),
+        zip: fields.text({ label: '우편번호' }),
+        addressKo: fields.text({ label: '사업장 주소 (국문)', validation: { isRequired: true } }),
+        addressEn: fields.text({ label: '사업장 주소 (영문)' }),
+        tel: fields.text({ label: '대표 전화', validation: { isRequired: true } }),
+        email: fields.text({ label: '대표 이메일', validation: { isRequired: true } }),
+
+        officerNameKo: fields.text({ label: '개인정보 보호책임자 — 성명 (국문)' }),
+        officerNameEn: fields.text({ label: '개인정보 보호책임자 — 성명 (영문)' }),
+        officerTitleKo: fields.text({ label: '개인정보 보호책임자 — 직책 (국문)' }),
+        officerTitleEn: fields.text({ label: '개인정보 보호책임자 — 직책 (영문)' }),
+        officerEmail: fields.text({ label: '개인정보 보호책임자 — 이메일' }),
+
+        shipFeeKo: fields.text({ label: '배송비 안내 (국문)', description: '예: 무료 배송' }),
+        shipFeeEn: fields.text({ label: '배송비 안내 (영문)' }),
+        shipLeadKo: fields.text({ label: '발송 소요 (국문)', multiline: true }),
+        shipLeadEn: fields.text({ label: '발송 소요 (영문)', multiline: true }),
+        shipCarrierKo: fields.text({ label: '택배사 (국문)' }),
+        shipCarrierEn: fields.text({ label: '택배사 (영문)' }),
+
+        withdrawDays: fields.integer({ label: '청약철회 기간 (일)', defaultValue: 7, validation: { isRequired: true } }),
+        refundDays: fields.integer({ label: '환불 처리 기간 (영업일)', defaultValue: 3, validation: { isRequired: true } }),
+      },
+    }),
+  },
+
   collections: {
+    // ── 약관·정책 ──────────────────────────────────────
+    // 본문에 {officerName} {officerTitle} {officerEmail} {tel} {email}
+    //         {withdrawDays} {refundDays} {shipFee} {shipLead}
+    // 를 쓰면 '사업자 정보'의 값으로 자동 치환됩니다.
+    policies: collection({
+      label: '약관·정책',
+      path: 'src/content/policies/*',
+      format: { data: 'json' },
+      slugField: 'title',
+      columns: ['kind', 'lang', 'updated'],
+      schema: {
+        title: fields.slug({
+          name: { label: '제목', validation: { isRequired: true } },
+          slug: { label: '파일 ID', description: '예: privacy-ko, terms-en' },
+        }),
+        kind: fields.select({
+          label: '문서 종류',
+          options: [
+            { label: '개인정보처리방침', value: 'privacy' },
+            { label: '이용약관', value: 'terms' },
+            { label: '환불·교환 정책', value: 'refund' },
+          ],
+          defaultValue: 'privacy',
+        }),
+        lang: fields.select({
+          label: '언어',
+          options: [{ label: '한국어', value: 'ko' }, { label: 'English', value: 'en' }],
+          defaultValue: 'ko',
+        }),
+        updated: fields.text({ label: '시행일', description: '예: 2026-07-13', validation: { isRequired: true } }),
+        intro: fields.text({ label: '머리말', multiline: true }),
+        sections: fields.array(
+          fields.object({
+            heading: fields.text({ label: '조항 제목', validation: { isRequired: true } }),
+            body: fields.text({ label: '내용', multiline: true, validation: { isRequired: true } }),
+          }),
+          { label: '조항', itemLabel: (p) => p.fields.heading.value || '(제목 없음)' },
+        ),
+        order: fields.integer({ label: '표시 순서', defaultValue: 1, validation: { isRequired: true } }),
+      },
+    }),
+
     // ── 특허·인증서 ────────────────────────────────────
     certificates: collection({
       label: '특허·인증서',

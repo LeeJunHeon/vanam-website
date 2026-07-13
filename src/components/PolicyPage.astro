@@ -1,0 +1,65 @@
+---
+// 법적 고지 문서(개인정보처리방침·이용약관·환불정책) 공용 렌더러.
+// 본문의 {officerName} 같은 자리표시자를 company.json 값으로 치환한다.
+// → 사업자 정보를 Keystatic에서 한 번만 고치면 모든 문서에 반영된다.
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+import company from '../data/company.json';
+
+const { kind } = Astro.props;
+const locale = (Astro.currentLocale ?? 'en') as 'ko' | 'en';
+const isKo = locale === 'ko';
+
+const doc = (await getCollection('policies')).find(
+  (p) => p.data.kind === kind && p.data.lang === locale,
+);
+
+// 자리표시자 → 사업자 정보
+const vars: Record<string, string> = {
+  companyName: isKo ? company.nameKo : company.nameEn,
+  ceo: isKo ? company.ceoKo : (company.ceoEn || company.ceoKo),
+  bizNo: company.bizNo,
+  mailOrderNo: company.mailOrderNo,
+  address: isKo ? company.addressKo : (company.addressEn || company.addressKo),
+  tel: company.tel,
+  email: company.email,
+  officerName: isKo ? company.officerNameKo : (company.officerNameEn || company.officerNameKo),
+  officerTitle: isKo ? company.officerTitleKo : (company.officerTitleEn || company.officerTitleKo),
+  officerEmail: company.officerEmail,
+  shipFee: isKo ? company.shipFeeKo : (company.shipFeeEn || company.shipFeeKo),
+  shipLead: isKo ? company.shipLeadKo : (company.shipLeadEn || company.shipLeadKo),
+  shipCarrier: isKo ? company.shipCarrierKo : (company.shipCarrierEn || company.shipCarrierKo),
+  withdrawDays: String(company.withdrawDays),
+  refundDays: String(company.refundDays),
+};
+const fill = (s: string) => s.replace(/\{(\w+)\}/g, (m, k) => vars[k] ?? m);
+
+const t = isKo
+  ? { updated: '시행일', notFound: '문서를 준비 중입니다.' }
+  : { updated: 'Effective', notFound: 'This document is being prepared.' };
+---
+
+<BaseLayout title={`${doc?.data.title ?? ''} | VANAM`} description={doc?.data.intro ?? ''}>
+  <section class="mx-auto max-w-3xl px-6 py-28 md:py-32">
+    {doc ? (
+      <>
+        <h1 class="text-3xl font-bold leading-tight text-white md:text-4xl">{doc.data.title}</h1>
+        <p class="mt-3 text-sm text-white/40">{t.updated}: {doc.data.updated}</p>
+        {doc.data.intro && (
+          <p class="mt-8 whitespace-pre-line text-base leading-relaxed text-white/60">{fill(doc.data.intro)}</p>
+        )}
+
+        <div class="mt-14 space-y-12">
+          {doc.data.sections.map((s) => (
+            <section>
+              <h2 class="text-lg font-semibold text-white">{s.heading}</h2>
+              <p class="mt-3 whitespace-pre-line text-[15px] leading-relaxed text-white/60">{fill(s.body)}</p>
+            </section>
+          ))}
+        </div>
+      </>
+    ) : (
+      <p class="text-white/60">{t.notFound}</p>
+    )}
+  </section>
+</BaseLayout>

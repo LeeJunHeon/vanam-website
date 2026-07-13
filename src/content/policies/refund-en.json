@@ -1,0 +1,42 @@
+{
+  "kind": "refund",
+  "lang": "en",
+  "order": 3,
+  "title": "Refund & Exchange Policy",
+  "updated": "2026-07-13",
+  "intro": "VANAM INC. operates the following withdrawal, exchange and refund policy in accordance with the Act on the Consumer Protection in Electronic Commerce of the Republic of Korea.",
+  "sections": [
+    {
+      "heading": "1. Withdrawal of Subscription (Cancellation)",
+      "body": "Users may withdraw from a purchase within {withdrawDays} days from the date the goods are received.\n\nWhere the goods differ from the advertised description or the contract was performed differently, withdrawal is possible within 3 months from receipt, or within 30 days from the date the user became aware (or could have become aware) of the fact."
+    },
+    {
+      "heading": "2. Restrictions on Withdrawal",
+      "body": "Withdrawal is restricted in the following cases.\n\n· The goods are lost or damaged due to a cause attributable to the user (excluding damage to packaging opened to inspect the contents)\n· The value of the goods has significantly decreased due to use or partial consumption\n· The value has significantly decreased over time such that resale is difficult\n· ⭐ Goods produced individually to the user's order — custom thin-film coating, made-to-order samples\n· Analysis or measurement services already commenced or completed\n\nMade-to-order goods and commenced services are excluded because withdrawal would cause the Company irrecoverable harm. This is notified and consented to before the order is placed."
+    },
+    {
+      "heading": "3. Defects or Incorrect Delivery",
+      "body": "If the goods are defective or differ from the order, exchange or refund is available regardless of the restrictions in section 2.\n\n· Please contact us within {withdrawDays} days of receipt with supporting evidence such as photographs.\n· Return shipping is paid by the Company.\n· After verification, the Company will remake, exchange or issue a full refund according to the user's preference."
+    },
+    {
+      "heading": "4. Return Shipping Costs",
+      "body": "· Withdrawal due to a change of mind: return shipping is paid by the user.\n· Defect, incorrect delivery, or discrepancy with the advertised description: paid by the Company."
+    },
+    {
+      "heading": "5. Refund Procedure and Timeline",
+      "body": "The Company issues refunds within {refundDays} business days from receiving the returned goods or confirming the withdrawal.\n\n· Credit card / easy-pay: cancellation of the payment approval (the actual credit date depends on the card issuer's schedule)\n· Bank transfer / virtual account: transferred to the account designated by the user\n\nWhere a refund is delayed, statutory interest is paid in accordance with applicable law."
+    },
+    {
+      "heading": "6. Exchange",
+      "body": "Exchange for the same item is available only where stock is held. Where stock is unavailable or the item is made to order, the Company will remake the item or issue a refund."
+    },
+    {
+      "heading": "7. Delivery",
+      "body": "· Shipping cost: {shipFee}\n· Dispatch time: {shipLead}\n· Delivery area: throughout the Republic of Korea (please contact us for international delivery)"
+    },
+    {
+      "heading": "8. Contact",
+      "body": "For enquiries about withdrawal, exchange or refund, please contact us.\n\n· Email: {email}\n· Phone: {tel}"
+    }
+  ]
+}

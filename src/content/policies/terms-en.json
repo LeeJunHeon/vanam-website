@@ -1,0 +1,66 @@
+{
+  "kind": "terms",
+  "lang": "en",
+  "order": 2,
+  "title": "Terms of Service",
+  "updated": "2026-07-13",
+  "intro": "These Terms govern the use of the online store operated by VANAM INC. (the \"Company\"), including the rights, obligations and responsibilities of the Company and users.",
+  "sections": [
+    {
+      "heading": "Article 1 (Purpose)",
+      "body": "These Terms set out the rights, obligations and responsibilities of the Company and users in relation to the services provided through the Company's online store."
+    },
+    {
+      "heading": "Article 2 (Definitions)",
+      "body": "· \"Store\" means the virtual place of business established by the Company to provide goods and services.\n· \"User\" means any person who accesses the Store and uses its services under these Terms.\n· \"Guest purchase\" means purchasing by entering order details without creating an account."
+    },
+    {
+      "heading": "Article 3 (Posting and Amendment of Terms)",
+      "body": "The Company posts these Terms where users can easily view them.\n\nThe Company may amend these Terms within the limits of applicable law. Amendments are announced at least 7 days before the effective date, or 30 days in advance if unfavourable to users."
+    },
+    {
+      "heading": "Article 4 (Services Provided)",
+      "body": "· Sale of thin-film samples and related goods\n· Custom deposition and coating services\n· Analysis and measurement services\n· Quote requests and consultation"
+    },
+    {
+      "heading": "Article 5 (Use Without an Account)",
+      "body": "Orders may be placed without creating an account. Users must enter accurate information; the user bears any disadvantage arising from inaccurate information."
+    },
+    {
+      "heading": "Article 6 (Purchase Requests and Formation of Contract)",
+      "body": "The Company may decline a purchase request in the following cases.\n\n· The request contains false, missing or incorrect information\n· The item is out of stock or cannot be produced\n· Acceptance would cause significant technical difficulty for the Company\n\nThe contract is formed when the Company's acceptance (order confirmation) reaches the user."
+    },
+    {
+      "heading": "Article 7 (Quote-Based Transactions)",
+      "body": "For items without a fixed price, the user requests a quote and the Company reviews the specification and proposes a price. The contract is formed when the user agrees to the proposed price and completes payment."
+    },
+    {
+      "heading": "Article 8 (Payment)",
+      "body": "Payment may be made by credit card, easy-pay, real-time bank transfer, or virtual account (bank deposit).\n\nDisplayed prices include VAT. Business users requiring a tax invoice should provide their business details at checkout; the Company will issue the invoice in accordance with applicable law."
+    },
+    {
+      "heading": "Article 9 (Delivery)",
+      "body": "The Company ships ordered goods within the stated period from payment confirmation. Made-to-order items require additional production time, which is advised individually.\n\nIf delivery is delayed due to the Company's fault, the Company will notify the user without delay."
+    },
+    {
+      "heading": "Article 10 (Withdrawal and Refund)",
+      "body": "Withdrawal, exchange and refund are governed by the separate Refund & Exchange Policy.\n\nWhere goods are individually produced to the user's order (such as custom coating or made-to-order samples) and permitting withdrawal would cause the Company irrecoverable harm, withdrawal may be restricted, provided the Company has notified the user in advance and obtained the user's consent."
+    },
+    {
+      "heading": "Article 11 (Obligations of the Company)",
+      "body": "The Company will not engage in acts prohibited by law or these Terms and will use its best efforts to provide the service reliably. The Company establishes and observes a Privacy Policy to protect users' personal information."
+    },
+    {
+      "heading": "Article 12 (Obligations of Users)",
+      "body": "Users must not:\n\n· Register false information when ordering\n· Alter information posted by the Company without authorisation\n· Infringe the intellectual property rights of the Company or third parties\n· Interfere with the Company's operations"
+    },
+    {
+      "heading": "Article 13 (Limitation of Liability)",
+      "body": "The Company is exempt from liability where it cannot provide the service due to force majeure such as natural disaster, war, power failure or network outage.\n\nThe Company is not liable for damage arising from inaccurate information provided by the user."
+    },
+    {
+      "heading": "Article 14 (Dispute Resolution)",
+      "body": "Disputes shall in principle be resolved by mutual agreement. If agreement is not reached, mediation may be sought from the Consumer Dispute Mediation Committee.\n\nThese Terms are governed by the laws of the Republic of Korea, and jurisdiction is determined under the Civil Procedure Act."
+    }
+  ]
+}

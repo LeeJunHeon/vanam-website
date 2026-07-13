@@ -4,6 +4,7 @@ import OrganizationSchema from '../components/OrganizationSchema.astro';
 import { getRelativeLocaleUrl, getAbsoluteLocaleUrl } from 'astro:i18n';
 import { Image } from 'astro:assets';
 import logo from '../assets/brand/logo.png';
+import company from '../data/company.json';
 const { title = 'VANAM — 차세대 반도체 박막 소재', description = 'VANA Materials LAB. 친환경 진공 증착 기반 차세대 반도체 박막 소재·공정 기술 기업.' } = Astro.props;
 // 각 페이지의 실제 경로를 절대 URL로 (canonical / og:url)
 const canonicalURL = new URL(Astro.url.pathname, Astro.site).href;
@@ -50,6 +51,19 @@ const ui = currentLocale === 'ko'
       tagline: 'VANA Materials LAB. — 차세대 반도체 박막 소재·공정' }
   : { mainMenu: 'Main menu', mobileMenu: 'Mobile menu', lang: 'Language', openMenu: 'Open menu', closeMenu: 'Close menu',
       tagline: 'VANA Materials LAB. — Next-generation semiconductor thin films & processes' };
+// 푸터 사업자 정보 (전자상거래법 표시 의무 항목) — Keystatic '사업자 정보'에서 관리
+const isKo = currentLocale === 'ko';
+const biz = {
+  name: isKo ? company.nameKo : company.nameEn,
+  ceo: isKo ? company.ceoKo : (company.ceoEn || company.ceoKo),
+  address: isKo ? company.addressKo : (company.addressEn || company.addressKo),
+};
+const fl = isKo
+  ? { ceo: '대표', bizNo: '사업자등록번호', mailOrder: '통신판매업 신고번호',
+      privacy: '개인정보처리방침', terms: '이용약관', refund: '환불·교환 정책' }
+  : { ceo: 'CEO', bizNo: 'Business Reg. No.', mailOrder: 'E-Commerce Reg. No.',
+      privacy: 'Privacy Policy', terms: 'Terms of Service', refund: 'Refund & Exchange' };
+
 const nav = [
   { href: '/', label: 'Home', labelKo: '홈' },
   { href: '/about', label: 'About', labelKo: '회사소개' },
@@ -172,11 +186,24 @@ const navLabel = (item) => currentLocale === 'ko' ? item.labelKo : item.label;
     </main>
     <footer class="mt-24 border-t border-white/10">
       <div class="mx-auto max-w-6xl px-6 py-12 text-sm text-white/45">
-        <p class="font-semibold text-white/70">VANAM INC.</p>
+        <p class="font-semibold text-white/70">{biz.name}</p>
         <p class="mt-1">{ui.tagline}</p>
-        <p class="mt-1">(07377) 21-1 Dosin-ro 4-gil, Yeongdeungpo-gu, Seoul</p>
-        <p class="mt-1">hello@vanam.co.kr · 02-6951-0922</p>
-        <p class="mt-4 text-white/55">© 2026 VANAM INC. All rights reserved.</p>
+
+        <!-- 전자상거래법상 표시 의무 항목 (PG 심사 필수) -->
+        <div class="mt-5 space-y-1 text-[13px] leading-relaxed text-white/40">
+          <p>{fl.ceo}: {biz.ceo} &nbsp;·&nbsp; {fl.bizNo}: {company.bizNo}</p>
+          <p>{fl.mailOrder}: {company.mailOrderNo}</p>
+          <p>({company.zip}) {biz.address}</p>
+          <p>{company.email} &nbsp;·&nbsp; {company.tel}</p>
+        </div>
+
+        <nav class="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-[13px]" aria-label={fl.privacy}>
+          <a href={localizedHref('/privacy')} class="font-medium text-white/60 transition hover:text-[#1EBBF0]">{fl.privacy}</a>
+          <a href={localizedHref('/terms')} class="text-white/45 transition hover:text-[#1EBBF0]">{fl.terms}</a>
+          <a href={localizedHref('/refund')} class="text-white/45 transition hover:text-[#1EBBF0]">{fl.refund}</a>
+        </nav>
+
+        <p class="mt-6 text-white/55">© 2026 {company.nameEn} All rights reserved.</p>
       </div>
     </footer>
     <script>

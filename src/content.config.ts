@@ -160,4 +160,20 @@ const certificates = defineCollection({
   }),
 });
 
-export const collections = { team, news, history, materials, partners, achievements, services, faq, products, certificates };
+// 11. POLICIES ────────────────────────
+// 법적 고지 문서(개인정보처리방침·이용약관·환불정책). 언어별로 파일이 하나씩.
+// body 안의 {officerName} {tel} 같은 자리표시자는 company.json 값으로 치환된다.
+const policies = defineCollection({
+  loader: glob({ pattern: '*.json', base: './src/content/policies' }),
+  schema: z.object({
+    kind: z.enum(['privacy', 'terms', 'refund']),
+    lang: z.enum(['ko', 'en']),
+    title: z.string(),
+    updated: z.string(),
+    intro: opt(z.string()),
+    sections: z.array(z.object({ heading: z.string(), body: z.string() })),
+    order: z.number().default(0),
+  }),
+});
+
+export const collections = { team, news, history, materials, partners, achievements, services, faq, products, certificates, policies };
