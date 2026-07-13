@@ -1,5 +1,8 @@
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /keystatic
+Disallow: /api/
 
 # AI 크롤러 명시 허용 (AEO/GEO)
 User-agent: GPTBot

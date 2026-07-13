@@ -1,0 +1,281 @@
+---
+// VANAM 관리자 — 견적·문의 관리
+// 접근: 비밀번호 (Cloudflare 워커 Secret: ADMIN_PASSWORD)
+// 도메인이 붙으면 Cloudflare Access(구글 로그인)로 전환 권장.
+export const prerender = false;
+
+import { isAdmin, adminConfigured } from '../../lib/admin-auth';
+import { db } from '../../lib/db';
+
+const authed = await isAdmin(Astro.request);
+const configured = adminConfigured();
+
+type Row = {
+  id: string; type: string; status: string;
+  name: string; email: string; phone: string | null; company: string | null;
+  message: string | null;
+  product_sku: string | null; product_name: string | null;
+  material: string | null; method: string | null; substrate: string | null;
+  thickness: string | null; quantity: string | null; deadline: string | null;
+  details: string | null;
+  quoted_amount: number | null; quote_note: string | null;
+  locale: string | null; created_at: string; updated_at: string | null;
+};
+
+let quotes: Row[] = [];
+let generals: Row[] = [];
+let dbError = '';
+
+if (authed) {
+  const d = await db();
+  if (!d) {
+    dbError = 'D1 데이터베이스가 연결되지 않았습니다. (로컬 dev에서는 동작하지 않습니다 — 배포된 사이트에서 확인하세요)';
+  } else {
+    try {
+      const { results } = await d
+        .prepare(`SELECT * FROM inquiries ORDER BY created_at DESC LIMIT 300`)
+        .all<Row>();
+      quotes = results.filter((r) => r.type === 'quote');
+      generals = results.filter((r) => r.type === 'general');
+    } catch (e) {
+      dbError = `조회 실패: ${e}`;
+    }
+  }
+}
+
+const won = (n: number | null) => (n == null ? '—' : `₩${n.toLocaleString('ko-KR')}`);
+const when = (s: string) => {
+  const d = new Date(s);
+  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+};
+const STATUS_KO: Record<string, string> = {
+  new: '신규', quoted: '견적 발송', replied: '회신 완료', closed: '종료',
+};
+const STATUS_COLOR: Record<string, string> = {
+  new: 'bg-[#1EBBF0]/15 text-[#1EBBF0] border-[#1EBBF0]/30',
+  quoted: 'bg-amber-400/15 text-amber-300 border-amber-400/30',
+  replied: 'bg-emerald-400/15 text-emerald-300 border-emerald-400/30',
+  closed: 'bg-white/5 text-white/40 border-white/10',
+};
+
+const spec = (r: Row) =>
+  [
+    r.material && `소재 ${r.material}`,
+    r.method && `방식 ${r.method}`,
+    r.substrate && `기판 ${r.substrate}`,
+    r.thickness && `두께 ${r.thickness}`,
+    r.quantity && `수량 ${r.quantity}`,
+    r.deadline && `납기 ${r.deadline}`,
+  ].filter(Boolean).join(' · ');
+---
+
+<html lang="ko" class="bg-[#0A0E13]">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>VANAM 관리자</title>
+    <link rel="icon" href="/favicon.ico" />
+    <style is:global>
+      @import 'tailwindcss';
+      body { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
+    </style>
+  </head>
+  <body class="min-h-screen bg-[#0A0E13] text-white antialiased">
+
+    {!authed ? (
+      <!-- ── 로그인 ─────────────────────────────────── -->
+      <main class="flex min-h-screen items-center justify-center px-6">
+        <div class="w-full max-w-sm">
+          <h1 class="text-2xl font-bold">VANAM 관리자</h1>
+          {configured ? (
+            <>
+              <p class="mt-2 text-sm text-white/50">비밀번호를 입력하세요.</p>
+              <form id="login-form" class="mt-8 space-y-4">
+                <input id="pw" type="password" autocomplete="current-password" required
+                  class="w-full rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-white outline-none transition focus:border-[#1EBBF0]"
+                  placeholder="비밀번호" />
+                <button type="submit"
+                  class="w-full rounded-lg bg-[#1EBBF0] px-4 py-3 font-semibold text-[#06222C] transition hover:brightness-110">
+                  로그인
+                </button>
+                <p id="login-err" class="text-sm text-red-400"></p>
+              </form>
+            </>
+          ) : (
+            <div class="mt-6 rounded-lg border border-amber-400/30 bg-amber-400/10 p-4 text-sm leading-relaxed text-amber-200">
+              <p class="font-semibold">관리자 비밀번호가 설정되지 않았습니다.</p>
+              <p class="mt-2 text-amber-200/80">
+                Cloudflare 워커 → Settings → Variables and secrets 에서
+                <code class="rounded bg-black/30 px-1">ADMIN_PASSWORD</code> 를
+                <b>Secret</b> 타입으로 등록한 뒤 재배포하세요. (8자 이상)
+              </p>
+            </div>
+          )}
+        </div>
+      </main>
+    ) : (
+      <!-- ── 대시보드 ───────────────────────────────── -->
+      <main class="mx-auto max-w-7xl px-6 py-10">
+        <header class="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-6">
+          <div>
+            <h1 class="text-2xl font-bold">VANAM 관리자</h1>
+            <p class="mt-1 text-sm text-white/45">견적 {quotes.length}건 · 문의 {generals.length}건</p>
+          </div>
+          <button id="logout" class="rounded-lg border border-white/15 px-4 py-2 text-sm text-white/60 transition hover:border-white/40 hover:text-white">
+            로그아웃
+          </button>
+        </header>
+
+        {dbError && (
+          <div class="mt-6 rounded-lg border border-red-400/30 bg-red-400/10 p-4 text-sm text-red-200">{dbError}</div>
+        )}
+
+        <!-- 견적 요청 -->
+        <section class="mt-10">
+          <h2 class="text-lg font-semibold text-[#1EBBF0]">견적 요청</h2>
+          {quotes.length === 0 ? (
+            <p class="mt-4 text-sm text-white/40">아직 견적 요청이 없습니다.</p>
+          ) : (
+            <div class="mt-5 space-y-4">
+              {quotes.map((r) => (
+                <article class="rounded-xl border border-white/10 bg-white/[0.02] p-5">
+                  <div class="flex flex-wrap items-start justify-between gap-3">
+                    <div class="min-w-0">
+                      <div class="flex flex-wrap items-center gap-2">
+                        <span class={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${STATUS_COLOR[r.status] ?? STATUS_COLOR.closed}`}>
+                          {STATUS_KO[r.status] ?? r.status}
+                        </span>
+                        <span class="font-mono text-xs text-white/35">{r.id}</span>
+                        <span class="text-xs text-white/35">{when(r.created_at)}</span>
+                      </div>
+                      <p class="mt-2 text-base font-semibold text-white">{r.product_name ?? r.product_sku}</p>
+                      <p class="mt-1 text-sm text-white/60">
+                        {r.name}{r.company ? ` · ${r.company}` : ''} · <a href={`mailto:${r.email}`} class="text-[#1EBBF0] hover:underline">{r.email}</a>{r.phone ? ` · ${r.phone}` : ''}
+                      </p>
+                    </div>
+                    <div class="text-right">
+                      <p class="text-xs text-white/35">견적 금액</p>
+                      <p class="text-lg font-bold text-white">{won(r.quoted_amount)}</p>
+                    </div>
+                  </div>
+
+                  {spec(r) && <p class="mt-3 text-sm leading-relaxed text-white/50">{spec(r)}</p>}
+                  {r.details && <p class="mt-2 whitespace-pre-line rounded-lg bg-black/30 p-3 text-sm leading-relaxed text-white/60">{r.details}</p>}
+
+                  <form class="quote-form mt-4 flex flex-wrap items-end gap-3 border-t border-white/10 pt-4" data-id={r.id}>
+                    <div>
+                      <label class="block text-xs text-white/45">견적 금액 (원, 부가세 포함)</label>
+                      <input name="amount" type="number" min="0" step="1000" value={r.quoted_amount ?? ''}
+                        class="mt-1 w-44 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-[#1EBBF0]" />
+                    </div>
+                    <div class="min-w-[16rem] flex-1">
+                      <label class="block text-xs text-white/45">메모</label>
+                      <input name="note" type="text" value={r.quote_note ?? ''} placeholder="고객 회신에 넣을 설명"
+                        class="mt-1 w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-[#1EBBF0]" />
+                    </div>
+                    <div>
+                      <label class="block text-xs text-white/45">상태</label>
+                      <select name="status"
+                        class="mt-1 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none focus:border-[#1EBBF0]">
+                        {Object.entries(STATUS_KO).map(([v, l]) => (
+                          <option value={v} selected={r.status === v}>{l}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <button type="submit"
+                      class="rounded-lg bg-[#1EBBF0] px-5 py-2 text-sm font-semibold text-[#06222C] transition hover:brightness-110">
+                      저장
+                    </button>
+                    <span class="save-msg text-sm"></span>
+                  </form>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <!-- 일반 문의 -->
+        <section class="mt-14">
+          <h2 class="text-lg font-semibold text-white/70">일반 문의</h2>
+          {generals.length === 0 ? (
+            <p class="mt-4 text-sm text-white/40">아직 문의가 없습니다.</p>
+          ) : (
+            <div class="mt-5 space-y-3">
+              {generals.map((r) => (
+                <article class="rounded-xl border border-white/10 bg-white/[0.02] p-5">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <span class="font-mono text-xs text-white/35">{r.id}</span>
+                    <span class="text-xs text-white/35">{when(r.created_at)}</span>
+                  </div>
+                  <p class="mt-2 text-sm text-white/60">
+                    <b class="text-white">{r.name}</b>{r.company ? ` · ${r.company}` : ''} · <a href={`mailto:${r.email}`} class="text-[#1EBBF0] hover:underline">{r.email}</a>{r.phone ? ` · ${r.phone}` : ''}
+                  </p>
+                  <p class="mt-3 whitespace-pre-line text-sm leading-relaxed text-white/70">{r.message}</p>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <p class="mt-16 text-center text-xs text-white/25">
+          주문 관리는 결제 시스템 연동 후 이 화면에 추가됩니다.
+        </p>
+      </main>
+    )}
+
+    <script>
+      // 로그인
+      const lf = document.getElementById('login-form') as HTMLFormElement | null;
+      lf?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const err = document.getElementById('login-err')!;
+        err.textContent = '';
+        const pw = (document.getElementById('pw') as HTMLInputElement).value;
+        const res = await fetch('/api/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: pw }),
+        });
+        if (res.ok) location.reload();
+        else err.textContent = res.status === 503 ? '관리자 비밀번호가 설정되지 않았습니다.' : '비밀번호가 맞지 않습니다.';
+      });
+
+      // 로그아웃
+      document.getElementById('logout')?.addEventListener('click', async () => {
+        await fetch('/api/admin/login', { method: 'DELETE' });
+        location.reload();
+      });
+
+      // 견적 금액 저장
+      document.querySelectorAll<HTMLFormElement>('.quote-form').forEach((f) => {
+        f.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const msg = f.querySelector('.save-msg') as HTMLElement;
+          const btn = f.querySelector('button[type=submit]') as HTMLButtonElement;
+          const data = Object.fromEntries(new FormData(f).entries()) as Record<string, string>;
+          btn.disabled = true;
+          msg.textContent = '저장 중…';
+          msg.style.color = '#ffffff80';
+          try {
+            const res = await fetch('/api/admin/quote', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id: f.dataset.id, ...data }),
+            });
+            const j = await res.json();
+            if (!res.ok || !j.ok) throw new Error(j.error ?? res.status);
+            msg.textContent = '저장됨';
+            msg.style.color = '#1EBBF0';
+            setTimeout(() => location.reload(), 600);
+          } catch (err) {
+            msg.textContent = `실패: ${err}`;
+            msg.style.color = '#f87171';
+          } finally {
+            btn.disabled = false;
+          }
+        });
+      });
+    </script>
+  </body>
+</html>
