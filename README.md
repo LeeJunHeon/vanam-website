@@ -1,43 +1,31 @@
-# Astro Starter Kit: Minimal
+# VanaM Website
 
-```sh
-npm create astro@latest -- --template minimal
+반암(VANAM INC.)의 공식 웹사이트 소스코드입니다. Astro 기반 정적 사이트로 빌드되어 Cloudflare에 배포됩니다.
+
+- **Live**: https://vanam.co.kr (전환 진행 중)
+- **Stack**: Astro 6 · Tailwind CSS 4 · Keystatic CMS
+- **요구사항**: Node.js 22.12+
+
+## 개발
+
+```bash
+npm install
+npm run dev      # http://localhost:4321 — 사이트 / /keystatic — 콘텐츠 관리자
+npm run build    # 프로덕션 빌드 (Cloudflare 어댑터, dist/client + dist/server)
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+## 콘텐츠 편집 (비개발자용)
 
-## 🚀 Project Structure
+개발 서버 실행 후 http://localhost:4321/keystatic 접속. 뉴스·팀·FAQ·연혁·성과·파트너·서비스·소재를 폼으로 편집할 수 있고, 저장하면 `src/content/` 아래 JSON 파일이 직접 수정됩니다. 커밋/푸시하면 사이트에 반영됩니다.
 
-Inside of your Astro project, you'll see the following folders and files:
+## 구조
 
-```text
-/
-├── public/
-├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
-```
+- `src/content/` — 콘텐츠 컬렉션 (항목당 JSON 파일 1개, 8종)
+- `src/data/site.json` — 페이지 문구 (EN/KO)
+- `src/components/pages/` — 페이지 화면 (Home / About / Technology / News / Contact)
+- `src/pages/` — 라우트 (영문 기본 `/`, 한국어 `/ko`)
+- `keystatic.config.ts` — 콘텐츠 관리자 정의
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+## 언어
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
-
-Any static assets, like images, can be placed in the `public/` directory.
-
-## 🧞 Commands
-
-All commands are run from the root of the project, from a terminal:
-
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+영문이 기본, 한국어는 `/ko` 접두사. hreflang·사이트맵 자동 생성.

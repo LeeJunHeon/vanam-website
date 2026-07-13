@@ -79,10 +79,12 @@ export default config({
       columns: ['published', 'order'],
       schema: {
         question: fields.slug({
-          name: { label: '질문', validation: { isRequired: true } },
+          name: { label: '질문 (한글)', validation: { isRequired: true } },
           slug: { label: '파일 ID (영문)', description: '예: lead-time' },
         }),
-        answer: fields.text({ label: '답변', multiline: true, description: '비워두면 사이트에 표시되지 않습니다' }),
+        answer: fields.text({ label: '답변 (한글)', multiline: true, description: '비워두면 사이트에 표시되지 않습니다' }),
+        question_en: fields.text({ label: '질문 (영문)', description: '비우면 한글이 표시됩니다' }),
+        answer_en: fields.text({ label: '답변 (영문)', multiline: true }),
         published: fields.checkbox({ label: '사이트에 공개', defaultValue: true }),
         order: fields.integer({ label: '표시 순서', defaultValue: 99, validation: { isRequired: true } }),
       },
@@ -102,9 +104,14 @@ export default config({
         }),
         items: fields.array(
           fields.text({ label: '내용 (영문)' }),
-          { label: '해당 연도 주요 사건 (영문 — About 페이지)', itemLabel: (props) => props.value || '(비어 있음)' },
+          { label: '주요 사건 — 영문 (About EN)', itemLabel: (props) => props.value || '(비어 있음)' },
         ),
-        summaryKo: fields.text({ label: '한 줄 요약 (한글 — 홈 화면)', multiline: true }),
+        items_ko: fields.array(
+          fields.text({ label: '내용 (한글)' }),
+          { label: '주요 사건 — 한글 (About KO, 비우면 영문이 표시됨)', itemLabel: (props) => props.value || '(비어 있음)' },
+        ),
+        summary_en: fields.text({ label: '한 줄 요약 — 영문 (홈 EN)', multiline: true }),
+        summaryKo: fields.text({ label: '한 줄 요약 — 한글 (홈 KO)', multiline: true }),
         order: fields.integer({ label: '표시 순서', description: '오래된 연도가 작은 숫자', defaultValue: 99, validation: { isRequired: true } }),
       },
     }),
@@ -178,10 +185,12 @@ export default config({
       columns: ['order'],
       schema: {
         title: fields.slug({
-          name: { label: '서비스명', validation: { isRequired: true } },
+          name: { label: '서비스명 (영문)', validation: { isRequired: true } },
           slug: { label: '파일 ID (영문)' },
         }),
-        description: fields.text({ label: '설명', multiline: true, validation: { isRequired: true } }),
+        description: fields.text({ label: '설명 (영문)', multiline: true, validation: { isRequired: true } }),
+        title_ko: fields.text({ label: '서비스명 (한글)', description: '비우면 영문이 표시됩니다' }),
+        description_ko: fields.text({ label: '설명 (한글)', multiline: true }),
         order: fields.integer({ label: '표시 순서', defaultValue: 99, validation: { isRequired: true } }),
       },
     }),

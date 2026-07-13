@@ -1,0 +1,28 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="404 — Page not found | VanaM"
+  description="The page you are looking for could not be found. 요청하신 페이지를 찾을 수 없습니다."
+>
+  <section class="relative flex min-h-[72vh] items-center justify-center overflow-hidden px-6 py-24">
+    <!-- 배경 글로우 (자체 완결형) -->
+    <div class="pointer-events-none absolute -left-24 top-8 h-[380px] w-[440px] rounded-full bg-[#1EBBF0]/10 blur-3xl" aria-hidden="true"></div>
+    <div class="pointer-events-none absolute -bottom-24 -right-16 h-[320px] w-[380px] rounded-full bg-[#1EBBF0]/[0.07] blur-3xl" aria-hidden="true"></div>
+
+    <div class="relative z-10 mx-auto max-w-xl text-center">
+      <p class="font-mono text-xs uppercase tracking-[0.35em] text-[#1EBBF0]">Error 404</p>
+      <h1 class="mt-5 text-4xl font-bold tracking-tight text-white sm:text-5xl">Page not found</h1>
+      <p class="mt-2 text-lg text-white/70">페이지를 찾을 수 없습니다</p>
+      <p class="mt-6 text-sm leading-relaxed text-white/55">
+        The page may have been moved, renamed, or no longer exists.<br />
+        주소가 변경되었거나 삭제된 페이지입니다.
+      </p>
+      <div class="mt-10 flex flex-wrap items-center justify-center gap-3">
+        <a href="/" class="rounded-full bg-[#1EBBF0] px-6 py-3 text-sm font-semibold text-[#04212E] transition hover:bg-[#5fd0f5]">Home (English)</a>
+        <a href="/ko/" class="rounded-full border border-white/15 px-6 py-3 text-sm font-semibold text-white/80 transition hover:border-[#1EBBF0]/60 hover:text-white">홈으로 (한국어)</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

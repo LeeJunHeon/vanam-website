@@ -113,7 +113,7 @@
     "news": {
       "heroTitle": "In the press",
       "heroSubtitleHtml": "Coverage of VanaM's thin-film materials, products, and milestones.",
-      "footnote": "External links open the original articles. Dates and full text will be added as the news archive is migrated.",
+      "footnote": "External links open the original articles.",
       "eyebrow": "News",
       "metaTitle": "News | VanaM",
       "metaDescription": "News and press coverage of VanaM (반암) — semiconductor thin-film materials, VM1, investment, and exhibitions."
@@ -265,7 +265,7 @@
       "eyebrow": "뉴스",
       "heroTitle": "언론 속 반암",
       "heroSubtitleHtml": "반암의 박막 소재, 제품, 주요 성과에 대한 보도입니다.",
-      "footnote": "외부 링크는 원문 기사로 연결됩니다. 게재일과 본문은 뉴스 아카이브 이관과 함께 추가될 예정입니다.",
+      "footnote": "외부 링크는 원문 기사로 연결됩니다.",
       "metaTitle": "뉴스 | VANAM",
       "metaDescription": "반암(VanaM) 관련 보도 — 반도체 박막 소재, VM1, 투자 유치, 전시회 소식."
     },
