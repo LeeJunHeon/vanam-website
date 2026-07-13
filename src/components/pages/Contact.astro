@@ -207,6 +207,24 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-[#1EBBF0
   <FaqSchema />
 </BaseLayout>
 
+<style is:global>
+  /* select의 드롭다운 목록(option 팝업)은 페이지 CSS가 아니라 브라우저가 OS 기본값으로 그린다.
+     따라서 배경이 흰색인데 글자는 select에서 상속된 흰색이라 항목이 보이지 않게 된다.
+     color-scheme으로 네이티브 컨트롤을 다크로 렌더링하고, option 색도 명시적으로 지정한다. */
+  #inquiry-form select {
+    color-scheme: dark;
+  }
+  #inquiry-form option {
+    background-color: #0F141A;
+    color: #FFFFFF;
+  }
+  #inquiry-form optgroup {
+    background-color: #0F141A;
+    color: #1EBBF0;
+    font-weight: 600;
+  }
+</style>
+
 <script>
   // 견적/문의 모두 이 서버 라우트로 전송한다. (웹훅 URL은 서버에만 존재 — 클라이언트 노출 금지)
   const ENDPOINT = "/api/inquiry";
