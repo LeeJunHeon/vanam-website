@@ -1,0 +1,243 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+import siteData from '../../data/site.json';
+const locale = Astro.currentLocale ?? 'en';
+const site = siteData[locale] ?? siteData.en;
+const q = site.quote;
+const f = q.form;
+const title = q.metaTitle;
+const description = q.metaDescription;
+
+// 소재 라이브러리(36종)를 카테고리별로 묶어 드롭다운으로 제공.
+// 라벨은 화학식(formula), 그룹은 category(Oxide/Nitride/Metal).
+const materials = (await getCollection('materials')).sort((a, b) => a.data.order - b.data.order);
+const categories = ['Oxide', 'Nitride', 'Metal'] as const;
+const grouped = categories
+  .map((cat) => ({ cat, items: materials.filter((m) => m.data.category === cat) }))
+  .filter((g) => g.items.length > 0);
+
+// 증착 방식: 소재 스키마의 system(sputter=PVD / ald)에 대응 + 미정 선택지
+const methods = [
+  { value: 'PVD (Sputtering / Evaporation)', label: f.methodPvd },
+  { value: 'ALD', label: f.methodAld },
+  { value: 'Undecided', label: f.methodOther },
+];
+
+const inputClass =
+  'mt-2 w-full rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-white placeholder-white/30 outline-none transition focus:border-[#1EBBF0] focus:ring-1 focus:ring-[#1EBBF0]';
+const labelClass = 'block text-sm font-medium text-white/80';
+const legendClass = 'text-sm font-medium uppercase tracking-widest text-[#1EBBF0]';
+---
+
+<BaseLayout title={title} description={description}>
+  <section class="relative mx-auto max-w-3xl px-6 py-28 md:py-36">
+    <p class="text-sm font-medium uppercase tracking-widest text-[#1EBBF0]">{q.eyebrow}</p>
+    <h1 class="mt-4 text-4xl font-bold leading-tight text-white md:text-5xl">{q.heroTitle.line1}<br />{q.heroTitle.line2}</h1>
+    <p class="mt-6 max-w-xl text-base leading-relaxed text-white/60">{q.intro}</p>
+
+    <form id="quote-form" class="mt-14 space-y-12"
+      data-msg-honeypot={f.msgHoneypot}
+      data-msg-success={f.msgSuccess}
+      data-msg-error={f.msgError}
+      data-msg-required={f.msgRequired}
+      data-label-send={f.submit}
+      data-label-sending={f.sending}>
+      <!-- Honeypot: hidden from humans (spam trap) -->
+      <div class="absolute left-[-9999px]" aria-hidden="true">
+        <label>{f.honeypot}
+          <input type="text" name="vanam_hp_email" tabindex="-1" autocomplete="off" />
+        </label>
+      </div>
+
+      <!-- 1. 연락처 -->
+      <fieldset>
+        <legend class={legendClass}>{f.sectionContact}</legend>
+        <div class="mt-6 grid gap-6 md:grid-cols-2">
+          <div>
+            <label for="name" class={labelClass}>{f.name}</label>
+            <input id="name" name="name" type="text" required class={inputClass} placeholder={f.namePlaceholder} />
+          </div>
+          <div>
+            <label for="email" class={labelClass}>{f.email}</label>
+            <input id="email" name="email" type="email" required class={inputClass} placeholder={f.emailPlaceholder} />
+          </div>
+          <div>
+            <label for="phone" class={labelClass}>{f.phone}</label>
+            <input id="phone" name="phone" type="tel" class={inputClass} placeholder={f.phonePlaceholder} />
+          </div>
+          <div>
+            <label for="company" class={labelClass}>{f.company}</label>
+            <input id="company" name="company" type="text" class={inputClass} placeholder={f.companyPlaceholder} />
+          </div>
+        </div>
+      </fieldset>
+
+      <!-- 2. 공정 스펙 -->
+      <fieldset>
+        <legend class={legendClass}>{f.sectionSpec}</legend>
+        <div class="mt-6 space-y-6">
+          <div class="grid gap-6 md:grid-cols-2">
+            <div>
+              <label for="material" class={labelClass}>{f.material}</label>
+              <select id="material" name="material" required class={inputClass}>
+                <option value="" disabled selected>{f.materialPlaceholder}</option>
+                {grouped.map((g) => (
+                  <optgroup label={g.cat}>
+                    {g.items.map((m) => (
+                      <option value={m.data.formula}>{m.data.formula}</option>
+                    ))}
+                  </optgroup>
+                ))}
+                <option value="__other__">{f.materialOther}</option>
+              </select>
+            </div>
+            <div>
+              <label for="method" class={labelClass}>{f.method}</label>
+              <select id="method" name="method" class={inputClass}>
+                <option value="" selected>{f.methodPlaceholder}</option>
+                {methods.map((m) => (
+                  <option value={m.value}>{m.label}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <!-- 소재에서 "기타"를 고를 때만 노출 -->
+          <div id="material-other-wrap" hidden>
+            <label for="materialOther" class={labelClass}>{f.materialOtherLabel}</label>
+            <input id="materialOther" name="materialOther" type="text" class={inputClass} placeholder={f.materialOtherPlaceholder} />
+          </div>
+
+          <div class="grid gap-6 md:grid-cols-2">
+            <div>
+              <label for="substrate" class={labelClass}>{f.substrate}</label>
+              <input id="substrate" name="substrate" type="text" class={inputClass} placeholder={f.substratePlaceholder} />
+            </div>
+            <div>
+              <label for="thickness" class={labelClass}>{f.thickness}</label>
+              <input id="thickness" name="thickness" type="text" class={inputClass} placeholder={f.thicknessPlaceholder} />
+            </div>
+          </div>
+        </div>
+      </fieldset>
+
+      <!-- 3. 수량·일정 -->
+      <fieldset>
+        <legend class={legendClass}>{f.sectionSchedule}</legend>
+        <div class="mt-6 space-y-6">
+          <div class="grid gap-6 md:grid-cols-2">
+            <div>
+              <label for="quantity" class={labelClass}>{f.quantity}</label>
+              <input id="quantity" name="quantity" type="text" class={inputClass} placeholder={f.quantityPlaceholder} />
+            </div>
+            <div>
+              <label for="deadline" class={labelClass}>{f.deadline}</label>
+              <input id="deadline" name="deadline" type="text" class={inputClass} placeholder={f.deadlinePlaceholder} />
+            </div>
+          </div>
+          <div>
+            <label for="details" class={labelClass}>{f.details}</label>
+            <textarea id="details" name="details" rows="6" class={`${inputClass} resize-y`} placeholder={f.detailsPlaceholder}></textarea>
+            <p class="mt-2 text-xs leading-relaxed text-white/40">{f.attachmentNote}</p>
+          </div>
+        </div>
+      </fieldset>
+
+      <!-- 4. 동의 및 제출 -->
+      <div class="space-y-6 border-t border-white/10 pt-8">
+        <label class="flex cursor-pointer items-start gap-3 text-sm text-white/70">
+          <input type="checkbox" name="privacy" required value="agreed"
+            class="mt-0.5 size-4 shrink-0 rounded border-white/20 bg-white/[0.03] accent-[#1EBBF0]" />
+          <span>{f.privacy}</span>
+        </label>
+
+        <div class="flex flex-wrap items-center gap-4">
+          <button type="submit" id="quote-submit-btn"
+            class="inline-flex items-center gap-2 rounded-lg bg-[#1EBBF0] px-7 py-3 font-semibold text-[#06222C] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60">
+            <span id="quote-submit-label">{f.submit}</span>
+          </button>
+          <p id="quote-status" class="text-sm" role="status" aria-live="polite"></p>
+        </div>
+      </div>
+    </form>
+  </section>
+</BaseLayout>
+
+<script>
+  // 견적 요청은 서버 라우트로 전송한다. (웹훅 URL은 서버에만 존재 — 클라이언트 노출 금지)
+  const QUOTE_ENDPOINT = "/api/quote";
+
+  const form = document.getElementById("quote-form") as HTMLFormElement | null;
+  const statusEl = document.getElementById("quote-status")!;
+  const btn = document.getElementById("quote-submit-btn") as HTMLButtonElement;
+  const label = document.getElementById("quote-submit-label")!;
+  const otherWrap = document.getElementById("material-other-wrap") as HTMLElement | null;
+  const materialSel = document.getElementById("material") as HTMLSelectElement | null;
+  const M = form ? form.dataset : ({} as DOMStringMap);
+
+  // 소재에서 "기타"를 고르면 직접 입력 칸을 연다.
+  materialSel?.addEventListener("change", () => {
+    const isOther = materialSel.value === "__other__";
+    if (otherWrap) otherWrap.hidden = !isOther;
+    const input = document.getElementById("materialOther") as HTMLInputElement | null;
+    if (input) {
+      input.required = isOther;
+      if (!isOther) input.value = "";
+    }
+  });
+
+  function setStatus(msg: string, ok: boolean) {
+    statusEl.textContent = msg;
+    statusEl.style.color = ok ? "#1EBBF0" : "#FF6B6B";
+  }
+
+  form?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    // 허니팟이 채워졌으면 봇 → 조용히 성공한 척
+    const hp = form.elements.namedItem("vanam_hp_email") as HTMLInputElement | null;
+    if (hp && hp.value.trim() !== "") {
+      setStatus(M.msgHoneypot!, true);
+      form.reset();
+      return;
+    }
+
+    const data = Object.fromEntries(new FormData(form).entries()) as Record<string, string>;
+    delete data.vanam_hp_email;
+
+    // "기타" 선택 시 직접 입력값으로 치환
+    if (data.material === "__other__") {
+      if (!data.materialOther?.trim()) {
+        setStatus(M.msgRequired!, false);
+        return;
+      }
+      data.material = data.materialOther.trim();
+    }
+    delete data.materialOther;
+
+    data.locale = document.documentElement.lang || "en";
+
+    btn.disabled = true;
+    label.textContent = M.labelSending!;
+    setStatus("", true);
+
+    try {
+      const res = await fetch(QUOTE_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      form.reset();
+      if (otherWrap) otherWrap.hidden = true;
+      setStatus(M.msgSuccess!, true);
+    } catch (err) {
+      console.error(err);
+      setStatus(M.msgError!, false);
+    } finally {
+      btn.disabled = false;
+      label.textContent = M.labelSend!;
+    }
+  });
+</script>
