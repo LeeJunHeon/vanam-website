@@ -27,41 +27,58 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return json({ ok: true, delivered: false, spam: true });
   }
 
-  // 2) 필수 항목 검증 (담당자명 · 이메일 · 소재 · 개인정보 동의)
+  // 2) 공통 필수: 담당자명 · 이메일 · 개인정보 동의
+  const type = str(body.type) === 'general' ? 'general' : 'quote';
   const name = str(body.name).slice(0, MAX);
   const email = str(body.email).slice(0, MAX);
-  const material = str(body.material).slice(0, MAX);
-  const privacy = str(body.privacy);
 
-  if (!name || !email || !material || privacy !== 'agreed') {
+  if (!name || !email || str(body.privacy) !== 'agreed') {
     return json({ ok: false, error: 'missing_required' }, 400);
   }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return json({ ok: false, error: 'invalid_email' }, 400);
   }
 
-  // 3) 선택 항목
+  // 3) 유형별 필수: 견적 → 소재 / 기타 문의 → 문의 내용
+  const material = str(body.material).slice(0, MAX);
+  const message = str(body.message).slice(0, MAX);
+  if (type === 'quote' && !material) {
+    return json({ ok: false, error: 'missing_material' }, 400);
+  }
+  if (type === 'general' && !message) {
+    return json({ ok: false, error: 'missing_message' }, 400);
+  }
+
+  // 4) 선택 항목
   const phone = str(body.phone).slice(0, MAX);
   const company = str(body.company).slice(0, MAX);
-  const method = str(body.method).slice(0, MAX);
-  const substrate = str(body.substrate).slice(0, MAX);
-  const thickness = str(body.thickness).slice(0, MAX);
-  const quantity = str(body.quantity).slice(0, MAX);
-  const deadline = str(body.deadline).slice(0, MAX);
-  const details = str(body.details).slice(0, MAX);
   const locale = str(body.locale) === 'ko' ? 'ko' : 'en';
 
   const dash = '—';
-  const text = [
-    '📩 *새 견적 요청*',
-    `담당: ${name}${company ? ` (${company})` : ''} · ${email}${phone ? ` · ${phone}` : ''}`,
-    `소재: ${material} | 방식: ${method || dash} | 기판: ${substrate || dash}`,
-    `두께: ${thickness || dash} | 수량: ${quantity || dash} | 납기: ${deadline || dash}`,
-    `요청: ${details || dash}`,
-    `(언어: ${locale} · 접수: ${new Date().toISOString()})`,
-  ].join('\n');
+  const who = `담당: ${name}${company ? ` (${company})` : ''} · ${email}${phone ? ` · ${phone}` : ''}`;
+  const meta = `(언어: ${locale} · 접수: ${new Date().toISOString()})`;
 
-  // 4) Google Chat 웹훅 전송
+  let text: string;
+  if (type === 'quote') {
+    const method = str(body.method).slice(0, MAX);
+    const substrate = str(body.substrate).slice(0, MAX);
+    const thickness = str(body.thickness).slice(0, MAX);
+    const quantity = str(body.quantity).slice(0, MAX);
+    const deadline = str(body.deadline).slice(0, MAX);
+    const details = str(body.details).slice(0, MAX);
+    text = [
+      '📩 *새 견적 요청*',
+      who,
+      `소재: ${material} | 방식: ${method || dash} | 기판: ${substrate || dash}`,
+      `두께: ${thickness || dash} | 수량: ${quantity || dash} | 납기: ${deadline || dash}`,
+      `요청: ${details || dash}`,
+      meta,
+    ].join('\n');
+  } else {
+    text = ['✉️ *새 문의*', who, `내용: ${message}`, meta].join('\n');
+  }
+
+  // 5) Google Chat 웹훅 전송
   //    - Cloudflare 런타임: locals.runtime.env
   //    - dev(Node): .env 파일 → import.meta.env
   const runtimeEnv = (locals as { runtime?: { env?: Record<string, string> } })?.runtime?.env;
@@ -69,7 +86,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   if (!webhook) {
     // 웹훅 미설정: 전송하지 않고 서버 로그로만 확인 (로컬 테스트 경로)
-    console.log('[quote] GOOGLE_CHAT_WEBHOOK not set. Payload:\n' + text);
+    console.log('[inquiry] GOOGLE_CHAT_WEBHOOK not set. Payload:\n' + text);
     return json({ ok: true, delivered: false });
   }
 
@@ -80,13 +97,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
       body: JSON.stringify({ text }),
     });
     if (!res.ok) {
-      console.error('[quote] webhook failed:', res.status, await res.text().catch(() => ''));
+      console.error('[inquiry] webhook failed:', res.status, await res.text().catch(() => ''));
       return json({ ok: false, error: 'webhook_failed' }, 502);
     }
   } catch (err) {
-    console.error('[quote] webhook error:', err);
+    console.error('[inquiry] webhook error:', err);
     return json({ ok: false, error: 'webhook_error' }, 502);
   }
 
-  return json({ ok: true, delivered: true });
+  return json({ ok: true, delivered: true, type });
 };

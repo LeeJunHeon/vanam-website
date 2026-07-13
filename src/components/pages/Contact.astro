@@ -7,8 +7,22 @@ const locale = Astro.currentLocale ?? 'en';
 const site = siteData[locale] ?? siteData.en;
 const c = site.contact;
 const f = c.form;
+const q = site.quote.form;   // 견적 전용 스펙 필드 문구
 const title = c.metaTitle;
 const description = c.metaDescription;
+
+// 소재 라이브러리(36종)를 카테고리별로 묶어 드롭다운으로 제공. 라벨은 화학식(formula).
+const materials = (await getCollection('materials')).sort((a, b) => a.data.order - b.data.order);
+const grouped = (['Oxide', 'Nitride', 'Metal'] as const)
+  .map((cat) => ({ cat, items: materials.filter((m) => m.data.category === cat) }))
+  .filter((g) => g.items.length > 0);
+
+// 증착 방식: 소재 스키마의 system(sputter=PVD / ald)에 대응 + 미정
+const methods = [
+  { value: 'PVD (Sputtering / Evaporation)', label: q.methodPvd },
+  { value: 'ALD', label: q.methodAld },
+  { value: 'Undecided', label: q.methodOther },
+];
 
 // FAQ: published:true 이고 answer가 비어있지 않은 항목만 표시. 언어는 locale별.
 const faqs = (await getCollection('faq'))
@@ -16,6 +30,11 @@ const faqs = (await getCollection('faq'))
   .sort((a, b) => a.data.order - b.data.order);
 const faqQ = (x) => locale === 'en' ? (x.data.question_en ?? x.data.question) : x.data.question;
 const faqA = (x) => locale === 'en' ? (x.data.answer_en ?? x.data.answer) : x.data.answer;
+
+const inputClass =
+  'mt-2 w-full rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-white placeholder-white/30 outline-none transition focus:border-[#1EBBF0] focus:ring-1 focus:ring-[#1EBBF0]';
+const labelClass = 'block text-sm font-medium text-white/80';
+const legendClass = 'text-sm font-medium uppercase tracking-widest text-[#1EBBF0]';
 ---
 
 <BaseLayout title={title} description={description}>
@@ -24,12 +43,14 @@ const faqA = (x) => locale === 'en' ? (x.data.answer_en ?? x.data.answer) : x.da
     <h1 class="mt-4 text-4xl font-bold leading-tight text-white md:text-5xl">{c.heroTitle.line1}<br />{c.heroTitle.line2}</h1>
     <p class="mt-6 max-w-xl text-base leading-relaxed text-white/60">{c.intro}</p>
 
-    <form id="contact-form" class="mt-14 space-y-6"
+    <form id="inquiry-form" class="mt-14 space-y-12"
       data-msg-honeypot={f.msgHoneypot}
-      data-msg-demo={f.msgDemo}
       data-msg-success={f.msgSuccess}
+      data-msg-success-quote={f.msgSuccessQuote}
       data-msg-error={f.msgError}
+      data-msg-required={f.msgRequired}
       data-label-send={f.submit}
+      data-label-send-quote={f.submitQuote}
       data-label-sending={f.sending}>
       <!-- Honeypot: hidden from humans (spam trap) -->
       <div class="absolute left-[-9999px]" aria-hidden="true">
@@ -38,46 +59,129 @@ const faqA = (x) => locale === 'en' ? (x.data.answer_en ?? x.data.answer) : x.da
         </label>
       </div>
 
-      <div class="grid gap-6 md:grid-cols-2">
-        <div>
-          <label for="name" class="block text-sm font-medium text-white/80">{f.name}</label>
-          <input id="name" name="name" type="text" required
-            class="mt-2 w-full rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-white placeholder-white/30 outline-none transition focus:border-[#1EBBF0] focus:ring-1 focus:ring-[#1EBBF0]"
-            placeholder={f.namePlaceholder} />
-        </div>
-        <div>
-          <label for="company" class="block text-sm font-medium text-white/80">{f.company}</label>
-          <input id="company" name="company" type="text"
-            class="mt-2 w-full rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-white placeholder-white/30 outline-none transition focus:border-[#1EBBF0] focus:ring-1 focus:ring-[#1EBBF0]"
-            placeholder={f.companyPlaceholder} />
-        </div>
-        <div>
-          <label for="email" class="block text-sm font-medium text-white/80">{f.email}</label>
-          <input id="email" name="email" type="email" required
-            class="mt-2 w-full rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-white placeholder-white/30 outline-none transition focus:border-[#1EBBF0] focus:ring-1 focus:ring-[#1EBBF0]"
-            placeholder={f.emailPlaceholder} />
-        </div>
-        <div>
-          <label for="phone" class="block text-sm font-medium text-white/80">{f.phone}</label>
-          <input id="phone" name="phone" type="tel"
-            class="mt-2 w-full rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-white placeholder-white/30 outline-none transition focus:border-[#1EBBF0] focus:ring-1 focus:ring-[#1EBBF0]"
-            placeholder={f.phonePlaceholder} />
-        </div>
-      </div>
-
+      <!-- 1. 문의 유형 — 이 선택에 따라 아래 폼이 바뀐다 -->
       <div>
-        <label for="message" class="block text-sm font-medium text-white/80">{f.message}</label>
-        <textarea id="message" name="message" rows="6" required
-          class="mt-2 w-full resize-y rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-white placeholder-white/30 outline-none transition focus:border-[#1EBBF0] focus:ring-1 focus:ring-[#1EBBF0]"
-          placeholder={f.messagePlaceholder}></textarea>
+        <label for="type" class={labelClass}>{f.type}</label>
+        <select id="type" name="type" class={`${inputClass} md:max-w-sm`}>
+          <option value="quote" selected>{f.typeQuote}</option>
+          <option value="general">{f.typeGeneral}</option>
+        </select>
       </div>
 
-      <div class="flex flex-wrap items-center gap-4">
-        <button type="submit" id="submit-btn"
-          class="inline-flex items-center gap-2 rounded-lg bg-[#1EBBF0] px-7 py-3 font-semibold text-[#06222C] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60">
-          <span id="submit-label">{f.submit}</span>
-        </button>
-        <p id="form-status" class="text-sm" role="status" aria-live="polite"></p>
+      <!-- 2. 연락처 (공통) -->
+      <fieldset>
+        <legend class={legendClass}>{f.sectionContact}</legend>
+        <div class="mt-6 grid gap-6 md:grid-cols-2">
+          <div>
+            <label for="name" class={labelClass}>{f.name}</label>
+            <input id="name" name="name" type="text" required class={inputClass} placeholder={f.namePlaceholder} />
+          </div>
+          <div>
+            <label for="email" class={labelClass}>{f.email}</label>
+            <input id="email" name="email" type="email" required class={inputClass} placeholder={f.emailPlaceholder} />
+          </div>
+          <div>
+            <label for="phone" class={labelClass}>{f.phone}</label>
+            <input id="phone" name="phone" type="tel" class={inputClass} placeholder={f.phonePlaceholder} />
+          </div>
+          <div>
+            <label for="company" class={labelClass}>{f.company}</label>
+            <input id="company" name="company" type="text" class={inputClass} placeholder={f.companyPlaceholder} />
+          </div>
+        </div>
+      </fieldset>
+
+      <!-- 3-A. 견적 요청일 때: 공정 스펙 -->
+      <fieldset data-when="quote">
+        <legend class={legendClass}>{q.sectionSpec}</legend>
+        <div class="mt-6 space-y-6">
+          <div class="grid gap-6 md:grid-cols-2">
+            <div>
+              <label for="material" class={labelClass}>{q.material}</label>
+              <select id="material" name="material" required class={inputClass}>
+                <option value="" disabled selected>{q.materialPlaceholder}</option>
+                {grouped.map((g) => (
+                  <optgroup label={g.cat}>
+                    {g.items.map((m) => <option value={m.data.formula}>{m.data.formula}</option>)}
+                  </optgroup>
+                ))}
+                <option value="__other__">{q.materialOther}</option>
+              </select>
+            </div>
+            <div>
+              <label for="method" class={labelClass}>{q.method}</label>
+              <select id="method" name="method" class={inputClass}>
+                <option value="" selected>{q.methodPlaceholder}</option>
+                {methods.map((m) => <option value={m.value}>{m.label}</option>)}
+              </select>
+            </div>
+          </div>
+
+          <!-- 소재에서 "기타"를 고를 때만 노출 -->
+          <div id="material-other-wrap" hidden>
+            <label for="materialOther" class={labelClass}>{q.materialOtherLabel}</label>
+            <input id="materialOther" name="materialOther" type="text" class={inputClass} placeholder={q.materialOtherPlaceholder} />
+          </div>
+
+          <div class="grid gap-6 md:grid-cols-2">
+            <div>
+              <label for="substrate" class={labelClass}>{q.substrate}</label>
+              <input id="substrate" name="substrate" type="text" class={inputClass} placeholder={q.substratePlaceholder} />
+            </div>
+            <div>
+              <label for="thickness" class={labelClass}>{q.thickness}</label>
+              <input id="thickness" name="thickness" type="text" class={inputClass} placeholder={q.thicknessPlaceholder} />
+            </div>
+          </div>
+        </div>
+      </fieldset>
+
+      <!-- 3-B. 견적 요청일 때: 수량·일정 -->
+      <fieldset data-when="quote">
+        <legend class={legendClass}>{q.sectionSchedule}</legend>
+        <div class="mt-6 space-y-6">
+          <div class="grid gap-6 md:grid-cols-2">
+            <div>
+              <label for="quantity" class={labelClass}>{q.quantity}</label>
+              <input id="quantity" name="quantity" type="text" class={inputClass} placeholder={q.quantityPlaceholder} />
+            </div>
+            <div>
+              <label for="deadline" class={labelClass}>{q.deadline}</label>
+              <input id="deadline" name="deadline" type="text" class={inputClass} placeholder={q.deadlinePlaceholder} />
+            </div>
+          </div>
+          <div>
+            <label for="details" class={labelClass}>{q.details}</label>
+            <textarea id="details" name="details" rows="5" class={`${inputClass} resize-y`} placeholder={q.detailsPlaceholder}></textarea>
+            <p class="mt-2 text-xs leading-relaxed text-white/40">{q.attachmentNote}</p>
+          </div>
+        </div>
+      </fieldset>
+
+      <!-- 4. 기타 문의일 때: 문의 내용 -->
+      <fieldset data-when="general" hidden>
+        <legend class={legendClass}>{f.sectionMessage}</legend>
+        <div class="mt-6">
+          <label for="message" class={labelClass}>{f.message}</label>
+          <textarea id="message" name="message" rows="7" class={`${inputClass} resize-y`} placeholder={f.messagePlaceholder}></textarea>
+        </div>
+      </fieldset>
+
+      <!-- 5. 동의 및 제출 (공통) -->
+      <div class="space-y-6 border-t border-white/10 pt-8">
+        <label class="flex cursor-pointer items-start gap-3 text-sm text-white/70">
+          <input type="checkbox" name="privacy" required value="agreed"
+            class="mt-0.5 size-4 shrink-0 rounded border-white/20 bg-white/[0.03] accent-[#1EBBF0]" />
+          <span>{f.privacy}</span>
+        </label>
+
+        <div class="flex flex-wrap items-center gap-4">
+          <button type="submit" id="submit-btn"
+            class="inline-flex items-center gap-2 rounded-lg bg-[#1EBBF0] px-7 py-3 font-semibold text-[#06222C] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60">
+            <span id="submit-label">{f.submit}</span>
+          </button>
+          <p id="form-status" class="text-sm" role="status" aria-live="polite"></p>
+        </div>
       </div>
     </form>
   </section>
@@ -104,63 +208,112 @@ const faqA = (x) => locale === 'en' ? (x.data.answer_en ?? x.data.answer) : x.da
 </BaseLayout>
 
 <script>
-  // === Form submission endpoint ===
-  // Set one of the following; leave empty to run in demo mode.
-  //  1) Formspree:            "https://formspree.io/f/XXXXXXX"
-  //  2) Serverless function (recommended): "/api/contact"  (hide the webhook server-side)
-  //  3) Existing PHP forwarder: "https://vanam.co.kr/contact-forward.php"
-  // WARNING: never put a Google Chat webhook URL directly in this client code (it would be exposed).
-  const FORM_ENDPOINT = "";
+  // 견적/문의 모두 이 서버 라우트로 전송한다. (웹훅 URL은 서버에만 존재 — 클라이언트 노출 금지)
+  const ENDPOINT = "/api/inquiry";
 
-  const form = document.getElementById("contact-form");
-  const statusEl = document.getElementById("form-status");
-  const btn = document.getElementById("submit-btn");
-  const label = document.getElementById("submit-label");
-  const M = form ? form.dataset : {};  // per-locale messages (data-* attributes)
+  const form = document.getElementById("inquiry-form") as HTMLFormElement | null;
+  const statusEl = document.getElementById("form-status")!;
+  const btn = document.getElementById("submit-btn") as HTMLButtonElement;
+  const label = document.getElementById("submit-label")!;
+  const typeSel = document.getElementById("type") as HTMLSelectElement | null;
+  const materialSel = document.getElementById("material") as HTMLSelectElement | null;
+  const otherWrap = document.getElementById("material-other-wrap") as HTMLElement | null;
+  const otherInput = document.getElementById("materialOther") as HTMLInputElement | null;
+  const messageEl = document.getElementById("message") as HTMLTextAreaElement | null;
+  const M = form ? form.dataset : ({} as DOMStringMap);
 
-  function setStatus(msg, ok) {
+  // 유형 전환: 해당 섹션만 노출하고, 숨은 필드의 required는 반드시 해제한다.
+  // (숨겨진 채 required로 남으면 브라우저가 "focusable 하지 않은 필드" 오류로 제출을 막는다)
+  const isQuote = () => (typeSel?.value ?? "quote") === "quote";
+  const sendLabel = () => (isQuote() ? M.labelSendQuote! : M.labelSend!);
+
+  function applyType() {
+    const t = typeSel?.value ?? "quote";
+    form?.querySelectorAll<HTMLElement>("[data-when]").forEach((el) => {
+      el.hidden = el.dataset.when !== t;
+    });
+    if (materialSel) materialSel.required = t === "quote";
+    if (messageEl) messageEl.required = t === "general";
+    if (t !== "quote" && otherWrap) {
+      otherWrap.hidden = true;
+      if (otherInput) otherInput.required = false;
+    }
+    label.textContent = sendLabel();   // 견적 요청하기 / 문의 보내기
+    setStatus("", true);
+  }
+  typeSel?.addEventListener("change", applyType);
+
+  // 소재에서 "기타"를 고르면 직접 입력 칸을 연다.
+  materialSel?.addEventListener("change", () => {
+    const isOther = materialSel.value === "__other__";
+    if (otherWrap) otherWrap.hidden = !isOther;
+    if (otherInput) {
+      otherInput.required = isOther;
+      if (!isOther) otherInput.value = "";
+    }
+  });
+
+  function setStatus(msg: string, ok: boolean) {
     statusEl.textContent = msg;
     statusEl.style.color = ok ? "#1EBBF0" : "#FF6B6B";
   }
 
+  applyType();   // 초기 상태 적용 (기본: 견적 요청)
+
   form?.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    // Honeypot filled → bot: silently fake success
-    if (form.vanam_hp_email && form.vanam_hp_email.value.trim() !== "") {
-      setStatus(M.msgHoneypot, true);
+    // 허니팟이 채워졌으면 봇 → 조용히 성공한 척
+    const hp = form.elements.namedItem("vanam_hp_email") as HTMLInputElement | null;
+    if (hp && hp.value.trim() !== "") {
+      setStatus(M.msgHoneypot!, true);
       form.reset();
+      applyType();
       return;
     }
 
-    const data = Object.fromEntries(new FormData(form).entries());
+    const data = Object.fromEntries(new FormData(form).entries()) as Record<string, string>;
     delete data.vanam_hp_email;
 
-    if (!FORM_ENDPOINT) {
-      console.log("[contact] FORM_ENDPOINT not set. Payload:", data);
-      setStatus(M.msgDemo, true);
-      return;
+    if (data.type === "quote") {
+      // "기타" 선택 시 직접 입력값으로 치환
+      if (data.material === "__other__") {
+        if (!otherInput?.value.trim()) {
+          setStatus(M.msgRequired!, false);
+          return;
+        }
+        data.material = otherInput.value.trim();
+      }
+      delete data.message;   // 숨겨진 문의 내용은 보내지 않는다
+    } else {
+      ["material", "method", "substrate", "thickness", "quantity", "deadline", "details"].forEach((k) => delete data[k]);
     }
+    delete data.materialOther;
+
+    data.locale = document.documentElement.lang || "en";
 
     btn.disabled = true;
-    label.textContent = M.labelSending;
+    label.textContent = M.labelSending!;
     setStatus("", true);
 
     try {
-      const res = await fetch(FORM_ENDPOINT, {
+      const res = await fetch(ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json", "Accept": "application/json" },
         body: JSON.stringify(data),
       });
       if (!res.ok) throw new Error("HTTP " + res.status);
+      const ok = isQuote() ? M.msgSuccessQuote! : M.msgSuccess!;
       form.reset();
-      setStatus(M.msgSuccess, true);
+      applyType();
+      if (otherWrap) otherWrap.hidden = true;
+      setStatus(ok, true);
     } catch (err) {
       console.error(err);
-      setStatus(M.msgError, false);
+      setStatus(M.msgError!, false);
     } finally {
       btn.disabled = false;
-      label.textContent = M.labelSend;
+      label.textContent = sendLabel();
     }
   });
 </script>
