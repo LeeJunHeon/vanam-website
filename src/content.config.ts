@@ -117,4 +117,31 @@ const faq = defineCollection({
   }),
 });
 
-export const collections = { team, news, history, materials, partners, achievements, services, faq };
+// 9. PRODUCTS ──────────────────────────
+// 스토어 상품. 가격 유형 2종:
+//   fixed = 고정가 (장바구니 → 즉시 결제)
+//   quote = 견적가 (스펙 접수 → 관리자가 금액 책정 → 결제 링크 발송)
+const products = defineCollection({
+  loader: glob({ pattern: '*.json', base: './src/content/products' }),
+  schema: z.object({
+    name: z.string(),                                   // KO 상품명 (파일 ID = SKU)
+    name_en: opt(z.string()),
+    category: z.enum(['sample', 'coating', 'analysis', 'etc']).default('etc'),
+    pricingType: z.enum(['fixed', 'quote']).default('fixed'),
+    price: opt(z.number()),                             // fixed일 때 판매가 (원, VAT 포함)
+    summary: z.string(),                                // KO 한 줄 소개
+    summary_en: opt(z.string()),
+    description: opt(z.string()),                       // KO 상세 설명
+    description_en: opt(z.string()),
+    image: opt(z.string()),                             // 대표 이미지 (Keystatic 업로드)
+    specs: z.array(z.object({ label: z.string(), value: z.string() })).default([]),
+    leadTime: opt(z.string()),                          // 납기 안내
+    leadTime_en: opt(z.string()),
+    shipping: opt(z.string()),                          // 배송 안내
+    shipping_en: opt(z.string()),
+    published: z.boolean().default(true),
+    order: z.number().default(0),
+  }),
+});
+
+export const collections = { team, news, history, materials, partners, achievements, services, faq, products };

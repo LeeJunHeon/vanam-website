@@ -1,0 +1,129 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+import siteData from '../../data/site.json';
+const locale = Astro.currentLocale ?? 'en';
+const site = siteData[locale] ?? siteData.en;
+const s = site.shop;
+const isKo = locale === 'ko';
+const base = isKo ? '/ko' : '';
+
+// 상품 이미지 에셋 매핑: products/*.json 의 image 경로 → ImageMetadata
+const productImages = import.meta.glob<{ default: ImageMetadata }>(
+  '/src/assets/products/*.{png,jpg,jpeg,webp,avif}',
+  { eager: true },
+);
+
+const products = (await getCollection('products'))
+  .filter((p) => p.data.published)
+  .sort((a, b) => a.data.order - b.data.order);
+
+const CATS = [
+  { key: 'all', label: s.all },
+  { key: 'sample', label: s.catSample },
+  { key: 'coating', label: s.catCoating },
+  { key: 'analysis', label: s.catAnalysis },
+  { key: 'etc', label: s.catEtc },
+].filter((c) => c.key === 'all' || products.some((p) => p.data.category === c.key));
+
+const name = (p) => (isKo ? p.data.name : (p.data.name_en ?? p.data.name));
+const summary = (p) => (isKo ? p.data.summary : (p.data.summary_en ?? p.data.summary));
+const won = (n: number) => new Intl.NumberFormat('ko-KR').format(n);
+---
+
+<BaseLayout title={s.metaTitle} description={s.metaDescription}>
+  <section class="relative mx-auto max-w-6xl px-6 py-28 md:py-36">
+    <div class="flex flex-wrap items-end justify-between gap-6">
+      <div>
+        <p class="text-sm font-medium uppercase tracking-widest text-[#1EBBF0]">{s.eyebrow}</p>
+        <h1 class="mt-4 text-4xl font-bold leading-tight text-white md:text-5xl">{s.heroTitle.line1}<br />{s.heroTitle.line2}</h1>
+        <p class="mt-6 max-w-xl text-base leading-relaxed text-white/60">{s.intro}</p>
+        <p class="mt-3 text-sm text-white/40">{s.guestNote}</p>
+      </div>
+      <a href={`${base}/cart`} class="inline-flex shrink-0 items-center gap-2 rounded-lg border border-white/15 px-5 py-2.5 text-sm font-medium text-white/80 transition hover:border-[#1EBBF0] hover:text-white">
+        {s.cart} <span class="cart-count rounded bg-[#1EBBF0] px-1.5 py-0.5 text-xs font-bold text-[#06222C]">0</span>
+      </a>
+    </div>
+
+    {products.length === 0 ? (
+      <p class="mt-16 text-white/50">{s.empty}</p>
+    ) : (
+      <>
+        <div class="mt-12 flex flex-wrap gap-2">
+          {CATS.map((c, i) => (
+            <button type="button" data-cat={c.key}
+              class:list={[
+                'cat-btn rounded-full border px-4 py-1.5 text-sm transition',
+                i === 0 ? 'border-[#1EBBF0] bg-[#1EBBF0]/10 text-[#1EBBF0]' : 'border-white/15 text-white/60 hover:border-white/40 hover:text-white',
+              ]}>{c.label}</button>
+          ))}
+        </div>
+
+        <div class="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {products.map((p) => {
+            const img = p.data.image ? productImages[p.data.image]?.default : undefined;
+            return (
+              <article data-cat={p.data.category}
+                class="product-card group flex flex-col overflow-hidden rounded-xl border border-white/10 bg-white/[0.02] transition hover:border-[#1EBBF0]/50">
+                <a href={`${base}/shop/${p.id}`} class="block">
+                  <div class="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-[#12202B] to-[#0A0E13]">
+                    {img ? (
+                      <Image src={img} alt={name(p)} width={600} height={450} class="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+                    ) : (
+                      <div class="flex h-full w-full items-center justify-center">
+                        <span class="text-3xl font-bold text-white/15">VANAM</span>
+                      </div>
+                    )}
+                  </div>
+                </a>
+                <div class="flex flex-1 flex-col p-5">
+                  <a href={`${base}/shop/${p.id}`}>
+                    <h2 class="text-lg font-semibold leading-snug text-white transition group-hover:text-[#1EBBF0]">{name(p)}</h2>
+                  </a>
+                  <p class="mt-2 line-clamp-2 text-sm leading-relaxed text-white/50">{summary(p)}</p>
+                  <div class="mt-5 flex items-end justify-between gap-3 pt-1">
+                    {p.data.pricingType === 'fixed' && p.data.price ? (
+                      <p class="text-xl font-bold text-white">₩{won(p.data.price)}<span class="ml-1.5 text-xs font-normal text-white/40">{s.vatIncluded}</span></p>
+                    ) : (
+                      <p class="text-base font-semibold text-[#1EBBF0]">{s.priceOnRequest}</p>
+                    )}
+                    <a href={`${base}/shop/${p.id}`} class="shrink-0 text-sm font-medium text-white/60 transition hover:text-[#1EBBF0]">{s.viewDetail} →</a>
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      </>
+    )}
+  </section>
+</BaseLayout>
+
+<script>
+  // 카테고리 필터 (클라이언트)
+  const btns = document.querySelectorAll<HTMLButtonElement>('.cat-btn');
+  const cards = document.querySelectorAll<HTMLElement>('.product-card');
+  const ON = ['border-[#1EBBF0]', 'bg-[#1EBBF0]/10', 'text-[#1EBBF0]'];
+  const OFF = ['border-white/15', 'text-white/60'];
+  btns.forEach((b) => b.addEventListener('click', () => {
+    const cat = b.dataset.cat;
+    btns.forEach((x) => {
+      const on = x === b;
+      x.classList.toggle('border-[#1EBBF0]', on);
+      x.classList.toggle('bg-[#1EBBF0]/10', on);
+      x.classList.toggle('text-[#1EBBF0]', on);
+      x.classList.toggle('border-white/15', !on);
+      x.classList.toggle('text-white/60', !on);
+    });
+    cards.forEach((c) => { c.hidden = cat !== 'all' && c.dataset.cat !== cat; });
+  }));
+
+  // 장바구니 개수 표시
+  try {
+    const cart = JSON.parse(localStorage.getItem('vanam_cart') ?? '[]');
+    const n = cart.reduce((sum: number, i: { qty: number }) => sum + i.qty, 0);
+    document.querySelectorAll('.cart-count').forEach((el) => { el.textContent = String(n); });
+  } catch {}
+</script>

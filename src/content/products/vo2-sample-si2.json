@@ -1,0 +1,35 @@
+{
+  "name": "VO₂ 박막 시편 (Si 2인치)",
+  "name_en": "VO₂ Thin Film Sample (2-inch Si)",
+  "category": "sample",
+  "pricingType": "fixed",
+  "price": 350000,
+  "summary": "※ 예시 상품입니다. Keystatic에서 실제 상품으로 교체하거나 삭제하세요.",
+  "summary_en": "Sample product placeholder — replace or delete in Keystatic.",
+  "description": "※ 예시 데이터입니다.\n실제 상품 설명을 여기에 작성하세요. 소재 특성, 적용 분야, 측정 데이터 포함 여부 등을 안내합니다.",
+  "description_en": "Placeholder. Write the real product description here.",
+  "specs": [
+    {
+      "label": "소재",
+      "value": "VO₂"
+    },
+    {
+      "label": "기판",
+      "value": "Si 웨이퍼 2인치"
+    },
+    {
+      "label": "두께",
+      "value": "100 nm"
+    },
+    {
+      "label": "증착 방식",
+      "value": "Sputtering (PVD)"
+    }
+  ],
+  "leadTime": "주문 후 2~3주",
+  "leadTime_en": "2–3 weeks after order",
+  "shipping": "택배 발송 (배송비 별도 안내)",
+  "shipping_en": "Shipped by courier (shipping fee quoted separately)",
+  "published": true,
+  "order": 1
+}

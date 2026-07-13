@@ -184,6 +184,48 @@
         "detailsPlaceholder": "Uniformity, patterning, measurement data, intended application — anything that helps us quote accurately.",
         "attachmentNote": "Have drawings or datasheets? Send them as a reply to our confirmation email — no need to attach anything here."
       }
+    },
+    "shop": {
+      "metaTitle": "Store | VANAM",
+      "metaDescription": "Buy VanaM thin-film samples, coating and analysis services online.",
+      "eyebrow": "Store",
+      "heroTitle": {
+        "line1": "Thin films,",
+        "line2": "off the shelf"
+      },
+      "intro": "Order standard samples and services directly. For custom deposition, request a quote and we'll price it for you.",
+      "all": "All",
+      "catSample": "Samples",
+      "catCoating": "Coating",
+      "catAnalysis": "Analysis",
+      "catEtc": "Other",
+      "priceOnRequest": "Price on request",
+      "vatIncluded": "VAT included",
+      "viewDetail": "View details",
+      "addToCart": "Add to cart",
+      "added": "Added to cart",
+      "requestQuote": "Request a quote",
+      "cart": "Cart",
+      "empty": "No products yet.",
+      "guestNote": "No account needed — checkout as a guest.",
+      "quantity": "Quantity",
+      "specs": "Specifications",
+      "leadTimeLabel": "Lead time",
+      "shippingLabel": "Shipping",
+      "backToShop": "Back to store"
+    },
+    "cartPage": {
+      "metaTitle": "Cart | VANAM",
+      "metaDescription": "Your VanaM store cart.",
+      "eyebrow": "Cart",
+      "heading": "Your cart",
+      "empty": "Your cart is empty.",
+      "continueShopping": "Continue shopping",
+      "remove": "Remove",
+      "subtotal": "Subtotal",
+      "total": "Total",
+      "checkout": "Proceed to checkout",
+      "comingSoon": "Checkout opens once payment integration is live."
     }
   },
   "ko": {
@@ -371,6 +413,48 @@
         "detailsPlaceholder": "균일도, 패터닝, 측정 데이터, 적용 분야 등 견적에 참고할 내용을 자유롭게 적어주세요.",
         "attachmentNote": "도면이나 데이터시트가 있으시면 접수 확인 메일에 회신으로 보내주세요. 이곳에 첨부하실 필요는 없습니다."
       }
+    },
+    "shop": {
+      "metaTitle": "스토어 | VANAM",
+      "metaDescription": "반암(VanaM)의 박막 시편·코팅·분석 서비스를 온라인으로 주문하세요.",
+      "eyebrow": "스토어",
+      "heroTitle": {
+        "line1": "박막을",
+        "line2": "바로 주문하세요"
+      },
+      "intro": "규격 시편과 서비스는 바로 주문할 수 있습니다. 맞춤 증착은 견적을 요청하시면 담당자가 금액을 책정해 드립니다.",
+      "all": "전체",
+      "catSample": "시편·샘플",
+      "catCoating": "코팅 서비스",
+      "catAnalysis": "분석 서비스",
+      "catEtc": "기타",
+      "priceOnRequest": "가격 문의",
+      "vatIncluded": "부가세 포함",
+      "viewDetail": "자세히 보기",
+      "addToCart": "장바구니 담기",
+      "added": "장바구니에 담았습니다",
+      "requestQuote": "견적 요청",
+      "cart": "장바구니",
+      "empty": "등록된 상품이 없습니다.",
+      "guestNote": "회원가입 없이 비회원으로 구매할 수 있습니다.",
+      "quantity": "수량",
+      "specs": "사양",
+      "leadTimeLabel": "납기",
+      "shippingLabel": "배송",
+      "backToShop": "스토어로 돌아가기"
+    },
+    "cartPage": {
+      "metaTitle": "장바구니 | VANAM",
+      "metaDescription": "VanaM 스토어 장바구니.",
+      "eyebrow": "장바구니",
+      "heading": "장바구니",
+      "empty": "장바구니가 비어 있습니다.",
+      "continueShopping": "계속 쇼핑하기",
+      "remove": "삭제",
+      "subtotal": "소계",
+      "total": "합계",
+      "checkout": "주문·결제하기",
+      "comingSoon": "결제 연동이 완료되면 활성화됩니다."
     }
   }
 }

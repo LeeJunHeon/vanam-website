@@ -14,10 +14,75 @@ export default config({
       '콘텐츠': ['news', 'team', 'faq'],
       '회사 정보': ['history', 'achievements', 'partners'],
       '기술 데이터': ['services', 'materials'],
+      '스토어': ['products'],
     },
   },
 
   collections: {
+    // ── 스토어 상품 ────────────────────────────────────
+    products: collection({
+      label: '스토어 상품',
+      path: 'src/content/products/*',
+      format: { data: 'json' },
+      slugField: 'name',
+      columns: ['category', 'pricingType', 'price', 'order'],
+      schema: {
+        name: fields.slug({
+          name: { label: '상품명 (한글)', validation: { isRequired: true } },
+          slug: {
+            label: '상품 코드 (SKU · 영문/숫자/하이픈)',
+            description: '주문·결제·주소에 쓰입니다. 예: vo2-sample-si2 — 만든 뒤에는 바꾸지 마세요',
+          },
+        }),
+        name_en: fields.text({ label: '상품명 (영문)' }),
+        category: fields.select({
+          label: '분류',
+          options: [
+            { label: '시편·샘플', value: 'sample' },
+            { label: '코팅 서비스', value: 'coating' },
+            { label: '분석 서비스', value: 'analysis' },
+            { label: '기타', value: 'etc' },
+          ],
+          defaultValue: 'sample',
+        }),
+        pricingType: fields.select({
+          label: '가격 유형',
+          description: '고정가 = 바로 장바구니·결제 / 견적가 = 스펙 접수 후 담당자가 금액을 책정해 결제 링크를 보냅니다',
+          options: [
+            { label: '고정가 (즉시 구매)', value: 'fixed' },
+            { label: '견적가 (문의 후 책정)', value: 'quote' },
+          ],
+          defaultValue: 'fixed',
+        }),
+        price: fields.number({
+          label: '판매가 (원, 부가세 포함)',
+          description: '고정가 상품만 입력하세요. 견적가 상품은 비워둡니다.',
+        }),
+        summary: fields.text({ label: '한 줄 소개 (한글)', validation: { isRequired: true } }),
+        summary_en: fields.text({ label: '한 줄 소개 (영문)' }),
+        description: fields.text({ label: '상세 설명 (한글)', multiline: true }),
+        description_en: fields.text({ label: '상세 설명 (영문)', multiline: true }),
+        image: fields.image({
+          label: '대표 이미지',
+          directory: 'src/assets/products',
+          publicPath: '/src/assets/products/',
+        }),
+        specs: fields.array(
+          fields.object({
+            label: fields.text({ label: '항목', description: '예: 소재 / 두께 / 기판 / 크기' }),
+            value: fields.text({ label: '값', description: '예: VO₂ / 100 nm / Si 2인치' }),
+          }),
+          { label: '사양', itemLabel: (p) => `${p.fields.label.value}: ${p.fields.value.value}` },
+        ),
+        leadTime: fields.text({ label: '납기 안내 (한글)', description: '예: 주문 후 2~3주' }),
+        leadTime_en: fields.text({ label: '납기 안내 (영문)' }),
+        shipping: fields.text({ label: '배송 안내 (한글)', description: '예: 택배 발송 (배송비 3,000원)' }),
+        shipping_en: fields.text({ label: '배송 안내 (영문)' }),
+        published: fields.checkbox({ label: '사이트에 공개', defaultValue: true }),
+        order: fields.integer({ label: '표시 순서', defaultValue: 99, validation: { isRequired: true } }),
+      },
+    }),
+
     // ── 뉴스 ──────────────────────────────────────────
     news: collection({
       label: '뉴스',

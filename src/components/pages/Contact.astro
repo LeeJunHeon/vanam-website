@@ -28,6 +28,13 @@ const methods = [
 const faqs = (await getCollection('faq'))
   .filter((x) => x.data.published && x.data.answer.trim() !== '')
   .sort((a, b) => a.data.order - b.data.order);
+// 스토어의 견적가 상품에서 넘어올 때(/contact?product=SKU) 요청사항을 프리필하기 위한 상품명 맵
+const productMap = Object.fromEntries(
+  (await getCollection('products'))
+    .filter((p) => p.data.published)
+    .map((p) => [p.id, locale === 'ko' ? p.data.name : (p.data.name_en ?? p.data.name)]),
+);
+
 const faqQ = (x) => locale === 'en' ? (x.data.question_en ?? x.data.question) : x.data.question;
 const faqA = (x) => locale === 'en' ? (x.data.answer_en ?? x.data.answer) : x.data.answer;
 
@@ -207,6 +214,8 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-[#1EBBF0
   )}
 
   <FaqSchema />
+
+  <script type="application/json" id="product-map" set:html={JSON.stringify(productMap)} is:inline></script>
 </BaseLayout>
 
 <style is:global>
@@ -282,6 +291,26 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-[#1EBBF0
   }
 
   applyType();   // 초기 상태 적용 (기본: 견적 요청)
+
+  // 스토어의 견적가 상품에서 넘어온 경우(/contact?product=SKU): 견적 유형으로 고정하고
+  // 어떤 상품 문의인지 요청사항 첫 줄에 채워둔다.
+  try {
+    const sku = new URLSearchParams(location.search).get("product");
+    if (sku) {
+      const map = JSON.parse(document.getElementById("product-map")?.textContent ?? "{}");
+      const productName = map[sku];
+      if (productName) {
+        if (typeSel) typeSel.value = "quote";
+        applyType();
+        const details = document.getElementById("details") as HTMLTextAreaElement | null;
+        if (details && !details.value) {
+          details.value = `[${productName}] `;
+          details.focus();
+          details.setSelectionRange(details.value.length, details.value.length);
+        }
+      }
+    }
+  } catch {}
 
   form?.addEventListener("submit", async (e) => {
     e.preventDefault();

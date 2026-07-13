@@ -1,0 +1,158 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+import siteData from '../../data/site.json';
+
+const { product } = Astro.props;
+const locale = Astro.currentLocale ?? 'en';
+const site = siteData[locale] ?? siteData.en;
+const s = site.shop;
+const isKo = locale === 'ko';
+const base = isKo ? '/ko' : '';
+
+const productImages = import.meta.glob<{ default: ImageMetadata }>(
+  '/src/assets/products/*.{png,jpg,jpeg,webp,avif}',
+  { eager: true },
+);
+
+const d = product.data;
+const name = isKo ? d.name : (d.name_en ?? d.name);
+const summary = isKo ? d.summary : (d.summary_en ?? d.summary);
+const description = isKo ? d.description : (d.description_en ?? d.description);
+const leadTime = isKo ? d.leadTime : (d.leadTime_en ?? d.leadTime);
+const shipping = isKo ? d.shipping : (d.shipping_en ?? d.shipping);
+const img = d.image ? productImages[d.image]?.default : undefined;
+const isFixed = d.pricingType === 'fixed' && typeof d.price === 'number';
+const won = (n: number) => new Intl.NumberFormat('ko-KR').format(n);
+---
+
+<BaseLayout title={`${name} | VANAM`} description={summary}>
+  <section class="relative mx-auto max-w-6xl px-6 py-28 md:py-32">
+    <a href={`${base}/shop`} class="text-sm text-white/50 transition hover:text-[#1EBBF0]">← {s.backToShop}</a>
+
+    <div class="mt-8 grid gap-12 lg:grid-cols-2">
+      <!-- 이미지 -->
+      <div class="overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br from-[#12202B] to-[#0A0E13]">
+        <div class="aspect-[4/3]">
+          {img ? (
+            <Image src={img} alt={name} width={900} height={675} class="h-full w-full object-cover" />
+          ) : (
+            <div class="flex h-full w-full items-center justify-center">
+              <span class="text-4xl font-bold text-white/15">VANAM</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <!-- 정보 -->
+      <div>
+        <h1 class="text-3xl font-bold leading-tight text-white md:text-4xl">{name}</h1>
+        <p class="mt-4 text-base leading-relaxed text-white/60">{summary}</p>
+
+        <div class="mt-8 border-y border-white/10 py-6">
+          {isFixed ? (
+            <p class="text-3xl font-bold text-white">
+              ₩{won(d.price)}<span class="ml-2 text-sm font-normal text-white/40">{s.vatIncluded}</span>
+            </p>
+          ) : (
+            <p class="text-2xl font-semibold text-[#1EBBF0]">{s.priceOnRequest}</p>
+          )}
+        </div>
+
+        {isFixed ? (
+          <div class="mt-8 flex flex-wrap items-end gap-4"
+            data-sku={product.id} data-name={name} data-price={d.price} data-msg-added={s.added}>
+            <div>
+              <label for="qty" class="block text-sm font-medium text-white/80">{s.quantity}</label>
+              <input id="qty" type="number" min="1" max="99" value="1"
+                class="mt-2 w-24 rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-white outline-none transition focus:border-[#1EBBF0] focus:ring-1 focus:ring-[#1EBBF0]" />
+            </div>
+            <button type="button" id="add-btn"
+              class="inline-flex items-center gap-2 rounded-lg bg-[#1EBBF0] px-7 py-3 font-semibold text-[#06222C] transition hover:brightness-110">
+              {s.addToCart}
+            </button>
+            <a href={`${base}/cart`} class="inline-flex items-center gap-2 rounded-lg border border-white/15 px-5 py-3 text-sm font-medium text-white/80 transition hover:border-[#1EBBF0] hover:text-white">
+              {s.cart} <span class="cart-count rounded bg-[#1EBBF0] px-1.5 py-0.5 text-xs font-bold text-[#06222C]">0</span>
+            </a>
+            <p id="add-status" class="w-full text-sm text-[#1EBBF0]" role="status" aria-live="polite"></p>
+          </div>
+        ) : (
+          <div class="mt-8">
+            <a href={`${base}/contact?product=${product.id}`}
+              class="inline-flex items-center gap-2 rounded-lg bg-[#1EBBF0] px-7 py-3 font-semibold text-[#06222C] transition hover:brightness-110">
+              {s.requestQuote} →
+            </a>
+          </div>
+        )}
+
+        <p class="mt-6 text-sm text-white/40">{s.guestNote}</p>
+
+        {(leadTime || shipping) && (
+          <dl class="mt-8 space-y-2 text-sm">
+            {leadTime && (
+              <div class="flex gap-3">
+                <dt class="w-20 shrink-0 text-white/40">{s.leadTimeLabel}</dt>
+                <dd class="text-white/70">{leadTime}</dd>
+              </div>
+            )}
+            {shipping && (
+              <div class="flex gap-3">
+                <dt class="w-20 shrink-0 text-white/40">{s.shippingLabel}</dt>
+                <dd class="text-white/70">{shipping}</dd>
+              </div>
+            )}
+          </dl>
+        )}
+      </div>
+    </div>
+
+    {d.specs.length > 0 && (
+      <div class="mt-20 max-w-3xl">
+        <h2 class="text-sm font-medium uppercase tracking-widest text-[#1EBBF0]">{s.specs}</h2>
+        <dl class="mt-6 divide-y divide-white/10 border-t border-white/10">
+          {d.specs.map((sp) => (
+            <div class="grid grid-cols-3 gap-4 py-4">
+              <dt class="text-sm text-white/50">{sp.label}</dt>
+              <dd class="col-span-2 text-sm text-white/90">{sp.value}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    )}
+
+    {description && (
+      <div class="mt-16 max-w-3xl whitespace-pre-line text-base leading-relaxed text-white/70">{description}</div>
+    )}
+  </section>
+</BaseLayout>
+
+<script>
+  const CART_KEY = 'vanam_cart';
+  const read = () => { try { return JSON.parse(localStorage.getItem(CART_KEY) ?? '[]'); } catch { return []; } };
+  const paint = () => {
+    const n = read().reduce((s: number, i: { qty: number }) => s + i.qty, 0);
+    document.querySelectorAll('.cart-count').forEach((el) => { el.textContent = String(n); });
+  };
+
+  const btn = document.getElementById('add-btn');
+  btn?.addEventListener('click', () => {
+    const box = btn.closest('[data-sku]') as HTMLElement;
+    const qtyEl = document.getElementById('qty') as HTMLInputElement;
+    const qty = Math.max(1, Math.min(99, parseInt(qtyEl.value, 10) || 1));
+    const sku = box.dataset.sku!;
+
+    const cart = read();
+    const hit = cart.find((i: { sku: string }) => i.sku === sku);
+    if (hit) hit.qty = Math.min(99, hit.qty + qty);
+    else cart.push({ sku, qty });
+    localStorage.setItem(CART_KEY, JSON.stringify(cart));
+
+    paint();
+    const st = document.getElementById('add-status')!;
+    st.textContent = box.dataset.msgAdded!;
+    setTimeout(() => { st.textContent = ''; }, 2500);
+  });
+
+  paint();
+</script>
