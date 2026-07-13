@@ -7,6 +7,7 @@ import sitemap from '@astrojs/sitemap';
 import react from '@astrojs/react';
 import keystatic from '@keystatic/astro';
 import cloudflare from '@astrojs/cloudflare';
+import basicSsl from '@vitejs/plugin-basic-ssl';
 
 // Keystatic 관리자는 dev에서 로컬 파일을 직접 읽고 써야 하므로(로컬 모드),
 // dev 서버는 순수 Node로 돌리고 Cloudflare 어댑터는 빌드(astro build)에만 적용한다.
@@ -33,7 +34,10 @@ export default defineConfig({
   },
 
   vite: {
-    plugins: [tailwindcss()]
+    // dev 서버를 자체서명 HTTPS로 제공: Keystatic이 쓰는 crypto.subtle이
+    // 보안 컨텍스트(HTTPS/localhost) 전용이라, 사내망 편집자가
+    // https://192.168.0.132:4321 로 접속할 수 있게 한다. 빌드에는 미적용.
+    plugins: isBuild ? [tailwindcss()] : [tailwindcss(), basicSsl()],
   },
 
   integrations: [
