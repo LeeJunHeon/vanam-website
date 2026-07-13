@@ -228,5 +228,67 @@ const navLabel = (item) => currentLocale === 'ko' ? item.labelKo : item.label;
         document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setNavOpen(false); });
       }
     </script>
+
+    <script>
+      // ── 폼 유효성 검사 메시지 현지화 ──────────────────────────
+      // 브라우저 기본 메시지는 '페이지 언어'가 아니라 '브라우저 UI 언어'를 따른다.
+      // (한국어 크롬에서는 영문 페이지에서도 한국어로 뜬다)
+      // 그래서 페이지 언어에 맞춰 우리가 직접 문구를 지정한다.
+      const V_KO = {
+        required: '필수 항목입니다.',
+        checkbox: '계속하려면 동의해 주세요.',
+        select: '항목을 선택해 주세요.',
+        email: '올바른 이메일 주소를 입력해 주세요. (예: name@company.com)',
+        tel: '올바른 전화번호를 입력해 주세요.',
+        number: '올바른 숫자를 입력해 주세요.',
+        length: '입력 길이를 확인해 주세요.',
+        fallback: '입력값을 확인해 주세요.',
+      };
+      const V_EN = {
+        required: 'This field is required.',
+        checkbox: 'Please tick this box to continue.',
+        select: 'Please choose an option.',
+        email: 'Please enter a valid email address (e.g. name@company.com).',
+        tel: 'Please enter a valid phone number.',
+        number: 'Please enter a valid number.',
+        length: 'Please check the length of your entry.',
+        fallback: 'Please check this value.',
+      };
+      const V = (document.documentElement.lang || 'en').startsWith('ko') ? V_KO : V_EN;
+
+      function validationMessage(el) {
+        const v = el.validity;
+        if (v.valueMissing) {
+          if (el.type === 'checkbox' || el.type === 'radio') return V.checkbox;
+          if (el.tagName === 'SELECT') return V.select;
+          return V.required;
+        }
+        if (v.typeMismatch) {
+          if (el.type === 'email') return V.email;
+          if (el.type === 'tel') return V.tel;
+          return V.fallback;
+        }
+        if (v.badInput) return el.type === 'number' ? V.number : V.fallback;
+        if (v.rangeUnderflow || v.rangeOverflow || v.stepMismatch) return V.number;
+        if (v.tooLong || v.tooShort) return V.length;
+        return V.fallback;
+      }
+
+      const isField = (el) =>
+        el instanceof HTMLInputElement ||
+        el instanceof HTMLTextAreaElement ||
+        el instanceof HTMLSelectElement;
+
+      // invalid 이벤트는 버블링되지 않으므로 캡처 단계에서 받는다
+      document.addEventListener('invalid', (e) => {
+        const el = e.target;
+        if (isField(el)) el.setCustomValidity(validationMessage(el));
+      }, true);
+
+      // 값을 고치면 커스텀 메시지를 해제해야 다시 정상 판정된다
+      const clear = (e) => { if (isField(e.target)) e.target.setCustomValidity(''); };
+      document.addEventListener('input', clear, true);
+      document.addEventListener('change', clear, true);
+    </script>
   </body>
 </html>
