@@ -1,4 +1,8 @@
 import type { APIRoute } from 'astro';
+// Astro 6부터 Astro.locals.runtime.env 가 제거되어(접근 시 예외를 던짐)
+// Cloudflare 런타임 환경변수는 이 모듈에서 직접 읽는다.
+// dev(순수 Node)에서는 astro.config.mjs의 shim이 빈 객체를 돌려주고, .env 로 폴백한다.
+import { env as cfEnv } from 'cloudflare:workers';
 
 // 서버에서 온디맨드 실행 (정적 생성 금지)
 export const prerender = false;
@@ -14,7 +18,7 @@ const json = (body: object, status = 200) =>
     headers: { 'Content-Type': 'application/json' },
   });
 
-export const POST: APIRoute = async ({ request, locals }) => {
+export const POST: APIRoute = async ({ request }) => {
   let body: Payload;
   try {
     body = (await request.json()) as Payload;
@@ -87,10 +91,14 @@ export const POST: APIRoute = async ({ request, locals }) => {
   }
 
   // 5) Google Chat 웹훅 전송
-  //    - Cloudflare 런타임: locals.runtime.env
+  //    - 배포(Cloudflare workerd): cloudflare:workers 의 env
   //    - dev(Node): .env 파일 → import.meta.env
-  const runtimeEnv = (locals as { runtime?: { env?: Record<string, string> } })?.runtime?.env;
-  const webhook = runtimeEnv?.GOOGLE_CHAT_WEBHOOK ?? import.meta.env.GOOGLE_CHAT_WEBHOOK ?? '';
+  //    대시보드 입력칸이 여러 줄이라 개행·따옴표가 섞여 들어올 수 있어 정리한다.
+  const raw =
+    (cfEnv as Record<string, unknown> | undefined)?.GOOGLE_CHAT_WEBHOOK ??
+    import.meta.env.GOOGLE_CHAT_WEBHOOK ??
+    '';
+  const webhook = typeof raw === 'string' ? raw.trim().replace(/^["']|["']$/g, '') : '';
 
   if (!webhook) {
     // 웹훅 미설정: 전송하지 않고 서버 로그로만 확인 (로컬 테스트 경로)

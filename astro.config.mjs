@@ -13,6 +13,19 @@ import basicSsl from '@vitejs/plugin-basic-ssl';
 // dev 서버는 순수 Node로 돌리고 Cloudflare 어댑터는 빌드(astro build)에만 적용한다.
 const isBuild = process.argv.includes('build');
 
+// dev 서버는 순수 Node로 돌기 때문에 workerd 내장 모듈인 'cloudflare:workers'가 없다.
+// 배포(workerd)에서는 진짜 모듈이 쓰이고, dev에서는 이 빈 shim이 쓰인다.
+// (Astro 6부터 Astro.locals.runtime.env 가 제거되어, 환경변수는 이 모듈에서 읽어야 한다)
+const cloudflareWorkersDevShim = {
+  name: 'vanam:cloudflare-workers-dev-shim',
+  resolveId(id) {
+    if (id === 'cloudflare:workers') return '\0vanam-cf-workers-shim';
+  },
+  load(id) {
+    if (id === '\0vanam-cf-workers-shim') return 'export const env = {};';
+  },
+};
+
 // https://astro.build/config
 export default defineConfig({
   site: 'https://vanam.co.kr',
@@ -37,7 +50,7 @@ export default defineConfig({
     // dev 서버를 자체서명 HTTPS로 제공: Keystatic이 쓰는 crypto.subtle이
     // 보안 컨텍스트(HTTPS/localhost) 전용이라, 사내망 편집자가
     // https://192.168.0.132:4321 로 접속할 수 있게 한다. 빌드에는 미적용.
-    plugins: isBuild ? [tailwindcss()] : [tailwindcss(), basicSsl()],
+    plugins: isBuild ? [tailwindcss()] : [tailwindcss(), basicSsl(), cloudflareWorkersDevShim],
   },
 
   integrations: [
