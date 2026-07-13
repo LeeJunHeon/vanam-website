@@ -2,7 +2,7 @@
   "nameKo": "반암 주식회사",
   "nameEn": "VANAM INC.",
   "ceoKo": "한수덕",
-  "ceoEn": "Sudeok Han",
+  "ceoEn": "Soo Deok Han",
   "bizNo": "894-86-02635",
   "mailOrderNo": "2025-서울영등포-1534",
   "zip": "07377",
@@ -19,8 +19,6 @@
   "shipFeeEn": "Free shipping",
   "shipLeadKo": "결제 확인 후 영업일 기준 7~14일 이내 발송 (주문 제작품은 별도 안내)",
   "shipLeadEn": "Shipped within 7–14 business days after payment (made-to-order items are advised separately)",
-  "shipCarrierKo": "",
-  "shipCarrierEn": "",
   "withdrawDays": 7,
   "refundDays": 3
 }
