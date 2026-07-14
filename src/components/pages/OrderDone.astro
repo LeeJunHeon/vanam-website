@@ -39,6 +39,10 @@ const t = isKo
       contact: '문의',
       home: '홈으로',
       shop: '스토어로',
+      keep: '이 주문번호를 저장해 두세요. 나중에 주문번호와 이메일로 진행 상태를 다시 확인하실 수 있습니다.',
+      lookup: '주문 조회',
+      copy: '복사',
+      copied: '복사됨',
     }
   : {
       meta: 'Order received | VANAM',
@@ -52,6 +56,10 @@ const t = isKo
       contact: 'Contact',
       home: 'Home',
       shop: 'Store',
+      keep: 'Please keep this order number. You can check the status again later with your order number and email.',
+      lookup: 'Track order',
+      copy: 'Copy',
+      copied: 'Copied',
     };
 ---
 
@@ -68,7 +76,11 @@ const t = isKo
           <div class="flex flex-wrap items-end justify-between gap-4">
             <div>
               <p class="text-sm text-white/45">{t.orderNo}</p>
-              <p class="mt-1 font-mono text-lg font-semibold text-white">{order.id}</p>
+              <div class="mt-1 flex items-center gap-3">
+                <p id="ord-id" class="font-mono text-lg font-semibold text-white">{order.id}</p>
+                <button type="button" id="copy-btn" data-copy={t.copy} data-copied={t.copied}
+                  class="rounded border border-white/15 px-2 py-0.5 text-xs text-white/50 transition hover:border-white/40 hover:text-white">{t.copy}</button>
+              </div>
             </div>
             <div class="text-right">
               <p class="text-sm text-white/45">{t.amount}</p>
@@ -85,15 +97,25 @@ const t = isKo
             <p class="mt-5 text-sm leading-relaxed text-white/50">{t.taxNote}</p>
           )}
 
-          <p class="mt-6 border-t border-white/10 pt-6 text-sm text-white/45">
-            {company.email} · {company.tel}
-          </p>
+          <p class="mt-6 border-t border-white/10 pt-6 text-sm leading-relaxed text-white/50">{t.keep}</p>
+
+          <p class="mt-4 text-sm text-white/45">{company.email} · {company.tel}</p>
         </div>
 
-        <div class="mt-10 flex justify-center gap-4">
+        <div class="mt-10 flex flex-wrap justify-center gap-4">
           <a href={lhref('/shop')} class="rounded-lg border border-white/15 px-6 py-3 text-sm text-white/70 transition hover:border-white/40 hover:text-white">{t.shop}</a>
+          <a href={`${lhref('/order/lookup')}?id=${order.id}`} class="rounded-lg border border-white/15 px-6 py-3 text-sm text-white/70 transition hover:border-white/40 hover:text-white">{t.lookup}</a>
           <a href={lhref('/contact')} class="rounded-lg bg-[#1EBBF0] px-6 py-3 text-sm font-semibold text-[#06222C] transition hover:brightness-110">{t.contact}</a>
         </div>
+
+        <script is:inline>
+          const cb = document.getElementById('copy-btn');
+          cb?.addEventListener('click', async () => {
+            await navigator.clipboard.writeText(document.getElementById('ord-id').textContent.trim());
+            cb.textContent = cb.dataset.copied;
+            setTimeout(() => { cb.textContent = cb.dataset.copy; }, 1600);
+          });
+        </script>
       </>
     ) : (
       <>

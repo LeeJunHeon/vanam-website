@@ -128,6 +128,7 @@ const products = defineCollection({
     name_en: opt(z.string()),
     category: z.enum(['sample', 'coating', 'analysis', 'etc']).default('etc'),
     pricingType: z.enum(['fixed', 'quote']).default('fixed'),
+    requiresShipping: z.boolean().default(true),        // 실물 배송이 필요한가 (분석 서비스는 false)
     price: opt(z.number()),                             // fixed일 때 판매가 (원, VAT 포함)
     summary: z.string(),                                // KO 한 줄 소개
     summary_en: opt(z.string()),

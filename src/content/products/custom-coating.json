@@ -24,5 +24,6 @@
   "leadTime": "스펙 확정 후 협의",
   "leadTime_en": "Agreed after spec confirmation",
   "published": true,
-  "order": 3
+  "order": 3,
+  "requiresShipping": true
 }

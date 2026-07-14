@@ -1,0 +1,205 @@
+---
+// 비회원 주문 조회. 주문번호 + 이메일로 상태를 확인한다.
+// ⚠️ prerender=false 는 페이지 파일(src/pages/order/lookup.astro)에 있다.
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import company from '../../data/company.json';
+
+const locale = (Astro.currentLocale ?? 'en') as 'ko' | 'en';
+const isKo = locale === 'ko';
+const lhref = (p: string) => getRelativeLocaleUrl(locale, p);
+
+// 주문 완료 화면에서 넘어오면 주문번호가 채워져 있다
+const prefill = Astro.url.searchParams.get('id') ?? '';
+
+const t = isKo
+  ? {
+      meta: '주문 조회 | VANAM', metaDesc: '주문번호와 이메일로 주문 상태를 확인하세요.',
+      eyebrow: '주문 조회', heading: '주문 확인',
+      lead: '주문번호와 주문 시 입력하신 이메일을 넣으시면 주문 내역과 진행 상태를 확인하실 수 있습니다.',
+      orderNo: '주문번호', email: '이메일',
+      submit: '조회하기', loading: '조회 중…',
+      notFound: '주문번호와 이메일이 일치하지 않습니다. 다시 확인해 주세요.',
+      fail: '조회에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+      status: '진행 상태', amount: '결제 금액', ordered: '주문일',
+      items: '주문 내역', shipTo: '배송지', taxYes: '세금계산서 요청됨',
+      noShip: '실물 배송 없음 (결과는 이메일로 안내)',
+      help: '주문번호를 잊으셨나요? 아래로 연락 주시면 확인해 드립니다.',
+      st: {
+        pending: '결제 대기', paid: '결제 완료', preparing: '제작 중',
+        shipped: '발송 완료', done: '완료', cancelled: '취소됨', refunded: '환불됨',
+      } as Record<string, string>,
+    }
+  : {
+      meta: 'Track your order | VANAM', metaDesc: 'Check your order status with your order number and email.',
+      eyebrow: 'Order lookup', heading: 'Track your order',
+      lead: 'Enter your order number and the email you used at checkout to see your order and its status.',
+      orderNo: 'Order number', email: 'Email',
+      submit: 'Look up', loading: 'Searching…',
+      notFound: 'The order number and email do not match. Please check and try again.',
+      fail: 'Lookup failed. Please try again shortly.',
+      status: 'Status', amount: 'Amount', ordered: 'Ordered',
+      items: 'Items', shipTo: 'Ship to', taxYes: 'Tax invoice requested',
+      noShip: 'No physical delivery (results sent by email)',
+      help: 'Lost your order number? Contact us and we will look it up for you.',
+      st: {
+        pending: 'Awaiting payment', paid: 'Paid', preparing: 'In production',
+        shipped: 'Shipped', done: 'Completed', cancelled: 'Cancelled', refunded: 'Refunded',
+      } as Record<string, string>,
+    };
+
+const inputClass =
+  'mt-2 w-full rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-white placeholder-white/30 outline-none transition focus:border-[#1EBBF0] focus:ring-1 focus:ring-[#1EBBF0]';
+---
+
+<BaseLayout title={t.meta} description={t.metaDesc}>
+  <section class="mx-auto max-w-2xl px-6 py-28 md:py-32">
+    <p class="text-sm font-medium uppercase tracking-widest text-[#1EBBF0]">{t.eyebrow}</p>
+    <h1 class="mt-4 text-3xl font-bold leading-tight text-white md:text-4xl">{t.heading}</h1>
+    <p class="mt-5 text-base leading-relaxed text-white/55">{t.lead}</p>
+
+    <form id="lookup-form" class="mt-10 space-y-6"
+      data-msg-notfound={t.notFound}
+      data-msg-fail={t.fail}
+      data-label-send={t.submit}
+      data-label-loading={t.loading}
+      data-labels={JSON.stringify(t.st)}
+      data-copy={JSON.stringify({
+        status: t.status, amount: t.amount, ordered: t.ordered,
+        items: t.items, shipTo: t.shipTo, taxYes: t.taxYes, noShip: t.noShip,
+      })}>
+      <div>
+        <label for="lk-id" class="block text-sm font-medium text-white/80">{t.orderNo} *</label>
+        <input id="lk-id" name="id" type="text" required value={prefill}
+          placeholder="ORD-20260714-ABCD" class={`${inputClass} font-mono`} />
+      </div>
+      <div>
+        <label for="lk-email" class="block text-sm font-medium text-white/80">{t.email} *</label>
+        <input id="lk-email" name="email" type="email" required autocomplete="email" class={inputClass} />
+      </div>
+      <button type="submit" id="lk-btn"
+        class="w-full rounded-lg bg-[#1EBBF0] px-6 py-3.5 font-semibold text-[#06222C] transition hover:brightness-110 disabled:opacity-50">
+        <span id="lk-label">{t.submit}</span>
+      </button>
+      <p id="lk-error" class="text-sm text-red-400" role="status" aria-live="polite"></p>
+    </form>
+
+    <div id="lk-result" class="mt-10" hidden></div>
+
+    <p class="mt-14 border-t border-white/10 pt-8 text-sm leading-relaxed text-white/40">
+      {t.help}<br />
+      <a href={`mailto:${company.email}`} class="text-[#1EBBF0] hover:underline">{company.email}</a> · {company.tel}
+    </p>
+  </section>
+</BaseLayout>
+
+<script>
+  const form = document.getElementById('lookup-form') as HTMLFormElement | null;
+  if (form) {
+    const M = form.dataset;
+    const ST: Record<string, string> = JSON.parse(M.labels ?? '{}');
+    const C = JSON.parse(M.copy ?? '{}');
+
+    const btn = document.getElementById('lk-btn') as HTMLButtonElement;
+    const label = document.getElementById('lk-label')!;
+    const errEl = document.getElementById('lk-error')!;
+    const resEl = document.getElementById('lk-result')!;
+
+    const won = (n: number) => `₩${Number(n).toLocaleString('ko-KR')}`;
+    const esc = (s: unknown) =>
+      String(s ?? '').replace(/[&<>"']/g, (c) =>
+        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!,
+      );
+    const when = (s: string) => {
+      const d = new Date(s);
+      return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
+    };
+
+    const COLOR: Record<string, string> = {
+      pending: 'border-amber-400/30 bg-amber-400/10 text-amber-300',
+      paid: 'border-[#1EBBF0]/30 bg-[#1EBBF0]/10 text-[#1EBBF0]',
+      preparing: 'border-[#1EBBF0]/30 bg-[#1EBBF0]/10 text-[#1EBBF0]',
+      shipped: 'border-emerald-400/30 bg-emerald-400/10 text-emerald-300',
+      done: 'border-emerald-400/30 bg-emerald-400/10 text-emerald-300',
+      cancelled: 'border-white/10 bg-white/5 text-white/40',
+      refunded: 'border-white/10 bg-white/5 text-white/40',
+    };
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errEl.textContent = '';
+      resEl.hidden = true;
+      btn.disabled = true;
+      label.textContent = M.labelLoading!;
+
+      const data = Object.fromEntries(new FormData(form).entries()) as Record<string, string>;
+
+      try {
+        const res = await fetch('/api/order/lookup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+        const j = await res.json();
+
+        if (res.status === 404) {
+          errEl.textContent = M.msgNotfound!;
+          return;
+        }
+        if (!res.ok || !j.ok) throw new Error(j.error ?? res.status);
+
+        const o = j.order;
+        const items = j.items ?? [];
+        const addr = [o.ship_addr1, o.ship_addr2, o.ship_city, o.ship_state]
+          .filter(Boolean).join(', ');
+
+        resEl.innerHTML = `
+          <div class="rounded-xl border border-white/10 bg-white/[0.02] p-7">
+            <div class="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <p class="font-mono text-lg font-semibold text-white">${esc(o.id)}</p>
+                <p class="mt-1 text-sm text-white/40">${C.ordered} ${when(o.created_at)}</p>
+              </div>
+              <span class="rounded-full border px-3 py-1 text-sm font-medium ${COLOR[o.status] ?? COLOR.cancelled}">
+                ${esc(ST[o.status] ?? o.status)}
+              </span>
+            </div>
+
+            <div class="mt-7 border-t border-white/10 pt-6">
+              <p class="text-xs font-medium uppercase tracking-widest text-[#1EBBF0]">${C.items}</p>
+              <ul class="mt-4 space-y-3 text-sm">
+                ${items.map((i: any) => `
+                  <li class="flex justify-between gap-4">
+                    <span class="text-white/70">${esc(i.name)} <span class="text-white/35">× ${esc(i.qty)}</span></span>
+                    <span class="shrink-0 text-white/80">${won(i.subtotal)}</span>
+                  </li>`).join('')}
+              </ul>
+              <div class="mt-5 flex items-center justify-between border-t border-white/10 pt-5">
+                <span class="text-sm text-white/60">${C.amount}</span>
+                <span class="text-xl font-bold text-white">${won(o.amount)}</span>
+              </div>
+            </div>
+
+            <div class="mt-7 border-t border-white/10 pt-6 text-sm">
+              <p class="text-xs font-medium uppercase tracking-widest text-[#1EBBF0]">${C.shipTo}</p>
+              ${o.needs_shipping
+                ? `<p class="mt-3 leading-relaxed text-white/60">
+                     ${esc(o.ship_name)} · ${esc(o.ship_phone)}<br />
+                     ${esc(o.ship_zip)} ${esc(addr)}<br />
+                     <span class="text-white/35">${esc(o.ship_country)}</span>
+                   </p>`
+                : `<p class="mt-3 text-white/50">${C.noShip}</p>`}
+              ${o.tax_invoice ? `<p class="mt-4 text-white/50">📄 ${C.taxYes}</p>` : ''}
+            </div>
+          </div>`;
+        resEl.hidden = false;
+      } catch (err) {
+        console.error(err);
+        errEl.textContent = M.msgFail!;
+      } finally {
+        btn.disabled = false;
+        label.textContent = M.labelSend!;
+      }
+    });
+  }
+</script>

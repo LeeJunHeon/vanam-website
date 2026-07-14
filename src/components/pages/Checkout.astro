@@ -1,27 +1,33 @@
 ---
 // 주문서. 장바구니(고정가) 또는 견적(견적가) 양쪽에서 들어온다.
-//   /checkout            → 장바구니 항목으로 주문
-//   /checkout?quote=INQ-… → 관리자가 금액을 책정한 견적으로 주문
+//   /checkout             → 장바구니 항목으로 주문
+//   /checkout?quote=INQ-…  → 관리자가 금액을 책정한 견적으로 주문
 //
-// ⚠️ 금액은 화면에 "표시"만 하고, 실제 결제 금액은 서버(/api/order)가 다시 계산한다.
 // ⚠️ prerender=false 는 이 컴포넌트가 아니라 '페이지 파일'(src/pages/...)에 있어야 한다.
 //    컴포넌트에 써두면 Astro가 읽지 않아 정적 생성되고, 쿼리스트링(?id=, ?quote=)을 못 읽는다.
-
+//
+// ⚠️ 금액은 화면에 "표시"만 한다. 실제 결제 금액은 서버(/api/order)가 다시 계산한다.
+//
+// 해외 주문: 국가를 먼저 고르고, 대한민국이면 (우편번호·주소·상세주소),
+//            해외면 (Address 1·2 · City · State · Postal code) 를 받는다.
+//            관세·수입부가세가 수령인 부담임을 고지한다.
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getCollection } from 'astro:content';
 import { getRelativeLocaleUrl } from 'astro:i18n';
-import siteData from '../../data/site.json';
 import company from '../../data/company.json';
+import { COUNTRIES } from '../../lib/countries';
 import { db } from '../../lib/db';
 
 const locale = (Astro.currentLocale ?? 'en') as 'ko' | 'en';
 const isKo = locale === 'ko';
-const site = siteData[locale] ?? siteData.en;
 const lhref = (p: string) => getRelativeLocaleUrl(locale, p);
 
-// 견적 주문이면 DB에서 확정 금액을 읽는다
+// ── 견적 주문이면 DB에서 확정 금액을 읽는다 ──
 const quoteId = Astro.url.searchParams.get('quote') ?? '';
-let quote: { id: string; product_name: string | null; quoted_amount: number | null; name: string; email: string; status: string } | null = null;
+let quote: {
+  id: string; product_sku: string | null; product_name: string | null;
+  quoted_amount: number | null; name: string; email: string; status: string;
+} | null = null;
 let quoteError = '';
 
 if (quoteId) {
@@ -33,7 +39,7 @@ if (quoteId) {
       quoteError = isKo ? '견적을 불러올 수 없습니다.' : 'Unable to load the quote.';
     } else {
       quote = await d
-        .prepare(`SELECT id, product_name, quoted_amount, name, email, status FROM inquiries WHERE id = ?`)
+        .prepare(`SELECT id, product_sku, product_name, quoted_amount, name, email, status FROM inquiries WHERE id = ?`)
         .bind(quoteId)
         .first();
       if (!quote) quoteError = isKo ? '견적을 찾을 수 없습니다.' : 'Quote not found.';
@@ -43,14 +49,23 @@ if (quoteId) {
   }
 }
 
-// 고정가 상품 카탈로그 (장바구니 금액 표시용 — 실제 계산은 서버가 한다)
-const products = (await getCollection('products'))
+// ── 상품 카탈로그 (금액 표시 + 배송 필요 여부) ──
+const all = await getCollection('products');
+const products = all
   .filter((p) => p.data.published && p.data.pricingType === 'fixed' && typeof p.data.price === 'number')
   .map((p) => ({
     sku: p.id,
     name: locale === 'en' ? (p.data.name_en ?? p.data.name) : p.data.name,
     price: p.data.price as number,
+    ship: p.data.requiresShipping !== false,
   }));
+
+// 견적 주문의 배송 필요 여부는 원본 상품에서 가져온다
+const quoteNeedsShipping = quote
+  ? all.find((p) => p.id === quote!.product_sku)?.data.requiresShipping !== false
+  : false;
+
+const countries = COUNTRIES.map((c) => ({ code: c.code, label: isKo ? c.ko : c.en }));
 
 const t = isKo
   ? {
@@ -58,54 +73,61 @@ const t = isKo
       eyebrow: '주문서', heading: '주문 정보',
       empty: '장바구니가 비어 있습니다.', backToShop: '스토어로 돌아가기',
       secBuyer: '주문자', secShip: '배송지', secTax: '세금계산서', secAgree: '확인 및 동의', secSummary: '주문 요약',
-      name: '이름 *', email: '이메일 *', phone: '연락처', company: '회사 / 소속',
+      name: '이름', email: '이메일', phone: '연락처', company: '회사 / 소속',
+      phoneHint: '해외 연락처는 국가번호를 포함해 주세요 (예: +1 555 000 0000)',
+      noShip: '이 주문은 실물 배송이 없습니다. 결과는 입력하신 이메일로 안내드립니다.',
       shipSame: '주문자와 동일',
-      shipName: '수령인', shipPhone: '수령인 연락처', shipZip: '우편번호',
-      shipAddr1: '주소', shipAddr2: '상세 주소', shipMemo: '배송 요청사항',
+      shipName: '수령인', shipPhone: '수령인 연락처',
+      country: '국가', countryOther: '국가명 직접 입력',
+      zip: '우편번호', addr1: '주소', addr2: '상세 주소',
+      addr1Intl: '주소 (Address line 1)', addr2Intl: '상세 주소 (Address line 2)',
+      city: '도시 (City)', state: '주 / 도 (State / Province)',
+      shipMemo: '배송 요청사항',
+      customs: '해외 배송의 수입 관세·부가세 및 통관 비용은 수령인 부담입니다.',
       taxWant: '세금계산서가 필요합니다 (사업자)',
       taxHint: '카드 결제 시에는 카드매출전표가 적격 증빙이 되어 세금계산서가 중복 발행되지 않습니다. 세금계산서가 필요하시면 가상계좌·계좌이체를 선택해 주세요.',
-      taxBizNo: '사업자등록번호 *', taxBizName: '상호 *', taxCeo: '대표자', taxEmail: '계산서 수신 이메일 *',
-      privacy: '주문 처리를 위한 개인정보 수집·이용에 동의합니다. *',
-      agreeTerms: '주문 제작품(맞춤 코팅·주문 시편)과 착수된 분석 용역은 청약철회가 제한됨을 확인했으며, 이에 동의합니다. *',
+      taxIntl: '해외 주문에는 상업 송장(Commercial Invoice)을 이메일로 보내드립니다.',
+      taxBizNo: '사업자등록번호', taxBizName: '상호', taxCeo: '대표자', taxEmail: '계산서 수신 이메일',
+      privacy: '주문 처리를 위한 개인정보 수집·이용에 동의합니다.',
+      agreeTerms: '주문 제작품(맞춤 코팅·주문 시편)과 착수된 분석 용역은 청약철회가 제한됨을 확인했으며, 이에 동의합니다.',
       agreeDetail: '이용자의 주문에 따라 개별 생산되는 재화는 「전자상거래법」 제17조 제2항 제5호에 따라 청약철회가 제한됩니다. 다만 하자·오배송의 경우에는 교환·환불이 가능합니다.',
       seePolicy: '환불·교환 정책 보기',
       shipping: '배송비', total: '총 결제 금액', vat: '부가세 포함',
       submit: '결제하기', sending: '주문 생성 중…',
-      qty: '수량',
-      errRequired: '필수 항목을 확인해 주세요.',
       errBiz: '사업자등록번호가 올바르지 않습니다.',
       errFail: '주문 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.',
-      pendingTitle: '결제 시스템 준비 중',
-      pendingBody: '주문은 정상 접수되었습니다. 결제 연동이 완료되면 결제 링크를 보내드립니다.',
-      orderNo: '주문번호',
     }
   : {
       meta: 'Checkout | VANAM', metaDesc: 'Enter your order details and pay.',
       eyebrow: 'Checkout', heading: 'Order details',
       empty: 'Your cart is empty.', backToShop: 'Back to store',
       secBuyer: 'Purchaser', secShip: 'Shipping', secTax: 'Tax invoice', secAgree: 'Confirm & agree', secSummary: 'Order summary',
-      name: 'Name *', email: 'Email *', phone: 'Phone', company: 'Company / Affiliation',
+      name: 'Name', email: 'Email', phone: 'Phone', company: 'Company / Affiliation',
+      phoneHint: 'Please include your country code (e.g. +1 555 000 0000)',
+      noShip: 'This order does not require physical delivery. Results are sent to the email you provide.',
       shipSame: 'Same as purchaser',
-      shipName: 'Recipient', shipPhone: 'Recipient phone', shipZip: 'Postal code',
-      shipAddr1: 'Address', shipAddr2: 'Address line 2', shipMemo: 'Delivery note',
-      taxWant: 'I need a tax invoice (business)',
+      shipName: 'Recipient', shipPhone: 'Recipient phone',
+      country: 'Country', countryOther: 'Country name',
+      zip: 'Postal code', addr1: 'Address', addr2: 'Address line 2',
+      addr1Intl: 'Address line 1', addr2Intl: 'Address line 2',
+      city: 'City', state: 'State / Province',
+      shipMemo: 'Delivery note',
+      customs: 'Import duties, taxes and customs charges for international delivery are payable by the recipient.',
+      taxWant: 'I need a Korean tax invoice (business)',
       taxHint: 'For card payments the card receipt is the qualifying document, so a separate tax invoice is not issued. If you need one, please choose virtual account or bank transfer.',
-      taxBizNo: 'Business reg. no. *', taxBizName: 'Company name *', taxCeo: 'Representative', taxEmail: 'Invoice email *',
-      privacy: 'I agree to the collection and use of my personal data to process this order. *',
-      agreeTerms: 'I understand and agree that made-to-order items (custom coating, made-to-order samples) and commenced analysis services are not eligible for withdrawal. *',
+      taxIntl: 'A commercial invoice will be emailed to you for international orders.',
+      taxBizNo: 'Business reg. no.', taxBizName: 'Company name', taxCeo: 'Representative', taxEmail: 'Invoice email',
+      privacy: 'I agree to the collection and use of my personal data to process this order.',
+      agreeTerms: 'I understand and agree that made-to-order items (custom coating, made-to-order samples) and commenced analysis services are not eligible for withdrawal.',
       agreeDetail: 'Goods produced individually to your order are excluded from withdrawal under the Act on Consumer Protection in Electronic Commerce. Defects and incorrect deliveries remain eligible for exchange or refund.',
       seePolicy: 'View refund policy',
       shipping: 'Shipping', total: 'Total', vat: 'VAT included',
       submit: 'Proceed to payment', sending: 'Creating order…',
-      qty: 'Qty',
-      errRequired: 'Please check the required fields.',
       errBiz: 'The business registration number is not valid.',
       errFail: 'Could not create the order. Please try again.',
-      pendingTitle: 'Payment coming soon',
-      pendingBody: 'Your order has been received. We will send a payment link once the gateway is live.',
-      orderNo: 'Order no.',
     };
 
+const req = ' *';
 const inputClass =
   'mt-2 w-full rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-white placeholder-white/30 outline-none transition focus:border-[#1EBBF0] focus:ring-1 focus:ring-[#1EBBF0]';
 const labelClass = 'block text-sm font-medium text-white/80';
@@ -124,10 +146,9 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-[#1EBBF0
       </div>
     ) : (
       <div class="mt-12 grid gap-12 lg:grid-cols-[1fr_20rem]">
-        <!-- ── 입력 ─────────────────────────────── -->
         <form id="checkout-form" class="space-y-12"
           data-quote={quote?.id ?? ''}
-          data-msg-required={t.errRequired}
+          data-quote-ship={quote ? String(quoteNeedsShipping) : ''}
           data-msg-biz={t.errBiz}
           data-msg-fail={t.errFail}
           data-label-send={t.submit}
@@ -140,18 +161,17 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-[#1EBBF0
             <legend class={legendClass}>{t.secBuyer}</legend>
             <div class="mt-6 grid gap-6 md:grid-cols-2">
               <div>
-                <label for="buyerName" class={labelClass}>{t.name}</label>
-                <input id="buyerName" name="buyerName" type="text" required autocomplete="name" class={inputClass}
-                  value={quote?.name ?? ''} />
+                <label for="buyerName" class={labelClass}>{t.name}{req}</label>
+                <input id="buyerName" name="buyerName" type="text" required autocomplete="name" class={inputClass} value={quote?.name ?? ''} />
               </div>
               <div>
-                <label for="buyerEmail" class={labelClass}>{t.email}</label>
-                <input id="buyerEmail" name="buyerEmail" type="email" required autocomplete="email" class={inputClass}
-                  value={quote?.email ?? ''} />
+                <label for="buyerEmail" class={labelClass}>{t.email}{req}</label>
+                <input id="buyerEmail" name="buyerEmail" type="email" required autocomplete="email" class={inputClass} value={quote?.email ?? ''} />
               </div>
               <div>
-                <label for="buyerPhone" class={labelClass}>{t.phone}</label>
-                <input id="buyerPhone" name="buyerPhone" type="tel" autocomplete="tel" class={inputClass} />
+                <label for="buyerPhone" class={labelClass}>{t.phone}{req}</label>
+                <input id="buyerPhone" name="buyerPhone" type="tel" required autocomplete="tel" class={inputClass} />
+                <p class="mt-1.5 text-xs text-white/35">{t.phoneHint}</p>
               </div>
               <div>
                 <label for="buyerCompany" class={labelClass}>{t.company}</label>
@@ -160,38 +180,86 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-[#1EBBF0
             </div>
           </fieldset>
 
-          <fieldset>
+          <fieldset id="ship-section" hidden>
             <legend class={legendClass}>{t.secShip}</legend>
+
             <label class="mt-5 flex cursor-pointer items-center gap-3 text-sm text-white/70">
-              <input type="checkbox" id="ship-same" checked
-                class="size-4 rounded border-white/20 bg-white/[0.03] accent-[#1EBBF0]" />
+              <input type="checkbox" id="ship-same" checked class="size-4 rounded border-white/20 bg-white/[0.03] accent-[#1EBBF0]" />
               <span>{t.shipSame}</span>
             </label>
+
             <div class="mt-5 space-y-6">
               <div id="ship-person" class="grid gap-6 md:grid-cols-2" hidden>
                 <div>
-                  <label for="shipName" class={labelClass}>{t.shipName}</label>
+                  <label for="shipName" class={labelClass}>{t.shipName}{req}</label>
                   <input id="shipName" name="shipName" type="text" class={inputClass} />
                 </div>
                 <div>
-                  <label for="shipPhone" class={labelClass}>{t.shipPhone}</label>
+                  <label for="shipPhone" class={labelClass}>{t.shipPhone}{req}</label>
                   <input id="shipPhone" name="shipPhone" type="tel" class={inputClass} />
                 </div>
               </div>
-              <div class="grid gap-6 md:grid-cols-[10rem_1fr]">
+
+              <div class="grid gap-6 md:grid-cols-2">
                 <div>
-                  <label for="shipZip" class={labelClass}>{t.shipZip}</label>
-                  <input id="shipZip" name="shipZip" type="text" inputmode="numeric" class={inputClass} />
+                  <label for="shipCountry" class={labelClass}>{t.country}{req}</label>
+                  <select id="shipCountry" name="shipCountry" class={inputClass}>
+                    {countries.map((c) => (
+                      <option value={c.code} selected={isKo && c.code === 'KR'}>{c.label}</option>
+                    ))}
+                  </select>
                 </div>
-                <div>
-                  <label for="shipAddr1" class={labelClass}>{t.shipAddr1}</label>
-                  <input id="shipAddr1" name="shipAddr1" type="text" autocomplete="street-address" class={inputClass} />
+                <div id="country-other-wrap" hidden>
+                  <label for="shipCountryOther" class={labelClass}>{t.countryOther}{req}</label>
+                  <input id="shipCountryOther" name="shipCountryOther" type="text" class={inputClass} />
                 </div>
               </div>
-              <div>
-                <label for="shipAddr2" class={labelClass}>{t.shipAddr2}</label>
-                <input id="shipAddr2" name="shipAddr2" type="text" class={inputClass} />
+
+              <div id="addr-kr" class="space-y-6">
+                <div class="grid gap-6 md:grid-cols-[10rem_1fr]">
+                  <div>
+                    <label for="shipZip" class={labelClass}>{t.zip}{req}</label>
+                    <input id="shipZip" name="shipZip" type="text" inputmode="numeric" autocomplete="postal-code" class={inputClass} />
+                  </div>
+                  <div>
+                    <label for="shipAddr1" class={labelClass}>{t.addr1}{req}</label>
+                    <input id="shipAddr1" name="shipAddr1" type="text" autocomplete="street-address" class={inputClass} />
+                  </div>
+                </div>
+                <div>
+                  <label for="shipAddr2" class={labelClass}>{t.addr2}</label>
+                  <input id="shipAddr2" name="shipAddr2" type="text" class={inputClass} />
+                </div>
               </div>
+
+              <div id="addr-intl" class="space-y-6" hidden>
+                <div>
+                  <label for="shipAddr1Intl" class={labelClass}>{t.addr1Intl}{req}</label>
+                  <input id="shipAddr1Intl" type="text" autocomplete="address-line1" class={inputClass} />
+                </div>
+                <div>
+                  <label for="shipAddr2Intl" class={labelClass}>{t.addr2Intl}</label>
+                  <input id="shipAddr2Intl" type="text" autocomplete="address-line2" class={inputClass} />
+                </div>
+                <div class="grid gap-6 md:grid-cols-3">
+                  <div>
+                    <label for="shipCity" class={labelClass}>{t.city}{req}</label>
+                    <input id="shipCity" name="shipCity" type="text" autocomplete="address-level2" class={inputClass} />
+                  </div>
+                  <div>
+                    <label for="shipState" class={labelClass}>{t.state}</label>
+                    <input id="shipState" name="shipState" type="text" autocomplete="address-level1" class={inputClass} />
+                  </div>
+                  <div>
+                    <label for="shipZipIntl" class={labelClass}>{t.zip}{req}</label>
+                    <input id="shipZipIntl" type="text" autocomplete="postal-code" class={inputClass} />
+                  </div>
+                </div>
+                <div class="rounded-lg border border-white/10 bg-white/[0.02] p-4">
+                  <p class="text-xs leading-relaxed text-white/50">{t.customs}</p>
+                </div>
+              </div>
+
               <div>
                 <label for="shipMemo" class={labelClass}>{t.shipMemo}</label>
                 <input id="shipMemo" name="shipMemo" type="text" class={inputClass} />
@@ -199,33 +267,41 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-[#1EBBF0
             </div>
           </fieldset>
 
-          <fieldset>
-            <legend class={legendClass}>{t.secTax}</legend>
-            <label class="mt-5 flex cursor-pointer items-start gap-3 text-sm text-white/70">
-              <input type="checkbox" id="tax-want" name="taxInvoice"
-                class="mt-0.5 size-4 shrink-0 rounded border-white/20 bg-white/[0.03] accent-[#1EBBF0]" />
-              <span>{t.taxWant}</span>
-            </label>
-            <p class="mt-3 text-xs leading-relaxed text-white/40">{t.taxHint}</p>
+          <div id="no-ship-note" class="rounded-lg border border-white/10 bg-white/[0.02] p-5" hidden>
+            <p class="text-sm text-white/55">{t.noShip}</p>
+          </div>
 
-            <div id="tax-fields" class="mt-6 grid gap-6 md:grid-cols-2" hidden>
-              <div>
-                <label for="taxBizNo" class={labelClass}>{t.taxBizNo}</label>
-                <input id="taxBizNo" name="taxBizNo" type="text" inputmode="numeric" placeholder="000-00-00000" class={inputClass} />
-              </div>
-              <div>
-                <label for="taxBizName" class={labelClass}>{t.taxBizName}</label>
-                <input id="taxBizName" name="taxBizName" type="text" class={inputClass} />
-              </div>
-              <div>
-                <label for="taxCeo" class={labelClass}>{t.taxCeo}</label>
-                <input id="taxCeo" name="taxCeo" type="text" class={inputClass} />
-              </div>
-              <div>
-                <label for="taxEmail" class={labelClass}>{t.taxEmail}</label>
-                <input id="taxEmail" name="taxEmail" type="email" class={inputClass} />
+          <fieldset id="tax-section">
+            <legend class={legendClass}>{t.secTax}</legend>
+
+            <div id="tax-kr">
+              <label class="mt-5 flex cursor-pointer items-start gap-3 text-sm text-white/70">
+                <input type="checkbox" id="tax-want" class="mt-0.5 size-4 shrink-0 rounded border-white/20 bg-white/[0.03] accent-[#1EBBF0]" />
+                <span>{t.taxWant}</span>
+              </label>
+              <p class="mt-3 text-xs leading-relaxed text-white/40">{t.taxHint}</p>
+
+              <div id="tax-fields" class="mt-6 grid gap-6 md:grid-cols-2" hidden>
+                <div>
+                  <label for="taxBizNo" class={labelClass}>{t.taxBizNo}{req}</label>
+                  <input id="taxBizNo" name="taxBizNo" type="text" inputmode="numeric" placeholder="000-00-00000" class={inputClass} />
+                </div>
+                <div>
+                  <label for="taxBizName" class={labelClass}>{t.taxBizName}{req}</label>
+                  <input id="taxBizName" name="taxBizName" type="text" class={inputClass} />
+                </div>
+                <div>
+                  <label for="taxCeo" class={labelClass}>{t.taxCeo}</label>
+                  <input id="taxCeo" name="taxCeo" type="text" class={inputClass} />
+                </div>
+                <div>
+                  <label for="taxEmail" class={labelClass}>{t.taxEmail}{req}</label>
+                  <input id="taxEmail" name="taxEmail" type="email" class={inputClass} />
+                </div>
               </div>
             </div>
+
+            <p id="tax-intl" class="mt-5 text-sm leading-relaxed text-white/50" hidden>{t.taxIntl}</p>
           </fieldset>
 
           <fieldset>
@@ -234,15 +310,14 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-[#1EBBF0
               <label class="flex cursor-pointer items-start gap-3 text-sm text-white/70">
                 <input type="checkbox" name="privacy" required value="agreed"
                   class="mt-0.5 size-4 shrink-0 rounded border-white/20 bg-white/[0.03] accent-[#1EBBF0]" />
-                <span>{t.privacy}</span>
+                <span>{t.privacy}{req}</span>
               </label>
 
-              <!-- 청약철회 제한 — 주문 "전"에 개별 고지하고 동의를 받아야 법적 효력이 있다 -->
               <div class="rounded-lg border border-amber-400/25 bg-amber-400/[0.06] p-4">
                 <label class="flex cursor-pointer items-start gap-3 text-sm text-amber-100">
                   <input type="checkbox" name="agreeTerms" required value="agreed"
                     class="mt-0.5 size-4 shrink-0 rounded border-amber-300/40 bg-black/20 accent-amber-400" />
-                  <span>{t.agreeTerms}</span>
+                  <span>{t.agreeTerms}{req}</span>
                 </label>
                 <p class="mt-3 pl-7 text-xs leading-relaxed text-amber-200/60">{t.agreeDetail}</p>
                 <a href={lhref('/refund')} target="_blank" rel="noopener"
@@ -252,7 +327,6 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-[#1EBBF0
           </fieldset>
         </form>
 
-        <!-- ── 주문 요약 ─────────────────────────── -->
         <aside class="lg:sticky lg:top-24 lg:self-start">
           <div class="rounded-xl border border-white/10 bg-white/[0.02] p-6">
             <p class={legendClass}>{t.secSummary}</p>
@@ -267,9 +341,9 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-[#1EBBF0
             )}
 
             <dl class="mt-5 space-y-2 text-sm">
-              <div class="flex justify-between text-white/50">
-                <dt>{t.shipping}</dt>
-                <dd>{isKo ? company.shipFeeKo : (company.shipFeeEn || company.shipFeeKo)}</dd>
+              <div class="flex justify-between gap-4 text-white/50">
+                <dt class="shrink-0">{t.shipping}</dt>
+                <dd id="ship-fee" class="text-right text-xs leading-relaxed">{isKo ? company.shipFeeKo : (company.shipFeeEn || company.shipFeeKo)}</dd>
               </div>
             </dl>
 
@@ -297,14 +371,17 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-[#1EBBF0
       </div>
     )}
 
-    <!-- 서버가 아는 고정가 카탈로그 (표시용 — 실제 금액은 서버가 재계산) -->
     <script type="application/json" id="catalog" is:inline set:html={JSON.stringify(products)}></script>
+    <script type="application/json" id="ship-fees" is:inline set:html={JSON.stringify({
+      domestic: isKo ? company.shipFeeKo : (company.shipFeeEn || company.shipFeeKo),
+      intl: isKo ? company.shipFeeIntlKo : (company.shipFeeIntlEn || company.shipFeeIntlKo),
+    })}></script>
   </section>
 </BaseLayout>
 
 <script>
   type Item = { sku: string; qty: number };
-  type Product = { sku: string; name: string; price: number };
+  type Product = { sku: string; name: string; price: number; ship: boolean };
 
   const form = document.getElementById('checkout-form') as HTMLFormElement | null;
   if (form) {
@@ -313,19 +390,26 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-[#1EBBF0
     const CART_KEY = 'vanam_cart';
 
     const catalog: Product[] = JSON.parse(document.getElementById('catalog')?.textContent ?? '[]');
+    const fees = JSON.parse(document.getElementById('ship-fees')?.textContent ?? '{}');
     const byId = new Map(catalog.map((p) => [p.sku, p]));
 
+    const $ = (id: string) => document.getElementById(id)!;
+    const $i = (id: string) => document.getElementById(id) as HTMLInputElement;
+
     const linesEl = document.getElementById('summary-lines');
-    const totalEl = document.getElementById('summary-total')!;
-    const emptyEl = document.getElementById('empty-cart')!;
-    const btn = document.getElementById('pay-btn') as HTMLButtonElement;
-    const label = document.getElementById('pay-label')!;
-    const statusEl = document.getElementById('pay-status')!;
+    const totalEl = $('summary-total');
+    const emptyEl = $('empty-cart');
+    const btn = $('pay-btn') as HTMLButtonElement;
+    const label = $('pay-label');
+    const statusEl = $('pay-status');
+    const feeEl = $('ship-fee');
 
     const won = (n: number) => `₩${n.toLocaleString('ko-KR')}`;
 
-    // 장바구니 → 요약 (견적 주문은 서버 렌더된 값을 그대로 쓴다)
+    // ── 장바구니 → 요약 · 배송 필요 여부 판단 ──────────
     let items: Item[] = [];
+    let needsShipping = quoteId ? M.quoteShip === 'true' : false;
+
     if (!quoteId) {
       try { items = JSON.parse(localStorage.getItem(CART_KEY) ?? '[]'); } catch { items = []; }
       items = items.filter((i) => byId.has(i.sku) && i.qty > 0);
@@ -336,6 +420,7 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-[#1EBBF0
         const p = byId.get(i.sku)!;
         const sub = p.price * i.qty;
         total += sub;
+        if (p.ship) needsShipping = true;
         const li = document.createElement('li');
         li.className = 'flex justify-between gap-3';
         li.innerHTML =
@@ -351,23 +436,69 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-[#1EBBF0
       }
     }
 
-    // 배송지: 주문자와 동일
-    const shipSame = document.getElementById('ship-same') as HTMLInputElement;
-    const shipPerson = document.getElementById('ship-person')!;
-    shipSame.addEventListener('change', () => { shipPerson.hidden = shipSame.checked; });
+    // 배송이 필요 없는 주문이면 배송지 섹션을 감춘다
+    $('ship-section').hidden = !needsShipping;
+    $('no-ship-note').hidden = needsShipping;
 
-    // 세금계산서 필드 토글
-    const taxWant = document.getElementById('tax-want') as HTMLInputElement;
-    const taxFields = document.getElementById('tax-fields')!;
-    const taxReq = ['taxBizNo', 'taxBizName', 'taxEmail'];
-    taxWant.addEventListener('change', () => {
-      taxFields.hidden = !taxWant.checked;
-      for (const id of taxReq) {
-        (document.getElementById(id) as HTMLInputElement).required = taxWant.checked;
+    const setReq = (id: string, on: boolean) => {
+      const el = document.getElementById(id) as HTMLInputElement | null;
+      if (el) el.required = on;
+    };
+
+    // ── 국가에 따라 주소 폼·세금계산서 전환 ────────────
+    const countrySel = document.getElementById('shipCountry') as HTMLSelectElement;
+    const taxWant = $i('tax-want');
+
+    function applyCountry() {
+      if (!needsShipping) {
+        feeEl.textContent = fees.domestic;
+        return;
       }
+      const c = countrySel.value;
+      const isKR = c === 'KR';
+
+      $('country-other-wrap').hidden = c !== 'OTHER';
+      setReq('shipCountryOther', c === 'OTHER');
+
+      $('addr-kr').hidden = !isKR;
+      $('addr-intl').hidden = isKR;
+
+      setReq('shipZip', isKR);
+      setReq('shipAddr1', isKR);
+      setReq('shipAddr1Intl', !isKR);
+      setReq('shipCity', !isKR);
+      setReq('shipZipIntl', !isKR);
+
+      // 세금계산서는 한국 사업자만
+      $('tax-kr').hidden = !isKR;
+      $('tax-intl').hidden = isKR;
+      if (!isKR) {
+        taxWant.checked = false;
+        $('tax-fields').hidden = true;
+        for (const id of ['taxBizNo', 'taxBizName', 'taxEmail']) setReq(id, false);
+      }
+
+      feeEl.textContent = isKR ? fees.domestic : fees.intl;
+    }
+    countrySel?.addEventListener('change', applyCountry);
+    applyCountry();
+
+    // ── 배송지: 주문자와 동일 ──────────────────────────
+    const shipSame = $i('ship-same');
+    function applySame() {
+      $('ship-person').hidden = shipSame.checked;
+      setReq('shipName', !shipSame.checked);
+      setReq('shipPhone', !shipSame.checked);
+    }
+    shipSame?.addEventListener('change', applySame);
+    applySame();
+
+    // ── 세금계산서 ─────────────────────────────────────
+    taxWant?.addEventListener('change', () => {
+      $('tax-fields').hidden = !taxWant.checked;
+      for (const id of ['taxBizNo', 'taxBizName', 'taxEmail']) setReq(id, taxWant.checked);
     });
 
-    // 사업자등록번호 체크섬 (서버에서도 검증하지만 즉시 피드백)
     function validBizNo(raw: string) {
       const n = raw.replace(/\D/g, '');
       if (n.length !== 10) return false;
@@ -378,11 +509,12 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-[#1EBBF0
       return (10 - (sum % 10)) % 10 === Number(n[9]);
     }
 
-    function setStatus(msg: string, ok: boolean) {
+    const setStatus = (msg: string, ok: boolean) => {
       statusEl.textContent = msg;
       statusEl.style.color = ok ? '#1EBBF0' : '#F87171';
-    }
+    };
 
+    // ── 제출 ───────────────────────────────────────────
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
 
@@ -392,20 +524,31 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-[#1EBBF0
       const data = Object.fromEntries(new FormData(form).entries()) as Record<string, string>;
       delete data.vanam_hp_email;
 
-      if (taxWant.checked && !validBizNo(data.taxBizNo ?? '')) {
+      const isKR = !needsShipping || countrySel.value === 'KR';
+
+      if (taxWant.checked && isKR && !validBizNo(data.taxBizNo ?? '')) {
         setStatus(M.msgBiz!, false);
         return;
       }
 
-      // 배송지가 주문자와 동일하면 채워 보낸다
-      if (shipSame.checked) {
-        data.shipName = data.buyerName;
-        data.shipPhone = data.buyerPhone ?? '';
+      if (needsShipping) {
+        if (shipSame.checked) {
+          data.shipName = data.buyerName;
+          data.shipPhone = data.buyerPhone ?? '';
+        }
+        // 해외 주소 입력칸은 name 을 두지 않았다 (국내 칸과 이름이 겹치면 빈 값이 덮어쓴다).
+        // 해외일 때만 여기서 값을 옮겨 담는다.
+        if (!isKR) {
+          data.shipAddr1 = $i('shipAddr1Intl').value.trim();
+          data.shipAddr2 = $i('shipAddr2Intl').value.trim();
+          data.shipZip = $i('shipZipIntl').value.trim();
+        }
       }
 
       const payload: Record<string, unknown> = {
         ...data,
-        taxInvoice: taxWant.checked,
+        needsShipping,
+        taxInvoice: taxWant.checked && isKR,
         locale: document.documentElement.lang || 'en',
       };
       if (quoteId) payload.inquiryId = quoteId;
@@ -424,8 +567,6 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-[#1EBBF0
         const j = await res.json();
         if (!res.ok || !j.ok) throw new Error(j.error ?? res.status);
 
-        // 결제 연동 전: 주문번호를 보여주고 장바구니를 비운다.
-        // 토스 연동 후에는 여기서 결제창을 띄운다.
         if (!quoteId) localStorage.removeItem(CART_KEY);
         const base = document.documentElement.lang === 'ko' ? '/ko' : '';
         location.href = `${base}/order/done?id=${encodeURIComponent(j.orderId)}`;

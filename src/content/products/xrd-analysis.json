@@ -27,5 +27,6 @@
   "shipping": "시료는 고객이 발송, 결과는 이메일 전달",
   "shipping_en": "Customer ships the sample; report delivered by email",
   "published": true,
-  "order": 2
+  "order": 2,
+  "requiresShipping": false
 }

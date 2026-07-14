@@ -50,6 +50,8 @@ export default config({
         shipLeadEn: fields.text({ label: '발송 소요 (영문)', multiline: true }),
         shipCarrierKo: fields.text({ label: '택배사 (국문)' }),
         shipCarrierEn: fields.text({ label: '택배사 (영문)' }),
+        shipFeeIntlKo: fields.text({ label: '해외 배송 안내 (국문)', multiline: true }),
+        shipFeeIntlEn: fields.text({ label: '해외 배송 안내 (영문)', multiline: true }),
 
         withdrawDays: fields.integer({ label: '청약철회 기간 (일)', defaultValue: 7, validation: { isRequired: true } }),
         refundDays: fields.integer({ label: '환불 처리 기간 (영업일)', defaultValue: 3, validation: { isRequired: true } }),
@@ -168,6 +170,11 @@ export default config({
             { label: '견적가 (문의 후 책정)', value: 'quote' },
           ],
           defaultValue: 'fixed',
+        }),
+        requiresShipping: fields.checkbox({
+          label: '실물 배송 필요',
+          description: '체크 해제하면 주문서에서 배송지를 받지 않습니다. (예: 분석 서비스 — 고객이 시료를 보내오는 경우)',
+          defaultValue: true,
         }),
         price: fields.number({
           label: '판매가 (원, 부가세 포함)',

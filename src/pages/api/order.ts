@@ -7,6 +7,7 @@ import type { APIRoute } from 'astro';
 import { getCollection } from 'astro:content';
 import { env as cfEnv } from 'cloudflare:workers';
 import { db, newId, nowIso } from '../../lib/db';
+import { isKnownCountry } from '../../lib/countries';
 
 export const prerender = false;
 
@@ -56,15 +57,41 @@ export const POST: APIRoute = async ({ request }) => {
   if (str(body.agreeTerms) !== 'agreed') return json({ ok: false, error: 'need_terms' }, 400);
 
   // ── 3) 배송지 ──────────────────────────────────────
+  // 실물 배송이 필요한 주문이면 주소가 필수다. (분석 서비스처럼 배송이 없으면 생략)
+  const needsShipping = body.needsShipping !== false;
   const shipName = str(body.shipName).slice(0, MAX);
   const shipPhone = str(body.shipPhone).slice(0, MAX);
   const shipZip = str(body.shipZip).slice(0, 20);
   const shipAddr1 = str(body.shipAddr1).slice(0, MAX);
   const shipAddr2 = str(body.shipAddr2).slice(0, MAX);
+  const shipCity = str(body.shipCity).slice(0, MAX);
+  const shipState = str(body.shipState).slice(0, MAX);
   const shipMemo = str(body.shipMemo).slice(0, 1000);
 
+  let shipCountry = str(body.shipCountry).toUpperCase().slice(0, 40);
+  if (needsShipping) {
+    if (!shipCountry || !isKnownCountry(shipCountry)) {
+      return json({ ok: false, error: 'bad_country' }, 400);
+    }
+    if (shipCountry === 'OTHER') {
+      const other = str(body.shipCountryOther).slice(0, 60);
+      if (!other) return json({ ok: false, error: 'missing_country' }, 400);
+      shipCountry = other; // 국가명을 그대로 저장
+    }
+    if (!shipName || !shipPhone) return json({ ok: false, error: 'missing_recipient' }, 400);
+    if (!shipAddr1 || !shipZip) return json({ ok: false, error: 'missing_address' }, 400);
+    // 해외는 도시가 필수 (한국 주소는 도로명에 포함됨)
+    if (shipCountry !== 'KR' && !shipCity) return json({ ok: false, error: 'missing_city' }, 400);
+  }
+
+  // 연락처는 필수 (배송·통관 연락용)
+  if (!buyerPhone) return json({ ok: false, error: 'missing_phone' }, 400);
+
   // ── 4) 세금계산서 ──────────────────────────────────
-  const taxInvoice = body.taxInvoice === true || str(body.taxInvoice) === 'on';
+  // 세금계산서는 국내 사업자만 (해외 주문은 상업 송장으로 대체)
+  const taxInvoice =
+    (body.taxInvoice === true || str(body.taxInvoice) === 'on') &&
+    (!needsShipping || shipCountry === 'KR');
   const taxBizNo = str(body.taxBizNo).slice(0, 20);
   const taxBizName = str(body.taxBizName).slice(0, MAX);
   const taxCeo = str(body.taxCeo).slice(0, MAX);
@@ -157,16 +184,18 @@ export const POST: APIRoute = async ({ request }) => {
         `INSERT INTO orders
            (id, status, amount, currency,
             buyer_name, buyer_email, buyer_phone, buyer_company,
-            ship_name, ship_phone, ship_zip, ship_addr1, ship_addr2, ship_memo,
+            needs_shipping, ship_name, ship_phone, ship_country, ship_zip,
+            ship_addr1, ship_addr2, ship_city, ship_state, ship_memo,
             tax_invoice, tax_biz_no, tax_biz_name, tax_ceo, tax_email,
             inquiry_id, agreed_terms, locale, created_at)
-         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       )
       .bind(
         orderId, 'pending', amount, 'KRW',
-        buyerName, buyerEmail, buyerPhone || null, buyerCompany || null,
-        shipName || null, shipPhone || null, shipZip || null,
-        shipAddr1 || null, shipAddr2 || null, shipMemo || null,
+        buyerName, buyerEmail, buyerPhone, buyerCompany || null,
+        needsShipping ? 1 : 0,
+        shipName || null, shipPhone || null, needsShipping ? shipCountry : null, shipZip || null,
+        shipAddr1 || null, shipAddr2 || null, shipCity || null, shipState || null, shipMemo || null,
         taxInvoice ? 1 : 0, taxInvoice ? taxBizNo : null, taxInvoice ? taxBizName : null,
         taxInvoice ? (taxCeo || null) : null, taxInvoice ? taxEmail : null,
         inquiryId || null, 1, locale, created,
@@ -207,7 +236,9 @@ export const POST: APIRoute = async ({ request }) => {
     `금액: ₩${amount.toLocaleString('ko-KR')}`,
     ...lines.map((l) => `· ${l.name} × ${l.qty} = ₩${l.subtotal.toLocaleString('ko-KR')}`),
     `주문자: ${buyerName}${buyerCompany ? ` (${buyerCompany})` : ''} · ${buyerEmail}${buyerPhone ? ` · ${buyerPhone}` : ''}`,
-    shipAddr1 ? `배송: (${shipZip}) ${shipAddr1} ${shipAddr2}`.trim() : '배송지 없음',
+    needsShipping
+      ? `배송[${shipCountry}]: ${shipName} · ${shipPhone}\n  (${shipZip}) ${[shipAddr1, shipAddr2, shipCity, shipState].filter(Boolean).join(', ')}`
+      : '배송 없음 (분석 서비스)',
     taxInvoice ? `📄 세금계산서 요청 — ${taxBizName} (${taxBizNo}) → ${taxEmail}` : '세금계산서: 미요청',
     inquiryId ? `견적: ${inquiryId}` : '',
     `(${locale} · ${created})`,

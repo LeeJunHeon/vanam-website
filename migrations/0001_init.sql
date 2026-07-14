@@ -41,11 +41,15 @@ CREATE TABLE IF NOT EXISTS orders (
   buyer_phone   TEXT,
   buyer_company TEXT,
 
+  needs_shipping INTEGER NOT NULL DEFAULT 1,   -- 실물 배송이 필요한 주문인가
   ship_name     TEXT,
   ship_phone    TEXT,
+  ship_country  TEXT,                         -- ISO 2자리 (KR, US, DE …)
   ship_zip      TEXT,
-  ship_addr1    TEXT,
-  ship_addr2    TEXT,
+  ship_addr1    TEXT,                         -- 주소 / Address line 1
+  ship_addr2    TEXT,                         -- 상세 주소 / Address line 2
+  ship_city     TEXT,                         -- 해외 전용 (국내는 주소에 포함)
+  ship_state    TEXT,                         -- 해외 전용 (주/도)
   ship_memo     TEXT,
 
   tax_invoice   INTEGER NOT NULL DEFAULT 0,    -- 세금계산서 요청(0/1)

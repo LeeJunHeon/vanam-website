@@ -31,5 +31,6 @@
   "shipping": "택배 발송 (배송비 별도 안내)",
   "shipping_en": "Shipped by courier (shipping fee quoted separately)",
   "published": true,
-  "order": 1
+  "order": 1,
+  "requiresShipping": true
 }

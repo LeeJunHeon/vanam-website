@@ -61,10 +61,27 @@ const SCHEMA = [
   `CREATE INDEX IF NOT EXISTS idx_items_order ON order_items(order_id)`,
 ];
 
+// 이미 만들어진 테이블에 컬럼을 덧붙일 때 쓴다.
+// CREATE TABLE IF NOT EXISTS 는 기존 테이블을 바꾸지 않으므로 ALTER 가 필요하고,
+// ALTER 는 컬럼이 이미 있으면 에러를 내므로 개별적으로 삼킨다. (D1엔 IF NOT EXISTS가 없다)
+const MIGRATIONS = [
+  `ALTER TABLE orders ADD COLUMN ship_country TEXT`,
+  `ALTER TABLE orders ADD COLUMN ship_city TEXT`,
+  `ALTER TABLE orders ADD COLUMN ship_state TEXT`,
+  `ALTER TABLE orders ADD COLUMN needs_shipping INTEGER NOT NULL DEFAULT 1`,
+];
+
 export async function ensureSchema(db: D1): Promise<void> {
   if (!schemaReady) {
     schemaReady = (async () => {
       for (const sql of SCHEMA) await db.prepare(sql).run();
+      for (const sql of MIGRATIONS) {
+        try {
+          await db.prepare(sql).run();
+        } catch {
+          /* 컬럼이 이미 있으면 무시 */
+        }
+      }
     })().catch((e) => {
       schemaReady = null; // 실패하면 다음 요청에서 재시도
       throw e;
