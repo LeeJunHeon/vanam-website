@@ -1,12 +1,28 @@
 // VANAM 콘텐츠 관리자 (Keystatic) 설정
-// - 접속: 개발 중 http://localhost:4321/keystatic
-// - 저장 방식: 아래 storage 참고. local = 파일에 직접 저장(개발/사내 Mac mini용),
-//   배포 후 편집자가 웹에서 쓰려면 github 모드로 전환:
-//   storage: { kind: 'github', repo: { owner: 'LeeJunHeon', name: 'vanam-website' } }
+//
+// 저장 방식: Keystatic Cloud
+//   · 편집자는 배포된 사이트의 /keystatic 에서 바로 편집한다 (Mac mini 불필요).
+//   · 저장하면 Keystatic 이 GitHub 에 직접 커밋 → Cloudflare 가 자동 재배포.
+//     (SSH 로 들어가 git commit/push 하던 과정이 사라진다)
+//   · 인증은 keystatic.cloud 가 처리한다. 편집자에게 GitHub 계정이 없어도 된다.
+//   · 무료 플랜: 팀당 3명까지.
+//
+// ⚠️ 왜 github 모드가 아니라 cloud 모드인가 — 실측으로 확인했다:
+//     cloud  모드 + 시크릿 없음 → 404 (설계대로. 서버 API 가 아무것도 안 한다)
+//     github 모드 + 시크릿 없음 → 💣 "Missing required config ... clientId, clientSecret, secret"
+//   github 모드는 저 시크릿 3개가 서버에 있어야 하는데, @keystatic/astro 는 그걸
+//   `Astro.locals.runtime.env` 로 읽는다. 그 API 는 Astro 6 에서 제거됐다
+//   (우리가 이미 폼 전송 500 으로 겪은 지뢰). cloud 모드는 그 경로를 아예 밟지 않는다.
+//
+// ⚠️ 콘텐츠 읽기/쓰기는 브라우저가 api.github.com/graphql 로 직접 한다.
+//   워커는 관여하지 않으므로 Cloudflare 의 subrequest 한도(50/요청)와 무관하다.
+//
+// ⚠️ 저장소를 VANAM Org 로 옮기면 Keystatic Cloud 프로젝트도 다시 연결해야 한다.
 import { config, fields, collection, singleton } from '@keystatic/core';
 
 export default config({
-  storage: { kind: 'local' },
+  storage: { kind: 'cloud' },
+  cloud: { project: 'vanam/vanam-website' },
 
   ui: {
     brand: { name: 'VANAM 콘텐츠 관리' },
