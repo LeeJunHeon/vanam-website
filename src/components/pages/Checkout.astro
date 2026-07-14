@@ -4,7 +4,8 @@
 //   /checkout?quote=INQ-… → 관리자가 금액을 책정한 견적으로 주문
 //
 // ⚠️ 금액은 화면에 "표시"만 하고, 실제 결제 금액은 서버(/api/order)가 다시 계산한다.
-export const prerender = false;
+// ⚠️ prerender=false 는 이 컴포넌트가 아니라 '페이지 파일'(src/pages/...)에 있어야 한다.
+//    컴포넌트에 써두면 Astro가 읽지 않아 정적 생성되고, 쿼리스트링(?id=, ?quote=)을 못 읽는다.
 
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getCollection } from 'astro:content';
