@@ -290,5 +290,31 @@ const navLabel = (item) => currentLocale === 'ko' ? item.labelKo : item.label;
       document.addEventListener('input', clear, true);
       document.addEventListener('change', clear, true);
     </script>
+    <!--
+      구 워드프레스의 해시 링크를 새 주소로 넘긴다.
+      해시(#team)는 서버로 전송되지 않아 _redirects 로는 처리할 수 없다. 브라우저에서만 가능하다.
+        구:  vanam.co.kr/#team              →  신: /about#team
+        구:  vanam.co.kr/technology-solution/#core  →  _redirects 가 /technology 로 보내고, 여기서 #core 를 붙인다
+    -->
+    <script is:inline>
+      (function () {
+        var h = location.hash.slice(1);
+        if (!h) return;
+        var p = location.pathname.replace(/\/$/, '');
+        var ko = p.indexOf('/ko') === 0;
+        var base = ko ? '/ko' : '';
+        var home = p === base || p === '';
+
+        // 홈에 있던 구 앵커 → /about
+        var ABOUT = ['vision', 'team', 'history', 'achievement', 'collaboration'];
+        if (home && ABOUT.indexOf(h) >= 0) {
+          location.replace(base + '/about#' + h);
+          return;
+        }
+        // 이미 목적지 페이지인데 해당 요소가 있으면 스크롤만 맞춘다
+        var el = document.getElementById(h);
+        if (el) el.scrollIntoView();
+      })();
+    </script>
   </body>
 </html>

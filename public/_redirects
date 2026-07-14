@@ -1,0 +1,32 @@
+# 구 워드프레스 → 새 사이트 (Cloudflare Workers Static Assets)
+# 형식: <구 경로> <새 경로> <상태코드>
+# 301 = 영구 이동. 검색엔진이 순위를 새 주소로 넘긴다.
+#
+# ⚠️ 해시(#team 등)는 서버로 전송되지 않으므로 여기서 처리할 수 없다.
+#    → BaseLayout 의 스크립트가 브라우저에서 처리한다.
+
+# ── 기술 ────────────────────────────────────────────
+/technology-solution        /technology   301
+/technology-solution/*      /technology   301
+
+# ── 뉴스 (News / Updates 두 탭 모두 뉴스로) ──────────
+/news-updates/news          /news         301
+/news-updates/news/*        /news         301
+/news-updates/update        /news         301
+/news-updates/update/*      /news         301
+
+# ── 문의 ────────────────────────────────────────────
+/news-updates/contact       /contact      301
+/news-updates/contact/*     /contact      301
+
+# ── 상위 경로 (구체적 규칙 다음에 와야 한다) ─────────
+/news-updates               /news         301
+/news-updates/*             /news         301
+
+# ── 워드프레스 RSS 구독자 ───────────────────────────
+/feed                       /news         301
+/feed/*                     /news         301
+/comments/feed              /news         301
+
+# ⚠️ /wp-admin, /wp-login.php, /xmlrpc.php 는 일부러 리다이렉트하지 않는다.
+#    봇이 끊임없이 두드리는 경로라, 응답을 주면 "여기 뭔가 있다"는 신호가 된다. 404로 둔다.
