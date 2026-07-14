@@ -7,10 +7,9 @@ import sitemap from '@astrojs/sitemap';
 import react from '@astrojs/react';
 import keystatic from '@keystatic/astro';
 import cloudflare from '@astrojs/cloudflare';
-import basicSsl from '@vitejs/plugin-basic-ssl';
 
-// Keystatic 관리자는 dev에서 로컬 파일을 직접 읽고 써야 하므로(로컬 모드),
-// dev 서버는 순수 Node로 돌리고 Cloudflare 어댑터는 빌드(astro build)에만 적용한다.
+// dev 서버는 순수 Node로 돌리고, Cloudflare 어댑터는 빌드(astro build)에만 적용한다.
+// (dev 에서 workerd 를 쓰면 React 가 CJS 로 로드되며 깨진다)
 const isBuild = process.argv.includes('build');
 
 // dev 서버는 순수 Node로 돌기 때문에 workerd 내장 모듈인 'cloudflare:workers'가 없다.
@@ -30,8 +29,8 @@ const cloudflareWorkersDevShim = {
 export default defineConfig({
   site: 'https://vanam.co.kr',
 
-  // Cloudflare 어댑터: 일반 페이지는 지금처럼 전부 정적으로 미리 생성되고,
-  // Keystatic 관리자(/keystatic, /api/keystatic)만 서버에서 동작한다.
+  // Cloudflare 어댑터: 일반 페이지는 전부 정적으로 미리 생성되고,
+  // 주문·문의·관리자·Keystatic UI 만 서버(워커)에서 동작한다.
   adapter: isBuild
     ? cloudflare({
         // 이미지는 기존처럼 빌드 시점에 webp로 최적화 (Cloudflare 유료 이미지 리사이징 불필요)
@@ -47,10 +46,13 @@ export default defineConfig({
   },
 
   vite: {
-    // dev 서버를 자체서명 HTTPS로 제공: Keystatic이 쓰는 crypto.subtle이
-    // 보안 컨텍스트(HTTPS/localhost) 전용이라, 사내망 편집자가
-    // https://192.168.0.132:4321 로 접속할 수 있게 한다. 빌드에는 미적용.
-    plugins: isBuild ? [tailwindcss()] : [tailwindcss(), basicSsl(), cloudflareWorkersDevShim],
+    // ⚠️ basicSsl(자체서명 HTTPS)은 제거했다.
+    //   원래는 사내망 편집자가 https://192.168.0.132:4321/keystatic 으로 들어오게 하려던 것이었다
+    //   (Keystatic 이 쓰는 crypto.subtle 은 보안 컨텍스트 전용이라 http://192.168.0.132 로는 안 된다).
+    //   이제 편집자는 배포된 사이트의 /keystatic 을 쓰므로 그 목적이 사라졌고,
+    //   오히려 Keystatic Cloud 의 로컬 허용 주소가 http://127.0.0.1 이라 HTTPS 면 인증이 안 맞는다.
+    //   localhost/127.0.0.1 은 HTTP 여도 보안 컨텍스트라 crypto.subtle 이 그대로 동작한다.
+    plugins: isBuild ? [tailwindcss()] : [tailwindcss(), cloudflareWorkersDevShim],
   },
 
   integrations: [

@@ -23,7 +23,5 @@
     "react-dom": "^19.2.7",
     "tailwindcss": "^4.3.0"
   },
-  "devDependencies": {
-    "@vitejs/plugin-basic-ssl": "^2.3.0"
-  }
+  "devDependencies": {}
 }
