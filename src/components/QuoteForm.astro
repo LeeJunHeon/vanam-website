@@ -168,7 +168,7 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
 
   function setStatus(msg: string, ok: boolean) {
     statusEl.textContent = msg;
-    statusEl.style.color = ok ? 'var(--color-accent)' : "#FF6B6B";
+    statusEl.style.color = ok ? 'var(--color-accent)' : 'var(--color-danger)';
   }
 
   // 상단 "견적 요청" 버튼 → 폼으로 부드럽게 스크롤 + 첫 칸에 포커스

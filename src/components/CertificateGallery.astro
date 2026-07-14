@@ -49,7 +49,7 @@ const kindLabel = (k: string) =>
             <li class="v-reveal">
               <button type="button" class="cert-thumb group block w-full text-left" data-index={i}
                 aria-label={`${label(c)} — ${isKo ? '크게 보기' : 'view larger'}`}>
-                <div class="overflow-hidden rounded-lg border border-ink/10 bg-white transition group-hover:border-accent">
+                <div class="overflow-hidden rounded-lg border border-ink/10 bg-plate transition group-hover:border-accent">
                   <Image src={img} alt={label(c)} width={420} height={594}
                     class="h-auto w-full object-contain transition duration-500 group-hover:scale-[1.03]" />
                 </div>
@@ -65,25 +65,25 @@ const kindLabel = (k: string) =>
 
     <!-- 라이트박스 -->
     <div id="cert-lightbox" hidden
-      class="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm"
+      class="fixed inset-0 z-[100] flex items-center justify-center bg-overlay/90 p-4 backdrop-blur-sm"
       role="dialog" aria-modal="true" aria-label={heading}>
       <button type="button" id="cert-close" aria-label={closeLabel}
-        class="absolute right-4 top-4 z-10 rounded-lg border border-white/20 px-3 py-1.5 text-sm text-white/70 transition hover:border-white/50 hover:text-white">✕</button>
+        class="absolute right-4 top-4 z-10 rounded-lg border border-onoverlay/20 px-3 py-1.5 text-sm text-onoverlay/70 transition hover:border-onoverlay/50 hover:text-onoverlay">✕</button>
 
       <button type="button" id="cert-prev" aria-label={prevLabel}
-        class="absolute left-2 z-10 rounded-full border border-white/20 bg-black/40 p-3 text-white/70 transition hover:border-white/50 hover:text-white md:left-6">
+        class="absolute left-2 z-10 rounded-full border border-onoverlay/20 bg-overlay/40 p-3 text-onoverlay/70 transition hover:border-onoverlay/50 hover:text-onoverlay md:left-6">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
       </button>
       <button type="button" id="cert-next" aria-label={nextLabel}
-        class="absolute right-2 z-10 rounded-full border border-white/20 bg-black/40 p-3 text-white/70 transition hover:border-white/50 hover:text-white md:right-6">
+        class="absolute right-2 z-10 rounded-full border border-onoverlay/20 bg-overlay/40 p-3 text-onoverlay/70 transition hover:border-onoverlay/50 hover:text-onoverlay md:right-6">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </button>
 
       <figure class="flex max-h-full max-w-4xl flex-col items-center">
-        <img id="cert-img" src="" alt="" class="max-h-[78vh] w-auto rounded-lg bg-white object-contain shadow-2xl" />
+        <img id="cert-img" src="" alt="" class="max-h-[78vh] w-auto rounded-lg bg-plate object-contain shadow-2xl" />
         <figcaption class="mt-4 text-center">
-          <p id="cert-caption" class="text-base font-medium text-white"></p>
-          <p id="cert-meta" class="mt-1 text-sm text-white/50"></p>
+          <p id="cert-caption" class="text-base font-medium text-onoverlay"></p>
+          <p id="cert-meta" class="mt-1 text-sm text-onoverlay/50"></p>
         </figcaption>
       </figure>
     </div>

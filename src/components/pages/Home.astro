@@ -96,14 +96,14 @@ const history = (await getCollection('history')).sort((a, b) => a.data.order - b
 <style>
   .vn-grid {
     background-image:
-      linear-gradient(rgba(30,187,240,0.06) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(30,187,240,0.06) 1px, transparent 1px);
+      linear-gradient(var(--v-grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--v-grid-line) 1px, transparent 1px);
     background-size: 42px 42px;
     -webkit-mask-image: radial-gradient(ellipse 70% 60% at 25% 20%, #000 35%, transparent 100%);
     mask-image: radial-gradient(ellipse 70% 60% at 25% 20%, #000 35%, transparent 100%);
   }
-  .vn-glow-a { background: radial-gradient(circle, rgba(30,187,240,0.20), transparent 70%); animation: vnDriftA 14s ease-in-out infinite; }
-  .vn-glow-b { background: radial-gradient(circle, rgba(90,80,220,0.15), transparent 70%); animation: vnDriftB 16s ease-in-out infinite; }
+  .vn-glow-a { background: radial-gradient(circle, var(--v-glow-a), transparent 70%); animation: vnDriftA 14s ease-in-out infinite; }
+  .vn-glow-b { background: radial-gradient(circle, var(--v-glow-b), transparent 70%); animation: vnDriftB 16s ease-in-out infinite; }
   @keyframes vnDriftA { 0%,100% { transform: translate(0,0); } 50% { transform: translate(46px,26px); } }
   @keyframes vnDriftB { 0%,100% { transform: translate(0,0); } 50% { transform: translate(-38px,-20px); } }
   .vn-bounce { animation: vnBounce 1.8s ease-in-out infinite; }

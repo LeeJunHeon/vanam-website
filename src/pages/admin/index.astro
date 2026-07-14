@@ -66,11 +66,11 @@ if (authed) {
 
 // 주문 상태 (결제 연동 전에는 관리자가 통장을 확인하고 '결제 완료'로 바꾼다)
 const ORDER_STATUS: { value: string; label: string; color: string }[] = [
-  { value: 'pending',   label: '결제 대기', color: 'border-amber-400/30 bg-amber-400/10 text-amber-300' },
+  { value: 'pending',   label: '결제 대기', color: 'border-warn/30 bg-warn/10 text-warn' },
   { value: 'paid',      label: '결제 완료', color: 'border-accent/30 bg-accent/10 text-accent' },
-  { value: 'preparing', label: '제작 중',   color: 'border-violet-400/30 bg-violet-400/10 text-violet-300' },
-  { value: 'shipped',   label: '발송 완료', color: 'border-emerald-400/30 bg-emerald-400/10 text-emerald-300' },
-  { value: 'done',      label: '완료',      color: 'border-emerald-400/30 bg-emerald-400/10 text-emerald-300' },
+  { value: 'preparing', label: '제작 중',   color: 'border-info/30 bg-info/10 text-info' },
+  { value: 'shipped',   label: '발송 완료', color: 'border-ok/30 bg-ok/10 text-ok' },
+  { value: 'done',      label: '완료',      color: 'border-ok/30 bg-ok/10 text-ok' },
   { value: 'cancelled', label: '취소',      color: 'border-ink/10 bg-ink/5 text-ink/40' },
   { value: 'refunded',  label: '환불',      color: 'border-ink/10 bg-ink/5 text-ink/40' },
 ];
@@ -87,8 +87,8 @@ const STATUS_KO: Record<string, string> = {
 };
 const STATUS_COLOR: Record<string, string> = {
   new: 'bg-accent/15 text-accent border-accent/30',
-  quoted: 'bg-amber-400/15 text-amber-300 border-amber-400/30',
-  replied: 'bg-emerald-400/15 text-emerald-300 border-emerald-400/30',
+  quoted: 'bg-warn/15 text-warn border-warn/30',
+  replied: 'bg-ok/15 text-ok border-ok/30',
   closed: 'bg-ink/5 text-ink/40 border-ink/10',
 };
 
@@ -130,13 +130,13 @@ const spec = (r: Row) =>
                   class="w-full rounded-lg bg-brand px-4 py-3 font-semibold text-onbrand transition hover:brightness-110">
                   로그인
                 </button>
-                <p id="login-err" class="text-sm text-red-400"></p>
+                <p id="login-err" class="text-sm text-danger"></p>
               </form>
             </>
           ) : (
-            <div class="mt-6 rounded-lg border border-amber-400/30 bg-amber-400/10 p-4 text-sm leading-relaxed text-amber-200">
+            <div class="mt-6 rounded-lg border border-warn/30 bg-warn/10 p-4 text-sm leading-relaxed text-warn">
               <p class="font-semibold">관리자 비밀번호가 설정되지 않았습니다.</p>
-              <p class="mt-2 text-amber-200/80">
+              <p class="mt-2 text-warn/80">
                 Cloudflare 워커 → Settings → Variables and secrets 에서
                 <code class="rounded bg-ink/[0.07] px-1">ADMIN_PASSWORD</code> 를
                 <b>Secret</b> 타입으로 등록한 뒤 재배포하세요. (8자 이상)
@@ -159,7 +159,7 @@ const spec = (r: Row) =>
         </header>
 
         {dbError && (
-          <div class="mt-6 rounded-lg border border-red-400/30 bg-red-400/10 p-4 text-sm text-red-200">{dbError}</div>
+          <div class="mt-6 rounded-lg border border-danger/30 bg-danger/10 p-4 text-sm text-danger">{dbError}</div>
         )}
 
         <!-- 견적 요청 -->
@@ -186,7 +186,7 @@ const spec = (r: Row) =>
                         </span>
                         <span class="font-mono text-xs text-ink/35">{o.id}</span>
                         <span class="text-xs text-ink/35">{when(o.created_at)}</span>
-                        {o.inquiry_id && <span class="font-mono text-xs text-violet-300/60">← {o.inquiry_id}</span>}
+                        {o.inquiry_id && <span class="font-mono text-xs text-info/60">← {o.inquiry_id}</span>}
                       </div>
 
                       <ul class="mt-3 space-y-1 text-sm">
@@ -389,7 +389,7 @@ const spec = (r: Row) =>
             setTimeout(() => location.reload(), 600);
           } catch (err) {
             msg.textContent = `실패: ${err}`;
-            msg.style.color = '#f87171';
+            msg.style.color = 'var(--color-danger)';
           } finally {
             btn.disabled = false;
           }
@@ -427,7 +427,7 @@ const spec = (r: Row) =>
             setTimeout(() => location.reload(), 600);
           } catch (err) {
             msg.textContent = `실패: ${err}`;
-            msg.style.color = '#f87171';
+            msg.style.color = 'var(--color-danger)';
           } finally {
             btn.disabled = false;
           }

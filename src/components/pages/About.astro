@@ -130,7 +130,7 @@ function initials(name){ const p = name.replace('Dr. ','').split(' '); return (p
       {partners.map((p) => {
         const logo = p.data.logo ? partnerLogos[p.data.logo]?.default : undefined;
         return logo ? (
-          <div class="flex items-center justify-center rounded-lg border border-ink/10 bg-ink/90 px-4 py-5">
+          <div class="flex items-center justify-center rounded-lg border border-ink/10 bg-plate px-4 py-5">
             <Image src={logo} alt={p.data.name} class="max-h-10 w-auto" />
           </div>
         ) : (

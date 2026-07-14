@@ -95,7 +95,7 @@ const catalog = (await getCollection('products'))
             <button type="button" data-act="inc" class="size-9 rounded-lg border border-ink/15 text-ink/70 transition hover:border-accent hover:text-ink">+</button>
           </div>
           <p class="w-28 shrink-0 text-right font-semibold text-ink">₩${won(p.price * i.qty)}</p>
-          <button type="button" data-act="del" class="shrink-0 text-sm text-ink/40 transition hover:text-[#FF6B6B]">${M.remove}</button>
+          <button type="button" data-act="del" class="shrink-0 text-sm text-ink/40 transition hover:text-danger">${M.remove}</button>
         </div>`;
     }).join('');
 

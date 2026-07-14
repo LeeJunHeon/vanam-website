@@ -81,7 +81,7 @@ const inputClass =
         class="w-full rounded-lg bg-brand px-6 py-3.5 font-semibold text-onbrand transition hover:brightness-110 disabled:opacity-50">
         <span id="lk-label">{t.submit}</span>
       </button>
-      <p id="lk-error" class="text-sm text-red-400" role="status" aria-live="polite"></p>
+      <p id="lk-error" class="text-sm text-danger" role="status" aria-live="polite"></p>
     </form>
 
     <div id="lk-result" class="mt-10" hidden></div>
@@ -116,11 +116,11 @@ const inputClass =
     };
 
     const COLOR: Record<string, string> = {
-      pending: 'border-amber-400/30 bg-amber-400/10 text-amber-300',
+      pending: 'border-warn/30 bg-warn/10 text-warn',
       paid: 'border-accent/30 bg-accent/10 text-accent',
       preparing: 'border-accent/30 bg-accent/10 text-accent',
-      shipped: 'border-emerald-400/30 bg-emerald-400/10 text-emerald-300',
-      done: 'border-emerald-400/30 bg-emerald-400/10 text-emerald-300',
+      shipped: 'border-ok/30 bg-ok/10 text-ok',
+      done: 'border-ok/30 bg-ok/10 text-ok',
       cancelled: 'border-ink/10 bg-ink/5 text-ink/40',
       refunded: 'border-ink/10 bg-ink/5 text-ink/40',
     };
