@@ -67,6 +67,7 @@ export const POST: APIRoute = async ({ request }) => {
   const shipCity = str(body.shipCity).slice(0, MAX);
   const shipState = str(body.shipState).slice(0, MAX);
   const shipMemo = str(body.shipMemo).slice(0, 1000);
+  const shipCourierAcct = str(body.shipCourierAcct).slice(0, 60);
 
   let shipCountry = str(body.shipCountry).toUpperCase().slice(0, 40);
   if (needsShipping) {
@@ -185,10 +186,10 @@ export const POST: APIRoute = async ({ request }) => {
            (id, status, amount, currency,
             buyer_name, buyer_email, buyer_phone, buyer_company,
             needs_shipping, ship_name, ship_phone, ship_country, ship_zip,
-            ship_addr1, ship_addr2, ship_city, ship_state, ship_memo,
+            ship_addr1, ship_addr2, ship_city, ship_state, ship_memo, ship_courier_acct,
             tax_invoice, tax_biz_no, tax_biz_name, tax_ceo, tax_email,
             inquiry_id, agreed_terms, locale, created_at)
-         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       )
       .bind(
         orderId, 'pending', amount, 'KRW',
@@ -196,6 +197,7 @@ export const POST: APIRoute = async ({ request }) => {
         needsShipping ? 1 : 0,
         shipName || null, shipPhone || null, needsShipping ? shipCountry : null, shipZip || null,
         shipAddr1 || null, shipAddr2 || null, shipCity || null, shipState || null, shipMemo || null,
+        shipCourierAcct || null,
         taxInvoice ? 1 : 0, taxInvoice ? taxBizNo : null, taxInvoice ? taxBizName : null,
         taxInvoice ? (taxCeo || null) : null, taxInvoice ? taxEmail : null,
         inquiryId || null, 1, locale, created,
@@ -239,6 +241,7 @@ export const POST: APIRoute = async ({ request }) => {
     needsShipping
       ? `배송[${shipCountry}]: ${shipName} · ${shipPhone}\n  (${shipZip}) ${[shipAddr1, shipAddr2, shipCity, shipState].filter(Boolean).join(', ')}`
       : '배송 없음 (분석 서비스)',
+    shipCourierAcct ? `택배사 계정(착불): ${shipCourierAcct}` : '',
     taxInvoice ? `📄 세금계산서 요청 — ${taxBizName} (${taxBizNo}) → ${taxEmail}` : '세금계산서: 미요청',
     inquiryId ? `견적: ${inquiryId}` : '',
     `(${locale} · ${created})`,

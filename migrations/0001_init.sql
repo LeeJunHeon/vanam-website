@@ -51,6 +51,7 @@ CREATE TABLE IF NOT EXISTS orders (
   ship_city     TEXT,                         -- 해외 전용 (국내는 주소에 포함)
   ship_state    TEXT,                         -- 해외 전용 (주/도)
   ship_memo     TEXT,
+  ship_courier_acct TEXT,                     -- 착불 시 수령인의 택배사 계정 (FedEx/DHL 등)
 
   tax_invoice   INTEGER NOT NULL DEFAULT 0,    -- 세금계산서 요청(0/1)
   tax_biz_no    TEXT,                          -- 사업자등록번호

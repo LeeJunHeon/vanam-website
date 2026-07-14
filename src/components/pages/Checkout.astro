@@ -16,6 +16,7 @@ import { getCollection } from 'astro:content';
 import { getRelativeLocaleUrl } from 'astro:i18n';
 import company from '../../data/company.json';
 import { COUNTRIES } from '../../lib/countries';
+import { shipLabel, isCollect } from '../../lib/shipping';
 import { db } from '../../lib/db';
 
 const locale = (Astro.currentLocale ?? 'en') as 'ko' | 'en';
@@ -67,6 +68,12 @@ const quoteNeedsShipping = quote
 
 const countries = COUNTRIES.map((c) => ({ code: c.code, label: isKo ? c.ko : c.en }));
 
+// 배송비 정책 (Keystatic '사업자 정보'에서 국내/해외 각각 설정)
+const shipFeeDomestic = shipLabel(company.shipDomesticMode, locale);
+const shipFeeIntl = shipLabel(company.shipIntlMode, locale);
+const collectDomestic = isCollect(company.shipDomesticMode);
+const collectIntl = isCollect(company.shipIntlMode);
+
 const t = isKo
   ? {
       meta: '주문서 | VANAM', metaDesc: '주문 정보를 입력하고 결제를 진행합니다.',
@@ -84,6 +91,8 @@ const t = isKo
       city: '도시 (City)', state: '주 / 도 (State / Province)',
       shipMemo: '배송 요청사항',
       customs: '해외 배송의 수입 관세·부가세 및 통관 비용은 수령인 부담입니다.',
+      courier: '택배사 계정번호 (FedEx / DHL / UPS 등)',
+      courierHint: '착불 배송이므로 수령인의 택배사 계정으로 배송비가 청구됩니다. 계정번호가 없으시면 비워두시고, 담당자가 별도로 안내드립니다.',
       taxWant: '세금계산서가 필요합니다 (사업자)',
       taxHint: '카드 결제 시에는 카드매출전표가 적격 증빙이 되어 세금계산서가 중복 발행되지 않습니다. 세금계산서가 필요하시면 가상계좌·계좌이체를 선택해 주세요.',
       taxIntl: '해외 주문에는 상업 송장(Commercial Invoice)을 이메일로 보내드립니다.',
@@ -113,6 +122,8 @@ const t = isKo
       city: 'City', state: 'State / Province',
       shipMemo: 'Delivery note',
       customs: 'Import duties, taxes and customs charges for international delivery are payable by the recipient.',
+      courier: 'Courier account number (FedEx / DHL / UPS)',
+      courierHint: 'Shipping is freight collect, so it will be billed to the recipient’s courier account. Leave blank if you do not have one and we will contact you.',
       taxWant: 'I need a Korean tax invoice (business)',
       taxHint: 'For card payments the card receipt is the qualifying document, so a separate tax invoice is not issued. If you need one, please choose virtual account or bank transfer.',
       taxIntl: 'A commercial invoice will be emailed to you for international orders.',
@@ -260,6 +271,13 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-[#1EBBF0
                 </div>
               </div>
 
+              <!-- 착불일 때만 노출: 수령인의 택배사 계정으로 배송비가 청구된다 -->
+              <div id="courier-wrap" hidden>
+                <label for="shipCourierAcct" class={labelClass}>{t.courier}</label>
+                <input id="shipCourierAcct" name="shipCourierAcct" type="text" class={inputClass} />
+                <p class="mt-1.5 text-xs leading-relaxed text-white/35">{t.courierHint}</p>
+              </div>
+
               <div>
                 <label for="shipMemo" class={labelClass}>{t.shipMemo}</label>
                 <input id="shipMemo" name="shipMemo" type="text" class={inputClass} />
@@ -343,7 +361,7 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-[#1EBBF0
             <dl class="mt-5 space-y-2 text-sm">
               <div class="flex justify-between gap-4 text-white/50">
                 <dt class="shrink-0">{t.shipping}</dt>
-                <dd id="ship-fee" class="text-right text-xs leading-relaxed">{isKo ? company.shipFeeKo : (company.shipFeeEn || company.shipFeeKo)}</dd>
+                <dd id="ship-fee" class="text-right text-xs leading-relaxed">{shipFeeDomestic}</dd>
               </div>
             </dl>
 
@@ -373,8 +391,8 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-[#1EBBF0
 
     <script type="application/json" id="catalog" is:inline set:html={JSON.stringify(products)}></script>
     <script type="application/json" id="ship-fees" is:inline set:html={JSON.stringify({
-      domestic: isKo ? company.shipFeeKo : (company.shipFeeEn || company.shipFeeKo),
-      intl: isKo ? company.shipFeeIntlKo : (company.shipFeeIntlEn || company.shipFeeIntlKo),
+      domestic: shipFeeDomestic, intl: shipFeeIntl,
+      collectDomestic, collectIntl,
     })}></script>
   </section>
 </BaseLayout>
@@ -479,6 +497,9 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-[#1EBBF0
       }
 
       feeEl.textContent = isKR ? fees.domestic : fees.intl;
+
+      // 착불이면 수령인의 택배사 계정번호를 받는다
+      $('courier-wrap').hidden = !(isKR ? fees.collectDomestic : fees.collectIntl);
     }
     countrySel?.addEventListener('change', applyCountry);
     applyCountry();

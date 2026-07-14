@@ -44,14 +44,29 @@ export default config({
         officerTitleEn: fields.text({ label: '개인정보 보호책임자 — 직책 (영문)' }),
         officerEmail: fields.text({ label: '개인정보 보호책임자 — 이메일' }),
 
-        shipFeeKo: fields.text({ label: '배송비 안내 (국문)', description: '예: 무료 배송' }),
-        shipFeeEn: fields.text({ label: '배송비 안내 (영문)' }),
+        shipDomesticMode: fields.select({
+          label: '국내 배송비',
+          options: [
+            { label: '무료 배송', value: 'free' },
+            { label: '수령인 착불', value: 'collect' },
+            { label: '주문 확인 후 별도 안내', value: 'quote' },
+          ],
+          defaultValue: 'free',
+        }),
+        shipIntlMode: fields.select({
+          label: '해외 배송비',
+          description: '착불을 고르면 주문서에서 수령인의 택배사 계정번호(FedEx/DHL 등)를 받습니다.',
+          options: [
+            { label: '무료 배송', value: 'free' },
+            { label: '수령인 착불 (택배사 계정 청구)', value: 'collect' },
+            { label: '주문 확인 후 별도 안내', value: 'quote' },
+          ],
+          defaultValue: 'free',
+        }),
         shipLeadKo: fields.text({ label: '발송 소요 (국문)', multiline: true }),
         shipLeadEn: fields.text({ label: '발송 소요 (영문)', multiline: true }),
         shipCarrierKo: fields.text({ label: '택배사 (국문)' }),
         shipCarrierEn: fields.text({ label: '택배사 (영문)' }),
-        shipFeeIntlKo: fields.text({ label: '해외 배송 안내 (국문)', multiline: true }),
-        shipFeeIntlEn: fields.text({ label: '해외 배송 안내 (영문)', multiline: true }),
 
         withdrawDays: fields.integer({ label: '청약철회 기간 (일)', defaultValue: 7, validation: { isRequired: true } }),
         refundDays: fields.integer({ label: '환불 처리 기간 (영업일)', defaultValue: 3, validation: { isRequired: true } }),

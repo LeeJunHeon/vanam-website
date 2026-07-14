@@ -32,7 +32,7 @@
     },
     {
       "heading": "7. 배송 안내",
-      "body": "· 배송비: {shipFee}\n· 발송 소요: {shipLead}\n· 배송 지역: 대한민국 전역 (해외 배송은 별도 문의)"
+      "body": "· 배송비: {shipFee}\n· 해외 배송: {shipFeeIntl}\n· 발송 소요: {shipLead}\n· 배송 지역: 대한민국 및 해외 (해외 배송의 관세·수입부가세는 수령인 부담)"
     },
     {
       "heading": "8. 문의",

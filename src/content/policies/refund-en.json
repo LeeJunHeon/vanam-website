@@ -32,7 +32,7 @@
     },
     {
       "heading": "7. Delivery",
-      "body": "· Shipping cost: {shipFee}\n· Dispatch time: {shipLead}\n· Delivery area: throughout the Republic of Korea (please contact us for international delivery)"
+      "body": "· Shipping cost: {shipFee}\n· International shipping: {shipFeeIntl}\n· Dispatch time: {shipLead}\n· Delivery area: Republic of Korea and international (import duties and taxes are payable by the recipient)"
     },
     {
       "heading": "8. Contact",

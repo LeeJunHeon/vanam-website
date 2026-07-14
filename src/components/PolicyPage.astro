@@ -5,6 +5,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { getCollection } from 'astro:content';
 import company from '../data/company.json';
+import { shipLabel } from '../lib/shipping';
 
 const { kind } = Astro.props;
 const locale = (Astro.currentLocale ?? 'en') as 'ko' | 'en';
@@ -26,7 +27,8 @@ const vars: Record<string, string> = {
   officerName: isKo ? company.officerNameKo : (company.officerNameEn || company.officerNameKo),
   officerTitle: isKo ? company.officerTitleKo : (company.officerTitleEn || company.officerTitleKo),
   officerEmail: company.officerEmail,
-  shipFee: isKo ? company.shipFeeKo : (company.shipFeeEn || company.shipFeeKo),
+  shipFee: shipLabel(company.shipDomesticMode, locale),
+  shipFeeIntl: shipLabel(company.shipIntlMode, locale),
   shipLead: isKo ? company.shipLeadKo : (company.shipLeadEn || company.shipLeadKo),
   shipCarrier: isKo ? company.shipCarrierKo : (company.shipCarrierEn || company.shipCarrierKo),
   withdrawDays: String(company.withdrawDays),
