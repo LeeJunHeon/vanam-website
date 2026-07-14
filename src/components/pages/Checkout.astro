@@ -430,7 +430,10 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-[#1EBBF0
 
     if (!quoteId) {
       try { items = JSON.parse(localStorage.getItem(CART_KEY) ?? '[]'); } catch { items = []; }
-      items = items.filter((i) => byId.has(i.sku) && i.qty > 0);
+      // localStorage 는 조작 가능하므로 수량을 1~99 정수로 강제한다 (금액은 어차피 서버가 재계산)
+      items = items
+        .filter((i) => i && typeof i.sku === 'string' && byId.has(i.sku))
+        .map((i) => ({ sku: i.sku, qty: Math.max(1, Math.min(99, Math.floor(Number(i.qty)) || 1)) }));
 
       let total = 0;
       linesEl!.innerHTML = '';

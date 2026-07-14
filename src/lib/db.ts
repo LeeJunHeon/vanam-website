@@ -70,6 +70,9 @@ const MIGRATIONS = [
   `ALTER TABLE orders ADD COLUMN ship_state TEXT`,
   `ALTER TABLE orders ADD COLUMN needs_shipping INTEGER NOT NULL DEFAULT 1`,
   `ALTER TABLE orders ADD COLUMN ship_courier_acct TEXT`,
+  `ALTER TABLE orders ADD COLUMN tracking_no TEXT`,
+  `ALTER TABLE orders ADD COLUMN tracking_courier TEXT`,
+  `ALTER TABLE orders ADD COLUMN admin_memo TEXT`,
 ];
 
 export async function ensureSchema(db: D1): Promise<void> {

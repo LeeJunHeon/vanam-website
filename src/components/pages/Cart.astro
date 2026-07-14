@@ -64,8 +64,12 @@ const catalog = (await getCollection('products'))
   };
 
   function render() {
-    // 카탈로그에 없는 항목(삭제된 상품 등)은 조용히 제거
-    const items = read().filter((i) => byId.has(i.sku));
+    // localStorage 는 사용자가 마음대로 고칠 수 있다.
+    // 카탈로그에 없는 항목은 제거하고, 수량은 반드시 1~99 정수로 강제한다.
+    // (문자열이 그대로 innerHTML/속성에 들어가면 마크업이 깨지거나 주입될 수 있다)
+    const items = read()
+      .filter((i) => i && typeof i.sku === 'string' && byId.has(i.sku))
+      .map((i) => ({ sku: i.sku, qty: Math.max(1, Math.min(99, Math.floor(Number(i.qty)) || 1)) }));
     write(items);
 
     if (items.length === 0) {
