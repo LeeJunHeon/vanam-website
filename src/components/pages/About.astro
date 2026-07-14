@@ -30,35 +30,35 @@ function initials(name){ const p = name.replace('Dr. ','').split(' '); return (p
 
   <section class="relative mx-auto max-w-6xl px-6 pt-28 pb-16 md:pt-36">
     <div class="v-reveal">
-      <p class="text-sm font-medium uppercase tracking-[0.2em] text-[#1EBBF0]">{about.eyebrowAbout}</p>
-      <h1 class="mt-5 text-4xl font-bold leading-tight text-white md:text-6xl">{about.heroTitle.line1}<br/>{about.heroTitle.line2}</h1>
-      <p class="mt-6 max-w-2xl text-lg leading-relaxed text-white/60">{about.heroSubtitle}</p>
+      <p class="text-sm font-medium uppercase tracking-[0.2em] text-accent">{about.eyebrowAbout}</p>
+      <h1 class="mt-5 text-4xl font-bold leading-tight text-ink md:text-6xl">{about.heroTitle.line1}<br/>{about.heroTitle.line2}</h1>
+      <p class="mt-6 max-w-2xl text-lg leading-relaxed text-ink/60">{about.heroSubtitle}</p>
     </div>
   </section>
 
   <section id="vision" class="scroll-mt-24 mx-auto max-w-6xl px-6 py-16">
     <div class="v-reveal grid gap-10 md:grid-cols-3">
-      <div class="md:col-span-1"><h2 class="text-2xl font-bold text-white">{about.companyHeading}</h2></div>
-      <div class="md:col-span-2 space-y-5 text-base leading-relaxed text-white/65">
+      <div class="md:col-span-1"><h2 class="text-2xl font-bold text-ink">{about.companyHeading}</h2></div>
+      <div class="md:col-span-2 space-y-5 text-base leading-relaxed text-ink/65">
         <p>{about.companyP1}</p>
-        <p>{about.companyP2.before}<span class="text-white">{about.companyP2.highlight}</span>{about.companyP2.after}</p>
+        <p>{about.companyP2.before}<span class="text-ink">{about.companyP2.highlight}</span>{about.companyP2.after}</p>
       </div>
     </div>
   </section>
 
-  <section class="border-y border-white/10 bg-white/[0.02]">
+  <section class="border-y border-ink/10 bg-ink/[0.02]">
     <div class="mx-auto max-w-6xl px-6 py-20">
       <div class="v-reveal max-w-3xl">
-        <p class="text-sm font-medium uppercase tracking-[0.2em] text-[#1EBBF0]">{about.visionEyebrow}</p>
-        <p class="mt-5 text-2xl font-semibold leading-snug text-white md:text-3xl">{about.visionBody}</p>
+        <p class="text-sm font-medium uppercase tracking-[0.2em] text-accent">{about.visionEyebrow}</p>
+        <p class="mt-5 text-2xl font-semibold leading-snug text-ink md:text-3xl">{about.visionBody}</p>
       </div>
     </div>
   </section>
 
   <section id="team" class="mx-auto max-w-6xl px-6 py-20 scroll-mt-24">
     <div class="v-reveal">
-      <h2 class="text-2xl font-bold text-white">{about.teamHeading}</h2>
-      <p class="mt-3 max-w-2xl text-base text-white/55">{about.teamDesc}</p>
+      <h2 class="text-2xl font-bold text-ink">{about.teamHeading}</h2>
+      <p class="mt-3 max-w-2xl text-base text-ink/55">{about.teamDesc}</p>
     </div>
     <div class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {team.map((member) => {
@@ -66,14 +66,14 @@ function initials(name){ const p = name.replace('Dr. ','').split(' '); return (p
         const role = locale === 'ko' ? (m.role_ko ?? m.role) : m.role;
         const affil = locale === 'ko' ? (m.affiliation_ko ?? m.affiliation) : m.affiliation;
         return (
-          <div class="v-reveal flex gap-4 rounded-xl border border-white/10 bg-white/[0.03] p-5">
-            <div class="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#1EBBF0]/15 text-sm font-bold text-[#1EBBF0]">
+          <div class="v-reveal flex gap-4 rounded-xl border border-ink/10 bg-ink/[0.03] p-5">
+            <div class="flex size-12 shrink-0 items-center justify-center rounded-full bg-accent/15 text-sm font-bold text-accent">
               {initials(m.name)}
             </div>
             <div class="min-w-0">
-              <p class="text-sm font-semibold text-white">{m.name}</p>
-              {role && <p class="mt-0.5 text-xs font-medium text-[#1EBBF0]">{role}</p>}
-              {affil && <p class="mt-1.5 text-xs leading-relaxed text-white/40">{affil}</p>}
+              <p class="text-sm font-semibold text-ink">{m.name}</p>
+              {role && <p class="mt-0.5 text-xs font-medium text-accent">{role}</p>}
+              {affil && <p class="mt-1.5 text-xs leading-relaxed text-ink/40">{affil}</p>}
             </div>
           </div>
         );
@@ -81,17 +81,17 @@ function initials(name){ const p = name.replace('Dr. ','').split(' '); return (p
     </div>
   </section>
 
-  <section id="history" class="scroll-mt-24 border-t border-white/10">
+  <section id="history" class="scroll-mt-24 border-t border-ink/10">
     <div class="mx-auto max-w-6xl px-6 py-20">
-      <div class="v-reveal"><h2 class="text-2xl font-bold text-white">{about.historyHeading}</h2></div>
+      <div class="v-reveal"><h2 class="text-2xl font-bold text-ink">{about.historyHeading}</h2></div>
       <div class="mt-12 space-y-12">
         {history.map((h) => (
           <div class="v-reveal grid gap-6 md:grid-cols-[120px_1fr]">
-            <div class="text-3xl font-bold text-[#1EBBF0]">{h.data.year}</div>
-            <ul class="space-y-3 border-l border-white/10 pl-6">
+            <div class="text-3xl font-bold text-accent">{h.data.year}</div>
+            <ul class="space-y-3 border-l border-ink/10 pl-6">
               {(locale === 'ko' ? (h.data.items_ko ?? h.data.items) : h.data.items).map((it) => (
-                <li class="relative text-base text-white/70">
-                  <span class="absolute -left-[1.65rem] top-2 h-2 w-2 rounded-full bg-[#1EBBF0]"></span>
+                <li class="relative text-base text-ink/70">
+                  <span class="absolute -left-[1.65rem] top-2 h-2 w-2 rounded-full bg-brand"></span>
                   {it}
                 </li>
               ))}
@@ -102,15 +102,15 @@ function initials(name){ const p = name.replace('Dr. ','').split(' '); return (p
     </div>
   </section>
 
-  <section id="achievement" class="scroll-mt-24 border-t border-white/10 bg-white/[0.02]">
+  <section id="achievement" class="scroll-mt-24 border-t border-ink/10 bg-ink/[0.02]">
     <div class="mx-auto max-w-6xl px-6 py-20">
       <div class="v-reveal">
-        <h2 class="text-2xl font-bold text-white">{about.globalActivityHeading}</h2>
-        <p class="mt-3 text-base text-white/55">{about.globalActivityDesc}</p>
+        <h2 class="text-2xl font-bold text-ink">{about.globalActivityHeading}</h2>
+        <p class="mt-3 text-base text-ink/55">{about.globalActivityDesc}</p>
       </div>
       <div class="mt-8 flex flex-wrap gap-3">
         {achievements.map((a) => (
-          <span class="v-reveal rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm text-white/70">{a.data.name}</span>
+          <span class="v-reveal rounded-full border border-ink/10 bg-ink/[0.04] px-4 py-2 text-sm text-ink/70">{a.data.name}</span>
         ))}
       </div>
     </div>
@@ -125,27 +125,27 @@ function initials(name){ const p = name.replace('Dr. ','').split(' '); return (p
   />
 
   <section id="collaboration" class="scroll-mt-24 mx-auto max-w-6xl px-6 py-20">
-    <div class="v-reveal"><h2 class="text-2xl font-bold text-white">{about.collaborationHeading}</h2></div>
+    <div class="v-reveal"><h2 class="text-2xl font-bold text-ink">{about.collaborationHeading}</h2></div>
     <div class="v-reveal mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
       {partners.map((p) => {
         const logo = p.data.logo ? partnerLogos[p.data.logo]?.default : undefined;
         return logo ? (
-          <div class="flex items-center justify-center rounded-lg border border-white/10 bg-white/90 px-4 py-5">
+          <div class="flex items-center justify-center rounded-lg border border-ink/10 bg-ink/90 px-4 py-5">
             <Image src={logo} alt={p.data.name} class="max-h-10 w-auto" />
           </div>
         ) : (
-          <div class="flex items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] px-4 py-6 text-center text-sm font-medium text-white/60">{p.data.name}</div>
+          <div class="flex items-center justify-center rounded-lg border border-ink/10 bg-ink/[0.03] px-4 py-6 text-center text-sm font-medium text-ink/60">{p.data.name}</div>
         );
       })}
     </div>
   </section>
 
-  <section class="border-t border-white/10">
+  <section class="border-t border-ink/10">
     <div class="mx-auto max-w-6xl px-6 py-24 text-center">
       <div class="v-reveal">
-        <h2 class="text-3xl font-bold text-white md:text-4xl" set:html={about.ctaHeadingHtml}></h2>
-        <p class="mx-auto mt-4 max-w-xl text-base text-white/60" set:html={about.ctaBodyHtml}></p>
-        <a href={lhref('/contact')} class="mt-8 inline-flex items-center gap-2 rounded-lg bg-[#1EBBF0] px-7 py-3 font-semibold text-[#06222C] transition hover:brightness-110">{about.ctaButton}</a>
+        <h2 class="text-3xl font-bold text-ink md:text-4xl" set:html={about.ctaHeadingHtml}></h2>
+        <p class="mx-auto mt-4 max-w-xl text-base text-ink/60" set:html={about.ctaBodyHtml}></p>
+        <a href={lhref('/contact')} class="mt-8 inline-flex items-center gap-2 rounded-lg bg-brand px-7 py-3 font-semibold text-onbrand transition hover:brightness-110">{about.ctaButton}</a>
       </div>
     </div>
   </section>

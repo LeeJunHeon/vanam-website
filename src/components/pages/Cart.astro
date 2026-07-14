@@ -23,8 +23,8 @@ const catalog = (await getCollection('products'))
 
 <BaseLayout title={c.metaTitle} description={c.metaDescription}>
   <section class="relative mx-auto max-w-4xl px-6 py-28 md:py-36">
-    <p class="text-sm font-medium uppercase tracking-widest text-[#1EBBF0]">{c.eyebrow}</p>
-    <h1 class="mt-4 text-4xl font-bold leading-tight text-white md:text-5xl">{c.heading}</h1>
+    <p class="text-sm font-medium uppercase tracking-widest text-accent">{c.eyebrow}</p>
+    <h1 class="mt-4 text-4xl font-bold leading-tight text-ink md:text-5xl">{c.heading}</h1>
 
     <div id="cart-root" class="mt-12"
       data-empty={c.empty}
@@ -35,7 +35,7 @@ const catalog = (await getCollection('products'))
       data-checkout-url={`${base}/checkout`}
       data-continue={c.continueShopping}
       data-shop-url={`${base}/shop`}>
-      <p class="text-white/50">…</p>
+      <p class="text-ink/50">…</p>
     </div>
 
     <script type="application/json" id="catalog" set:html={JSON.stringify(catalog)} is:inline></script>
@@ -74,8 +74,8 @@ const catalog = (await getCollection('products'))
 
     if (items.length === 0) {
       root.innerHTML = `
-        <p class="text-white/50">${M.empty}</p>
-        <a href="${M.shopUrl}" class="mt-6 inline-flex items-center gap-2 rounded-lg border border-white/15 px-5 py-3 text-sm font-medium text-white/80 transition hover:border-[#1EBBF0] hover:text-white">${M.continue} →</a>`;
+        <p class="text-ink/50">${M.empty}</p>
+        <a href="${M.shopUrl}" class="mt-6 inline-flex items-center gap-2 rounded-lg border border-ink/15 px-5 py-3 text-sm font-medium text-ink/80 transition hover:border-accent hover:text-ink">${M.continue} →</a>`;
       return;
     }
 
@@ -85,33 +85,33 @@ const catalog = (await getCollection('products'))
       return `
         <div class="flex flex-wrap items-center gap-4 py-5" data-sku="${p.sku}">
           <div class="min-w-0 flex-1">
-            <a href="${p.url}" class="font-medium text-white transition hover:text-[#1EBBF0]">${p.name}</a>
-            <p class="mt-1 text-sm text-white/40">₩${won(p.price)}</p>
+            <a href="${p.url}" class="font-medium text-ink transition hover:text-accent">${p.name}</a>
+            <p class="mt-1 text-sm text-ink/40">₩${won(p.price)}</p>
           </div>
           <div class="flex items-center gap-1">
-            <button type="button" data-act="dec" class="size-9 rounded-lg border border-white/15 text-white/70 transition hover:border-[#1EBBF0] hover:text-white">−</button>
+            <button type="button" data-act="dec" class="size-9 rounded-lg border border-ink/15 text-ink/70 transition hover:border-accent hover:text-ink">−</button>
             <input type="number" min="1" max="99" value="${i.qty}" data-act="qty"
-              class="h-9 w-14 rounded-lg border border-white/10 bg-white/[0.03] text-center text-white outline-none focus:border-[#1EBBF0]" />
-            <button type="button" data-act="inc" class="size-9 rounded-lg border border-white/15 text-white/70 transition hover:border-[#1EBBF0] hover:text-white">+</button>
+              class="h-9 w-14 rounded-lg border border-ink/10 bg-ink/[0.03] text-center text-ink outline-none focus:border-accent" />
+            <button type="button" data-act="inc" class="size-9 rounded-lg border border-ink/15 text-ink/70 transition hover:border-accent hover:text-ink">+</button>
           </div>
-          <p class="w-28 shrink-0 text-right font-semibold text-white">₩${won(p.price * i.qty)}</p>
-          <button type="button" data-act="del" class="shrink-0 text-sm text-white/40 transition hover:text-[#FF6B6B]">${M.remove}</button>
+          <p class="w-28 shrink-0 text-right font-semibold text-ink">₩${won(p.price * i.qty)}</p>
+          <button type="button" data-act="del" class="shrink-0 text-sm text-ink/40 transition hover:text-[#FF6B6B]">${M.remove}</button>
         </div>`;
     }).join('');
 
     root.innerHTML = `
-      <div class="divide-y divide-white/10 border-y border-white/10">${rows}</div>
+      <div class="divide-y divide-ink/10 border-y border-ink/10">${rows}</div>
       <div class="mt-8 flex items-center justify-between">
-        <p class="text-sm text-white/50">${M.total} <span class="ml-1 text-xs text-white/30">(${M.vat})</span></p>
-        <p class="text-3xl font-bold text-white">₩${won(total)}</p>
+        <p class="text-sm text-ink/50">${M.total} <span class="ml-1 text-xs text-ink/30">(${M.vat})</span></p>
+        <p class="text-3xl font-bold text-ink">₩${won(total)}</p>
       </div>
       <div class="mt-8">
         <a href="${M.checkoutUrl}"
-          class="inline-flex items-center gap-2 rounded-lg bg-[#1EBBF0] px-7 py-3 font-semibold text-[#06222C] transition hover:brightness-110">${M.checkout}
+          class="inline-flex items-center gap-2 rounded-lg bg-brand px-7 py-3 font-semibold text-onbrand transition hover:brightness-110">${M.checkout}
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </a>
       </div>
-      <a href="${M.shopUrl}" class="mt-6 inline-block text-sm text-white/50 transition hover:text-[#1EBBF0]">← ${M.continue}</a>`;
+      <a href="${M.shopUrl}" class="mt-6 inline-block text-sm text-ink/50 transition hover:text-accent">← ${M.continue}</a>`;
   }
 
   root.addEventListener('click', (e) => {

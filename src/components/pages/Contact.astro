@@ -18,15 +18,15 @@ const faqQ = (x) => locale === 'en' ? (x.data.question_en ?? x.data.question) : 
 const faqA = (x) => locale === 'en' ? (x.data.answer_en ?? x.data.answer) : x.data.answer;
 
 const inputClass =
-  'mt-2 w-full rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-white placeholder-white/30 outline-none transition focus:border-[#1EBBF0] focus:ring-1 focus:ring-[#1EBBF0]';
-const labelClass = 'block text-sm font-medium text-white/80';
+  'mt-2 w-full rounded-lg border border-ink/10 bg-ink/[0.03] px-4 py-3 text-ink placeholder-ink/30 outline-none transition focus:border-accent focus:ring-1 focus:ring-accent';
+const labelClass = 'block text-sm font-medium text-ink/80';
 ---
 
 <BaseLayout title={title} description={description}>
   <section class="relative mx-auto max-w-3xl px-6 py-28 md:py-36">
-    <p class="text-sm font-medium uppercase tracking-widest text-[#1EBBF0]">{c.eyebrow}</p>
-    <h1 class="mt-4 text-4xl font-bold leading-tight text-white md:text-5xl">{c.heroTitle.line1}<br />{c.heroTitle.line2}</h1>
-    <p class="mt-6 max-w-xl text-base leading-relaxed text-white/60">{c.intro}</p>
+    <p class="text-sm font-medium uppercase tracking-widest text-accent">{c.eyebrow}</p>
+    <h1 class="mt-4 text-4xl font-bold leading-tight text-ink md:text-5xl">{c.heroTitle.line1}<br />{c.heroTitle.line2}</h1>
+    <p class="mt-6 max-w-xl text-base leading-relaxed text-ink/60">{c.intro}</p>
 
     <form id="inquiry-form" class="mt-14 space-y-8"
       data-msg-honeypot={f.msgHoneypot}
@@ -65,16 +65,16 @@ const labelClass = 'block text-sm font-medium text-white/80';
         <textarea id="message" name="message" rows="7" required class={`${inputClass} resize-y`} placeholder={f.messagePlaceholder}></textarea>
       </div>
 
-      <div class="space-y-6 border-t border-white/10 pt-8">
-        <label class="flex cursor-pointer items-start gap-3 text-sm text-white/70">
+      <div class="space-y-6 border-t border-ink/10 pt-8">
+        <label class="flex cursor-pointer items-start gap-3 text-sm text-ink/70">
           <input type="checkbox" name="privacy" required value="agreed"
-            class="mt-0.5 size-4 shrink-0 rounded border-white/20 bg-white/[0.03] accent-[#1EBBF0]" />
+            class="mt-0.5 size-4 shrink-0 rounded border-ink/20 bg-ink/[0.03] accent-brand" />
           <span>{f.privacy}</span>
         </label>
 
         <div class="flex flex-wrap items-center gap-4">
           <button type="submit" id="submit-btn"
-            class="inline-flex items-center gap-2 rounded-lg bg-[#1EBBF0] px-7 py-3 font-semibold text-[#06222C] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60">
+            class="inline-flex items-center gap-2 rounded-lg bg-brand px-7 py-3 font-semibold text-onbrand transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60">
             <span id="submit-label">{f.submit}</span>
           </button>
           <p id="form-status" class="text-sm" role="status" aria-live="polite"></p>
@@ -85,16 +85,16 @@ const labelClass = 'block text-sm font-medium text-white/80';
 
   {faqs.length > 0 && (
     <section class="mx-auto max-w-3xl px-6 pb-28">
-      <p class="text-sm font-medium uppercase tracking-widest text-[#1EBBF0]">{c.faqEyebrow}</p>
-      <h2 class="mt-4 text-3xl font-bold text-white">{c.faqHeading}</h2>
-      <div class="mt-10 divide-y divide-white/10 border-t border-white/10">
+      <p class="text-sm font-medium uppercase tracking-widest text-accent">{c.faqEyebrow}</p>
+      <h2 class="mt-4 text-3xl font-bold text-ink">{c.faqHeading}</h2>
+      <div class="mt-10 divide-y divide-ink/10 border-t border-ink/10">
         {faqs.map((x) => (
           <details class="group py-5">
-            <summary class="flex cursor-pointer list-none items-center justify-between gap-4 text-base font-medium text-white/90 transition hover:text-white">
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-4 text-base font-medium text-ink/90 transition hover:text-ink">
               <span>{faqQ(x)}</span>
-              <span class="shrink-0 text-xl leading-none text-[#1EBBF0] transition-transform duration-200 group-open:rotate-45">+</span>
+              <span class="shrink-0 text-xl leading-none text-accent transition-transform duration-200 group-open:rotate-45">+</span>
             </summary>
-            <p class="mt-3 text-sm leading-relaxed text-white/60">{faqA(x)}</p>
+            <p class="mt-3 text-sm leading-relaxed text-ink/60">{faqA(x)}</p>
           </details>
         ))}
       </div>
@@ -117,7 +117,7 @@ const labelClass = 'block text-sm font-medium text-white/80';
 
   function setStatus(msg: string, ok: boolean) {
     statusEl.textContent = msg;
-    statusEl.style.color = ok ? "#1EBBF0" : "#FF6B6B";
+    statusEl.style.color = ok ? 'var(--color-accent)' : "#FF6B6B";
   }
 
   form?.addEventListener("submit", async (e) => {

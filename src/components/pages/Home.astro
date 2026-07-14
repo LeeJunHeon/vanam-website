@@ -28,67 +28,67 @@ const history = (await getCollection('history')).sort((a, b) => a.data.order - b
     <div class="vn-glow-a absolute -left-20 -top-24 h-[420px] w-[480px] rounded-full"></div>
     <div class="vn-glow-b absolute -bottom-32 -right-16 h-[380px] w-[420px] rounded-full"></div>
     <div class="relative mx-auto w-full max-w-6xl">
-      <p class="mb-5 font-mono text-xs tracking-[0.25em] text-[#1EBBF0]">VANA&nbsp;MATERIALS&nbsp;LAB.</p>
-      <h1 class="text-5xl font-bold leading-[1.05] tracking-tight text-white sm:text-7xl">{home.heroTitle.line1}<br />{home.heroTitle.line2}</h1>
-      <p class="mt-6 max-w-xl text-lg leading-relaxed text-white/60">{home.heroSubtitle.line1}<br />{home.heroSubtitle.line2}</p>
+      <p class="mb-5 font-mono text-xs tracking-[0.25em] text-accent">VANA&nbsp;MATERIALS&nbsp;LAB.</p>
+      <h1 class="text-5xl font-bold leading-[1.05] tracking-tight text-ink sm:text-7xl">{home.heroTitle.line1}<br />{home.heroTitle.line2}</h1>
+      <p class="mt-6 max-w-xl text-lg leading-relaxed text-ink/60">{home.heroSubtitle.line1}<br />{home.heroSubtitle.line2}</p>
       <div class="mt-9 flex flex-wrap gap-4">
-        <a href={lhref('/technology')} class="rounded-full bg-[#1EBBF0] px-6 py-3 text-sm font-semibold text-[#04212E] transition hover:bg-[#5fd0f5]">{home.heroCtaPrimary}</a>
-        <a href={lhref('/contact')} class="rounded-full border border-white/25 px-6 py-3 text-sm font-medium text-white/85 transition hover:border-white hover:text-white">{home.heroCtaSecondary}</a>
+        <a href={lhref('/technology')} class="rounded-full bg-brand px-6 py-3 text-sm font-semibold text-onbrand transition hover:brightness-110">{home.heroCtaPrimary}</a>
+        <a href={lhref('/contact')} class="rounded-full border border-ink/25 px-6 py-3 text-sm font-medium text-ink/85 transition hover:border-ink hover:text-ink">{home.heroCtaSecondary}</a>
       </div>
     </div>
     <div class="vn-bounce absolute bottom-7 left-1/2 flex -translate-x-1/2 flex-col items-center gap-1">
-      <span class="font-mono text-[10px] tracking-widest text-white/50">SCROLL</span>
-      <span class="text-white/60">↓</span>
+      <span class="font-mono text-[10px] tracking-widest text-ink/50">SCROLL</span>
+      <span class="text-ink/60">↓</span>
     </div>
   </section>
 
   <section class="v-reveal mx-auto max-w-6xl px-6 py-20">
-    <p class="mb-3 font-mono text-xs tracking-[0.16em] text-[#1EBBF0]">01 / VISION</p>
-    <h2 class="mb-5 text-3xl font-semibold text-white">{home.visionHeading}</h2>
-    <p class="max-w-2xl text-base leading-relaxed text-white/65">{home.visionBody}</p>
+    <p class="mb-3 font-mono text-xs tracking-[0.16em] text-accent">01 / VISION</p>
+    <h2 class="mb-5 text-3xl font-semibold text-ink">{home.visionHeading}</h2>
+    <p class="max-w-2xl text-base leading-relaxed text-ink/65">{home.visionBody}</p>
   </section>
 
   <section class="v-reveal mx-auto max-w-6xl px-6 py-12">
-    <p class="mb-6 font-mono text-xs tracking-[0.16em] text-[#1EBBF0]">02 / CORE TECHNOLOGIES</p>
+    <p class="mb-6 font-mono text-xs tracking-[0.16em] text-accent">02 / CORE TECHNOLOGIES</p>
     <h2 class="sr-only">{locale === 'ko' ? '핵심 기술' : 'Core technologies'}</h2>
     <div class="grid gap-5 sm:grid-cols-3">
       {pillars.map((p) => (
-        <div class="rounded-2xl border border-white/10 bg-white/[0.035] p-6 transition hover:border-[#1EBBF0]/50">
-          <h3 class="text-lg font-medium text-white">{p.title}</h3>
-          <p class="mt-3 text-sm leading-relaxed text-white/55">{p.desc}</p>
+        <div class="rounded-2xl border border-ink/10 bg-ink/[0.035] p-6 transition hover:border-accent/50">
+          <h3 class="text-lg font-medium text-ink">{p.title}</h3>
+          <p class="mt-3 text-sm leading-relaxed text-ink/55">{p.desc}</p>
         </div>
       ))}
     </div>
   </section>
 
   <section class="v-reveal mx-auto max-w-6xl px-6 py-12">
-    <p class="mb-5 font-mono text-xs tracking-[0.16em] text-[#1EBBF0]">03 / MATERIALS</p>
+    <p class="mb-5 font-mono text-xs tracking-[0.16em] text-accent">03 / MATERIALS</p>
     <h2 class="sr-only">{locale === 'ko' ? '소재' : 'Materials'}</h2>
     <div class="flex flex-wrap gap-2">
       {materials.map((m) => (
-        <span class="rounded-md border border-[#1EBBF0]/25 bg-[#1EBBF0]/[0.08] px-3 py-1.5 font-mono text-sm text-[#9BDDF5]">{m}</span>
+        <span class="rounded-md border border-accent/25 bg-accent/[0.08] px-3 py-1.5 font-mono text-sm text-accent">{m}</span>
       ))}
     </div>
   </section>
 
   <section class="v-reveal mx-auto max-w-6xl px-6 py-12">
-    <p class="mb-6 font-mono text-xs tracking-[0.16em] text-[#1EBBF0]">04 / HISTORY</p>
+    <p class="mb-6 font-mono text-xs tracking-[0.16em] text-accent">04 / HISTORY</p>
     <h2 class="sr-only">{locale === 'ko' ? '연혁' : 'History'}</h2>
-    <div class="divide-y divide-white/10">
+    <div class="divide-y divide-ink/10">
       {history.map((h) => (
         <div class="flex gap-5 py-4">
-          <span class="w-14 shrink-0 font-mono text-sm text-[#1EBBF0]">{h.data.year}</span>
-          <span class="text-sm text-white/70">{locale === 'en' ? h.data.summary_en : h.data.summaryKo}</span>
+          <span class="w-14 shrink-0 font-mono text-sm text-accent">{h.data.year}</span>
+          <span class="text-sm text-ink/70">{locale === 'en' ? h.data.summary_en : h.data.summaryKo}</span>
         </div>
       ))}
     </div>
   </section>
 
   <section class="v-reveal mx-auto max-w-6xl px-6 py-16">
-    <div class="relative overflow-hidden rounded-3xl border border-[#1EBBF0]/20 bg-[#0C1320] px-8 py-14 text-center">
-      <h2 class="text-2xl font-semibold text-white sm:text-3xl">{home.ctaHeading}</h2>
-      <p class="mx-auto mt-4 max-w-xl text-white/60" set:html={home.ctaBodyHtml}></p>
-      <a href={lhref('/contact')} class="mt-8 inline-block rounded-full bg-[#1EBBF0] px-7 py-3 text-sm font-semibold text-[#04212E] transition hover:bg-[#5fd0f5]">{home.ctaButton}</a>
+    <div class="relative overflow-hidden rounded-3xl border border-accent/20 bg-panel px-8 py-14 text-center">
+      <h2 class="text-2xl font-semibold text-ink sm:text-3xl">{home.ctaHeading}</h2>
+      <p class="mx-auto mt-4 max-w-xl text-ink/60" set:html={home.ctaBodyHtml}></p>
+      <a href={lhref('/contact')} class="mt-8 inline-block rounded-full bg-brand px-7 py-3 text-sm font-semibold text-onbrand transition hover:brightness-110">{home.ctaButton}</a>
     </div>
   </section>
 </BaseLayout>

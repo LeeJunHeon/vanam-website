@@ -35,11 +35,11 @@ const kindLabel = (k: string) =>
 ---
 
 {certs.length > 0 && (
-  <section class="border-t border-white/10">
+  <section class="border-t border-ink/10">
     <div class="mx-auto max-w-6xl px-6 py-20">
       <div class="v-reveal">
-        <h2 class="text-2xl font-bold text-white">{heading}</h2>
-        {subheading && <p class="mt-3 text-base text-white/55">{subheading}</p>}
+        <h2 class="text-2xl font-bold text-ink">{heading}</h2>
+        {subheading && <p class="mt-3 text-base text-ink/55">{subheading}</p>}
       </div>
 
       <ul class="mt-10 grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-5">
@@ -49,13 +49,13 @@ const kindLabel = (k: string) =>
             <li class="v-reveal">
               <button type="button" class="cert-thumb group block w-full text-left" data-index={i}
                 aria-label={`${label(c)} — ${isKo ? '크게 보기' : 'view larger'}`}>
-                <div class="overflow-hidden rounded-lg border border-white/10 bg-white transition group-hover:border-[#1EBBF0]">
+                <div class="overflow-hidden rounded-lg border border-ink/10 bg-white transition group-hover:border-accent">
                   <Image src={img} alt={label(c)} width={420} height={594}
                     class="h-auto w-full object-contain transition duration-500 group-hover:scale-[1.03]" />
                 </div>
-                <p class="mt-3 text-xs font-medium uppercase tracking-widest text-[#1EBBF0]">{kindLabel(c.data.kind)}</p>
-                <p class="mt-1 line-clamp-2 text-sm leading-snug text-white/70 transition group-hover:text-white">{label(c)}</p>
-                {c.data.number && <p class="mt-1 text-xs text-white/35">{c.data.number}</p>}
+                <p class="mt-3 text-xs font-medium uppercase tracking-widest text-accent">{kindLabel(c.data.kind)}</p>
+                <p class="mt-1 line-clamp-2 text-sm leading-snug text-ink/70 transition group-hover:text-ink">{label(c)}</p>
+                {c.data.number && <p class="mt-1 text-xs text-ink/35">{c.data.number}</p>}
               </button>
             </li>
           );

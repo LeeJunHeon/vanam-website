@@ -49,14 +49,14 @@ const t = isKo
     };
 
 const inputClass =
-  'mt-2 w-full rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-white placeholder-white/30 outline-none transition focus:border-[#1EBBF0] focus:ring-1 focus:ring-[#1EBBF0]';
+  'mt-2 w-full rounded-lg border border-ink/10 bg-ink/[0.03] px-4 py-3 text-ink placeholder-ink/30 outline-none transition focus:border-accent focus:ring-1 focus:ring-accent';
 ---
 
 <BaseLayout title={t.meta} description={t.metaDesc}>
   <section class="mx-auto max-w-2xl px-6 py-28 md:py-32">
-    <p class="text-sm font-medium uppercase tracking-widest text-[#1EBBF0]">{t.eyebrow}</p>
-    <h1 class="mt-4 text-3xl font-bold leading-tight text-white md:text-4xl">{t.heading}</h1>
-    <p class="mt-5 text-base leading-relaxed text-white/55">{t.lead}</p>
+    <p class="text-sm font-medium uppercase tracking-widest text-accent">{t.eyebrow}</p>
+    <h1 class="mt-4 text-3xl font-bold leading-tight text-ink md:text-4xl">{t.heading}</h1>
+    <p class="mt-5 text-base leading-relaxed text-ink/55">{t.lead}</p>
 
     <form id="lookup-form" class="mt-10 space-y-6"
       data-msg-notfound={t.notFound}
@@ -69,16 +69,16 @@ const inputClass =
         items: t.items, shipTo: t.shipTo, taxYes: t.taxYes, noShip: t.noShip,
       })}>
       <div>
-        <label for="lk-id" class="block text-sm font-medium text-white/80">{t.orderNo} *</label>
+        <label for="lk-id" class="block text-sm font-medium text-ink/80">{t.orderNo} *</label>
         <input id="lk-id" name="id" type="text" required value={prefill}
           placeholder="ORD-20260714-ABCD" class={`${inputClass} font-mono`} />
       </div>
       <div>
-        <label for="lk-email" class="block text-sm font-medium text-white/80">{t.email} *</label>
+        <label for="lk-email" class="block text-sm font-medium text-ink/80">{t.email} *</label>
         <input id="lk-email" name="email" type="email" required autocomplete="email" class={inputClass} />
       </div>
       <button type="submit" id="lk-btn"
-        class="w-full rounded-lg bg-[#1EBBF0] px-6 py-3.5 font-semibold text-[#06222C] transition hover:brightness-110 disabled:opacity-50">
+        class="w-full rounded-lg bg-brand px-6 py-3.5 font-semibold text-onbrand transition hover:brightness-110 disabled:opacity-50">
         <span id="lk-label">{t.submit}</span>
       </button>
       <p id="lk-error" class="text-sm text-red-400" role="status" aria-live="polite"></p>
@@ -86,9 +86,9 @@ const inputClass =
 
     <div id="lk-result" class="mt-10" hidden></div>
 
-    <p class="mt-14 border-t border-white/10 pt-8 text-sm leading-relaxed text-white/40">
+    <p class="mt-14 border-t border-ink/10 pt-8 text-sm leading-relaxed text-ink/40">
       {t.help}<br />
-      <a href={`mailto:${company.email}`} class="text-[#1EBBF0] hover:underline">{company.email}</a> · {company.tel}
+      <a href={`mailto:${company.email}`} class="text-accent hover:underline">{company.email}</a> · {company.tel}
     </p>
   </section>
 </BaseLayout>
@@ -117,12 +117,12 @@ const inputClass =
 
     const COLOR: Record<string, string> = {
       pending: 'border-amber-400/30 bg-amber-400/10 text-amber-300',
-      paid: 'border-[#1EBBF0]/30 bg-[#1EBBF0]/10 text-[#1EBBF0]',
-      preparing: 'border-[#1EBBF0]/30 bg-[#1EBBF0]/10 text-[#1EBBF0]',
+      paid: 'border-accent/30 bg-accent/10 text-accent',
+      preparing: 'border-accent/30 bg-accent/10 text-accent',
       shipped: 'border-emerald-400/30 bg-emerald-400/10 text-emerald-300',
       done: 'border-emerald-400/30 bg-emerald-400/10 text-emerald-300',
-      cancelled: 'border-white/10 bg-white/5 text-white/40',
-      refunded: 'border-white/10 bg-white/5 text-white/40',
+      cancelled: 'border-ink/10 bg-ink/5 text-ink/40',
+      refunded: 'border-ink/10 bg-ink/5 text-ink/40',
     };
 
     form.addEventListener('submit', async (e) => {
@@ -154,42 +154,42 @@ const inputClass =
           .filter(Boolean).join(', ');
 
         resEl.innerHTML = `
-          <div class="rounded-xl border border-white/10 bg-white/[0.02] p-7">
+          <div class="rounded-xl border border-ink/10 bg-ink/[0.02] p-7">
             <div class="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <p class="font-mono text-lg font-semibold text-white">${esc(o.id)}</p>
-                <p class="mt-1 text-sm text-white/40">${C.ordered} ${when(o.created_at)}</p>
+                <p class="font-mono text-lg font-semibold text-ink">${esc(o.id)}</p>
+                <p class="mt-1 text-sm text-ink/40">${C.ordered} ${when(o.created_at)}</p>
               </div>
               <span class="rounded-full border px-3 py-1 text-sm font-medium ${COLOR[o.status] ?? COLOR.cancelled}">
                 ${esc(ST[o.status] ?? o.status)}
               </span>
             </div>
 
-            <div class="mt-7 border-t border-white/10 pt-6">
-              <p class="text-xs font-medium uppercase tracking-widest text-[#1EBBF0]">${C.items}</p>
+            <div class="mt-7 border-t border-ink/10 pt-6">
+              <p class="text-xs font-medium uppercase tracking-widest text-accent">${C.items}</p>
               <ul class="mt-4 space-y-3 text-sm">
                 ${items.map((i: any) => `
                   <li class="flex justify-between gap-4">
-                    <span class="text-white/70">${esc(i.name)} <span class="text-white/35">× ${esc(i.qty)}</span></span>
-                    <span class="shrink-0 text-white/80">${won(i.subtotal)}</span>
+                    <span class="text-ink/70">${esc(i.name)} <span class="text-ink/35">× ${esc(i.qty)}</span></span>
+                    <span class="shrink-0 text-ink/80">${won(i.subtotal)}</span>
                   </li>`).join('')}
               </ul>
-              <div class="mt-5 flex items-center justify-between border-t border-white/10 pt-5">
-                <span class="text-sm text-white/60">${C.amount}</span>
-                <span class="text-xl font-bold text-white">${won(o.amount)}</span>
+              <div class="mt-5 flex items-center justify-between border-t border-ink/10 pt-5">
+                <span class="text-sm text-ink/60">${C.amount}</span>
+                <span class="text-xl font-bold text-ink">${won(o.amount)}</span>
               </div>
             </div>
 
-            <div class="mt-7 border-t border-white/10 pt-6 text-sm">
-              <p class="text-xs font-medium uppercase tracking-widest text-[#1EBBF0]">${C.shipTo}</p>
+            <div class="mt-7 border-t border-ink/10 pt-6 text-sm">
+              <p class="text-xs font-medium uppercase tracking-widest text-accent">${C.shipTo}</p>
               ${o.needs_shipping
-                ? `<p class="mt-3 leading-relaxed text-white/60">
+                ? `<p class="mt-3 leading-relaxed text-ink/60">
                      ${esc(o.ship_name)} · ${esc(o.ship_phone)}<br />
                      ${esc(o.ship_zip)} ${esc(addr)}<br />
-                     <span class="text-white/35">${esc(o.ship_country)}</span>
+                     <span class="text-ink/35">${esc(o.ship_country)}</span>
                    </p>`
-                : `<p class="mt-3 text-white/50">${C.noShip}</p>`}
-              ${o.tax_invoice ? `<p class="mt-4 text-white/50">📄 ${C.taxYes}</p>` : ''}
+                : `<p class="mt-3 text-ink/50">${C.noShip}</p>`}
+              ${o.tax_invoice ? `<p class="mt-4 text-ink/50">📄 ${C.taxYes}</p>` : ''}
             </div>
           </div>`;
         resEl.hidden = false;

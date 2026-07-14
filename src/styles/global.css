@@ -1,35 +1,124 @@
 @import "tailwindcss";
 
-/* ─────────────────────────────────────────────────────────────
-   브라우저 기본 UI를 다크로 (⚠️ 전역 규칙 — 새 폼도 자동 적용)
+/* ═══════════════════════════════════════════════════════════════════════
+   테마 토큰 (다크 / 라이트)
 
-   select 드롭다운 · 스크롤바 · 숫자 스피너 · 날짜 선택기 등은
-   페이지 CSS가 아니라 "브라우저가" 그린다. 따라서 배경색만 어둡게
-   칠해도 이 요소들은 흰 바탕으로 뜬다.
-   color-scheme 으로 브라우저에 "이 페이지는 다크"라고 알려줘야 한다.
+   ⚠️ 핵심 원리 — 왜 이렇게 짰는지 반드시 읽을 것.
 
-   과거에 select 드롭다운이 하얗게 뜨는 문제를 폼마다 개별로 고쳤는데,
-   새 폼을 만들 때마다 재발했다. 그래서 전역으로 올린다.
-   ───────────────────────────────────────────────────────────── */
-:root {
+   Tailwind v4 는 `text-white/60` 처럼 투명도가 붙은 유틸리티를
+   리터럴 hex(#fff9)로 굳혀버린다. 그래서 --color-white 를 바꿔도
+   투명도가 붙은 것들은 안 바뀐다.
+
+   그런데 색을 "CSS 변수 참조"로 정의하면 Tailwind 가 정적 계산을 포기하고
+   color-mix() 를 쓴다:
+
+       .text-ink\/60 { color: var(--color-ink) }                        ← 폴백
+       @supports (color: color-mix(...)) {
+         .text-ink\/60 { color: color-mix(in oklab, var(--color-ink) 60%, transparent) }
+       }
+
+   즉 --v-ink 하나만 뒤집으면 text-ink/60, border-ink/10, bg-ink/[0.03] 이
+   전부 따라온다. 이 사이트의 색은 전부 "잉크를 배경 위에 올린 것"이라,
+   잉크와 배경을 맞바꾸면 디자인 전체가 자연스럽게 반전된다.
+
+   ⚠️ 새 마크업에서도 text-white 가 아니라 text-ink 를 쓸 것.
+      (white 를 쓰면 라이트 모드에서 흰 배경에 흰 글씨가 된다)
+   ═══════════════════════════════════════════════════════════════════════ */
+@theme {
+  --color-ink: var(--v-ink);           /* 본문 잉크 — 다크=흰색, 라이트=먹색 */
+  --color-canvas: var(--v-canvas);     /* 페이지 배경 */
+  --color-accent: var(--v-accent);     /* 시안 — 텍스트·보더·틴트용 */
+  --color-brand: var(--v-brand);       /* 시안 — 버튼 채움용 (양쪽 동일) */
+  --color-onbrand: var(--v-onbrand);   /* 시안 버튼 위 글자 */
+  --color-panel: var(--v-panel);       /* 카드·그라디언트 하단 */
+  --color-panel2: var(--v-panel2);     /* 그라디언트 상단 */
+}
+
+:root,
+[data-theme='dark'] {
+  --v-ink: #ffffff;
+  --v-canvas: #0a0e13;
+  --v-accent: #1ebbf0;
+  --v-brand: #1ebbf0;
+  --v-onbrand: #06222c;
+  --v-panel: #0f141a;
+  --v-panel2: #12202b;
+
+  /* select 드롭다운·스크롤바·날짜선택기는 페이지 CSS가 아니라 브라우저가 그린다.
+     color-scheme 으로 알려주지 않으면 흰 바탕으로 뜬다. */
   color-scheme: dark;
 }
 
-/* 일부 브라우저는 select 팝업 색을 위 선언만으로 따르지 않아 명시한다 */
+[data-theme='light'] {
+  --v-ink: #0a0e13;
+  --v-canvas: #ffffff;
+
+  /* ⚠️ #1EBBF0 은 흰 배경에서 대비가 2.23:1 밖에 안 된다 (WCAG AA = 4.5:1).
+     그래서 텍스트·보더용 시안만 어둡게 내린다. #0E7FA8 = 4.55:1 ✅ */
+  --v-accent: #0e7fa8;
+
+  /* 버튼 채움은 비비드 시안 그대로 — 브랜드 색이 살아야 하고,
+     그 위의 #06222C 글자는 시안 위에서 7.40:1 로 충분하다. */
+  --v-brand: #1ebbf0;
+  --v-onbrand: #06222c;
+
+  --v-panel: #f2f6f9;
+  --v-panel2: #e3edf3;
+
+  color-scheme: light;
+}
+
+/* ───────────────────────────────────────────────────────────────────────
+   라이트 모드 텍스트 대비 보정
+
+   같은 불투명도라도 라이트 모드에서 훨씬 옅게 보인다.
+     검은 배경 위 흰색 40%  →  3.78:1
+     흰 배경 위 먹색 40%   →  2.66:1   (읽기 어려움)
+   그래서 낮은 불투명도만 한 단계씩 올린다. 위계는 유지하고 가독성만 확보.
+   ─────────────────────────────────────────────────────────────────────── */
+@supports (color: color-mix(in lab, red, red)) {
+  [data-theme='light'] .text-ink\/20 { color: color-mix(in oklab, var(--color-ink) 32%, transparent); }
+  [data-theme='light'] .text-ink\/25 { color: color-mix(in oklab, var(--color-ink) 38%, transparent); }
+  [data-theme='light'] .text-ink\/30 { color: color-mix(in oklab, var(--color-ink) 44%, transparent); }
+  [data-theme='light'] .text-ink\/35 { color: color-mix(in oklab, var(--color-ink) 50%, transparent); }
+  [data-theme='light'] .text-ink\/40 { color: color-mix(in oklab, var(--color-ink) 55%, transparent); }
+  [data-theme='light'] .text-ink\/45 { color: color-mix(in oklab, var(--color-ink) 58%, transparent); }
+  [data-theme='light'] .text-ink\/50 { color: color-mix(in oklab, var(--color-ink) 62%, transparent); }
+  [data-theme='light'] .text-ink\/55 { color: color-mix(in oklab, var(--color-ink) 66%, transparent); }
+
+  [data-theme='light'] .placeholder-ink\/25::placeholder { color: color-mix(in oklab, var(--color-ink) 42%, transparent); }
+  [data-theme='light'] .placeholder-ink\/30::placeholder { color: color-mix(in oklab, var(--color-ink) 46%, transparent); }
+}
+
+/* 브라우저가 그리는 select 팝업 */
 select {
-  color-scheme: dark;
+  color-scheme: inherit;
 }
 option {
-  background-color: #0f141a;
-  color: #ffffff;
+  background-color: var(--v-panel);
+  color: var(--v-ink);
 }
 optgroup {
-  background-color: #0f141a;
-  color: #1ebbf0;
+  background-color: var(--v-panel);
+  color: var(--v-accent);
   font-weight: 600;
 }
 
-/* 본문 폰트 — 기존 BaseLayout body 인라인 style에서 이전 (렌더 결과 동일). */
 body {
   font-family: Pretendard, system-ui, sans-serif;
+}
+
+/* ───────────────────────────────────────────────────────────────────────
+   테마별 로고 — 로고는 흰 글자 PNG 라서 흰 배경에서 사라진다.
+   채도가 낮은 픽셀만 반전시킨 라이트용 로고를 따로 둔다 (브랜드 색은 보존).
+   ─────────────────────────────────────────────────────────────────────── */
+[data-theme='light'] .logo-dark,
+[data-theme='dark'] .logo-light {
+  display: none;
+}
+
+/* 테마 토글 아이콘 */
+[data-theme='light'] .icon-moon,
+[data-theme='dark'] .icon-sun {
+  display: none;
 }

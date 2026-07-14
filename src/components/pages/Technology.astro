@@ -52,9 +52,9 @@ const catLabel = locale === 'ko'
 
   <section class="mx-auto max-w-6xl px-6 pt-28 pb-16 md:pt-36">
     <div class="v-reveal">
-      <p class="text-sm font-medium uppercase tracking-[0.2em] text-[#1EBBF0]">Technology &amp; Solution</p>
-      <h1 class="mt-5 text-4xl font-bold leading-tight text-white md:text-6xl">{tech.heroTitle.line1}<br/>{tech.heroTitle.line2}</h1>
-      <p class="mt-6 max-w-2xl text-lg leading-relaxed text-white/60">{tech.heroSubtitle}</p>
+      <p class="text-sm font-medium uppercase tracking-[0.2em] text-accent">Technology &amp; Solution</p>
+      <h1 class="mt-5 text-4xl font-bold leading-tight text-ink md:text-6xl">{tech.heroTitle.line1}<br/>{tech.heroTitle.line2}</h1>
+      <p class="mt-6 max-w-2xl text-lg leading-relaxed text-ink/60">{tech.heroSubtitle}</p>
     </div>
   </section>
 
@@ -62,54 +62,54 @@ const catLabel = locale === 'ko'
     <h2 class="sr-only">{tech.keyAdvantages}</h2>
     <div class="grid gap-5 md:grid-cols-2">
       {valueProps.map((v) => (
-        <div class="v-reveal rounded-2xl border border-white/10 bg-white/[0.03] p-7">
-          <h3 class="text-lg font-bold text-white">{v.h}</h3>
-          <p class="mt-3 text-base leading-relaxed text-white/60">{v.d}</p>
+        <div class="v-reveal rounded-2xl border border-ink/10 bg-ink/[0.03] p-7">
+          <h3 class="text-lg font-bold text-ink">{v.h}</h3>
+          <p class="mt-3 text-base leading-relaxed text-ink/60">{v.d}</p>
         </div>
       ))}
     </div>
   </section>
 
-  <section id="core" class="scroll-mt-24 border-y border-white/10 bg-white/[0.02]">
+  <section id="core" class="scroll-mt-24 border-y border-ink/10 bg-ink/[0.02]">
     <div class="mx-auto max-w-6xl px-6 py-20">
       <div class="v-reveal max-w-3xl">
-        <p class="text-sm font-medium uppercase tracking-[0.2em] text-[#1EBBF0]">Core Technology</p>
-        <h2 class="mt-5 text-3xl font-bold leading-snug text-white">{tech.coreTechHeading}</h2>
-        <p class="mt-5 text-base leading-relaxed text-white/65">{tech.coreTechBody}</p>
+        <p class="text-sm font-medium uppercase tracking-[0.2em] text-accent">Core Technology</p>
+        <h2 class="mt-5 text-3xl font-bold leading-snug text-ink">{tech.coreTechHeading}</h2>
+        <p class="mt-5 text-base leading-relaxed text-ink/65">{tech.coreTechBody}</p>
       </div>
     </div>
   </section>
 
   <section class="mx-auto max-w-6xl px-6 py-20">
     <div class="v-reveal">
-      <h2 class="text-2xl font-bold text-white">{tech.materialsHeading}</h2>
-      <p class="mt-3 max-w-2xl text-base text-white/55">{tech.materialsLibraryDesc}</p>
+      <h2 class="text-2xl font-bold text-ink">{tech.materialsHeading}</h2>
+      <p class="mt-3 max-w-2xl text-base text-ink/55">{tech.materialsLibraryDesc}</p>
     </div>
 
     <div class="mt-10 grid gap-6 lg:grid-cols-2">
-      <div class="v-reveal rounded-2xl border border-white/10 bg-white/[0.03] p-7">
-        <h3 class="text-lg font-bold text-[#1EBBF0]">PVD — Sputter &amp; Evaporator</h3>
+      <div class="v-reveal rounded-2xl border border-ink/10 bg-ink/[0.03] p-7">
+        <h3 class="text-lg font-bold text-accent">PVD — Sputter &amp; Evaporator</h3>
         {Object.entries(sputter).map(([group, items]) => (
           <div class="mt-5">
-            <p class="text-xs font-semibold uppercase tracking-wider text-white/55">{catLabel[group]}</p>
+            <p class="text-xs font-semibold uppercase tracking-wider text-ink/55">{catLabel[group]}</p>
             <div class="mt-2 flex flex-wrap gap-2">
-              {items.map((m) => (<span class="rounded-md border border-white/10 bg-white/[0.04] px-2.5 py-1 text-sm text-white/75">{m}</span>))}
+              {items.map((m) => (<span class="rounded-md border border-ink/10 bg-ink/[0.04] px-2.5 py-1 text-sm text-ink/75">{m}</span>))}
             </div>
           </div>
         ))}
       </div>
 
-      <div class="v-reveal rounded-2xl border border-white/10 bg-white/[0.03] p-7">
-        <h3 class="text-lg font-bold text-[#1EBBF0]">ALD</h3>
+      <div class="v-reveal rounded-2xl border border-ink/10 bg-ink/[0.03] p-7">
+        <h3 class="text-lg font-bold text-accent">ALD</h3>
         {Object.entries(ald).map(([group, items]) => (
           <div class="mt-5">
-            <p class="text-xs font-semibold uppercase tracking-wider text-white/55">{catLabel[group]}</p>
+            <p class="text-xs font-semibold uppercase tracking-wider text-ink/55">{catLabel[group]}</p>
             <div class="mt-2 flex flex-wrap gap-2">
-              {items.map((m) => (<span class="rounded-md border border-white/10 bg-white/[0.04] px-2.5 py-1 text-sm text-white/75">{m}</span>))}
+              {items.map((m) => (<span class="rounded-md border border-ink/10 bg-ink/[0.04] px-2.5 py-1 text-sm text-ink/75">{m}</span>))}
             </div>
           </div>
         ))}
-        <p class="mt-6 text-xs text-white/55">{tech.alsoAvailable}</p>
+        <p class="mt-6 text-xs text-ink/55">{tech.alsoAvailable}</p>
       </div>
     </div>
   </section>
@@ -117,18 +117,19 @@ const catLabel = locale === 'ko'
   <!-- ── 기존 벌크 vs 반암 박막 ─────────────────────────
        VANAM의 경쟁력을 숫자로 증명하는 표. "1개월 → 6시간", "15단계 → 4단계".
        왼쪽(기존)은 흐리게, 오른쪽(반암)은 시안으로 — 눈이 오른쪽으로 가게 만든다. -->
-  <section class="mx-auto max-w-5xl px-6 py-20">
+  <section class="border-t border-ink/10">
+    <div class="mx-auto max-w-5xl px-6 py-20">
     <div class="v-reveal">
-      <h2 class="text-2xl font-bold text-white">{tech.compareHeading}</h2>
-      <p class="mt-3 text-base text-white/55">{tech.compareSub}</p>
+      <h2 class="text-2xl font-bold text-ink">{tech.compareHeading}</h2>
+      <p class="mt-3 text-base text-ink/55">{tech.compareSub}</p>
     </div>
 
-    <div class="v-reveal mt-12 overflow-hidden rounded-2xl border border-white/10">
+    <div class="v-reveal mt-12 overflow-hidden rounded-2xl border border-ink/10">
       <!-- 헤더 -->
-      <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-2 border-b border-white/10 bg-white/[0.02] px-4 py-4 md:gap-6 md:px-8">
-        <p class="text-right text-xs font-medium uppercase tracking-wider text-white/35 md:text-sm">{tech.compareBulk}</p>
-        <p class="w-20 text-center text-xs text-white/20 md:w-32">&nbsp;</p>
-        <p class="text-left text-xs font-medium uppercase tracking-wider text-[#1EBBF0] md:text-sm">{tech.compareFilm}</p>
+      <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-2 border-b border-ink/10 bg-ink/[0.02] px-4 py-4 md:gap-6 md:px-8">
+        <p class="text-right text-xs font-medium uppercase tracking-wider text-ink/35 md:text-sm">{tech.compareBulk}</p>
+        <p class="w-20 text-center text-xs text-ink/20 md:w-32">&nbsp;</p>
+        <p class="text-left text-xs font-medium uppercase tracking-wider text-accent md:text-sm">{tech.compareFilm}</p>
       </div>
 
       {comparison.map((row) => {
@@ -138,35 +139,36 @@ const catLabel = locale === 'ko'
         const film = locale === 'ko' ? (d.film_ko ?? d.film) : d.film;
         const note = locale === 'ko' ? (d.note_ko ?? d.note) : d.note;
         return (
-          <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-2 border-b border-white/[0.06] px-4 py-5 last:border-b-0 md:gap-6 md:px-8">
-            <p class="text-right text-sm text-white/40 md:text-base">{bulk}</p>
-            <p class="w-20 text-center text-[11px] leading-tight text-white/30 md:w-32 md:text-xs">{label}</p>
+          <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-2 border-b border-ink/[0.06] px-4 py-5 last:border-b-0 md:gap-6 md:px-8">
+            <p class="text-right text-sm text-ink/40 md:text-base">{bulk}</p>
+            <p class="w-20 text-center text-[11px] leading-tight text-ink/30 md:w-32 md:text-xs">{label}</p>
             <div class="text-left">
-              <p class="text-base font-bold text-[#1EBBF0] md:text-xl">{film}</p>
-              {note && <p class="mt-0.5 text-[11px] text-white/35 md:text-xs">{note}</p>}
+              <p class="text-base font-bold text-accent md:text-xl">{film}</p>
+              {note && <p class="mt-0.5 text-[11px] text-ink/35 md:text-xs">{note}</p>}
             </div>
           </div>
         );
       })}
     </div>
+    </div>
   </section>
 
-  <section id="fs" class="scroll-mt-24 border-t border-white/10 bg-white/[0.02]">
+  <section id="fs" class="scroll-mt-24 border-t border-ink/10 bg-ink/[0.02]">
     <div class="mx-auto max-w-6xl px-6 py-20">
-      <div class="v-reveal"><h2 class="text-2xl font-bold text-white">{tech.servicesHeading}</h2></div>
+      <div class="v-reveal"><h2 class="text-2xl font-bold text-ink">{tech.servicesHeading}</h2></div>
       <div class="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {services.map((s, i) => (
-          <div class="v-reveal rounded-2xl border border-white/10 bg-white/[0.03] p-6">
-            <div class="text-sm font-bold text-[#1EBBF0]">0{i+1}</div>
-            <h3 class="mt-3 text-lg font-bold text-white">{locale === 'ko' ? (s.data.title_ko ?? s.data.title) : s.data.title}</h3>
-            <p class="mt-2 text-sm leading-relaxed text-white/60">{locale === 'ko' ? (s.data.description_ko ?? s.data.description) : s.data.description}</p>
+          <div class="v-reveal rounded-2xl border border-ink/10 bg-ink/[0.03] p-6">
+            <div class="text-sm font-bold text-accent">0{i+1}</div>
+            <h3 class="mt-3 text-lg font-bold text-ink">{locale === 'ko' ? (s.data.title_ko ?? s.data.title) : s.data.title}</h3>
+            <p class="mt-2 text-sm leading-relaxed text-ink/60">{locale === 'ko' ? (s.data.description_ko ?? s.data.description) : s.data.description}</p>
             {(() => {
               const bl = (locale === 'ko' ? s.data.bullets_ko : s.data.bullets) ?? s.data.bullets ?? [];
               return bl.length > 0 && (
-                <ul class="mt-4 space-y-1.5 border-t border-white/[0.08] pt-4">
+                <ul class="mt-4 space-y-1.5 border-t border-ink/[0.08] pt-4">
                   {bl.map((b) => (
-                    <li class="flex gap-2 text-xs leading-relaxed text-white/45">
-                      <span class="mt-[7px] size-1 shrink-0 rounded-full bg-[#1EBBF0]/50"></span>
+                    <li class="flex gap-2 text-xs leading-relaxed text-ink/45">
+                      <span class="mt-[7px] size-1 shrink-0 rounded-full bg-accent/50"></span>
                       <span>{b}</span>
                     </li>
                   ))}
@@ -184,8 +186,8 @@ const catLabel = locale === 'ko'
        스토어의 분석 서비스 상품과 직결되는 정보라, 칩 형태로 한눈에 보이게 한다. -->
   <section class="mx-auto max-w-6xl px-6 py-20">
     <div class="v-reveal">
-      <h2 class="text-2xl font-bold text-white">{tech.analysisHeading}</h2>
-      <p class="mt-3 text-base text-white/55">{tech.analysisSub}</p>
+      <h2 class="text-2xl font-bold text-ink">{tech.analysisHeading}</h2>
+      <p class="mt-3 text-base text-ink/55">{tech.analysisSub}</p>
     </div>
 
     <div class="mt-10 grid gap-4 md:grid-cols-2">
@@ -193,13 +195,13 @@ const catLabel = locale === 'ko'
         { title: tech.analysisMaterial, items: analysisMaterial },
         { title: tech.analysisDevice, items: analysisDevice },
       ].map((g) => (
-        <div class="v-reveal rounded-2xl border border-white/10 bg-white/[0.03] p-6">
-          <p class="text-xs font-medium uppercase tracking-widest text-[#1EBBF0]">{g.title}</p>
+        <div class="v-reveal rounded-2xl border border-ink/10 bg-ink/[0.03] p-6">
+          <p class="text-xs font-medium uppercase tracking-widest text-accent">{g.title}</p>
           <ul class="mt-5 space-y-3">
             {g.items.map((a) => (
-              <li class="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 border-b border-white/[0.06] pb-3 last:border-b-0 last:pb-0">
-                <span class="font-mono text-sm font-semibold text-white">{a.data.name}</span>
-                <span class="text-xs text-white/40">
+              <li class="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 border-b border-ink/[0.06] pb-3 last:border-b-0 last:pb-0">
+                <span class="font-mono text-sm font-semibold text-ink">{a.data.name}</span>
+                <span class="text-xs text-ink/40">
                   {locale === 'ko' ? (a.data.description_ko ?? a.data.description) : a.data.description}
                 </span>
               </li>
@@ -212,18 +214,18 @@ const catLabel = locale === 'ko'
 
   <!-- ── 장비 ────────────────────────────────────────────
        "30년 경력 진공장비 전문가와 자체 개발" — WP에 묻혀 있던 강력한 신뢰 요소. -->
-  <section class="border-y border-white/10 bg-white/[0.02]">
+  <section class="border-y border-ink/10 bg-ink/[0.02]">
     <div class="mx-auto max-w-6xl px-6 py-20">
       <div class="v-reveal">
-        <h2 class="text-2xl font-bold text-white">{tech.equipmentHeading}</h2>
-        <p class="mt-3 max-w-3xl text-base text-white/55">{tech.equipmentSub}</p>
+        <h2 class="text-2xl font-bold text-ink">{tech.equipmentHeading}</h2>
+        <p class="mt-3 max-w-3xl text-base text-ink/55">{tech.equipmentSub}</p>
       </div>
 
       <div class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {equipment.filter((e) => e.data.category === 'deposition').map((e) => (
-          <div class="v-reveal rounded-xl border border-white/10 bg-white/[0.03] p-5">
-            <h3 class="text-base font-bold text-white">{locale === 'ko' ? (e.data.name_ko ?? e.data.name) : e.data.name}</h3>
-            <p class="mt-2 text-xs leading-relaxed text-white/50">
+          <div class="v-reveal rounded-xl border border-ink/10 bg-ink/[0.03] p-5">
+            <h3 class="text-base font-bold text-ink">{locale === 'ko' ? (e.data.name_ko ?? e.data.name) : e.data.name}</h3>
+            <p class="mt-2 text-xs leading-relaxed text-ink/50">
               {locale === 'ko' ? (e.data.description_ko ?? e.data.description) : e.data.description}
             </p>
           </div>
@@ -231,9 +233,9 @@ const catLabel = locale === 'ko'
       </div>
 
       {equipment.filter((e) => e.data.category === 'data').map((e) => (
-        <div class="v-reveal mt-4 rounded-xl border border-[#1EBBF0]/25 bg-[#1EBBF0]/[0.05] p-6">
-          <h3 class="text-base font-bold text-[#1EBBF0]">{locale === 'ko' ? (e.data.name_ko ?? e.data.name) : e.data.name}</h3>
-          <p class="mt-2 max-w-3xl text-sm leading-relaxed text-white/60">
+        <div class="v-reveal mt-4 rounded-xl border border-accent/25 bg-accent/[0.05] p-6">
+          <h3 class="text-base font-bold text-accent">{locale === 'ko' ? (e.data.name_ko ?? e.data.name) : e.data.name}</h3>
+          <p class="mt-2 max-w-3xl text-sm leading-relaxed text-ink/60">
             {locale === 'ko' ? (e.data.description_ko ?? e.data.description) : e.data.description}
           </p>
         </div>
@@ -246,55 +248,57 @@ const catLabel = locale === 'ko'
        마지막에 견적 요청으로 이어진다 — 스토어와 연결되는 지점. -->
   <section class="mx-auto max-w-6xl px-6 py-20">
     <div class="v-reveal">
-      <h2 class="text-2xl font-bold text-white">{tech.processHeading}</h2>
-      <p class="mt-3 text-base text-white/55">{tech.processSub}</p>
+      <h2 class="text-2xl font-bold text-ink">{tech.processHeading}</h2>
+      <p class="mt-3 text-base text-ink/55">{tech.processSub}</p>
     </div>
 
-    <ol class="mt-12 grid gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/10 sm:grid-cols-2 lg:grid-cols-3">
+    <ol class="mt-12 grid gap-px overflow-hidden rounded-2xl border border-ink/10 bg-ink/10 sm:grid-cols-2 lg:grid-cols-3">
       {processSteps.map((st, i) => (
-        <li class="v-reveal bg-[#0A0E13] p-6">
+        <li class="v-reveal bg-canvas p-6">
           <div class="flex items-baseline gap-3">
-            <span class="font-mono text-xs font-bold text-[#1EBBF0]">{String(i + 1).padStart(2, '0')}</span>
-            <h3 class="text-base font-bold text-white">{st.t}</h3>
+            <span class="font-mono text-xs font-bold text-accent">{String(i + 1).padStart(2, '0')}</span>
+            <h3 class="text-base font-bold text-ink">{st.t}</h3>
           </div>
-          <p class="mt-2.5 text-sm leading-relaxed text-white/50">{st.d}</p>
+          <p class="mt-2.5 text-sm leading-relaxed text-ink/50">{st.d}</p>
         </li>
       ))}
     </ol>
 
     <div class="v-reveal mt-8 flex flex-wrap items-center gap-4">
       <a href={lhref('/shop')}
-        class="inline-flex items-center gap-2 rounded-lg bg-[#1EBBF0] px-6 py-3 text-sm font-semibold text-[#06222C] transition hover:brightness-110">
+        class="inline-flex items-center gap-2 rounded-lg bg-brand px-6 py-3 text-sm font-semibold text-onbrand transition hover:brightness-110">
         {tech.processCta}
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
       </a>
       <a href="/VanaM_Request-for-Deposition-Process.xlsx" download
-        class="inline-flex items-center gap-2 rounded-lg border border-white/15 px-6 py-3 text-sm text-white/70 transition hover:border-[#1EBBF0] hover:text-white">
+        class="inline-flex items-center gap-2 rounded-lg border border-ink/15 px-6 py-3 text-sm text-ink/70 transition hover:border-accent hover:text-ink">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
         {tech.formDownload}
       </a>
-      <p class="text-xs text-white/35">{tech.formDownloadSub}</p>
+      <p class="text-xs text-ink/35">{tech.formDownloadSub}</p>
     </div>
   </section>
 
-  <section id="rt" class="scroll-mt-24 mx-auto max-w-6xl px-6 py-20">
+  <section id="rt" class="scroll-mt-24 border-t border-ink/10">
+    <div class="mx-auto max-w-6xl px-6 py-20">
     <div class="v-reveal">
-      <h2 class="text-2xl font-bold text-white">{tech.applicationsHeading}</h2>
-      <p class="mt-3 text-base text-white/55">{tech.applicationsDesc}</p>
+      <h2 class="text-2xl font-bold text-ink">{tech.applicationsHeading}</h2>
+      <p class="mt-3 text-base text-ink/55">{tech.applicationsDesc}</p>
     </div>
     <div class="mt-8 flex flex-wrap gap-3">
       {applications.map((a) => (
-        <span class="v-reveal rounded-full border border-[#1EBBF0]/30 bg-[#1EBBF0]/10 px-4 py-2 text-sm font-medium text-white/80">{a}</span>
+        <span class="v-reveal rounded-full border border-accent/30 bg-accent/10 px-4 py-2 text-sm font-medium text-ink/80">{a}</span>
       ))}
+    </div>
     </div>
   </section>
 
-  <section class="border-t border-white/10">
+  <section class="border-t border-ink/10">
     <div class="mx-auto max-w-6xl px-6 py-24 text-center">
       <div class="v-reveal">
-        <h2 class="text-3xl font-bold text-white md:text-4xl">{tech.ctaHeading}</h2>
-        <p class="mx-auto mt-4 max-w-xl text-base text-white/60" set:html={tech.ctaBodyHtml}></p>
-        <a href={lhref('/contact')} class="mt-8 inline-flex items-center gap-2 rounded-lg bg-[#1EBBF0] px-7 py-3 font-semibold text-[#06222C] transition hover:brightness-110">{tech.ctaButton}</a>
+        <h2 class="text-3xl font-bold text-ink md:text-4xl">{tech.ctaHeading}</h2>
+        <p class="mx-auto mt-4 max-w-xl text-base text-ink/60" set:html={tech.ctaBodyHtml}></p>
+        <a href={lhref('/contact')} class="mt-8 inline-flex items-center gap-2 rounded-lg bg-brand px-7 py-3 font-semibold text-onbrand transition hover:brightness-110">{tech.ctaButton}</a>
       </div>
     </div>
   </section>

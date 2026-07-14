@@ -45,23 +45,23 @@ const t = isKo
   <section class="mx-auto max-w-3xl px-6 py-28 md:py-32">
     {doc ? (
       <>
-        <h1 class="text-3xl font-bold leading-tight text-white md:text-4xl">{doc.data.title}</h1>
-        <p class="mt-3 text-sm text-white/40">{t.updated}: {doc.data.updated}</p>
+        <h1 class="text-3xl font-bold leading-tight text-ink md:text-4xl">{doc.data.title}</h1>
+        <p class="mt-3 text-sm text-ink/40">{t.updated}: {doc.data.updated}</p>
         {doc.data.intro && (
-          <p class="mt-8 whitespace-pre-line text-base leading-relaxed text-white/60">{fill(doc.data.intro)}</p>
+          <p class="mt-8 whitespace-pre-line text-base leading-relaxed text-ink/60">{fill(doc.data.intro)}</p>
         )}
 
         <div class="mt-14 space-y-12">
           {doc.data.sections.map((s) => (
             <section>
-              <h2 class="text-lg font-semibold text-white">{s.heading}</h2>
-              <p class="mt-3 whitespace-pre-line text-[15px] leading-relaxed text-white/60">{fill(s.body)}</p>
+              <h2 class="text-lg font-semibold text-ink">{s.heading}</h2>
+              <p class="mt-3 whitespace-pre-line text-[15px] leading-relaxed text-ink/60">{fill(s.body)}</p>
             </section>
           ))}
         </div>
       </>
     ) : (
-      <p class="text-white/60">{t.notFound}</p>
+      <p class="text-ink/60">{t.notFound}</p>
     )}
   </section>
 </BaseLayout>

@@ -140,20 +140,20 @@ const t = isKo
 
 const req = ' *';
 const inputClass =
-  'mt-2 w-full rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-white placeholder-white/30 outline-none transition focus:border-[#1EBBF0] focus:ring-1 focus:ring-[#1EBBF0]';
-const labelClass = 'block text-sm font-medium text-white/80';
-const legendClass = 'text-sm font-medium uppercase tracking-widest text-[#1EBBF0]';
+  'mt-2 w-full rounded-lg border border-ink/10 bg-ink/[0.03] px-4 py-3 text-ink placeholder-ink/30 outline-none transition focus:border-accent focus:ring-1 focus:ring-accent';
+const labelClass = 'block text-sm font-medium text-ink/80';
+const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
 ---
 
 <BaseLayout title={t.meta} description={t.metaDesc}>
   <section class="mx-auto max-w-5xl px-6 py-28 md:py-32">
-    <p class="text-sm font-medium uppercase tracking-widest text-[#1EBBF0]">{t.eyebrow}</p>
-    <h1 class="mt-4 text-3xl font-bold leading-tight text-white md:text-4xl">{t.heading}</h1>
+    <p class="text-sm font-medium uppercase tracking-widest text-accent">{t.eyebrow}</p>
+    <h1 class="mt-4 text-3xl font-bold leading-tight text-ink md:text-4xl">{t.heading}</h1>
 
     {quoteError ? (
       <div class="mt-10 rounded-xl border border-amber-400/30 bg-amber-400/10 p-6">
         <p class="text-amber-200">{quoteError}</p>
-        <a href={lhref('/shop')} class="mt-4 inline-block text-sm text-[#1EBBF0] hover:underline">{t.backToShop} →</a>
+        <a href={lhref('/shop')} class="mt-4 inline-block text-sm text-accent hover:underline">{t.backToShop} →</a>
       </div>
     ) : (
       <div class="mt-12 grid gap-12 lg:grid-cols-[1fr_20rem]">
@@ -182,7 +182,7 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-[#1EBBF0
               <div>
                 <label for="buyerPhone" class={labelClass}>{t.phone}{req}</label>
                 <input id="buyerPhone" name="buyerPhone" type="tel" required autocomplete="tel" class={inputClass} />
-                <p class="mt-1.5 text-xs text-white/35">{t.phoneHint}</p>
+                <p class="mt-1.5 text-xs text-ink/35">{t.phoneHint}</p>
               </div>
               <div>
                 <label for="buyerCompany" class={labelClass}>{t.company}</label>
@@ -194,8 +194,8 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-[#1EBBF0
           <fieldset id="ship-section" hidden>
             <legend class={legendClass}>{t.secShip}</legend>
 
-            <label class="mt-5 flex cursor-pointer items-center gap-3 text-sm text-white/70">
-              <input type="checkbox" id="ship-same" checked class="size-4 rounded border-white/20 bg-white/[0.03] accent-[#1EBBF0]" />
+            <label class="mt-5 flex cursor-pointer items-center gap-3 text-sm text-ink/70">
+              <input type="checkbox" id="ship-same" checked class="size-4 rounded border-ink/20 bg-ink/[0.03] accent-brand" />
               <span>{t.shipSame}</span>
             </label>
 
@@ -266,8 +266,8 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-[#1EBBF0
                     <input id="shipZipIntl" type="text" autocomplete="postal-code" class={inputClass} />
                   </div>
                 </div>
-                <div class="rounded-lg border border-white/10 bg-white/[0.02] p-4">
-                  <p class="text-xs leading-relaxed text-white/50">{t.customs}</p>
+                <div class="rounded-lg border border-ink/10 bg-ink/[0.02] p-4">
+                  <p class="text-xs leading-relaxed text-ink/50">{t.customs}</p>
                 </div>
               </div>
 
@@ -275,7 +275,7 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-[#1EBBF0
               <div id="courier-wrap" hidden>
                 <label for="shipCourierAcct" class={labelClass}>{t.courier}</label>
                 <input id="shipCourierAcct" name="shipCourierAcct" type="text" class={inputClass} />
-                <p class="mt-1.5 text-xs leading-relaxed text-white/35">{t.courierHint}</p>
+                <p class="mt-1.5 text-xs leading-relaxed text-ink/35">{t.courierHint}</p>
               </div>
 
               <div>
@@ -285,19 +285,19 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-[#1EBBF0
             </div>
           </fieldset>
 
-          <div id="no-ship-note" class="rounded-lg border border-white/10 bg-white/[0.02] p-5" hidden>
-            <p class="text-sm text-white/55">{t.noShip}</p>
+          <div id="no-ship-note" class="rounded-lg border border-ink/10 bg-ink/[0.02] p-5" hidden>
+            <p class="text-sm text-ink/55">{t.noShip}</p>
           </div>
 
           <fieldset id="tax-section">
             <legend class={legendClass}>{t.secTax}</legend>
 
             <div id="tax-kr">
-              <label class="mt-5 flex cursor-pointer items-start gap-3 text-sm text-white/70">
-                <input type="checkbox" id="tax-want" class="mt-0.5 size-4 shrink-0 rounded border-white/20 bg-white/[0.03] accent-[#1EBBF0]" />
+              <label class="mt-5 flex cursor-pointer items-start gap-3 text-sm text-ink/70">
+                <input type="checkbox" id="tax-want" class="mt-0.5 size-4 shrink-0 rounded border-ink/20 bg-ink/[0.03] accent-brand" />
                 <span>{t.taxWant}</span>
               </label>
-              <p class="mt-3 text-xs leading-relaxed text-white/40">{t.taxHint}</p>
+              <p class="mt-3 text-xs leading-relaxed text-ink/40">{t.taxHint}</p>
 
               <div id="tax-fields" class="mt-6 grid gap-6 md:grid-cols-2" hidden>
                 <div>
@@ -319,15 +319,15 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-[#1EBBF0
               </div>
             </div>
 
-            <p id="tax-intl" class="mt-5 text-sm leading-relaxed text-white/50" hidden>{t.taxIntl}</p>
+            <p id="tax-intl" class="mt-5 text-sm leading-relaxed text-ink/50" hidden>{t.taxIntl}</p>
           </fieldset>
 
           <fieldset>
             <legend class={legendClass}>{t.secAgree}</legend>
             <div class="mt-5 space-y-5">
-              <label class="flex cursor-pointer items-start gap-3 text-sm text-white/70">
+              <label class="flex cursor-pointer items-start gap-3 text-sm text-ink/70">
                 <input type="checkbox" name="privacy" required value="agreed"
-                  class="mt-0.5 size-4 shrink-0 rounded border-white/20 bg-white/[0.03] accent-[#1EBBF0]" />
+                  class="mt-0.5 size-4 shrink-0 rounded border-ink/20 bg-ink/[0.03] accent-brand" />
                 <span>{t.privacy}{req}</span>
               </label>
 
@@ -346,43 +346,43 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-[#1EBBF0
         </form>
 
         <aside class="lg:sticky lg:top-24 lg:self-start">
-          <div class="rounded-xl border border-white/10 bg-white/[0.02] p-6">
+          <div class="rounded-xl border border-ink/10 bg-ink/[0.02] p-6">
             <p class={legendClass}>{t.secSummary}</p>
 
             {quote ? (
-              <div class="mt-5 space-y-1 border-b border-white/10 pb-5">
-                <p class="text-sm text-white/80">{quote.product_name}</p>
-                <p class="font-mono text-xs text-white/35">{quote.id}</p>
+              <div class="mt-5 space-y-1 border-b border-ink/10 pb-5">
+                <p class="text-sm text-ink/80">{quote.product_name}</p>
+                <p class="font-mono text-xs text-ink/35">{quote.id}</p>
               </div>
             ) : (
-              <ul id="summary-lines" class="mt-5 space-y-3 border-b border-white/10 pb-5 text-sm"></ul>
+              <ul id="summary-lines" class="mt-5 space-y-3 border-b border-ink/10 pb-5 text-sm"></ul>
             )}
 
             <dl class="mt-5 space-y-2 text-sm">
-              <div class="flex justify-between gap-4 text-white/50">
+              <div class="flex justify-between gap-4 text-ink/50">
                 <dt class="shrink-0">{t.shipping}</dt>
                 <dd id="ship-fee" class="text-right text-xs leading-relaxed">{shipFeeDomestic}</dd>
               </div>
             </dl>
 
-            <div class="mt-5 flex items-end justify-between border-t border-white/10 pt-5">
+            <div class="mt-5 flex items-end justify-between border-t border-ink/10 pt-5">
               <div>
-                <p class="text-sm text-white/60">{t.total}</p>
-                <p class="text-xs text-white/35">{t.vat}</p>
+                <p class="text-sm text-ink/60">{t.total}</p>
+                <p class="text-xs text-ink/35">{t.vat}</p>
               </div>
-              <p id="summary-total" class="text-2xl font-bold text-white">
+              <p id="summary-total" class="text-2xl font-bold text-ink">
                 {quote ? `₩${(quote.quoted_amount ?? 0).toLocaleString('ko-KR')}` : '₩0'}
               </p>
             </div>
 
             <button type="submit" form="checkout-form" id="pay-btn"
-              class="mt-6 w-full rounded-lg bg-[#1EBBF0] px-6 py-3.5 font-semibold text-[#06222C] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50">
+              class="mt-6 w-full rounded-lg bg-brand px-6 py-3.5 font-semibold text-onbrand transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50">
               <span id="pay-label">{t.submit}</span>
             </button>
             <p id="pay-status" class="mt-3 text-sm" role="status" aria-live="polite"></p>
 
-            <p id="empty-cart" class="mt-4 text-center text-sm text-white/40" hidden>
-              {t.empty} <a href={lhref('/shop')} class="text-[#1EBBF0] hover:underline">{t.backToShop} →</a>
+            <p id="empty-cart" class="mt-4 text-center text-sm text-ink/40" hidden>
+              {t.empty} <a href={lhref('/shop')} class="text-accent hover:underline">{t.backToShop} →</a>
             </p>
           </div>
         </aside>
@@ -445,8 +445,8 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-[#1EBBF0
         const li = document.createElement('li');
         li.className = 'flex justify-between gap-3';
         li.innerHTML =
-          `<span class="text-white/70">${p.name} <span class="text-white/35">× ${i.qty}</span></span>` +
-          `<span class="shrink-0 text-white/80">${won(sub)}</span>`;
+          `<span class="text-ink/70">${p.name} <span class="text-ink/35">× ${i.qty}</span></span>` +
+          `<span class="shrink-0 text-ink/80">${won(sub)}</span>`;
         linesEl!.appendChild(li);
       }
       totalEl.textContent = won(total);
@@ -535,7 +535,7 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-[#1EBBF0
 
     const setStatus = (msg: string, ok: boolean) => {
       statusEl.textContent = msg;
-      statusEl.style.color = ok ? '#1EBBF0' : '#F87171';
+      statusEl.style.color = ok ? 'var(--color-accent)' : '#F87171';
     };
 
     // ── 제출 ───────────────────────────────────────────
