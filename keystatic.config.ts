@@ -255,13 +255,16 @@ export default config({
       path: 'src/content/team/*',
       format: { data: 'json' },
       slugField: 'name',
-      columns: ['role', 'order'],
+      columns: ['role_ko', 'order'],
       schema: {
         name: fields.slug({
           name: { label: '이름', description: '예: Dr. SD HAN', validation: { isRequired: true } },
           slug: { label: '파일 ID (영문)', description: '예: sd-han' },
         }),
-        role: fields.text({ label: '직책', description: '예: CEO / CTO / Senior Researcher' }),
+        role: fields.text({ label: '직책 (영문)', description: '예: CEO · Ph.D' }),
+        role_ko: fields.text({ label: '직책 (한글)', description: '예: 대표이사 · 박사' }),
+        affiliation: fields.text({ label: '이력·소속 (영문)', description: '예: KIST · Univ. of Cambridge (UK)' }),
+        affiliation_ko: fields.text({ label: '이력·소속 (한글)', description: '예: KIST · 케임브리지대 (영국)' }),
         photo: fields.image({
           label: '프로필 사진',
           directory: 'src/assets/team',
