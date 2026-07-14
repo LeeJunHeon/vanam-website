@@ -393,6 +393,14 @@ export default config({
         description: fields.text({ label: '설명 (영문)', multiline: true, validation: { isRequired: true } }),
         title_ko: fields.text({ label: '서비스명 (한글)', description: '비우면 영문이 표시됩니다' }),
         description_ko: fields.text({ label: '설명 (한글)', multiline: true }),
+        bullets: fields.array(fields.text({ label: '항목' }), {
+          label: '상세 항목 (영문)',
+          itemLabel: (p) => p.value,
+        }),
+        bullets_ko: fields.array(fields.text({ label: '항목' }), {
+          label: '상세 항목 (한글)',
+          itemLabel: (p) => p.value,
+        }),
         order: fields.integer({ label: '표시 순서', defaultValue: 99, validation: { isRequired: true } }),
       },
     }),
@@ -428,6 +436,74 @@ export default config({
         }),
         order: fields.integer({ label: 'Technology 페이지 표시 순서', defaultValue: 99, validation: { isRequired: true } }),
         home: fields.integer({ label: '홈 화면 노출 순서 (비우면 미노출)' }),
+      },
+    }),
+
+    // ── 벌크 vs 박막 비교 (기술 페이지) ──────────────
+    comparison: collection({
+      label: '벌크 vs 박막 비교',
+      path: 'src/content/comparison/*',
+      format: { data: 'json' },
+      slugField: 'label',
+      columns: ['label_ko', 'order'],
+      schema: {
+        label: fields.slug({ name: { label: '비교 항목 (영문)', description: '예: Process steps' } }),
+        label_ko: fields.text({ label: '비교 항목 (한글)', description: '예: 공정 단계' }),
+        bulk: fields.text({ label: '기존 벌크 (영문)' }),
+        bulk_ko: fields.text({ label: '기존 벌크 (한글)' }),
+        film: fields.text({ label: '반암 박막 (영문)' }),
+        film_ko: fields.text({ label: '반암 박막 (한글)' }),
+        note: fields.text({ label: '보조 설명 (영문)', description: '박막 값 아래 작게 붙습니다. 예: under 1/10,000' }),
+        note_ko: fields.text({ label: '보조 설명 (한글)' }),
+        order: fields.integer({ label: '표시 순서', defaultValue: 0 }),
+      },
+    }),
+
+    // ── 장비 ─────────────────────────────────────────
+    equipment: collection({
+      label: '장비',
+      path: 'src/content/equipment/*',
+      format: { data: 'json' },
+      slugField: 'name',
+      columns: ['name_ko', 'category', 'order'],
+      schema: {
+        name: fields.slug({ name: { label: '장비명 (영문)' } }),
+        name_ko: fields.text({ label: '장비명 (한글)' }),
+        category: fields.select({
+          label: '분류',
+          options: [
+            { label: '증착 장비', value: 'deposition' },
+            { label: '데이터 수집', value: 'data' },
+            { label: '인프라', value: 'infra' },
+          ],
+          defaultValue: 'deposition',
+        }),
+        description: fields.text({ label: '설명 (영문)', multiline: true }),
+        description_ko: fields.text({ label: '설명 (한글)', multiline: true }),
+        order: fields.integer({ label: '표시 순서', defaultValue: 0 }),
+      },
+    }),
+
+    // ── 분석·측정 항목 (스토어의 분석 상품과 연결) ───
+    analysis: collection({
+      label: '분석 · 측정 항목',
+      path: 'src/content/analysis/*',
+      format: { data: 'json' },
+      slugField: 'name',
+      columns: ['group', 'order'],
+      schema: {
+        name: fields.slug({ name: { label: '항목명', description: '예: XRD, I–V' } }),
+        group: fields.select({
+          label: '분류',
+          options: [
+            { label: '소재 분석', value: 'material' },
+            { label: '소자 특성 분석', value: 'device' },
+          ],
+          defaultValue: 'material',
+        }),
+        description: fields.text({ label: '설명 (영문)' }),
+        description_ko: fields.text({ label: '설명 (한글)' }),
+        order: fields.integer({ label: '표시 순서', defaultValue: 0 }),
       },
     }),
   },

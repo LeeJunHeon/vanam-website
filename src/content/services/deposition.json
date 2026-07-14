@@ -3,5 +3,19 @@
   "title": "Deposition Service",
   "description": "Customized thin-film deposition across PVD (Sputter, Evaporator), ALD, PLD, and MOCVD.",
   "title_ko": "증착 서비스",
-  "description_ko": "PVD(스퍼터·증발기), ALD, PLD, MOCVD 전반에 걸친 맞춤형 박막 증착을 제공합니다."
+  "description_ko": "PVD(스퍼터·증발기), ALD, PLD, MOCVD 전반에 걸친 맞춤형 박막 증착을 제공합니다.",
+  "bullets": [
+    "PVD — Sputter & Evaporator",
+    "ALD — sub-nanometre conformal films",
+    "PLD & MOCVD",
+    "Custom material, substrate and process conditions",
+    "Quality inspection before shipping"
+  ],
+  "bullets_ko": [
+    "PVD — 스퍼터 · 증발 증착",
+    "ALD — 서브 나노미터 등각 박막",
+    "PLD · MOCVD",
+    "소재·기판·공정 조건 맞춤 설정",
+    "출하 전 기본 품질 검사"
+  ]
 }

@@ -1,0 +1,7 @@
+{
+  "name": "Piezoelectric",
+  "group": "device",
+  "description": "Piezoresponse measurement",
+  "description_ko": "압전 응답 측정",
+  "order": 5
+}

@@ -1,0 +1,7 @@
+{
+  "name": "XRD",
+  "group": "material",
+  "description": "X-ray diffraction — crystallinity",
+  "description_ko": "X선 회절 — 결정성",
+  "order": 3
+}

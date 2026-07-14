@@ -60,13 +60,24 @@ function initials(name){ const p = name.replace('Dr. ','').split(' '); return (p
       <h2 class="text-2xl font-bold text-white">{about.teamHeading}</h2>
       <p class="mt-3 max-w-2xl text-base text-white/55">{about.teamDesc}</p>
     </div>
-    <div class="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-6">
-      {team.map((member) => (
-        <div class="v-reveal rounded-xl border border-white/10 bg-white/[0.03] p-5 text-center">
-          <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#1EBBF0]/15 text-sm font-bold text-[#1EBBF0]">{initials(member.data.name)}</div>
-          <p class="mt-4 text-sm font-semibold text-white">{member.data.name}</p>
-        </div>
-      ))}
+    <div class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {team.map((member) => {
+        const m = member.data;
+        const role = locale === 'ko' ? (m.role_ko ?? m.role) : m.role;
+        const affil = locale === 'ko' ? (m.affiliation_ko ?? m.affiliation) : m.affiliation;
+        return (
+          <div class="v-reveal flex gap-4 rounded-xl border border-white/10 bg-white/[0.03] p-5">
+            <div class="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#1EBBF0]/15 text-sm font-bold text-[#1EBBF0]">
+              {initials(m.name)}
+            </div>
+            <div class="min-w-0">
+              <p class="text-sm font-semibold text-white">{m.name}</p>
+              {role && <p class="mt-0.5 text-xs font-medium text-[#1EBBF0]">{role}</p>}
+              {affil && <p class="mt-1.5 text-xs leading-relaxed text-white/40">{affil}</p>}
+            </div>
+          </div>
+        );
+      })}
     </div>
   </section>
 

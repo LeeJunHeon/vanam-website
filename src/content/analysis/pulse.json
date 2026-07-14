@@ -1,0 +1,7 @@
+{
+  "name": "Pulse",
+  "group": "device",
+  "description": "Pulse measurement",
+  "description_ko": "펄스 측정",
+  "order": 3
+}

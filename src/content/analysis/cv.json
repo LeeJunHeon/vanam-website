@@ -1,0 +1,7 @@
+{
+  "name": "C–V",
+  "group": "device",
+  "description": "Capacitance–voltage characteristics",
+  "description_ko": "정전용량–전압 특성",
+  "order": 2
+}

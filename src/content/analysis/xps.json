@@ -1,0 +1,7 @@
+{
+  "name": "XPS",
+  "group": "material",
+  "description": "X-ray photoelectron spectroscopy",
+  "description_ko": "X선 광전자 분광",
+  "order": 4
+}

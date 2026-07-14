@@ -1,0 +1,7 @@
+{
+  "name": "Ferroelectric",
+  "group": "device",
+  "description": "Polarisation hysteresis",
+  "description_ko": "분극 이력 곡선",
+  "order": 4
+}

@@ -3,5 +3,19 @@
   "title": "R&D Service",
   "description": "Thin-film simulation, commercial viability testing, and ML-based process prediction.",
   "title_ko": "R&D 서비스",
-  "description_ko": "박막 시뮬레이션, 상용성 검증, 머신러닝 기반 공정 예측을 제공합니다."
+  "description_ko": "박막 시뮬레이션, 상용성 검증, 머신러닝 기반 공정 예측을 제공합니다.",
+  "bullets": [
+    "Customised thin-film materials and devices",
+    "DFT-based adsorption thermodynamics & growth mechanism",
+    "Crystal orientation, morphology and strain simulation",
+    "ML-based process optimisation and performance prediction",
+    "Device design and fab-linked manufacturing"
+  ],
+  "bullets_ko": [
+    "맞춤형 특수 박막 소재·소자 개발",
+    "DFT 기반 흡착 열역학 및 성장 메커니즘 해석",
+    "결정 배향·모폴로지·스트레인 시뮬레이션",
+    "머신러닝 기반 공정 최적화 및 성능 예측",
+    "소자 설계 및 팹 연계 제조"
+  ]
 }

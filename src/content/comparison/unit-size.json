@@ -1,0 +1,11 @@
+{
+  "label": "Unit size",
+  "label_ko": "단위 크기",
+  "bulk": "cm ~ mm",
+  "bulk_ko": "cm ~ mm",
+  "film": "nm",
+  "film_ko": "nm",
+  "note": "under 1/10,000",
+  "note_ko": "1만분의 1 이하",
+  "order": 1
+}

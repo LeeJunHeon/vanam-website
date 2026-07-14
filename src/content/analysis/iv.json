@@ -1,0 +1,7 @@
+{
+  "name": "I–V",
+  "group": "device",
+  "description": "Current–voltage characteristics",
+  "description_ko": "전류–전압 특성",
+  "order": 1
+}

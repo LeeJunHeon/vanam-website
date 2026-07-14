@@ -1,0 +1,7 @@
+{
+  "name": "UPS",
+  "group": "material",
+  "description": "UV photoelectron spectroscopy",
+  "description_ko": "자외선 광전자 분광",
+  "order": 5
+}

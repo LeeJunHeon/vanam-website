@@ -3,5 +3,13 @@
   "title": "IP / Patent Package",
   "description": "Core IP analysis, IP portfolio construction, and technology transfer mediation.",
   "title_ko": "IP·특허 패키지",
-  "description_ko": "핵심 IP 분석, IP 포트폴리오 구축, 기술이전 중개를 지원합니다."
+  "description_ko": "핵심 IP 분석, IP 포트폴리오 구축, 기술이전 중개를 지원합니다.",
+  "bullets": [
+    "Research team — material & process analysis, simulation, commercial viability testing",
+    "Patent team — core IP analysis, portfolio construction, technology transfer mediation"
+  ],
+  "bullets_ko": [
+    "연구팀 — 박막 소재·공정 기술 분석, 시뮬레이션, 사업성 검증",
+    "특허팀 — 핵심 IP 분석, IP 포트폴리오 구축, 기술이전 중개"
+  ]
 }

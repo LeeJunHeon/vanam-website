@@ -1,0 +1,7 @@
+{
+  "name": "AFM",
+  "group": "material",
+  "description": "Atomic force microscopy",
+  "description_ko": "원자간력 현미경",
+  "order": 6
+}

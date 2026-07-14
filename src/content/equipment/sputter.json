@@ -1,0 +1,8 @@
+{
+  "name": "Sputter",
+  "name_ko": "스퍼터",
+  "category": "deposition",
+  "description": "Magnetron sputtering for high-crystalline oxide, nitride and metal films.",
+  "description_ko": "고결정성 산화물·질화물·금속 박막을 위한 마그네트론 스퍼터링.",
+  "order": 1
+}

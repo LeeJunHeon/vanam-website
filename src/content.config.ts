@@ -15,7 +15,10 @@ const team = defineCollection({
   loader: glob({ pattern: '*.json', base: './src/content/team' }),
   schema: z.object({
     name: z.string(),
-    role: opt(z.string()),       // 직책/직함 (※ 신규 수집 예정 — 현재 비움)
+    role: opt(z.string()),             // 직책/직함 (EN)
+    role_ko: opt(z.string()),
+    affiliation: opt(z.string()),      // 이력·소속 (EN)
+    affiliation_ko: opt(z.string()),
     photo: opt(z.string()),      // 프로필 이미지 (※ 신규 수집 예정 — 현재 비움)
     linkedin: opt(z.string().url()),
     order: z.number().default(0),
@@ -97,6 +100,8 @@ const services = defineCollection({
     title: z.string(),                       // EN
     description: z.string(),                 // EN
     title_ko: opt(z.string()),         // KO
+    bullets: opt(z.array(z.string())),        // 상세 항목 (EN)
+    bullets_ko: opt(z.array(z.string())),
     description_ko: opt(z.string()),   // KO
     order: z.number().default(0),
   }),
@@ -177,4 +182,48 @@ const policies = defineCollection({
   }),
 });
 
-export const collections = { team, news, history, materials, partners, achievements, services, faq, products, certificates, policies };
+// 기존 벌크 공정 vs 반암 박막 공정 비교 (기술 페이지)
+const comparison = defineCollection({
+  loader: glob({ pattern: '*.json', base: './src/content/comparison' }),
+  schema: z.object({
+    label: z.string(),                 // 비교 항목 (EN)
+    label_ko: opt(z.string()),
+    bulk: z.string(),                  // 기존 벌크 쪽 값
+    bulk_ko: opt(z.string()),
+    film: z.string(),                  // 반암 박막 쪽 값
+    film_ko: opt(z.string()),
+    note: opt(z.string()),             // 박막 값에 붙는 보조 설명 (예: "1만분의 1 이하")
+    note_ko: opt(z.string()),
+    order: z.number().default(0),
+  }),
+});
+
+// 증착 장비 · 공정 데이터 수집 시스템
+const equipment = defineCollection({
+  loader: glob({ pattern: '*.json', base: './src/content/equipment' }),
+  schema: z.object({
+    name: z.string(),
+    name_ko: opt(z.string()),
+    category: z.enum(['deposition', 'data', 'infra']).default('deposition'),
+    description: z.string(),
+    description_ko: opt(z.string()),
+    order: z.number().default(0),
+  }),
+});
+
+// 분석·측정 항목 (스토어의 분석 서비스 상품과 연결된다)
+const analysis = defineCollection({
+  loader: glob({ pattern: '*.json', base: './src/content/analysis' }),
+  schema: z.object({
+    name: z.string(),                          // SEM, XRD, I–V …
+    group: z.enum(['material', 'device']),     // 소재 분석 / 소자 특성 분석
+    description: z.string(),
+    description_ko: opt(z.string()),
+    order: z.number().default(0),
+  }),
+});
+
+export const collections = {
+  team, news, history, materials, partners, achievements, services, faq,
+  products, certificates, policies, comparison, equipment, analysis,
+};

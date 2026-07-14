@@ -1,0 +1,8 @@
+{
+  "name": "Process Big Data Collection System",
+  "name_ko": "공정 빅데이터 수집 시스템",
+  "category": "data",
+  "description": "In-situ capture of plasma wavelength, residual gas and process variables — the data that feeds our ML prediction models.",
+  "description_ko": "플라즈마 파장·잔류 가스·공정 변수를 실시간 수집합니다. 머신러닝 성능 예측 모델의 학습 데이터가 됩니다.",
+  "order": 5
+}

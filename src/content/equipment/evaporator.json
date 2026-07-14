@@ -1,0 +1,8 @@
+{
+  "name": "Evaporator",
+  "name_ko": "증발 증착기",
+  "category": "deposition",
+  "description": "Thermal and e-beam evaporation for metal and dielectric layers.",
+  "description_ko": "금속·유전체 층을 위한 열증착 및 전자빔 증착.",
+  "order": 2
+}
