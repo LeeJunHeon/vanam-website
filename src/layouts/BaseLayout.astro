@@ -67,14 +67,41 @@ const fl = isKo
 
 const nav = [
   { href: '/', label: 'Home', labelKo: '홈' },
-  { href: '/about', label: 'About', labelKo: '회사소개' },
-  { href: '/technology', label: 'Technology', labelKo: '기술' },
+  {
+    href: '/about', label: 'About', labelKo: '회사소개',
+    children: [
+      { href: '/about#vision', label: 'Company', labelKo: '회사 개요' },
+      { href: '/about#team', label: 'Team', labelKo: '팀' },
+      { href: '/about#history', label: 'History', labelKo: '연혁' },
+      { href: '/about#achievement', label: 'Global Activity', labelKo: '글로벌 활동' },
+      { href: '/about#collaboration', label: 'Collaboration', labelKo: '협력' },
+    ],
+  },
+  {
+    href: '/technology', label: 'Technology', labelKo: '기술',
+    children: [
+      { href: '/technology#core', label: 'Core Technology', labelKo: '핵심 기술' },
+      { href: '/technology#materials', label: 'Material Library', labelKo: '소재 라이브러리' },
+      { href: '/technology#fs', label: 'Services', labelKo: '서비스' },
+      { href: '/technology#analysis', label: 'Analysis', labelKo: '분석·측정' },
+      { href: '/technology#equipment', label: 'Equipment', labelKo: '장비' },
+      { href: '/technology#rt', label: 'Applications', labelKo: '응용 분야' },
+    ],
+  },
   { href: '/product', label: 'Product', labelKo: '제품' },
   { href: '/news', label: 'News', labelKo: '뉴스' },
   { href: '/blog', label: 'Blog', labelKo: '블로그' },
   { href: '/contact', label: 'Contact', labelKo: '문의' },
 ];
 const navLabel = (item) => currentLocale === 'ko' ? item.labelKo : item.label;
+const childLabel = (item) => currentLocale === 'ko' ? item.labelKo : item.label;
+// 앵커(#) 포함 링크용: getRelativeLocaleUrl 은 경로 끝에 '/'를 붙여 '#vision/' 처럼
+// 앵커를 깨뜨린다. 경로와 앵커를 분리해 경로만 지역화하고 앵커를 뒤에 붙인다.
+const childHref = (path) => {
+  const [p, hash] = path.split('#');
+  const base = localizedHref(p);
+  return hash ? `${base.replace(/\/$/, '')}#${hash}` : base;
+};
 ---
 <!doctype html>
 <html lang={currentLocale}>
@@ -169,7 +196,24 @@ const navLabel = (item) => currentLocale === 'ko' ? item.labelKo : item.label;
         <div class="flex items-center gap-5">
           <nav class="hidden items-center gap-5 text-sm text-ink/60 md:flex" aria-label={ui.mainMenu}>
             {nav.map((item) => (
-              <a href={localizedHref(item.href)} class="transition hover:text-ink">{navLabel(item)}</a>
+              item.children ? (
+                <div class="group relative">
+                  <a href={localizedHref(item.href)} class="inline-flex items-center gap-1 py-2 transition hover:text-ink">
+                    {navLabel(item)}
+                    <svg class="h-3 w-3 transition group-hover:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                  </a>
+                  <!-- 드롭다운: 호버 시 표시. 상단 padding(pt-2)으로 마우스 이동 간격 확보 -->
+                  <div class="invisible absolute left-0 top-full z-50 pt-2 opacity-0 transition-all duration-150 group-hover:visible group-hover:opacity-100">
+                    <div class="min-w-[13rem] rounded-xl border border-ink/10 bg-canvas p-2 shadow-lg shadow-ink/5">
+                      {item.children.map((c) => (
+                        <a href={childHref(c.href)} class="block rounded-lg px-3 py-2 text-sm text-ink/70 transition hover:bg-ink/[0.05] hover:text-ink">{childLabel(c)}</a>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <a href={localizedHref(item.href)} class="py-2 transition hover:text-ink">{navLabel(item)}</a>
+              )
             ))}
           </nav>
           <div class="hidden items-center gap-1.5 text-xs font-medium md:flex" aria-label={ui.lang}>
@@ -208,7 +252,16 @@ const navLabel = (item) => currentLocale === 'ko' ? item.labelKo : item.label;
       </div>
       <nav id="mobile-nav" aria-label={ui.mobileMenu} class="border-t border-ink/10 px-6 pb-3 md:hidden">
         {nav.map((item) => (
-          <a href={localizedHref(item.href)} class="block py-3 text-base text-ink/70 transition hover:text-ink">{navLabel(item)}</a>
+          <>
+            <a href={localizedHref(item.href)} class="block py-3 text-base text-ink/70 transition hover:text-ink">{navLabel(item)}</a>
+            {item.children && (
+              <div class="mb-1 ml-3 border-l border-ink/10 pl-3">
+                {item.children.map((c) => (
+                  <a href={childHref(c.href)} class="block py-2 text-sm text-ink/55 transition hover:text-ink">{childLabel(c)}</a>
+                ))}
+              </div>
+            )}
+          </>
         ))}
         <div class="mt-2 flex items-center gap-4 border-t border-ink/10 pt-3 text-base" aria-label={ui.lang}>
           <a href={enPath} hreflang="en" class={currentLocale === 'en' ? 'text-accent' : 'text-ink/70 transition hover:text-ink'}>EN</a>
