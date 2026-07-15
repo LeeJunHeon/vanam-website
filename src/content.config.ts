@@ -64,6 +64,12 @@ const materials = defineCollection({
     formula: z.string(),
     order: z.number(),                   // technology 그룹 내 표시 순서
     home: opt(z.number()),         // index 큐레이션 노출 순서 (없으면 미노출)
+    // ── 물질 상세 페이지용 (콘텐츠는 추후 채움) ──
+    name: opt(z.string()),         // 물질 정식 명칭 EN (예: "Vanadium Dioxide")
+    name_ko: opt(z.string()),      // 물질 정식 명칭 KO (예: "이산화바나듐")
+    image: opt(z.string()),        // 상세 이미지 경로 (※ 사박사님 제공 예정 — 현재 비움)
+    description: opt(z.string()),      // 상세 설명 EN
+    description_ko: opt(z.string()),   // 상세 설명 KO
   }),
 });
 
