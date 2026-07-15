@@ -105,6 +105,7 @@ const t = isKo
       submit: '결제하기', sending: '주문 생성 중…',
       errBiz: '사업자등록번호가 올바르지 않습니다.',
       errFail: '주문 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+      errCaptcha: '봇 확인이 끝날 때까지 잠시 기다렸다가 다시 시도해주세요.',
     }
   : {
       meta: 'Checkout | VANAM', metaDesc: 'Enter your order details and pay.',
@@ -136,6 +137,7 @@ const t = isKo
       submit: 'Proceed to payment', sending: 'Creating order…',
       errBiz: 'The business registration number is not valid.',
       errFail: 'Could not create the order. Please try again.',
+      errCaptcha: 'Please wait a moment for the verification to finish, then try again.',
     };
 
 const req = ' *';
@@ -162,6 +164,7 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
           data-quote-ship={quote ? String(quoteNeedsShipping) : ''}
           data-msg-biz={t.errBiz}
           data-msg-fail={t.errFail}
+          data-msg-captcha={t.errCaptcha}
           data-label-send={t.submit}
           data-label-sending={t.sending}>
           <div class="absolute left-[-9999px]" aria-hidden="true">
@@ -341,6 +344,14 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
                 <a href={lhref('/refund')} target="_blank" rel="noopener"
                   class="mt-2 inline-block pl-7 text-xs text-warn underline hover:text-warn">{t.seePolicy} ↗</a>
               </div>
+
+              {/* Turnstile 봇 검증 위젯 */}
+              <div
+                class="cf-turnstile"
+                data-sitekey="0x4AAAAAAD2FGmnAciuP8Mbo"
+                data-theme="auto"
+                data-language="auto"
+              ></div>
             </div>
           </fieldset>
         </form>
@@ -397,7 +408,16 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
   </section>
 </BaseLayout>
 
+<script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+
 <script>
+  // Turnstile 전역 API 타입 (api.js 가 window.turnstile 을 주입한다)
+  declare global {
+    interface Window {
+      turnstile?: { reset: (widgetId?: string) => void };
+    }
+  }
+
   type Item = { sku: string; qty: number };
   type Product = { sku: string; name: string; price: number; ship: boolean };
 
@@ -548,6 +568,12 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
       const data = Object.fromEntries(new FormData(form).entries()) as Record<string, string>;
       delete data.vanam_hp_email;
 
+      // Turnstile 토큰 확인 (FormData 가 cf-turnstile-response 를 자동 수집한다)
+      if (!data['cf-turnstile-response']) {
+        setStatus(M.msgCaptcha!, false);
+        return;
+      }
+
       const isKR = !needsShipping || countrySel.value === 'KR';
 
       if (taxWant.checked && isKR && !validBizNo(data.taxBizNo ?? '')) {
@@ -596,6 +622,8 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
         location.href = `${base}/order/done?id=${encodeURIComponent(j.orderId)}`;
       } catch (err) {
         console.error(err);
+        // 토큰은 1회용 — 실패 시 리셋해 재시도를 준비한다. (성공 시엔 페이지가 이동하므로 불필요)
+        window.turnstile?.reset();
         setStatus(M.msgFail!, false);
         btn.disabled = false;
         label.textContent = M.labelSend!;

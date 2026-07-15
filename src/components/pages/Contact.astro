@@ -32,6 +32,7 @@ const labelClass = 'block text-sm font-medium text-ink/80';
       data-msg-honeypot={f.msgHoneypot}
       data-msg-success={f.msgSuccess}
       data-msg-error={f.msgError}
+      data-msg-captcha={f.msgCaptcha}
       data-label-send={f.submit}
       data-label-sending={f.sending}>
       <!-- Honeypot: hidden from humans (spam trap) -->
@@ -72,6 +73,15 @@ const labelClass = 'block text-sm font-medium text-ink/80';
           <span>{f.privacy}</span>
         </label>
 
+        {/* Turnstile 봇 검증 위젯. 대부분 방문자에겐 보이지 않거나 로딩 표시만 뜬다.
+            테마는 사이트 라이트/다크에 맞춰 auto. */}
+        <div
+          class="cf-turnstile"
+          data-sitekey="0x4AAAAAAD2FGmnAciuP8Mbo"
+          data-theme="auto"
+          data-language="auto"
+        ></div>
+
         <div class="flex flex-wrap items-center gap-4">
           <button type="submit" id="submit-btn"
             class="inline-flex items-center gap-2 rounded-lg bg-brand px-7 py-3 font-semibold text-onbrand transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60">
@@ -104,7 +114,17 @@ const labelClass = 'block text-sm font-medium text-ink/80';
   <FaqSchema />
 </BaseLayout>
 
+{/* Turnstile API. explicit 렌더가 아니라 자동 렌더(.cf-turnstile 를 찾아 위젯 생성). */}
+<script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+
 <script>
+  // Turnstile 전역 API 타입 (api.js 가 window.turnstile 을 주입한다)
+  declare global {
+    interface Window {
+      turnstile?: { reset: (widgetId?: string) => void };
+    }
+  }
+
   // 문의는 서버 라우트로 전송한다. (웹훅 URL은 서버에만 존재 — 클라이언트 노출 금지)
   // 견적 요청은 스토어의 견적가 상품 페이지에서 모달로 접수한다.
   const ENDPOINT = "/api/inquiry";
@@ -136,6 +156,13 @@ const labelClass = 'block text-sm font-medium text-ink/80';
     data.type = "general";
     data.locale = document.documentElement.lang || "en";
 
+    // Turnstile 토큰 확인. 위젯이 아직 준비 안 됐으면 잠깐 기다리라고 안내.
+    // (FormData 가 cf-turnstile-response 를 자동 수집하므로 data 에 이미 들어있다)
+    if (!data["cf-turnstile-response"]) {
+      setStatus(M.msgCaptcha!, false);
+      return;
+    }
+
     btn.disabled = true;
     label.textContent = M.labelSending!;
     setStatus("", true);
@@ -148,9 +175,12 @@ const labelClass = 'block text-sm font-medium text-ink/80';
       });
       if (!res.ok) throw new Error("HTTP " + res.status);
       form.reset();
+      // 제출 성공/실패와 무관하게 토큰은 1회용이므로 위젯을 리셋해 다음 제출을 준비한다.
+      window.turnstile?.reset();
       setStatus(M.msgSuccess!, true);
     } catch (err) {
       console.error(err);
+      window.turnstile?.reset();
       setStatus(M.msgError!, false);
     } finally {
       btn.disabled = false;

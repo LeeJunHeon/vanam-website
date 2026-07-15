@@ -9,6 +9,7 @@ import { env as cfEnv } from 'cloudflare:workers';
 import { db, newId, nowIso } from '../../lib/db';
 import { isKnownCountry } from '../../lib/countries';
 import { rateLimit, tooMany } from '../../lib/rate-limit';
+import { verifyTurnstile } from '../../lib/turnstile';
 
 export const prerender = false;
 
@@ -43,6 +44,11 @@ export const POST: APIRoute = async ({ request }) => {
   // 레이트리밋: IP당 1시간에 10건. (허니팟 통과 후 — 봇은 위에서 걸러진다)
   const rl = await rateLimit(await db(), 'order', request);
   if (!rl.ok) return tooMany(rl.retryAfterSec);
+
+  // Turnstile 캡챠 검증. (허니팟 통과 후 — 사람만 검증)
+  //   키 미설정/네트워크 오류면 통과(가용성 우선), 토큰 없음/무효면 차단.
+  const ts = await verifyTurnstile(str(body['cf-turnstile-response']), request);
+  if (!ts.ok) return json({ ok: false, error: 'captcha_failed' }, 400);
 
   // ── 1) 주문자 ──────────────────────────────────────
   const buyerName = str(body.buyerName).slice(0, MAX);

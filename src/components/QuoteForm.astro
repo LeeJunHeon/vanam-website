@@ -41,6 +41,7 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
       data-msg-success={q.msgSuccess}
       data-msg-error={c.msgError}
       data-msg-required={c.msgRequired}
+      data-msg-captcha={c.msgCaptcha}
       data-label-send={q.submit}
       data-label-sending={c.sending}>
       <!-- Honeypot: hidden from humans (spam trap) -->
@@ -144,6 +145,14 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
           <span>{q.privacy}</span>
         </label>
 
+        {/* Turnstile 봇 검증 위젯 */}
+        <div
+          class="cf-turnstile"
+          data-sitekey="0x4AAAAAAD2FGmnAciuP8Mbo"
+          data-theme="auto"
+          data-language="auto"
+        ></div>
+
         <div class="flex flex-wrap items-center gap-4">
           <button type="submit" id="quote-submit"
             class="inline-flex items-center gap-2 rounded-lg bg-brand px-7 py-3 font-semibold text-onbrand transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60">
@@ -156,7 +165,16 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
   </div>
 </section>
 
+<script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+
 <script>
+  // Turnstile 전역 API 타입 (api.js 가 window.turnstile 을 주입한다)
+  declare global {
+    interface Window {
+      turnstile?: { reset: (widgetId?: string) => void };
+    }
+  }
+
   const form = document.getElementById("quote-form") as HTMLFormElement | null;
   const statusEl = document.getElementById("quote-status")!;
   const btn = document.getElementById("quote-submit") as HTMLButtonElement;
@@ -219,6 +237,12 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
     data.productName = M.productName!;
     data.locale = document.documentElement.lang || "en";
 
+    // Turnstile 토큰 확인 (FormData 가 cf-turnstile-response 를 자동 수집한다)
+    if (!data["cf-turnstile-response"]) {
+      setStatus(M.msgCaptcha!, false);
+      return;
+    }
+
     btn.disabled = true;
     label.textContent = M.labelSending!;
     setStatus("", true);
@@ -232,9 +256,11 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
       if (!res.ok) throw new Error("HTTP " + res.status);
       form.reset();
       if (otherWrap) otherWrap.hidden = true;
+      window.turnstile?.reset();
       setStatus(M.msgSuccess!, true);
     } catch (err) {
       console.error(err);
+      window.turnstile?.reset();
       setStatus(M.msgError!, false);
     } finally {
       btn.disabled = false;
