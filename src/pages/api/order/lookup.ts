@@ -3,6 +3,7 @@
 // (주문번호만으로 조회하게 두면 임의 대입으로 남의 주문을 볼 수 있다)
 import type { APIRoute } from 'astro';
 import { db } from '../../../lib/db';
+import { rateLimit, tooMany } from '../../../lib/rate-limit';
 
 export const prerender = false;
 
@@ -10,6 +11,10 @@ const json = (b: unknown, s = 200) =>
   new Response(JSON.stringify(b), { status: s, headers: { 'Content-Type': 'application/json' } });
 
 export const POST: APIRoute = async ({ request }) => {
+  // 주문번호 무차별 대입 차단: IP당 1분에 10회.
+  const rl = await rateLimit(await db(), 'lookup', request);
+  if (!rl.ok) return tooMany(rl.retryAfterSec);
+
   let body: Record<string, unknown>;
   try {
     body = (await request.json()) as Record<string, unknown>;

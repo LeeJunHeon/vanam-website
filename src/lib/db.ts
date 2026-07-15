@@ -59,6 +59,10 @@ const SCHEMA = [
   `CREATE INDEX IF NOT EXISTS idx_ord_created ON orders(created_at DESC)`,
   `CREATE INDEX IF NOT EXISTS idx_ord_status ON orders(status)`,
   `CREATE INDEX IF NOT EXISTS idx_items_order ON order_items(order_id)`,
+  // 레이트리밋: (버킷:IP) 별 시도 횟수. rate-limit.ts 가 UPSERT 로 원자적 관리.
+  //   key = "login:1.2.3.4" 등, window_start = 창 시작 시각(ms epoch)
+  `CREATE TABLE IF NOT EXISTS rate_limits (
+    key TEXT PRIMARY KEY, hits INTEGER NOT NULL, window_start INTEGER NOT NULL)`,
 ];
 
 // 이미 만들어진 테이블에 컬럼을 덧붙일 때 쓴다.

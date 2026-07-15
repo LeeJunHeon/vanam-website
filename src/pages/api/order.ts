@@ -8,6 +8,7 @@ import { getCollection } from 'astro:content';
 import { env as cfEnv } from 'cloudflare:workers';
 import { db, newId, nowIso } from '../../lib/db';
 import { isKnownCountry } from '../../lib/countries';
+import { rateLimit, tooMany } from '../../lib/rate-limit';
 
 export const prerender = false;
 
@@ -38,6 +39,10 @@ export const POST: APIRoute = async ({ request }) => {
 
   // 봇 차단
   if (str(body.vanam_hp_email) !== '') return json({ ok: true, orderId: 'SPAM', spam: true });
+
+  // 레이트리밋: IP당 1시간에 10건. (허니팟 통과 후 — 봇은 위에서 걸러진다)
+  const rl = await rateLimit(await db(), 'order', request);
+  if (!rl.ok) return tooMany(rl.retryAfterSec);
 
   // ── 1) 주문자 ──────────────────────────────────────
   const buyerName = str(body.buyerName).slice(0, MAX);

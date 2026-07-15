@@ -1,5 +1,7 @@
 import type { APIRoute } from 'astro';
 import { checkPassword, makeSessionCookie, clearSessionCookie, adminConfigured } from '../../../lib/admin-auth';
+import { db } from '../../../lib/db';
+import { rateLimit, tooMany } from '../../../lib/rate-limit';
 
 export const prerender = false;
 
@@ -10,6 +12,10 @@ export const POST: APIRoute = async ({ request }) => {
       headers: { 'Content-Type': 'application/json' },
     });
   }
+
+  // 무차별 대입 차단: IP당 15분에 5회. (700ms 지연은 병렬 요청에 무력하므로 필수)
+  const rl = await rateLimit(await db(), 'login', request);
+  if (!rl.ok) return tooMany(rl.retryAfterSec);
 
   let password = '';
   try {

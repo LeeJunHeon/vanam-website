@@ -4,6 +4,7 @@ import type { APIRoute } from 'astro';
 // dev(순수 Node)에서는 astro.config.mjs의 shim이 빈 객체를 돌려주고, .env 로 폴백한다.
 import { env as cfEnv } from 'cloudflare:workers';
 import { db, newId, nowIso } from '../../lib/db';
+import { rateLimit, tooMany } from '../../lib/rate-limit';
 
 // 서버에서 온디맨드 실행 (정적 생성 금지)
 export const prerender = false;
@@ -31,6 +32,11 @@ export const POST: APIRoute = async ({ request }) => {
   if (str(body.vanam_hp_email) !== '') {
     return json({ ok: true, delivered: false, spam: true });
   }
+
+  // 1-2) 레이트리밋: IP당 10분에 5회. (허니팟 통과 후에 센다 —
+  //      봇은 위에서 조용히 걸러지므로, 여기서는 실제 사람의 반복 제출만 카운트된다)
+  const rl = await rateLimit(await db(), 'inquiry', request);
+  if (!rl.ok) return tooMany(rl.retryAfterSec);
 
   // 2) 공통 필수: 담당자명 · 이메일 · 개인정보 동의
   const type = str(body.type) === 'general' ? 'general' : 'quote';
