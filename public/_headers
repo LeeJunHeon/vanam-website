@@ -1,0 +1,44 @@
+# Cloudflare 정적 자산 응답 헤더.
+# 형식: 경로 패턴을 한 줄에 쓰고, 그 아래 들여쓴 줄들이 그 경로에 붙을 헤더다.
+# (_redirects 와 같은 Cloudflare Static Assets 규칙)
+#
+# ⚠️ 이 파일이 사이트의 유일한 CSP/보안 헤더 소스다. (src/ 안에 http-equiv·CSP 없음 — 확인함)
+# ⚠️ 규칙 순서: Cloudflare 는 "더 구체적인 경로"를 먼저 적용한다.
+#    /keystatic* 예외 블록을 위에, 전역(/*)을 아래에 둔다.
+
+# ── /keystatic (Keystatic Cloud 관리자 UI) 예외 ─────────────────────────
+# cloud 모드라 브라우저가 api.keystatic.cloud 와 GitHub 에 직접 접속한다.
+# React 관리자 UI 는 인라인 스타일·워커·blob 을 쓰므로 전역 CSP 로는 깨진다.
+# 이 경로만 완화하되, 클릭재킹 차단(frame-ancestors)·MIME 스니핑 차단은 유지한다.
+/keystatic
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data:; connect-src 'self' https://api.keystatic.cloud https://api.github.com https://github.com; frame-src 'self'; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+
+/keystatic/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data:; connect-src 'self' https://api.keystatic.cloud https://api.github.com https://github.com; frame-src 'self'; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+
+/api/keystatic/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+
+# ── 전역 (그 외 모든 경로) ──────────────────────────────────────────────
+# CSP 근거 (실제 코드 조사 결과):
+#   script-src  'unsafe-inline' — 인라인 스크립트 10개(JSON-LD·reveal·모바일메뉴).
+#                                 Astro client: 지시어 0개라 hydration 스크립트 없음 → nonce 불필요.
+#   style-src   'unsafe-inline' — 인라인 <style is:global> + 폰트 링크의 onload 핸들러.
+#               cdn.jsdelivr.net — Pretendard CSS.
+#   font-src    cdn.jsdelivr.net — Pretendard woff. data: 는 폰트 폴백 대비.
+#   img-src     data: — 인라인 SVG/이미지 대비. (외부 이미지 없음 — 뉴스/소셜은 <a> 링크뿐)
+#   connect-src 'self' — fetch 는 전부 /api/* 내부.
+#   frame-ancestors 'none' — 클릭재킹 완전 차단. (사이트에 iframe·YouTube 임베드 0개라 안전)
+#   frame-src   'none' — iframe 임베드 없음.
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net data:; img-src 'self' data:; connect-src 'self'; object-src 'none'; frame-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
