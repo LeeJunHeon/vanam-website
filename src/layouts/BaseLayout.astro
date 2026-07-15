@@ -36,8 +36,8 @@ const websiteSchema = {
 };
 const cleanPath = basePath !== '/' ? basePath.replace(/\/$/, '') : '/';
 const crumbLabels = currentLocale === 'ko'
-  ? { '/about': '회사 소개', '/technology': '기술·솔루션', '/news': '뉴스', '/contact': '문의' }
-  : { '/about': 'About', '/technology': 'Technology', '/news': 'News', '/contact': 'Contact' };
+  ? { '/about': '회사 소개', '/technology': '기술·솔루션', '/news': '뉴스', '/blog': '블로그', '/contact': '문의' }
+  : { '/about': 'About', '/technology': 'Technology', '/news': 'News', '/blog': 'Blog', '/contact': 'Contact' };
 const breadcrumbSchema = (cleanPath !== '/' && crumbLabels[cleanPath]) ? {
   "@context": "https://schema.org",
   "@type": "BreadcrumbList",
@@ -68,9 +68,10 @@ const fl = isKo
 const nav = [
   { href: '/', label: 'Home', labelKo: '홈' },
   { href: '/about', label: 'About', labelKo: '회사소개' },
-  { href: '/technology', label: 'Technology', labelKo: '기술' },
+  { href: '/technology', label: 'Tech', labelKo: '기술' },
+  { href: '/shop', label: 'Product', labelKo: '제품' },
   { href: '/news', label: 'News', labelKo: '뉴스' },
-  { href: '/shop', label: 'Store', labelKo: '스토어' },
+  { href: '/blog', label: 'Blog', labelKo: '블로그' },
   { href: '/contact', label: 'Contact', labelKo: '문의' },
 ];
 const navLabel = (item) => currentLocale === 'ko' ? item.labelKo : item.label;

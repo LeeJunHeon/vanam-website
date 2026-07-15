@@ -1,0 +1,88 @@
+---
+// Blog 페이지.
+//   링크드인 글 등을 수동 등록해 보여준다(자동 수집은 링크드인 정책상 불가).
+//   ⚠️ 아직 글이 없으므로, blog 컬렉션이 비어 있으면 "준비 중" 안내를 표시한다.
+//      src/content/blog/*.json 을 추가하면 자동으로 목록이 나온다.
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+const locale = Astro.currentLocale ?? 'en';
+const isKo = locale === 'ko';
+
+const posts = (await getCollection('blog'))
+  .filter((p) => p.data.published)
+  .sort((a, b) => {
+    const da = a.data.date?.valueOf() ?? 0;
+    const db = b.data.date?.valueOf() ?? 0;
+    return db - da || a.data.order - b.data.order;
+  });
+
+const fmtDate = (d) =>
+  d.toLocaleDateString(isKo ? 'ko-KR' : 'en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' });
+
+const title = (p) => (isKo ? (p.data.title_ko ?? p.data.title) : p.data.title);
+const excerpt = (p) => (isKo ? (p.data.excerpt_ko ?? p.data.excerpt) : p.data.excerpt);
+
+const t = {
+  metaTitle: isKo ? '블로그 | VANAM' : 'Blog | VANAM',
+  metaDesc: isKo ? 'VANAM의 기술 이야기와 소식' : 'Stories and updates from VANAM',
+  eyebrow: 'Blog',
+  heroTitle: isKo ? '블로그' : 'Blog',
+  heroSub: isKo
+    ? 'VANAM의 기술과 산업 이야기를 전합니다.'
+    : 'Insights and stories on our technology and industry.',
+  emptyTitle: isKo ? '준비 중입니다' : 'Coming soon',
+  emptyBody: isKo
+    ? '곧 새로운 글로 찾아뵙겠습니다.'
+    : 'New posts will be published here soon.',
+};
+---
+
+<BaseLayout title={t.metaTitle} description={t.metaDesc}>
+
+  <section class="mx-auto max-w-5xl px-6 pt-28 pb-12 md:pt-36">
+    <div class="v-reveal">
+      <p class="text-sm font-medium uppercase tracking-[0.2em] text-accent">{t.eyebrow}</p>
+      <h1 class="mt-5 text-4xl font-bold leading-tight text-ink md:text-6xl">{t.heroTitle}</h1>
+      <p class="mt-6 max-w-2xl text-lg leading-relaxed text-ink/60">{t.heroSub}</p>
+    </div>
+  </section>
+
+  <section class="mx-auto max-w-5xl px-6 pb-24">
+    {posts.length > 0 ? (
+      <div class="space-y-4">
+        {posts.map((p) => {
+          const Tag = p.data.url ? 'a' : 'div';
+          return (
+            <Tag
+              href={p.data.url}
+              target={p.data.url ? '_blank' : undefined}
+              rel={p.data.url ? 'noopener noreferrer' : undefined}
+              class="v-reveal group flex items-start gap-5 rounded-2xl border border-ink/10 bg-ink/[0.03] p-6 transition hover:border-accent/40 hover:bg-ink/[0.05]"
+            >
+              <span class="flex-1">
+                <span class="block text-base font-medium leading-relaxed text-ink/85 group-hover:text-ink">{title(p)}</span>
+                {excerpt(p) && (
+                  <span class="mt-1.5 block text-sm leading-relaxed text-ink/55">{excerpt(p)}</span>
+                )}
+                {p.data.date && (
+                  <span class="mt-1.5 block text-xs text-ink/45">{fmtDate(p.data.date)}</span>
+                )}
+              </span>
+              {p.data.url && (
+                <svg class="mt-1 h-5 w-5 shrink-0 text-ink/30 transition group-hover:text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg>
+              )}
+            </Tag>
+          );
+        })}
+      </div>
+    ) : (
+      <div class="v-reveal flex flex-col items-center justify-center gap-3 rounded-2xl border border-ink/10 bg-ink/[0.03] py-20 text-center">
+        <svg class="h-12 w-12 text-ink/20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        <p class="text-lg font-semibold text-ink/70">{t.emptyTitle}</p>
+        <p class="text-sm text-ink/45">{t.emptyBody}</p>
+      </div>
+    )}
+  </section>
+
+</BaseLayout>

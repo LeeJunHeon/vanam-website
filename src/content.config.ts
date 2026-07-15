@@ -39,6 +39,24 @@ const news = defineCollection({
   }),
 });
 
+// 2-1. BLOG ────────────────────────────
+// 링크드인 글 등을 수동으로 등록(자동 수집은 링크드인 정책상 불가).
+// url = 링크드인 원문 링크, excerpt = 요약. 콘텐츠는 추후 채움 → 지금은 비어 있어도 됨.
+const blog = defineCollection({
+  loader: glob({ pattern: '*.json', base: './src/content/blog' }),
+  schema: z.object({
+    title: z.string(),                 // 글 제목 (EN)
+    title_ko: opt(z.string()),   // 글 제목 (KO)
+    url: opt(z.string().url()),  // 링크드인 등 원문 링크 (있으면 클릭 시 이동)
+    excerpt: opt(z.string()),    // 요약 (EN)
+    excerpt_ko: opt(z.string()), // 요약 (KO)
+    date: opt(z.coerce.date()),
+    thumbnail: opt(z.string()),  // 썸네일 이미지 (추후)
+    published: z.boolean().default(true),  // false면 목록에서 제외 (초안·예시용)
+    order: z.number().default(0),
+  }),
+});
+
 // 3. HISTORY ───────────────────────────
 // items/items_ko = about 연혁 항목(EN/KO), summary_en/summaryKo = home 한 줄 요약(EN/KO).
 const history = defineCollection({
@@ -230,6 +248,6 @@ const analysis = defineCollection({
 });
 
 export const collections = {
-  team, news, history, materials, partners, achievements, services, faq,
+  team, news, blog, history, materials, partners, achievements, services, faq,
   products, certificates, policies, comparison, equipment, analysis,
 };
