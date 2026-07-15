@@ -144,8 +144,10 @@ export const POST: APIRoute = async ({ request }) => {
   const webhook = typeof raw === 'string' ? raw.trim().replace(/^["']|["']$/g, '') : '';
 
   if (!webhook) {
-    // 웹훅 미설정: 전송하지 않고 서버 로그로만 확인 (로컬 테스트 경로)
-    console.log('[inquiry] GOOGLE_CHAT_WEBHOOK not set. Payload:\n' + text);
+    // 웹훅 미설정: 전송하지 않는다.
+    // ⚠️ 여기에 payload(text)를 로그로 남기면 이름·이메일·전화·문의내용이 로그에 그대로 쌓인다.
+    //    접수번호만 남겨 진단 가능하게 하고, PII 는 로그에 남기지 않는다.
+    console.warn('[inquiry] GOOGLE_CHAT_WEBHOOK 미설정 — 알림을 건너뜁니다. 접수번호:', id);
     return json({ ok: true, delivered: false });
   }
 

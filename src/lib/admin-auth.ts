@@ -51,7 +51,9 @@ function signingKey(): string {
   return pw;
 }
 
-export const adminConfigured = () => secret().length >= 8;
+// 고객 PII(주문·문의)가 걸린 계정이므로 16자 이상을 요구한다.
+// (짧은 비밀번호는 유출된 세션 쿠키 없이도 온라인 추측 공격의 표적이 된다)
+export const adminConfigured = () => secret().length >= 16;
 
 const b64url = (buf: ArrayBuffer) =>
   btoa(String.fromCharCode(...new Uint8Array(buf)))

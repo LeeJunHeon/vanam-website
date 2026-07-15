@@ -269,7 +269,9 @@ export const POST: APIRoute = async ({ request }) => {
       console.error('[order] 알림 실패 (주문은 저장됨):', e);
     }
   } else {
-    console.log('[order] GOOGLE_CHAT_WEBHOOK not set. Payload:\n' + text);
+    // ⚠️ payload(text)에는 주문자 이름·이메일·전화·배송지가 들어있다. 로그에 남기지 않는다.
+    //    진단은 주문번호만으로 충분하다.
+    console.warn('[order] GOOGLE_CHAT_WEBHOOK 미설정 — 알림을 건너뜁니다. 주문번호:', orderId);
   }
 
   return json({ ok: true, orderId, amount });
