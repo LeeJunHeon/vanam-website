@@ -28,5 +28,12 @@
 /feed/*                     /news         301
 /comments/feed              /news         301
 
+# ── 제품 (주소 변경: /shop → /product) ───────────────
+#    메뉴 라벨을 Product 로 통일하면서 주소도 맞췄다. 기존 링크·북마크·검색 순위 보존용 301.
+/shop                       /product            301
+/shop/*                     /product/:splat     301
+/ko/shop                    /ko/product         301
+/ko/shop/*                  /ko/product/:splat  301
+
 # ⚠️ /wp-admin, /wp-login.php, /xmlrpc.php 는 일부러 리다이렉트하지 않는다.
 #    봇이 끊임없이 두드리는 경로라, 응답을 주면 "여기 뭔가 있다"는 신호가 된다. 404로 둔다.

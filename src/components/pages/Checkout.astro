@@ -78,7 +78,7 @@ const t = isKo
   ? {
       meta: '주문서 | VANAM', metaDesc: '주문 정보를 입력하고 결제를 진행합니다.',
       eyebrow: '주문서', heading: '주문 정보',
-      empty: '장바구니가 비어 있습니다.', backToShop: '스토어로 돌아가기',
+      empty: '장바구니가 비어 있습니다.', backToShop: '제품으로 돌아가기',
       secBuyer: '주문자', secShip: '배송지', secTax: '세금계산서', secAgree: '확인 및 동의', secSummary: '주문 요약',
       name: '이름', email: '이메일', phone: '연락처', company: '회사 / 소속',
       phoneHint: '해외 연락처는 국가번호를 포함해 주세요 (예: +1 555 000 0000)',
@@ -110,7 +110,7 @@ const t = isKo
   : {
       meta: 'Checkout | VANAM', metaDesc: 'Enter your order details and pay.',
       eyebrow: 'Checkout', heading: 'Order details',
-      empty: 'Your cart is empty.', backToShop: 'Back to store',
+      empty: 'Your cart is empty.', backToShop: 'Back to products',
       secBuyer: 'Purchaser', secShip: 'Shipping', secTax: 'Tax invoice', secAgree: 'Confirm & agree', secSummary: 'Order summary',
       name: 'Name', email: 'Email', phone: 'Phone', company: 'Company / Affiliation',
       phoneHint: 'Please include your country code (e.g. +1 555 000 0000)',
@@ -155,7 +155,7 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
     {quoteError ? (
       <div class="mt-10 rounded-xl border border-warn/30 bg-warn/10 p-6">
         <p class="text-warn">{quoteError}</p>
-        <a href={lhref('/shop')} class="mt-4 inline-block text-sm text-accent hover:underline">{t.backToShop} →</a>
+        <a href={lhref('/product')} class="mt-4 inline-block text-sm text-accent hover:underline">{t.backToShop} →</a>
       </div>
     ) : (
       <div class="mt-12 grid gap-12 lg:grid-cols-[1fr_20rem]">
@@ -393,7 +393,7 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
             <p id="pay-status" class="mt-3 text-sm" role="status" aria-live="polite"></p>
 
             <p id="empty-cart" class="mt-4 text-center text-sm text-ink/40" hidden>
-              {t.empty} <a href={lhref('/shop')} class="text-accent hover:underline">{t.backToShop} →</a>
+              {t.empty} <a href={lhref('/product')} class="text-accent hover:underline">{t.backToShop} →</a>
             </p>
           </div>
         </aside>

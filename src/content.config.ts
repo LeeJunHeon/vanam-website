@@ -147,7 +147,7 @@ const faq = defineCollection({
 });
 
 // 9. PRODUCTS ──────────────────────────
-// 스토어 상품. 가격 유형 2종:
+// 제품 상품. 가격 유형 2종:
 //   fixed = 고정가 (장바구니 → 즉시 결제)
 //   quote = 견적가 (스펙 접수 → 관리자가 금액 책정 → 결제 링크 발송)
 const products = defineCollection({
@@ -235,7 +235,7 @@ const equipment = defineCollection({
   }),
 });
 
-// 분석·측정 항목 (스토어의 분석 서비스 상품과 연결된다)
+// 분석·측정 항목 (제품의 분석 서비스 상품과 연결된다)
 const analysis = defineCollection({
   loader: glob({ pattern: '*.json', base: './src/content/analysis' }),
   schema: z.object({

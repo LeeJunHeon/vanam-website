@@ -17,7 +17,7 @@ const catalog = (await getCollection('products'))
     sku: p.id,
     name: isKo ? p.data.name : (p.data.name_en ?? p.data.name),
     price: p.data.price,
-    url: `${base}/shop/${p.id}`,
+    url: `${base}/product/${p.id}`,
   }));
 ---
 
@@ -34,7 +34,7 @@ const catalog = (await getCollection('products'))
       data-checkout={c.checkout}
       data-checkout-url={`${base}/checkout`}
       data-continue={c.continueShopping}
-      data-shop-url={`${base}/shop`}>
+      data-shop-url={`${base}/product`}>
       <p class="text-ink/50">…</p>
     </div>
 

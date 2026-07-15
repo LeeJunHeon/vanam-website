@@ -67,7 +67,7 @@ const won = (n: number) => new Intl.NumberFormat('ko-KR').format(n);
             return (
               <article data-cat={p.data.category}
                 class="product-card group flex flex-col overflow-hidden rounded-xl border border-ink/10 bg-ink/[0.02] transition hover:border-accent/50">
-                <a href={`${base}/shop/${p.id}`} class="block">
+                <a href={`${base}/product/${p.id}`} class="block">
                   <div class="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-panel2 to-canvas">
                     {img ? (
                       <Image src={img} alt={name(p)} width={600} height={450} class="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
@@ -79,7 +79,7 @@ const won = (n: number) => new Intl.NumberFormat('ko-KR').format(n);
                   </div>
                 </a>
                 <div class="flex flex-1 flex-col p-5">
-                  <a href={`${base}/shop/${p.id}`}>
+                  <a href={`${base}/product/${p.id}`}>
                     <h2 class="text-lg font-semibold leading-snug text-ink transition group-hover:text-accent">{name(p)}</h2>
                   </a>
                   <p class="mt-2 line-clamp-2 text-sm leading-relaxed text-ink/50">{summary(p)}</p>
@@ -89,7 +89,7 @@ const won = (n: number) => new Intl.NumberFormat('ko-KR').format(n);
                     ) : (
                       <p class="text-base font-semibold text-accent">{s.priceOnRequest}</p>
                     )}
-                    <a href={`${base}/shop/${p.id}`} class="shrink-0 text-sm font-medium text-ink/60 transition hover:text-accent">{s.viewDetail} →</a>
+                    <a href={`${base}/product/${p.id}`} class="shrink-0 text-sm font-medium text-ink/60 transition hover:text-accent">{s.viewDetail} →</a>
                   </div>
                 </div>
               </article>

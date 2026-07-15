@@ -57,7 +57,7 @@ export const POST: APIRoute = async ({ request }) => {
   }
 
   // 3) 유형별 필수
-  //    견적(스토어 상품에서만 접수) → 상품 + 소재
+  //    견적(제품 상품에서만 접수) → 상품 + 소재
   //    기타 문의 → 문의 내용
   const material = str(body.material).slice(0, MAX);
   const message = str(body.message).slice(0, MAX);

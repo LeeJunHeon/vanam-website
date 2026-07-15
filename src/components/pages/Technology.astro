@@ -36,7 +36,7 @@ const comparison = (await getCollection('comparison')).sort((a, b) => a.data.ord
 // 증착 장비 · 공정 데이터 수집 시스템
 const equipment = (await getCollection('equipment')).sort((a, b) => a.data.order - b.data.order);
 
-// 분석·측정 항목 (스토어의 분석 상품과 연결)
+// 분석·측정 항목 (제품의 분석 상품과 연결)
 const analysisAll = (await getCollection('analysis')).sort((a, b) => a.data.order - b.data.order);
 const analysisMaterial = analysisAll.filter((a) => a.data.group === 'material');
 const analysisDevice = analysisAll.filter((a) => a.data.group === 'device');
@@ -232,7 +232,7 @@ const contactHref = lhref('/contact');
 
   <!-- ── 분석 · 측정 ─────────────────────────────────────
        WP에만 있던 장비 목록(SEM/TEM/XRD/XPS…)을 옮겨왔다.
-       스토어의 분석 서비스 상품과 직결되는 정보라, 칩 형태로 한눈에 보이게 한다. -->
+       제품의 분석 서비스 상품과 직결되는 정보라, 칩 형태로 한눈에 보이게 한다. -->
   <section class="mx-auto max-w-6xl px-6 py-20">
     <div class="v-reveal">
       <h2 class="text-2xl font-bold text-ink">{tech.analysisHeading}</h2>
@@ -294,7 +294,7 @@ const contactHref = lhref('/contact');
 
   <!-- ── 증착 의뢰 프로세스 ──────────────────────────────
        WP의 "Deposition Process" 설명을 6단계로 정리했다.
-       마지막에 견적 요청으로 이어진다 — 스토어와 연결되는 지점. -->
+       마지막에 견적 요청으로 이어진다 — 제품과 연결되는 지점. -->
   <section class="mx-auto max-w-6xl px-6 py-20">
     <div class="v-reveal">
       <h2 class="text-2xl font-bold text-ink">{tech.processHeading}</h2>
@@ -314,7 +314,7 @@ const contactHref = lhref('/contact');
     </ol>
 
     <div class="v-reveal mt-8 flex flex-wrap items-center gap-4">
-      <a href={lhref('/shop')}
+      <a href={lhref('/product')}
         class="inline-flex items-center gap-2 rounded-lg bg-brand px-6 py-3 text-sm font-semibold text-onbrand transition hover:brightness-110">
         {tech.processCta}
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
