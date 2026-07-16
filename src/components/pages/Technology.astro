@@ -92,7 +92,7 @@ const contactHref = lhref('/contact');
     <div class="v-reveal">
       <p class="text-sm font-medium uppercase tracking-[0.2em] text-accent">Technology &amp; Solution</p>
       <h1 class="mt-5 text-4xl font-bold leading-tight text-ink md:text-6xl">{tech.heroTitle.line1}<br/>{tech.heroTitle.line2}</h1>
-      <p class="mt-6 max-w-2xl text-lg leading-relaxed text-ink/60">{tech.heroSubtitle}</p>
+      <p class="mt-6 max-w-2xl whitespace-pre-line text-lg leading-relaxed text-ink/60">{tech.heroSubtitle}</p>
     </div>
   </section>
 
@@ -102,7 +102,7 @@ const contactHref = lhref('/contact');
       {valueProps.map((v) => (
         <div class="v-reveal rounded-2xl border border-ink/10 bg-ink/[0.03] p-7">
           <h3 class="text-lg font-bold text-ink">{v.h}</h3>
-          <p class="mt-3 text-base leading-relaxed text-ink/60">{v.d}</p>
+          <p class="mt-3 text-base leading-relaxed text-ink/60" set:html={v.d}></p>
         </div>
       ))}
     </div>
@@ -261,11 +261,11 @@ const contactHref = lhref('/contact');
         <p class="mt-3 max-w-3xl text-base text-ink/55">{tech.equipmentSub}</p>
       </div>
 
-      <div class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {equipment.filter((e) => e.data.category === 'deposition').map((e) => (
           <div class="v-reveal rounded-xl border border-ink/10 bg-ink/[0.03] p-5">
             <h3 class="text-base font-bold text-ink">{locale === 'ko' ? (e.data.name_ko ?? e.data.name) : e.data.name}</h3>
-            <p class="mt-2 text-xs leading-relaxed text-ink/50">
+            <p class="mt-2 whitespace-pre-line text-xs leading-relaxed text-ink/50">
               {locale === 'ko' ? (e.data.description_ko ?? e.data.description) : e.data.description}
             </p>
           </div>

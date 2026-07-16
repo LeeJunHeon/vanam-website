@@ -39,7 +39,7 @@
         "line1": "Advanced thin films",
         "line2": "for emerging hardware"
       },
-      "heroSubtitle": "VanaM provides process technology, custom deposition recipes, and pilot manufacturing for thin films that conventional suppliers cannot easily deliver. Our platform integrates vacuum deposition, pre/post treatment, in-situ process monitoring, metrology, and AI-assisted optimization.",
+      "heroSubtitle": "VanaM provides process technology, custom deposition recipes, and pilot manufacturing for thin films that conventional suppliers cannot easily deliver.\n\nOur platform integrates vacuum deposition, pre/post treatment, in-situ process monitoring, metrology, and AI-assisted optimization.",
       "valueProps": [
         {
           "h": "Core IP & Novel Materials",
@@ -51,7 +51,7 @@
         },
         {
           "h": "Project 1: Energy-Responsive Thin Film",
-          "d": "The world's 1st multifunctional thin film that responds to changes on thermal and electrical energy, enabling sensing, switching, system simplification and protection."
+          "d": "The world's 1<sup>st</sup> multifunctional thin film that responds to changes on thermal and electrical energy, enabling sensing, switching, system simplification and protection."
         },
         {
           "h": "Project 2: Quantum Photonics",
@@ -70,7 +70,7 @@
         "Fire Detection",
         "Thermal Management",
         "Protection Circuit",
-        "Neuromorphic Semiconductor"
+        "Neuromorphic Semiconductors"
       ],
       "applicationsDesc": "Enabling next-generation products across deep-tech markets and emerging technology applications.",
       "ctaHeading": "Have a thin-film challenge?",
@@ -349,7 +349,7 @@
         "line1": "첨단 박막 소재",
         "line2": "새로운 하드웨어를 위한"
       },
-      "heroSubtitle": "반암(VanaM)은 기존 공급사가 쉽게 제공하지 못하는 박막을 위한 공정 기술과 맞춤형 증착 레시피, 파일럿 제조를 제공합니다. 진공 증착, 전·후처리, 인시투(in-situ) 공정 모니터링, 계측, AI 기반 최적화를 하나의 플랫폼으로 통합했습니다.",
+      "heroSubtitle": "반암(VanaM)은 기존 공급사가 쉽게 제공하지 못하는 박막을 위한 공정 기술과 맞춤형 증착 레시피, 파일럿 제조를 제공합니다.\n\n진공 증착, 전·후처리, 인시투(in-situ) 공정 모니터링, 계측, AI 기반 최적화를 하나의 플랫폼으로 통합했습니다.",
       "valueProps": [
         {
           "h": "핵심 IP · 신소재",
