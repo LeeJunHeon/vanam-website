@@ -6,6 +6,7 @@ import { Image } from 'astro:assets';
 import logo from '../assets/brand/logo.png';
 import logoLight from '../assets/brand/logo-light.png';
 import company from '../data/company.json';
+import banner from '../data/banner.json';
 const { title = 'VANAM — 차세대 반도체 박막 소재', description = 'VANA Materials LAB. 친환경 진공 증착 기반 차세대 반도체 박막 소재·공정 기술 기업.' } = Astro.props;
 // 각 페이지의 실제 경로를 절대 URL로 (canonical / og:url)
 const canonicalURL = new URL(Astro.url.pathname, Astro.site).href;
@@ -59,6 +60,19 @@ const biz = {
   ceo: isKo ? company.ceoKo : (company.ceoEn || company.ceoKo),
   address: isKo ? company.addressKo : (company.addressEn || company.addressKo),
 };
+// 상단 공지 배너 (Keystatic '상단 공지 배너'에서 관리)
+const bannerText = isKo ? banner.textKo : (banner.textEn || banner.textKo);
+const bannerLinkLabel = isKo ? (banner.linkLabelKo || '자세히 보기') : (banner.linkLabelEn || banner.linkLabelKo || 'Learn more');
+const showBanner = banner.enabled && bannerText;
+const bannerTone = {
+  brand: 'bg-brand text-onbrand',
+  accent: 'bg-accent text-onbrand',
+  muted: 'bg-ink/[0.06] text-ink/80',
+}[banner.tone] ?? 'bg-brand text-onbrand';
+// 배너 링크: 앵커·외부·내부 경로 모두 지원 (외부는 http로 시작)
+const bannerHref = banner.linkUrl
+  ? (/^https?:\/\//.test(banner.linkUrl) ? banner.linkUrl : localizedHref(banner.linkUrl))
+  : null;
 const fl = isKo
   ? { ceo: '대표', bizNo: '사업자등록번호', mailOrder: '통신판매업 신고번호',
       privacy: '개인정보처리방침', terms: '이용약관', refund: '환불·교환 정책' }
@@ -187,6 +201,45 @@ const childHref = (path) => {
     </style>
   </head>
   <body class="min-h-screen bg-canvas text-ink/90 antialiased">
+    {showBanner && (
+      <>
+      <div id="top-banner" data-dismissible={banner.dismissible ? '1' : '0'} class={`relative ${bannerTone}`}>
+        <div class="mx-auto flex max-w-6xl items-center justify-center gap-3 px-10 py-2.5 text-center text-sm">
+          <p class="font-medium">
+            {bannerText}
+            {bannerHref && (
+              <a href={bannerHref} class="ml-2 inline-flex items-center gap-1 whitespace-nowrap font-semibold underline underline-offset-2 hover:opacity-80">
+                {bannerLinkLabel}
+                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+              </a>
+            )}
+          </p>
+          {banner.dismissible && (
+            <button type="button" id="banner-close" aria-label={isKo ? '오늘 하루 닫기' : 'Dismiss for today'}
+              class="absolute right-3 top-1/2 -translate-y-1/2 grid h-6 w-6 place-items-center rounded-full opacity-70 transition hover:opacity-100 hover:bg-black/10">
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+          )}
+        </div>
+      </div>
+      <script is:inline>
+        // 상단 배너 "오늘 하루 닫기": localStorage 에 닫은 날짜를 저장.
+        // 같은 날이면 배너를 즉시 숨겨 깜빡임을 막는다.
+        (function () {
+          var el = document.getElementById('top-banner');
+          if (!el || el.getAttribute('data-dismissible') !== '1') return;
+          var KEY = 'vanam-banner-dismissed';
+          var today = new Date().toISOString().slice(0, 10);
+          try { if (localStorage.getItem(KEY) === today) { el.style.display = 'none'; return; } } catch (e) {}
+          var btn = document.getElementById('banner-close');
+          if (btn) btn.addEventListener('click', function () {
+            el.style.display = 'none';
+            try { localStorage.setItem(KEY, today); } catch (e) {}
+          });
+        })();
+      </script>
+      </>
+    )}
     <header class="sticky top-0 z-50 border-b border-ink/10 bg-canvas/80 backdrop-blur">
       <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <a href={localizedHref('/')} class="shrink-0" aria-label="VANAM">
@@ -546,12 +599,19 @@ const childHref = (path) => {
           document.addEventListener('click', function () { if (open) setOpen(false); });
           document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && open) setOpen(false); });
 
-          // 첫 진입 안내: 로드 후 잠깐 펼쳤다가 자동으로 접는다 ("여기 SNS 있어요" 신호).
-          // 사용자가 그새 직접 열었으면(open) 자동 접기는 건너뛴다.
-          setTimeout(function () {
-            setOpen(true);
-            setTimeout(function () { if (open) setOpen(false); }, 2200);
-          }, 700);
+          // 첫 진입 안내: 잠깐 펼쳤다가 자동으로 접는다 ("여기 SNS 있어요" 신호).
+          // ⚠️ 세션당 1회만 — 첫 접속·새로고침(세션 시작) 때만 뜨고, 페이지 이동 시엔 안 뜬다.
+          //    (이 사이트는 페이지 이동마다 전체 로드되므로 sessionStorage 로 방문 여부를 기억)
+          var SEEN = 'vanam-sns-hinted';
+          var alreadyHinted = false;
+          try { alreadyHinted = sessionStorage.getItem(SEEN) === '1'; } catch (e) {}
+          if (!alreadyHinted) {
+            try { sessionStorage.setItem(SEEN, '1'); } catch (e) {}
+            setTimeout(function () {
+              setOpen(true);
+              setTimeout(function () { if (open) setOpen(false); }, 1600);
+            }, 300);
+          }
         }
 
         window.addEventListener('resize', update, { passive: true });

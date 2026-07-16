@@ -88,6 +88,30 @@ export default config({
         refundDays: fields.integer({ label: '환불 처리 기간 (영업일)', defaultValue: 3, validation: { isRequired: true } }),
       },
     }),
+    banner: singleton({
+      label: '상단 공지 배너',
+      path: 'src/data/banner',
+      format: { data: 'json' },
+      schema: {
+        enabled: fields.checkbox({ label: '배너 표시', description: '체크하면 사이트 최상단에 공지 배너가 뜹니다.', defaultValue: false }),
+        textKo: fields.text({ label: '문구 (국문)', description: '예: 🎓 VANAM이 반도체대전(SEDEX)에 참가합니다 — 부스 A-12', multiline: true }),
+        textEn: fields.text({ label: '문구 (영문)', multiline: true }),
+        linkUrl: fields.text({ label: '링크 주소 (선택)', description: '누르면 이동할 주소. 비우면 링크 없는 안내만 표시됩니다. 예: /news 또는 https://…' }),
+        linkLabelKo: fields.text({ label: '링크 버튼 문구 (국문)', description: '예: 자세히 보기' }),
+        linkLabelEn: fields.text({ label: '링크 버튼 문구 (영문)', description: '예: Learn more' }),
+        tone: fields.select({
+          label: '배너 색상',
+          description: '일반 공지는 브랜드, 중요/긴급은 강조 색을 쓰세요.',
+          options: [
+            { label: '브랜드 (기본)', value: 'brand' },
+            { label: '강조 (중요·긴급)', value: 'accent' },
+            { label: '차분 (은은한 안내)', value: 'muted' },
+          ],
+          defaultValue: 'brand',
+        }),
+        dismissible: fields.checkbox({ label: '"오늘 하루 보지 않기" 허용', description: '방문자가 배너를 하루 동안 닫을 수 있게 합니다.', defaultValue: true }),
+      },
+    }),
   },
 
   collections: {
