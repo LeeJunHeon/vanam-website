@@ -27,7 +27,7 @@ export default config({
   ui: {
     brand: { name: 'VANAM 콘텐츠 관리' },
     navigation: {
-      '콘텐츠': ['news', 'team', 'faq'],
+      '콘텐츠': ['banner', 'news', 'team', 'faq'],
       '회사 정보': ['history', 'achievements', 'partners', 'certificates'],
       '기술 데이터': ['services', 'materials'],
       '스토어': ['products'],
