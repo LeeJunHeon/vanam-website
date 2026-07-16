@@ -1,0 +1,16 @@
+{
+  "name": "웨이퍼",
+  "name_en": "Wafers",
+  "category": "coating",
+  "pricingType": "quote",
+  "requiresShipping": true,
+  "summary": "박막 증착 웨이퍼.",
+  "summary_en": "Thin-film deposited wafers.",
+  "description": "소재·두께·기판·수량에 따라 견적을 안내해 드립니다. 자세한 사양은 문의해 주세요.",
+  "description_en": "Pricing is provided by quote based on material, thickness, substrate and volume. Contact us for details.",
+  "specs": [],
+  "leadTime": "사양 확정 후 협의",
+  "leadTime_en": "Agreed after specification confirmation",
+  "published": true,
+  "order": 5
+}
