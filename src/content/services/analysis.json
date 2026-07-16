@@ -1,17 +1,17 @@
 {
   "order": 2,
-  "title": "Material Analysis",
-  "description": "Characterization and measurement of material properties and structure with advanced equipment.",
+  "title": "Materials Analysis",
+  "description": "Measurement and verification of thin film structure, composition and electrical/optical properties.",
   "title_ko": "소재 분석",
-  "description_ko": "첨단 장비로 소재의 물성과 구조를 분석·측정합니다.",
+  "description_ko": "박막의 구조·조성 및 전기적/광학적 물성을 측정·검증합니다.",
   "bullets": [
-    "Material — SEM, TEM, XRD, XPS, UPS, AFM, Raman",
-    "Device — I–V, C–V, Pulse, Ferroelectric, Piezoelectric",
-    "Non-destructive spectroscopy to electrical characterisation"
+    "SEM, TEM, XRD, XPS, UPS, AFM and Raman",
+    "I-V, C-V, pulse and ferroelectric testing",
+    "Non-destructive spectroscopy and reliability checks"
   ],
   "bullets_ko": [
-    "소재 — SEM, TEM, XRD, XPS, UPS, AFM, 라만",
-    "소자 — I–V, C–V, 펄스, 강유전, 압전",
-    "비파괴 분광부터 전기적 특성 분석까지"
+    "SEM, TEM, XRD, XPS, UPS, AFM 및 라만",
+    "I-V, C-V, 펄스 및 강유전 특성 측정",
+    "비파괴 분광 분석 및 신뢰성 검사"
   ]
 }

@@ -1,8 +1,0 @@
-{
-  "name": "PLD",
-  "name_ko": "PLD",
-  "category": "deposition",
-  "description": "Pulsed laser deposition for complex-oxide stoichiometry control.",
-  "description_ko": "복합 산화물의 조성 제어를 위한 펄스 레이저 증착.",
-  "order": 3
-}

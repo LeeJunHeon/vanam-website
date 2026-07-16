@@ -1,8 +1,0 @@
-{
-  "name": "ALD & MOCVD",
-  "name_ko": "ALD & MOCVD",
-  "category": "deposition",
-  "description": "Sub-nanometre conformal films and metal-organic vapour growth.",
-  "description_ko": "서브 나노미터 등각 박막과 유기금속 기상 성장.",
-  "order": 4
-}

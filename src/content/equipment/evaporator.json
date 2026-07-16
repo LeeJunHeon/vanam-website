@@ -2,7 +2,7 @@
   "name": "Evaporator",
   "name_ko": "증발 증착기",
   "category": "deposition",
-  "description": "Thermal and e-beam evaporation for metal and dielectric layers.",
-  "description_ko": "금속·유전체 층을 위한 열증착 및 전자빔 증착.",
-  "order": 2
+  "description": "Metal sputtering and thermal evaporation systems for depositing metal layers, electrodes, and functional thin-film stacks for device prototyping and small-batch production.",
+  "description_ko": "소자 시제품 제작과 소규모 배치 생산을 위한 금속층·전극·기능성 박막 적층 증착용 금속 스퍼터링 및 열 증발 시스템.",
+  "order": 3
 }

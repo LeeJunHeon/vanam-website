@@ -36,58 +36,60 @@
     },
     "technology": {
       "heroTitle": {
-        "line1": "Next-generation thin film,",
-        "line2": "on emerging technology"
+        "line1": "Advanced thin films",
+        "line2": "for emerging hardware"
       },
-      "heroSubtitle": "VanaM delivers process technology and deposition solutions that go beyond simple manufacturing — minimizing the cost and time of early-stage R&D, with special deposition instruments that capture process data for machine-learning-based performance prediction and optimization.",
+      "heroSubtitle": "VanaM provides process technology, custom deposition recipes, and pilot manufacturing for thin films that conventional suppliers cannot easily deliver. Our platform integrates vacuum deposition, pre/post treatment, in-situ process monitoring, metrology, and AI-assisted optimization.",
       "valueProps": [
         {
-          "h": "World-first energy-responsive thin film",
-          "d": "Commercializing an ultra-sensitive, energy-responsive semiconductor thin film (VM1) that senses and switches in response to thermal or electrical energy."
+          "h": "Core IP & Novel Materials",
+          "d": "Proprietary source and deposition know-how for high crystallinity thin films, including materials that are not yet commercialized."
         },
         {
-          "h": "Eco-friendly by design",
-          "d": "Vacuum deposition with no toxic organic materials or gases — ESG-aligned manufacturing."
+          "h": "Cost-Competitive Foundry",
+          "d": "Low MOQ prototyping and small batch production reduce early-stage cost, waiting time, and iteration risk."
         },
         {
-          "h": "Cost competitive",
-          "d": "Simple process, low production cost, and circuit simplification reduce total cost."
+          "h": "Project 1: Energy-Responsive Thin Film",
+          "d": "The world's 1st multifunctional thin film that responds to changes on thermal and electrical energy, enabling sensing, switching, system simplification and protection."
         },
         {
-          "h": "Low facility investment",
-          "d": "No fine patterning or high-class cleanroom required to reach production."
+          "h": "Project 2: Quantum Photonics",
+          "d": "Developing key thin films for next-generation PICs: SNSPDs, waveguides, cryogenic modulators, and DBR mirrors for future quantum systems."
         }
       ],
-      "coreTechBody": "A high-crystalline thin-film deposition source technology that adds sensing and switching functions in response to thermal or electrical energy — enabling system simplification and higher accuracy versus conventional designs.",
+      "coreTechBody": "VanaM combines proprietary sputtering/ALD processes, pre- and post-treatment, in-situ process sensing, and thin film metrology to develop high-quality materials with faster optimization cycles and stronger process reproducibility.",
       "materialsLibraryDesc": "Special thin films and process conditions unavailable in conventional fabs — across oxides, nitrides, and metals.",
       "applications": [
         "Quantum Computing",
+        "Photonics",
         "A.I. Semiconductors",
         "Power Electronics",
         "Glass Substrate",
         "Advanced Materials",
-        "Fire Detector",
+        "Fire Detection",
+        "Thermal Management",
         "Protection Circuit",
         "Neuromorphic Semiconductor"
       ],
-      "applicationsDesc": "PoC in progress with R&D partners across emerging fields.",
+      "applicationsDesc": "Enabling next-generation products across deep-tech markets and emerging technology applications.",
       "ctaHeading": "Have a thin-film challenge?",
       "ctaBodyHtml": "Tell us your target material or process — we'll help you get there faster.",
       "ctaButton": "Talk to us",
       "keyAdvantages": "Key advantages",
-      "coreTechHeading": "Multifunctional, energy-responsive thin film",
+      "coreTechHeading": "AI-assisted vacuum deposition platform",
       "materialsHeading": "Materials Library",
-      "alsoAvailable": "Also available: PLD, MOCVD, and process big-data collection.",
+      "alsoAvailable": "Also available: process big-data collection.",
       "servicesHeading": "Services",
       "applicationsHeading": "Applications",
       "metaTitle": "Technology | VANAM",
-      "metaDescription": "VANAM's thin-film technology: energy-responsive films, PVD/ALD/PLD/MOCVD deposition, an oxide-nitride-metal library, plus R&D, analysis and foundry services.",
+      "metaDescription": "VANAM's thin-film technology: energy-responsive films, PVD/ALD deposition, an oxide-nitride-metal library, plus R&D, analysis and foundry services.",
       "compareHeading": "Bulk vs thin film",
       "compareSub": "The same function, made a different way — and the numbers are not close.",
       "compareBulk": "Conventional bulk",
       "compareFilm": "VANAM thin film",
       "processHeading": "How a deposition order works",
-      "processSub": "From your spec to a film in your hands.",
+      "processSub": "From your specifications to a film in your hands.",
       "process": [
         {
           "t": "Request",
@@ -99,7 +101,7 @@
         },
         {
           "t": "Quotation",
-          "d": "We send a price and lead time for your exact spec."
+          "d": "We send a price and lead time for your exact specifications."
         },
         {
           "t": "Deposition",
@@ -122,7 +124,36 @@
       "analysisHeading": "Analysis & measurement",
       "analysisSub": "From non-destructive spectroscopy to electrical characterisation.",
       "analysisMaterial": "Material analysis",
-      "analysisDevice": "Device characterisation"
+      "analysisDevice": "Device characterisation",
+      "quantumEyebrow": "THE QUANTUM PHOTONICS PROJECT",
+      "quantumHeading": "Thin films for next-generation PICs and quantum systems",
+      "quantumBody": "VanaM is developing the major thin-film building blocks needed for cryogenic photonic integrated circuits and quantum hardware, with collaboration pathways including KIST Quantum Fab and UIUC.",
+      "quantumItems": [
+        {
+          "name": "SNSPD",
+          "desc": "NbTiN / NbN films for high-sensitivity single-photon detection."
+        },
+        {
+          "name": "Waveguides",
+          "desc": "Ta₂O₅, SiO₂ and TiO₂ films for low-loss optical waveguides."
+        },
+        {
+          "name": "Modulators",
+          "desc": "BTO and STO thin films for cryogenic electro-optic modulation."
+        },
+        {
+          "name": "DBR Mirrors",
+          "desc": "Si, SiO₂ and TiO₂ multilayer stacks for high-reflectance mirrors."
+        }
+      ],
+      "quantumTargetLabel": "Target applications",
+      "quantumTargets": [
+        "quantum computing",
+        "quantum communication",
+        "quantum sensing",
+        "laser/LiDAR",
+        "silicon photonics"
+      ]
     },
     "about": {
       "heroTitle": {
@@ -203,7 +234,7 @@
     },
     "quote": {
       "form": {
-        "sectionSpec": "Process spec",
+        "sectionSpec": "Process specifications",
         "sectionSchedule": "Volume & schedule",
         "material": "Material *",
         "materialPlaceholder": "Select a material",
@@ -232,7 +263,7 @@
         "title": "Request a quote",
         "close": "Close",
         "productLabel": "Product",
-        "intro": "Tell us your target spec and we'll come back with a price. Fill in what you know."
+        "intro": "Tell us your target specifications and we'll come back with a price. Fill in what you know."
       }
     },
     "shop": {
@@ -315,58 +346,60 @@
     },
     "technology": {
       "heroTitle": {
-        "line1": "신기술을 구현하는",
-        "line2": "차세대 박막"
+        "line1": "첨단 박막 소재",
+        "line2": "새로운 하드웨어를 위한"
       },
-      "heroSubtitle": "반암은 단순 제조를 넘어서는 공정 기술과 증착 솔루션을 제공합니다. 초기 R&D의 비용과 시간을 줄이고, 공정 데이터를 확보하는 특수 증착 장비로 머신러닝 기반 성능 예측과 공정 최적화를 지원합니다.",
+      "heroSubtitle": "반암(VanaM)은 기존 공급사가 쉽게 제공하지 못하는 박막을 위한 공정 기술과 맞춤형 증착 레시피, 파일럿 제조를 제공합니다. 진공 증착, 전·후처리, 인시투(in-situ) 공정 모니터링, 계측, AI 기반 최적화를 하나의 플랫폼으로 통합했습니다.",
       "valueProps": [
         {
-          "h": "세계 최초의 에너지 감응형 박막",
-          "d": "열·전기 에너지에 감응해 감지와 스위칭이 가능한 초고감도 에너지 감응형 반도체 박막(VM1)을 상용화합니다."
+          "h": "핵심 IP · 신소재",
+          "d": "아직 상용화되지 않은 소재를 포함해, 고결정성 박막을 위한 독자 소스·증착 노하우를 보유하고 있습니다."
         },
         {
-          "h": "설계부터 친환경",
-          "d": "유독성 유기물이나 가스를 사용하지 않는 진공 증착 — ESG 지향 제조."
+          "h": "가격 경쟁력 있는 파운드리",
+          "d": "소량(low-MOQ) 시제품과 소규모 배치 생산으로 초기 비용·대기 시간·반복 리스크를 줄입니다."
         },
         {
-          "h": "뛰어난 가격 경쟁력",
-          "d": "단순한 공정, 낮은 생산 비용, 회로 단순화로 총비용을 절감합니다."
+          "h": "Project 1: 에너지 반응형 박막",
+          "d": "열·전기 에너지 변화에 반응하는 세계 최초의 다기능 박막으로, 감지·스위칭·시스템 단순화·보호 기능을 구현합니다."
         },
         {
-          "h": "낮은 설비 투자",
-          "d": "미세 패터닝이나 고등급 클린룸 없이도 양산에 도달할 수 있습니다."
+          "h": "Project 2: 양자 포토닉스",
+          "d": "차세대 PIC를 위한 핵심 박막을 개발합니다: SNSPD, 도파로, 극저온 변조기, DBR 미러 등 미래 양자 시스템용 소재."
         }
       ],
-      "coreTechBody": "열·전기 에너지에 감응해 감지·스위칭 기능을 더하는 고결정성 박막 증착 소스 기술로, 기존 설계 대비 시스템을 단순화하고 정확도를 높입니다.",
+      "coreTechBody": "반암은 독자적인 스퍼터링/ALD 공정, 전·후처리, 인시투 공정 센싱, 박막 계측을 결합하여 더 빠른 최적화 사이클과 강력한 공정 재현성으로 고품질 소재를 개발합니다.",
       "materialsLibraryDesc": "기존 양산 팹에서 다루기 어려운 특수 박막과 공정 조건 — 산화물·질화물·금속 전반.",
       "applications": [
-        "양자컴퓨팅",
+        "양자 컴퓨팅",
+        "포토닉스",
         "AI 반도체",
         "전력반도체",
         "글래스 기판",
         "첨단 소재",
-        "화재 감지기",
+        "화재 감지",
+        "열 관리",
         "보호 회로",
         "뉴로모픽 반도체"
       ],
-      "applicationsDesc": "신기술 분야 R&D 파트너들과 PoC를 진행 중입니다.",
+      "applicationsDesc": "딥테크 시장과 신기술 응용 전반에서 차세대 제품을 가능하게 합니다.",
       "ctaHeading": "박막 관련 과제가 있으신가요?",
       "ctaBodyHtml": "목표 소재나 공정을 알려주세요 — 더 빠르게 도달하도록 돕겠습니다.",
       "ctaButton": "문의하기",
       "keyAdvantages": "핵심 강점",
-      "coreTechHeading": "다기능 에너지 감응형 박막",
+      "coreTechHeading": "AI 기반 진공 증착 플랫폼",
       "materialsHeading": "소재 라이브러리",
-      "alsoAvailable": "PLD, MOCVD 및 공정 빅데이터 수집도 제공합니다.",
+      "alsoAvailable": "공정 빅데이터 수집도 제공합니다.",
       "servicesHeading": "서비스",
       "applicationsHeading": "응용 분야",
       "metaTitle": "기술·솔루션 | VANAM",
-      "metaDescription": "반암의 박막 기술: 에너지 감응형 박막, PVD/ALD/PLD/MOCVD 증착, 산화물·질화물·금속 소재 라이브러리, R&D·분석·파운드리 서비스.",
+      "metaDescription": "반암의 박막 기술: 에너지 감응형 박막, PVD/ALD 증착, 산화물·질화물·금속 소재 라이브러리, R&D·분석·파운드리 서비스.",
       "compareHeading": "기존 벌크 vs 박막",
       "compareSub": "같은 기능을 다른 방식으로 만듭니다 — 그리고 숫자가 비교되지 않습니다.",
       "compareBulk": "기존 벌크 공정",
       "compareFilm": "반암 박막 공정",
       "processHeading": "증착 의뢰는 이렇게 진행됩니다",
-      "processSub": "사양 전달부터 박막 수령까지.",
+      "processSub": "원하시는 사양에서 완성된 박막까지.",
       "process": [
         {
           "t": "의뢰 접수",
@@ -378,7 +411,7 @@
         },
         {
           "t": "견적",
-          "d": "요청하신 사양에 맞춰 가격과 납기를 안내드립니다."
+          "d": "정확한 사양에 맞춰 금액과 납기를 안내해 드립니다."
         },
         {
           "t": "증착",
@@ -401,7 +434,36 @@
       "analysisHeading": "분석 · 측정",
       "analysisSub": "비파괴 분광부터 전기적 특성 분석까지.",
       "analysisMaterial": "소재 분석",
-      "analysisDevice": "소자 특성 분석"
+      "analysisDevice": "소자 특성 분석",
+      "quantumEyebrow": "양자 포토닉스 프로젝트",
+      "quantumHeading": "차세대 PIC와 양자 시스템을 위한 박막",
+      "quantumBody": "반암은 극저온 광집적회로(PIC)와 양자 하드웨어에 필요한 주요 박막 빌딩 블록을 개발하고 있으며, KIST 양자팹 및 UIUC 등과 협력하고 있습니다.",
+      "quantumItems": [
+        {
+          "name": "SNSPD",
+          "desc": "고감도 단일광자 검출을 위한 NbTiN / NbN 박막."
+        },
+        {
+          "name": "도파로",
+          "desc": "저손실 광도파로를 위한 Ta₂O₅, SiO₂, TiO₂ 박막."
+        },
+        {
+          "name": "변조기",
+          "desc": "극저온 전기광학 변조를 위한 BTO, STO 박막."
+        },
+        {
+          "name": "DBR 미러",
+          "desc": "고반사 미러를 위한 Si, SiO₂, TiO₂ 다층 적층."
+        }
+      ],
+      "quantumTargetLabel": "타겟 응용 분야",
+      "quantumTargets": [
+        "양자 컴퓨팅",
+        "양자 통신",
+        "양자 센싱",
+        "레이저/라이다",
+        "실리콘 포토닉스"
+      ]
     },
     "about": {
       "metaTitle": "회사 소개 | VANAM",
@@ -482,7 +544,7 @@
     },
     "quote": {
       "form": {
-        "sectionSpec": "공정 스펙",
+        "sectionSpec": "공정 사양",
         "sectionSchedule": "수량·일정",
         "material": "소재 *",
         "materialPlaceholder": "소재를 선택하세요",
@@ -511,7 +573,7 @@
         "title": "견적 요청",
         "close": "닫기",
         "productLabel": "상품",
-        "intro": "원하시는 스펙을 알려주시면 담당자가 금액을 책정해 회신드립니다. 아는 범위에서 작성해 주세요."
+        "intro": "원하시는 사양을 알려주시면 담당자가 금액을 책정해 회신드립니다. 아는 범위에서 작성해 주세요."
       }
     },
     "shop": {
