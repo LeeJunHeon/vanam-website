@@ -114,8 +114,8 @@ const won = (n: number) => new Intl.NumberFormat('ko-KR').format(n);
         <dl class="mt-6 divide-y divide-ink/10 border-t border-ink/10">
           {d.specs.map((sp) => (
             <div class="grid grid-cols-3 gap-4 py-4">
-              <dt class="text-sm text-ink/50">{sp.label}</dt>
-              <dd class="col-span-2 text-sm text-ink/90">{sp.value}</dd>
+              <dt class="text-sm text-ink/50">{isKo ? sp.label : (sp.label_en ?? sp.label)}</dt>
+              <dd class="col-span-2 text-sm text-ink/90">{isKo ? sp.value : (sp.value_en ?? sp.value)}</dd>
             </div>
           ))}
         </dl>

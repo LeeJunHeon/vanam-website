@@ -19,6 +19,11 @@ const enPath = getRelativeLocaleUrl('en', basePath);
 const koPath = getRelativeLocaleUrl('ko', basePath);
 const enHref = getAbsoluteLocaleUrl('en', basePath);
 const koHref = getAbsoluteLocaleUrl('ko', basePath);
+// 언어 전환 시 현재 쿼리(?id=…)·해시(#…)를 유지한다.
+// (예: /order/done?id=ORD-… 에서 언어를 바꿔도 주문번호가 사라지지 않도록)
+const localeSuffix = Astro.url.search + Astro.url.hash;
+const enPathFull = enPath + localeSuffix;
+const koPathFull = koPath + localeSuffix;
 const ogLocale = currentLocale === 'ko' ? 'ko_KR' : 'en_US';
 const inLang = currentLocale === 'ko' ? 'ko-KR' : 'en-US';
 // 현재 locale을 유지하는 내부 링크 헬퍼 (예: ko에서 /about → /ko/about)
@@ -270,9 +275,9 @@ const childHref = (path) => {
             ))}
           </nav>
           <div class="hidden items-center gap-1.5 text-xs font-medium md:flex" aria-label={ui.lang}>
-            <a href={enPath} hreflang="en" class={currentLocale === 'en' ? 'text-accent' : 'text-ink/50 transition hover:text-ink'}>EN</a>
+            <a href={enPathFull} hreflang="en" class={currentLocale === 'en' ? 'text-accent' : 'text-ink/50 transition hover:text-ink'}>EN</a>
             <span class="text-ink/20">/</span>
-            <a href={koPath} hreflang="ko" class={currentLocale === 'ko' ? 'text-accent' : 'text-ink/50 transition hover:text-ink'}>KO</a>
+            <a href={koPathFull} hreflang="ko" class={currentLocale === 'ko' ? 'text-accent' : 'text-ink/50 transition hover:text-ink'}>KO</a>
           </div>
 
           <button
@@ -317,8 +322,8 @@ const childHref = (path) => {
           </>
         ))}
         <div class="mt-2 flex items-center gap-4 border-t border-ink/10 pt-3 text-base" aria-label={ui.lang}>
-          <a href={enPath} hreflang="en" class={currentLocale === 'en' ? 'text-accent' : 'text-ink/70 transition hover:text-ink'}>EN</a>
-          <a href={koPath} hreflang="ko" class={currentLocale === 'ko' ? 'text-accent' : 'text-ink/70 transition hover:text-ink'}>KO</a>
+          <a href={enPathFull} hreflang="en" class={currentLocale === 'en' ? 'text-accent' : 'text-ink/70 transition hover:text-ink'}>EN</a>
+          <a href={koPathFull} hreflang="ko" class={currentLocale === 'ko' ? 'text-accent' : 'text-ink/70 transition hover:text-ink'}>KO</a>
         </div>
       </nav>
     </header>

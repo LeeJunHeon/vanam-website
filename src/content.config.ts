@@ -164,7 +164,7 @@ const products = defineCollection({
     description: opt(z.string()),                       // KO 상세 설명
     description_en: opt(z.string()),
     image: opt(z.string()),                             // 대표 이미지 (Keystatic 업로드)
-    specs: z.array(z.object({ label: z.string(), value: z.string() })).default([]),
+    specs: z.array(z.object({ label: z.string(), value: z.string(), label_en: z.string().optional(), value_en: z.string().optional() })).default([]),
     leadTime: opt(z.string()),                          // 납기 안내
     leadTime_en: opt(z.string()),
     shipping: opt(z.string()),                          // 배송 안내

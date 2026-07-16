@@ -248,6 +248,8 @@ export default config({
           fields.object({
             label: fields.text({ label: '항목', description: '예: 소재 / 두께 / 기판 / 크기' }),
             value: fields.text({ label: '값', description: '예: VO₂ / 100 nm / Si 2인치' }),
+            label_en: fields.text({ label: '항목 (영문)', description: '예: Material / Thickness / Substrate' }),
+            value_en: fields.text({ label: '값 (영문)', description: '비우면 국문 값이 그대로 표시됩니다' }),
           }),
           { label: '사양', itemLabel: (p) => `${p.fields.label.value}: ${p.fields.value.value}` },
         ),
