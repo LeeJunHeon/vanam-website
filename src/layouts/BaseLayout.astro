@@ -164,6 +164,10 @@ const childHref = (path) => {
           if (isReload) {
             sessionStorage.removeItem('vanam-banner-hidden');
             sessionStorage.removeItem('vanam-sns-hinted');
+            // 새로고침 시 브라우저가 이전 스크롤 위치를 복원하지 않도록 하고 맨 위로 올린다.
+            // (그래야 다시 나타나는 배너가 화면에 보인다.)
+            if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+            window.scrollTo(0, 0);
           }
         } catch (e) {}
       })();
@@ -226,14 +230,22 @@ const childHref = (path) => {
       #nav-toggle .nav-icon-close { display: none; }
       #nav-toggle[aria-expanded="true"] .nav-icon-open { display: none; }
       #nav-toggle[aria-expanded="true"] .nav-icon-close { display: block; }
+
+      /* 상단 배너: 페이지 로드 시 위에서 스르륵 내려온다 */
+      @keyframes banner-slide-down {
+        from { transform: translateY(-100%); }
+        to   { transform: translateY(0); }
+      }
+      .banner-slide { animation: banner-slide-down .45s cubic-bezier(0.22, 1, 0.36, 1) both; }
+      @media (prefers-reduced-motion: reduce) {
+        .banner-slide { animation: none; }
+      }
     </style>
   </head>
   <body class="min-h-screen bg-canvas text-ink/90 antialiased">
-    <!-- 상단 고정 영역: 배너 + 헤더를 함께 상단에 고정 (스크롤해도 항상 보임) -->
-    <div class="sticky top-0 z-50">
     {showBanner && (
       <>
-      <div id="top-banner" data-dismissible={banner.dismissible ? '1' : '0'} class={`relative ${bannerTone}`} style={bannerStyle}>
+      <div id="top-banner" data-dismissible={banner.dismissible ? '1' : '0'} class={`banner-slide relative ${bannerTone}`} style={bannerStyle}>
         <div class="mx-auto flex max-w-6xl items-center justify-center gap-3 px-10 py-2.5 text-center text-sm">
           <p class="font-medium">
             {bannerText}
@@ -269,7 +281,7 @@ const childHref = (path) => {
       </script>
       </>
     )}
-    <header class="border-b border-ink/10 bg-canvas/80 backdrop-blur">
+    <header class="sticky top-0 z-50 border-b border-ink/10 bg-canvas/80 backdrop-blur">
       <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <a href={localizedHref('/')} class="shrink-0" aria-label="VANAM">
           <Image src={logo} alt="VANAM — VANA Materials LAB." width={200} height={50} class="logo-dark h-9 w-auto md:h-10" loading="eager" />
@@ -351,7 +363,6 @@ const childHref = (path) => {
         </div>
       </nav>
     </header>
-    </div>
     <main>
       <slot />
     </main>
