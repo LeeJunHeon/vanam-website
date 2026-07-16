@@ -294,6 +294,18 @@ const childHref = (path) => {
         <p class="mt-6 text-ink/55">© 2026 {company.nameEn} All rights reserved.</p>
       </div>
     </footer>
+
+    <!-- 우측 하단 플로팅: 맨 위 / 맨 아래로 이동. 스크롤 위치에 따라 버튼이 자동 노출/숨김 -->
+    <div id="scroll-fab" class="fixed bottom-6 right-6 z-40 flex flex-col gap-2 opacity-0 transition-opacity duration-200" aria-hidden="true">
+      <button type="button" data-scroll="top" aria-label={currentLocale === 'ko' ? '맨 위로' : 'Scroll to top'}
+        class="grid h-11 w-11 place-items-center rounded-full border border-ink/10 bg-canvas text-ink/70 shadow-lg shadow-ink/10 transition hover:text-ink hover:brightness-95">
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 15-6-6-6 6"/></svg>
+      </button>
+      <button type="button" data-scroll="bottom" aria-label={currentLocale === 'ko' ? '맨 아래로' : 'Scroll to bottom'}
+        class="grid h-11 w-11 place-items-center rounded-full border border-ink/10 bg-canvas text-ink/70 shadow-lg shadow-ink/10 transition hover:text-ink hover:brightness-95">
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+    </div>
     <script>
       // 공통 reveal 옵저버: .v-reveal 요소가 뷰포트에 들어오면 is-visible 부여
       const obs = new IntersectionObserver((entries) => {
@@ -441,6 +453,36 @@ const childHref = (path) => {
         root.setAttribute('data-theme', next);
         try { localStorage.setItem('vanam-theme', next); } catch (e) {}
       });
+    </script>
+    <script is:inline>
+      // 우측 하단 플로팅 버튼: 스크롤 위치에 따라 노출하고, 맨 위/맨 아래로 부드럽게 이동.
+      (function () {
+        var fab = document.getElementById('scroll-fab');
+        if (!fab) return;
+        var topBtn = fab.querySelector('[data-scroll="top"]');
+        var botBtn = fab.querySelector('[data-scroll="bottom"]');
+
+        function update() {
+          var y = window.scrollY;
+          var max = document.documentElement.scrollHeight - window.innerHeight;
+          // 페이지가 한 화면보다 짧으면 버튼 자체를 숨김
+          if (max < 200) { fab.style.opacity = '0'; fab.setAttribute('aria-hidden', 'true'); return; }
+          fab.style.opacity = '1';
+          fab.setAttribute('aria-hidden', 'false');
+          // 맨 위 근처면 '위로' 숨김, 맨 아래 근처면 '아래로' 숨김
+          topBtn.style.display = y > 300 ? '' : 'none';
+          botBtn.style.display = y < max - 300 ? '' : 'none';
+        }
+
+        topBtn.addEventListener('click', function () { window.scrollTo({ top: 0, behavior: 'smooth' }); });
+        botBtn.addEventListener('click', function () {
+          window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+        });
+
+        window.addEventListener('scroll', update, { passive: true });
+        window.addEventListener('resize', update, { passive: true });
+        update();
+      })();
     </script>
   </body>
 </html>
