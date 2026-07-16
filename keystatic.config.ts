@@ -101,14 +101,17 @@ export default config({
         linkLabelEn: fields.text({ label: '링크 버튼 문구 (영문)', description: '예: Learn more' }),
         tone: fields.select({
           label: '배너 색상',
-          description: '일반 공지는 브랜드, 중요/긴급은 강조 색을 쓰세요.',
+          description: '프리셋을 고르거나, "직접 지정"을 선택해 아래에서 색을 직접 넣으세요.',
           options: [
             { label: '브랜드 (기본)', value: 'brand' },
             { label: '강조 (중요·긴급)', value: 'accent' },
             { label: '차분 (은은한 안내)', value: 'muted' },
+            { label: '직접 지정 (아래 색상 사용)', value: 'custom' },
           ],
           defaultValue: 'brand',
         }),
+        customBg: fields.text({ label: '직접 지정 — 배경색', description: '"직접 지정"일 때만 적용. HEX 코드로 입력 (예: #1E3A8A).' }),
+        customText: fields.text({ label: '직접 지정 — 글자색', description: '"직접 지정"일 때만 적용. HEX 코드로 입력 (예: #FFFFFF).' }),
         dismissible: fields.checkbox({ label: '닫기 버튼 표시', description: '방문자가 배너를 닫을 수 있게 합니다. 닫아도 새로고침하거나 다시 접속하면 표시됩니다.', defaultValue: true }),
       },
     }),

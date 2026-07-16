@@ -69,11 +69,17 @@ const biz = {
 const bannerText = isKo ? banner.textKo : (banner.textEn || banner.textKo);
 const bannerLinkLabel = isKo ? (banner.linkLabelKo || '자세히 보기') : (banner.linkLabelEn || banner.linkLabelKo || 'Learn more');
 const showBanner = banner.enabled && bannerText;
-const bannerTone = {
+// 배너 색상: custom 이면 직접 지정한 배경·글자색을 인라인 스타일로, 아니면 프리셋 클래스.
+const bannerPresetClass = {
   brand: 'bg-brand text-onbrand',
   accent: 'bg-accent text-onbrand',
   muted: 'bg-ink/[0.06] text-ink/80',
 }[banner.tone] ?? 'bg-brand text-onbrand';
+const bannerIsCustom = banner.tone === 'custom' && banner.customBg;
+const bannerTone = bannerIsCustom ? '' : bannerPresetClass;
+const bannerStyle = bannerIsCustom
+  ? `background-color:${banner.customBg};color:${banner.customText || '#ffffff'};`
+  : '';
 // 배너 링크: 앵커·외부·내부 경로 모두 지원 (외부는 http로 시작)
 const bannerHref = banner.linkUrl
   ? (/^https?:\/\//.test(banner.linkUrl) ? banner.linkUrl : localizedHref(banner.linkUrl))
@@ -225,7 +231,7 @@ const childHref = (path) => {
   <body class="min-h-screen bg-canvas text-ink/90 antialiased">
     {showBanner && (
       <>
-      <div id="top-banner" data-dismissible={banner.dismissible ? '1' : '0'} class={`relative ${bannerTone}`}>
+      <div id="top-banner" data-dismissible={banner.dismissible ? '1' : '0'} class={`relative ${bannerTone}`} style={bannerStyle}>
         <div class="mx-auto flex max-w-6xl items-center justify-center gap-3 px-10 py-2.5 text-center text-sm">
           <p class="font-medium">
             {bannerText}
