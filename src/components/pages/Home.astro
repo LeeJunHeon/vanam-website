@@ -1,6 +1,5 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { getCollection } from 'astro:content';
 import { getRelativeLocaleUrl } from 'astro:i18n';
 import siteData from '../../data/site.json';
 
@@ -11,15 +10,6 @@ const home = site.home;
 const pillars = home.pillars;
 const title = home.metaTitle;
 const description = home.metaDescription;
-
-// 홈 큐레이션 소재: home 값이 있는 행만, home 순서대로.
-const materials = (await getCollection('materials'))
-  .filter((m) => m.data.home != null)
-  .sort((a, b) => a.data.home - b.data.home)
-  .map((m) => m.data.formula);
-
-// history: home은 한 줄 요약(locale별 summary_en/summaryKo), about은 항목 목록(items/items_ko) 사용.
-const history = (await getCollection('history')).sort((a, b) => a.data.order - b.data.order);
 ---
 
 <BaseLayout title={title} description={description}>
@@ -56,29 +46,6 @@ const history = (await getCollection('history')).sort((a, b) => a.data.order - b
         <div class="rounded-2xl border border-ink/10 bg-ink/[0.035] p-6 transition hover:border-accent/50">
           <h3 class="text-lg font-medium text-ink">{p.title}</h3>
           <p class="mt-3 text-sm leading-relaxed text-ink/55">{p.desc}</p>
-        </div>
-      ))}
-    </div>
-  </section>
-
-  <section class="v-reveal mx-auto max-w-6xl px-6 py-12">
-    <p class="mb-5 font-mono text-xs tracking-[0.16em] text-accent">03 / MATERIALS</p>
-    <h2 class="sr-only">{locale === 'ko' ? '소재' : 'Materials'}</h2>
-    <div class="flex flex-wrap gap-2">
-      {materials.map((m) => (
-        <span class="rounded-md border border-accent/25 bg-accent/[0.08] px-3 py-1.5 font-mono text-sm text-accent">{m}</span>
-      ))}
-    </div>
-  </section>
-
-  <section class="v-reveal mx-auto max-w-6xl px-6 py-12">
-    <p class="mb-6 font-mono text-xs tracking-[0.16em] text-accent">04 / HISTORY</p>
-    <h2 class="sr-only">{locale === 'ko' ? '연혁' : 'History'}</h2>
-    <div class="divide-y divide-ink/10">
-      {history.map((h) => (
-        <div class="flex gap-5 py-4">
-          <span class="w-14 shrink-0 font-mono text-sm text-accent">{h.data.year}</span>
-          <span class="text-sm text-ink/70">{locale === 'en' ? h.data.summary_en : h.data.summaryKo}</span>
         </div>
       ))}
     </div>
