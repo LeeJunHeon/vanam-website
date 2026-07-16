@@ -1,9 +1,9 @@
 {
   "enabled": true,
   "textKo": "TES",
-  "textEn": "test 🎓 VANAM will be at SEDEX — Booth A-12",
+  "textEn": "TEST",
   "linkLabelKo": "자세히 보기",
   "linkLabelEn": "Learn more",
-  "tone": "accent",
+  "tone": "brand",
   "dismissible": true
 }
