@@ -41,7 +41,9 @@ function initials(name){ const p = name.replace('Dr. ','').split(' '); return (p
       <div class="md:col-span-1"><h2 class="text-2xl font-bold text-ink">{about.companyHeading}</h2></div>
       <div class="md:col-span-2 space-y-5 text-base leading-relaxed text-ink/65">
         <p>{about.companyP1}</p>
-        <p>{about.companyP2.before}<span class="text-ink">{about.companyP2.highlight}</span>{about.companyP2.after}</p>
+        {(about.companyP2.before || about.companyP2.highlight || about.companyP2.after) && (
+          <p>{about.companyP2.before}<span class="text-ink">{about.companyP2.highlight}</span>{about.companyP2.after}</p>
+        )}
       </div>
     </div>
   </section>
@@ -85,22 +87,53 @@ function initials(name){ const p = name.replace('Dr. ','').split(' '); return (p
     <div class="mx-auto max-w-6xl px-6 py-20">
       <div class="v-reveal"><h2 class="text-2xl font-bold text-ink">{about.historyHeading}</h2></div>
       <div class="mt-12 space-y-12">
-        {history.map((h) => (
-          <div class="v-reveal grid gap-6 md:grid-cols-[120px_1fr]">
-            <div class="text-3xl font-bold text-accent">{h.data.year}</div>
-            <ul class="space-y-3 border-l border-ink/10 pl-6">
-              {(locale === 'ko' ? (h.data.items_ko ?? h.data.items) : h.data.items).map((it) => (
-                <li class="relative text-base text-ink/70">
-                  <span class="absolute -left-[1.65rem] top-2 h-2 w-2 rounded-full bg-brand"></span>
-                  {it}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
+        {history.map((h) => {
+          const items = locale === 'ko' ? (h.data.items_ko ?? h.data.items) : h.data.items;
+          const LIMIT = 3;
+          // 최신 연도(2026)는 기본으로 모두 펼친다. 나머지는 3개까지만 보이고 더보기로 펼친다.
+          const expanded = h.data.year === '2026';
+          const hasMore = items.length > LIMIT;
+          return (
+            <div class="v-reveal grid gap-6 md:grid-cols-[120px_1fr]">
+              <div class="text-3xl font-bold text-accent">{h.data.year}</div>
+              <div>
+                <ul class="space-y-3 border-l border-ink/10 pl-6" data-history-list>
+                  {items.map((it, i) => (
+                    <li class={`relative text-base text-ink/70 ${(!expanded && i >= LIMIT) ? 'hidden' : ''}`} data-extra={(!expanded && i >= LIMIT) ? '1' : undefined}>
+                      <span class="absolute -left-[1.65rem] top-2 h-2 w-2 rounded-full bg-brand"></span>
+                      {it}
+                    </li>
+                  ))}
+                </ul>
+                {hasMore && !expanded && (
+                  <button type="button" class="mt-4 ml-6 text-sm font-medium text-accent transition hover:underline" data-history-toggle
+                    data-more={about.showMore} data-less={about.showLess} aria-expanded="false">
+                    {about.showMore} ({items.length - LIMIT})
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   </section>
+
+  <script is:inline>
+    // 연혁 "더 보기": 클릭하면 숨겨진 항목(data-extra)을 펼치고, 다시 누르면 접는다.
+    document.querySelectorAll('[data-history-toggle]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var wrap = btn.parentElement;
+        var extras = wrap.querySelectorAll('[data-extra="1"]');
+        var open = btn.getAttribute('aria-expanded') === 'true';
+        extras.forEach(function (el) { el.classList.toggle('hidden', open); });
+        btn.setAttribute('aria-expanded', open ? 'false' : 'true');
+        btn.textContent = open
+          ? btn.dataset.more + ' (' + extras.length + ')'
+          : btn.dataset.less;
+      });
+    });
+  </script>
 
   <section id="achievement" class="scroll-mt-24 border-t border-ink/10 bg-ink/[0.02]">
     <div class="mx-auto max-w-6xl px-6 py-20">
@@ -125,15 +158,27 @@ function initials(name){ const p = name.replace('Dr. ','').split(' '); return (p
 
   <section id="collaboration" class="scroll-mt-24 mx-auto max-w-6xl px-6 py-20">
     <div class="v-reveal"><h2 class="text-2xl font-bold text-ink">{about.collaborationHeading}</h2></div>
-    <div class="v-reveal mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
-      {partners.map((p) => {
-        const logo = p.data.logo ? partnerLogos[p.data.logo]?.default : undefined;
-        return logo ? (
-          <div class="flex items-center justify-center rounded-lg border border-ink/10 bg-plate px-4 py-5">
-            <Image src={logo} alt={p.data.name} class="max-h-10 w-auto" />
+    <div class="v-reveal mt-8 space-y-4">
+      {[0, 1].map((row) => {
+        // 협력사를 두 줄로 나눠 각 줄이 반대 방향으로 흐르게 한다.
+        const half = Math.ceil(partners.length / 2);
+        const rowItems = row === 0 ? partners.slice(0, half) : partners.slice(half);
+        return (
+          <div class="marquee group" data-dir={row === 0 ? 'left' : 'right'}>
+            <div class="marquee-track">
+              {/* 끊김 없는 무한 루프를 위해 같은 목록을 두 번 렌더 */}
+              {[...rowItems, ...rowItems].map((p) => {
+                const logo = p.data.logo ? partnerLogos[p.data.logo]?.default : undefined;
+                return logo ? (
+                  <div class="flex shrink-0 items-center justify-center rounded-lg border border-ink/10 bg-plate px-6 py-4">
+                    <Image src={logo} alt={p.data.name} class="max-h-9 w-auto" />
+                  </div>
+                ) : (
+                  <div class={`flex shrink-0 items-center justify-center rounded-lg border px-6 py-4 text-center text-sm font-medium ${p.data.needsCheck ? 'border-danger/40 bg-danger/[0.05] text-danger' : 'border-ink/10 bg-ink/[0.03] text-ink/60'}`}>{p.data.name}</div>
+                );
+              })}
+            </div>
           </div>
-        ) : (
-          <div class="flex items-center justify-center rounded-lg border border-ink/10 bg-ink/[0.03] px-4 py-6 text-center text-sm font-medium text-ink/60">{p.data.name}</div>
         );
       })}
     </div>
@@ -149,3 +194,17 @@ function initials(name){ const p = name.replace('Dr. ','').split(' '); return (p
     </div>
   </section>
 </BaseLayout>
+
+<style>
+  /* 협력사 로고 무한 회전(마퀴): 목록을 2번 렌더하고 -50% 이동해 끊김 없이 반복 */
+  .marquee { overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); }
+  .marquee-track { display: flex; gap: 0.75rem; width: max-content; animation: marquee-left 42s linear infinite; }
+  .marquee[data-dir="right"] .marquee-track { animation-name: marquee-right; }
+  .marquee:hover .marquee-track { animation-play-state: paused; }
+  @keyframes marquee-left { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  @keyframes marquee-right { from { transform: translateX(-50%); } to { transform: translateX(0); } }
+  @media (prefers-reduced-motion: reduce) {
+    .marquee-track { animation: none; flex-wrap: wrap; width: auto; }
+    .marquee { -webkit-mask-image: none; mask-image: none; }
+  }
+</style>

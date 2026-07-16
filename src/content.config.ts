@@ -101,6 +101,7 @@ const partners = defineCollection({
     logo: opt(z.string()),       // 로고 이미지 (※ 신규 수집 예정 — 현재 비움)
     url: opt(z.string().url()),
     kind: opt(z.enum(['institute', 'university', 'company', 'finance'])),
+    needsCheck: z.boolean().optional(),   // 대표님 확인 필요(로고·표기) — 빨간색 표시
     order: z.number().default(0),
   }),
 });

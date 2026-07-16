@@ -129,12 +129,12 @@
         "line1": "Thin Films,",
         "line2": "All Around"
       },
-      "heroSubtitle": "VanaM is a deep-tech startup developing and manufacturing next-generation semiconductor thin films that have yet to be commercialized — built on proprietary technology and core IP, powered by an eco-friendly vacuum deposition process.",
-      "companyP1": "We possess innovative proprietary technology and core IP for producing high-performance semiconductor thin films, based on an eco-friendly vacuum deposition process.",
+      "heroSubtitle": "VanaM is a deep-tech materials company developing and manufacturing advanced thin films for next-generation semiconductor, photonic, quantum, and power electronic systems. Our platform combines proprietary vacuum deposition technology, materials IP, and data-driven process optimization.",
+      "companyP1": "We operate a Seoul-based foundry that enables rapid thin-film R&D, low-MOQ prototyping, and small- to medium-batch production. We work closely with customers and collaborators to solve complex technical challenges and accelerate commercialization.",
       "companyP2": {
-        "before": "We have constructed an ",
-        "highlight": "urban micro foundry",
-        "after": " — a semi-cleanroom-level urban fab — enabling rapid thin-film R&D and small-scale production close to our partners."
+        "before": "",
+        "highlight": "",
+        "after": ""
       },
       "visionBody": "Connect the next world with semiconductor materials — localizing new materials and components, and leading the industry.",
       "teamDesc": "Ph.D.-level semiconductor researchers, IP & patent attorneys, and facility engineers — combining deep expertise across thin-film materials, intellectual property, and fab construction.",
@@ -155,7 +155,9 @@
       "certSub": "Core IP and certifications underpinning our thin-film technology. Click to view larger.",
       "certClose": "Close",
       "certPrev": "Previous",
-      "certNext": "Next"
+      "certNext": "Next",
+      "showMore": "Show more",
+      "showLess": "Show less"
     },
     "news": {
       "heroTitle": "In the press",
@@ -408,12 +410,12 @@
         "line1": "Thin Films,",
         "line2": "All Around"
       },
-      "heroSubtitle": "반암(VanaM)은 친환경 진공 증착 공정과 독자 기술·핵심 IP를 바탕으로, 아직 상용화되지 않은 차세대 반도체 박막을 개발·제조하는 딥테크 스타트업입니다.",
-      "companyP1": "친환경 진공 증착 공정을 바탕으로 고성능 반도체 박막을 생산하는 데 필요한 혁신적인 독자 기술과 핵심 IP를 보유하고 있습니다.",
+      "heroSubtitle": "반암(VanaM)은 차세대 반도체·포토닉스·양자·전력반도체 시스템을 위한 첨단 박막을 개발·제조하는 딥테크 소재 기업입니다. 독자적인 진공 증착 기술과 소재 IP, 데이터 기반 공정 최적화를 결합한 플랫폼을 갖추고 있습니다.",
+      "companyP1": "서울 기반의 파운드리를 운영하며, 신속한 박막 R&D와 소량(low-MOQ) 시제품 제작, 중소량 배치 생산을 지원합니다. 고객·협력사와 긴밀히 협업하여 복잡한 기술 과제를 해결하고 상용화를 가속합니다.",
       "companyP2": {
         "before": "",
-        "highlight": "도심형 마이크로 파운드리",
-        "after": "를 구축해, 세미 클린룸급 도심형 팹에서 파트너와 가까운 곳에서 신속한 박막 R&D와 소규모 생산을 수행합니다."
+        "highlight": "",
+        "after": ""
       },
       "visionBody": "반도체 소재로 다음 세상을 연결합니다 — 신소재·부품을 국산화하고 산업을 선도합니다.",
       "teamDesc": "박막 소재, 지식재산(IP), 설비 구축 분야의 박사급 반도체 연구진과 IP·특허 변리사, 설비 엔지니어가 모여 깊이 있는 전문성을 결합합니다.",
@@ -432,7 +434,9 @@
       "certSub": "반암의 박막 기술을 뒷받침하는 핵심 IP와 인증입니다. 클릭하면 크게 볼 수 있습니다.",
       "certClose": "닫기",
       "certPrev": "이전",
-      "certNext": "다음"
+      "certNext": "다음",
+      "showMore": "더 보기",
+      "showLess": "접기"
     },
     "news": {
       "eyebrow": "뉴스",

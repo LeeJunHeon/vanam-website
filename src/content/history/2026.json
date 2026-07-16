@@ -1,0 +1,30 @@
+{
+  "year": "2026",
+  "order": 5,
+  "items": [
+    "SPIE Photonics WEST, San Francisco",
+    "TakeOff Tokyo, Pitch Competition Winner",
+    "East Meets West Hawaii, Startup World Cup Pitch Competition",
+    "SelectLA Investment Summit, Los Angeles",
+    "SelectUSA Investment Summit, National Harbor, MD (1st place in Open Tech Pitching Session 1)",
+    "NGPT 2026 International Conference on Nanogenerators & Piezotronics",
+    "KITIA Global Innovation Matching Day",
+    "Next Rise 2026, COEX, Seoul",
+    "ISPSA 2026 (International Symposium on the Physics of Semiconductors and Applications), Jeju",
+    "Quantum Korea – Canadian Delegation B2B Meeting"
+  ],
+  "items_ko": [
+    "SPIE Photonics WEST (미국 샌프란시스코)",
+    "TakeOff Tokyo 피칭 대회 우승",
+    "East Meets West Hawaii, 스타트업 월드컵 피칭 대회",
+    "SelectLA 투자 서밋 (미국 로스앤젤레스)",
+    "SelectUSA 투자 서밋 (미국 내셔널하버, MD) — 오픈테크 피칭 세션 1 1위",
+    "NGPT 2026 국제 나노제너레이터·피에조트로닉스 학회",
+    "KITIA 글로벌 이노베이션 매칭 데이",
+    "Next Rise 2026 (서울 COEX)",
+    "ISPSA 2026 국제 반도체 물리·응용 심포지엄 (제주)",
+    "Quantum Korea – 캐나다 대표단 B2B 미팅"
+  ],
+  "summary_en": "SPIE Photonics West · SelectUSA 2026 1st place · TakeOff Tokyo winner",
+  "summaryKo": "SPIE Photonics West · SelectUSA 2026 1위 · TakeOff Tokyo 우승"
+}
