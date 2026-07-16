@@ -405,6 +405,35 @@ const childHref = (path) => {
       })();
     </script>
     <script is:inline>
+      // 같은 페이지 안의 앵커(#) 링크를 클릭하면, 페이지를 새로 로드하지 않고
+      // 곧바로 부드럽게 스크롤한다. (이게 없으면 /about 에서 /about#team 을 눌러도
+      //  브라우저가 페이지를 다시 불러 "로딩 후 전환"되는 느낌이 난다.)
+      (function () {
+        document.addEventListener('click', function (e) {
+          var a = e.target.closest && e.target.closest('a[href]');
+          if (!a) return;
+          // 새 탭·수정키·다운로드·외부 target 은 기본 동작 유지
+          if (a.target === '_blank' || a.hasAttribute('download') || a.origin !== location.origin) return;
+          if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+
+          var hash = a.hash;
+          if (!hash || hash.length < 2) return;
+          // 경로가 지금 페이지와 같을 때만 (앞뒤 '/' 차이는 무시)
+          var here = location.pathname.replace(/\/$/, '');
+          var there = a.pathname.replace(/\/$/, '');
+          if (here !== there) return;
+
+          var el = document.getElementById(decodeURIComponent(hash.slice(1)));
+          if (!el) return;
+
+          e.preventDefault();
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          // 주소창 해시도 갱신(뒤로가기·북마크 유지). 스크롤은 위에서 이미 처리.
+          history.pushState(null, '', hash);
+        });
+      })();
+    </script>
+    <script is:inline>
       // 테마 토글 — 선택은 localStorage 에 남는다.
       document.getElementById('theme-toggle')?.addEventListener('click', function () {
         var root = document.documentElement;
