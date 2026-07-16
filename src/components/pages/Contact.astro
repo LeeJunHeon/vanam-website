@@ -24,11 +24,13 @@ const labelClass = 'block text-sm font-medium text-ink/80';
 
 <BaseLayout title={title} description={description}>
   <section class="relative mx-auto max-w-3xl px-6 py-28 md:py-36">
-    <p class="text-sm font-medium uppercase tracking-widest text-accent">{c.eyebrow}</p>
-    <h1 class="mt-4 text-4xl font-bold leading-tight text-ink md:text-5xl">{c.heroTitle.line1}<br />{c.heroTitle.line2}</h1>
-    <p class="mt-6 max-w-xl text-base leading-relaxed text-ink/60">{c.intro}</p>
+    <div class="v-reveal">
+      <p class="text-sm font-medium uppercase tracking-widest text-accent">{c.eyebrow}</p>
+      <h1 class="mt-4 text-4xl font-bold leading-tight text-ink md:text-5xl">{c.heroTitle.line1}<br />{c.heroTitle.line2}</h1>
+      <p class="mt-6 max-w-xl text-base leading-relaxed text-ink/60">{c.intro}</p>
+    </div>
 
-    <form id="inquiry-form" class="mt-14 space-y-8"
+    <form id="inquiry-form" class="v-reveal mt-14 space-y-8"
       data-msg-honeypot={f.msgHoneypot}
       data-msg-success={f.msgSuccess}
       data-msg-error={f.msgError}
@@ -95,8 +97,10 @@ const labelClass = 'block text-sm font-medium text-ink/80';
 
   {faqs.length > 0 && (
     <section class="mx-auto max-w-3xl px-6 pb-28">
-      <p class="text-sm font-medium uppercase tracking-widest text-accent">{c.faqEyebrow}</p>
-      <h2 class="mt-4 text-3xl font-bold text-ink">{c.faqHeading}</h2>
+      <div class="v-reveal">
+        <p class="text-sm font-medium uppercase tracking-widest text-accent">{c.faqEyebrow}</p>
+        <h2 class="mt-4 text-3xl font-bold text-ink">{c.faqHeading}</h2>
+      </div>
       <div class="mt-10 divide-y divide-ink/10 border-t border-ink/10">
         {faqs.map((x) => (
           <details class="group py-5">
