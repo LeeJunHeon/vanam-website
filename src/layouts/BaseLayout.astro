@@ -295,8 +295,8 @@ const childHref = (path) => {
       </div>
     </footer>
 
-    <!-- 우측 하단 플로팅: 맨 위 / 맨 아래로 이동. 스크롤 위치에 따라 버튼이 자동 노출/숨김 -->
-    <div id="scroll-fab" class="fixed bottom-6 right-6 z-40 flex flex-col gap-2 opacity-0 transition-opacity duration-200" aria-hidden="true">
+    <!-- 우측 하단 플로팅: 맨 위 / 맨 아래로 이동. 항상 둘 다 고정 표시 (짧은 페이지에서만 숨김) -->
+    <div id="scroll-fab" class="fixed bottom-6 right-6 z-40 flex flex-col gap-2 transition-opacity duration-200">
       <button type="button" data-scroll="top" aria-label={currentLocale === 'ko' ? '맨 위로' : 'Scroll to top'}
         class="grid h-11 w-11 place-items-center rounded-full border border-ink/10 bg-canvas text-ink/70 shadow-lg shadow-ink/10 transition hover:text-ink hover:brightness-95">
         <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 15-6-6-6 6"/></svg>
@@ -455,7 +455,8 @@ const childHref = (path) => {
       });
     </script>
     <script is:inline>
-      // 우측 하단 플로팅 버튼: 스크롤 위치에 따라 노출하고, 맨 위/맨 아래로 부드럽게 이동.
+      // 우측 하단 플로팅 버튼: 위/아래 항상 고정 표시. 맨 위/맨 아래로 부드럽게 이동.
+      // (스크롤할 내용이 없는 짧은 페이지에서만 버튼 전체를 숨긴다.)
       (function () {
         var fab = document.getElementById('scroll-fab');
         if (!fab) return;
@@ -463,15 +464,8 @@ const childHref = (path) => {
         var botBtn = fab.querySelector('[data-scroll="bottom"]');
 
         function update() {
-          var y = window.scrollY;
           var max = document.documentElement.scrollHeight - window.innerHeight;
-          // 페이지가 한 화면보다 짧으면 버튼 자체를 숨김
-          if (max < 200) { fab.style.opacity = '0'; fab.setAttribute('aria-hidden', 'true'); return; }
-          fab.style.opacity = '1';
-          fab.setAttribute('aria-hidden', 'false');
-          // 맨 위 근처면 '위로' 숨김, 맨 아래 근처면 '아래로' 숨김
-          topBtn.style.display = y > 300 ? '' : 'none';
-          botBtn.style.display = y < max - 300 ? '' : 'none';
+          fab.style.display = max < 200 ? 'none' : '';
         }
 
         topBtn.addEventListener('click', function () { window.scrollTo({ top: 0, behavior: 'smooth' }); });
@@ -479,7 +473,6 @@ const childHref = (path) => {
           window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
         });
 
-        window.addEventListener('scroll', update, { passive: true });
         window.addEventListener('resize', update, { passive: true });
         update();
       })();
