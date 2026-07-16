@@ -6,25 +6,26 @@
         "line2": "All Around"
       },
       "heroSubtitle": {
-        "line1": "Next-generation semiconductor thin films,",
-        "line2": "made by eco-friendly vacuum deposition"
+        "line1": "Advanced thin films for AI, photonics,",
+        "line2": "quantum and power electronics."
       },
       "heroCtaPrimary": "Explore the technology →",
       "heroCtaSecondary": "Contact",
       "visionHeading": "Company Vision",
-      "visionBody": "Built on innovative deposition-source technology and core IP, VanaM develops next-generation thin-film materials that have yet to be commercialized. We create new thin films for deep-tech fields such as AI semiconductors, quantum computing, and power electronics, and are building an eco-friendly micro foundry in Seoul.",
+      "visionBody": "VanaM builds the thin-film materials infrastructure for next-generation hardware. Through proprietary vacuum deposition technology, core IP and AI-assisted process optimization, we develop high-performance thin films that are difficult to source or not yet commercialized.\n\nFrom our first foundry in Seoul, we support deep-tech teams in quantum photonics, AI semiconductors, power electronics, and advanced optical systems with faster R&D cycles, flexible batch production and a path from prototyping to pilot manufacturing.",
       "pillars": [
         {
-          "title": "Customized R&D",
-          "desc": "We develop special thin films and deposition process conditions that are hard to achieve with conventional processes."
+          "title": "Proprietary Thin-Film R&D",
+          "desc": "We design custom materials and stack structures for applications that conventional foundries do not yet support."
         },
         {
-          "title": "Analysis & Measurements",
-          "desc": "We support process optimization and reliability verification through thin-film property analysis and measurement."
+          "title": "AI-Assisted Optimization",
+          "desc": "We combine process data, metrology, and simulation to shorten trial-and-error cycles and improve reproducibility."
         },
         {
-          "title": "Simulation for Materials",
-          "desc": "We reduce trial and error in thin-film design and process development through materials simulation."
+          "title": "Foundry Manufacturing",
+          "desc": "We support low-MOQ prototyping, pilot wafers, and small to medium batch production from our Seoul foundry.",
+          "note": "Mass production and U.S. expansion are in progress."
         }
       ],
       "ctaHeading": "Thin-film solutions, built together",
@@ -282,25 +283,26 @@
         "line2": "All Around"
       },
       "heroSubtitle": {
-        "line1": "친환경 진공 증착 기술로 만드는",
-        "line2": "차세대 반도체 박막 소재"
+        "line1": "AI·포토닉스·양자·전력반도체를 위한",
+        "line2": "첨단 박막 소재"
       },
       "heroCtaPrimary": "기술 살펴보기 →",
       "heroCtaSecondary": "문의하기",
       "visionHeading": "회사 비전",
-      "visionBody": "VanaM은 혁신적인 증착 소스 기술과 핵심 IP를 기반으로, 아직 상용화되지 않은 차세대 박막 소재를 개발합니다. AI 반도체·양자컴퓨팅·전력반도체 등 딥테크 분야에 필요한 신소재 박막을 만들고, 서울에 친환경 마이크로 파운드리를 구축하고 있습니다.",
+      "visionBody": "VanaM은 차세대 하드웨어를 위한 박막 소재 인프라를 구축합니다. 독자적인 진공 증착 기술과 핵심 IP, AI 기반 공정 최적화를 통해 확보가 어렵거나 아직 상용화되지 않은 고성능 박막을 개발합니다.\n\n서울의 첫 파운드리를 기반으로, 양자 포토닉스·AI 반도체·전력반도체·첨단 광학 시스템 분야의 딥테크 팀에게 더 빠른 R&D 사이클, 유연한 배치 생산, 그리고 시제품부터 파일럿 양산까지 이어지는 경로를 제공합니다.",
       "pillars": [
         {
-          "title": "맞춤형 R&D",
-          "desc": "기존 공정으로 구현하기 어려운 특수 박막과 증착 공정 조건을 맞춤형으로 개발합니다."
+          "title": "독자 박막 R&D",
+          "desc": "기존 파운드리가 아직 지원하지 못하는 응용 분야를 위해 맞춤형 소재와 적층 구조를 설계합니다."
         },
         {
-          "title": "분석·측정",
-          "desc": "박막 물성 분석과 측정으로 공정 최적화와 신뢰성 검증을 지원합니다."
+          "title": "AI 기반 최적화",
+          "desc": "공정 데이터·계측·시뮬레이션을 결합해 시행착오를 줄이고 재현성을 높입니다."
         },
         {
-          "title": "소재 시뮬레이션",
-          "desc": "소재 시뮬레이션으로 박막 설계와 공정 개발의 시행착오를 줄입니다."
+          "title": "파운드리 제조",
+          "desc": "서울 파운드리에서 소량(low-MOQ) 시제품, 파일럿 웨이퍼, 중소량 배치 생산을 지원합니다.",
+          "note": "대량 양산과 미국 진출을 준비하고 있습니다."
         }
       ],
       "ctaHeading": "함께 만들 박막 솔루션",
