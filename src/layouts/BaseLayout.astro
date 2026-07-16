@@ -229,6 +229,8 @@ const childHref = (path) => {
     </style>
   </head>
   <body class="min-h-screen bg-canvas text-ink/90 antialiased">
+    <!-- 상단 고정 영역: 배너 + 헤더를 함께 상단에 고정 (스크롤해도 항상 보임) -->
+    <div class="sticky top-0 z-50">
     {showBanner && (
       <>
       <div id="top-banner" data-dismissible={banner.dismissible ? '1' : '0'} class={`relative ${bannerTone}`} style={bannerStyle}>
@@ -267,7 +269,7 @@ const childHref = (path) => {
       </script>
       </>
     )}
-    <header class="sticky top-0 z-50 border-b border-ink/10 bg-canvas/80 backdrop-blur">
+    <header class="border-b border-ink/10 bg-canvas/80 backdrop-blur">
       <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <a href={localizedHref('/')} class="shrink-0" aria-label="VANAM">
           <Image src={logo} alt="VANAM — VANA Materials LAB." width={200} height={50} class="logo-dark h-9 w-auto md:h-10" loading="eager" />
@@ -349,6 +351,7 @@ const childHref = (path) => {
         </div>
       </nav>
     </header>
+    </div>
     <main>
       <slot />
     </main>
