@@ -144,7 +144,24 @@ const childHref = (path) => {
         }
       })();
     </script>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script is:inline>
+      // 배너·SNS "세션 기준" 표시 제어의 공통 준비.
+      // 정의: 새로고침·새 탭 접속 → 다시 보임 / 사이트 내 페이지 이동 → 숨김(직전에 봤으니).
+      // 구현: sessionStorage 로 "이번 세션에 봤음"을 기억하되, 이번 로드가 '새로고침'이면 그 기억을 지운다.
+      //   - 새 탭        → sessionStorage 자체가 비어 있음 → 보임
+      //   - 새로고침(reload) → 아래에서 플래그 삭제 → 보임
+      //   - 내부 이동(navigate) → 플래그 남아 있음 → 숨김
+      (function () {
+        try {
+          var nav = performance.getEntriesByType('navigation')[0];
+          var isReload = nav ? nav.type === 'reload' : (performance.navigation && performance.navigation.type === 1);
+          if (isReload) {
+            sessionStorage.removeItem('vanam-banner-hidden');
+            sessionStorage.removeItem('vanam-sns-hinted');
+          }
+        } catch (e) {}
+      })();
+    </script>
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonicalURL} />
@@ -220,7 +237,7 @@ const childHref = (path) => {
             )}
           </p>
           {banner.dismissible && (
-            <button type="button" id="banner-close" aria-label={isKo ? '오늘 하루 닫기' : 'Dismiss for today'}
+            <button type="button" id="banner-close" aria-label={isKo ? '닫기' : 'Dismiss'}
               class="absolute right-3 top-1/2 -translate-y-1/2 grid h-6 w-6 place-items-center rounded-full opacity-70 transition hover:opacity-100 hover:bg-black/10">
               <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
             </button>
@@ -228,18 +245,17 @@ const childHref = (path) => {
         </div>
       </div>
       <script is:inline>
-        // 상단 배너 "오늘 하루 닫기": localStorage 에 닫은 날짜를 저장.
-        // 같은 날이면 배너를 즉시 숨겨 깜빡임을 막는다.
+        // 상단 배너 닫기 — "세션 기준". 닫으면 이번 세션 동안만 숨긴다.
+        // (새로고침·새 탭이면 위 head 스크립트가 플래그를 지워/비워 다시 보인다.)
         (function () {
           var el = document.getElementById('top-banner');
           if (!el || el.getAttribute('data-dismissible') !== '1') return;
-          var KEY = 'vanam-banner-dismissed';
-          var today = new Date().toISOString().slice(0, 10);
-          try { if (localStorage.getItem(KEY) === today) { el.style.display = 'none'; return; } } catch (e) {}
+          var KEY = 'vanam-banner-hidden';
+          try { if (sessionStorage.getItem(KEY) === '1') { el.style.display = 'none'; return; } } catch (e) {}
           var btn = document.getElementById('banner-close');
           if (btn) btn.addEventListener('click', function () {
             el.style.display = 'none';
-            try { localStorage.setItem(KEY, today); } catch (e) {}
+            try { sessionStorage.setItem(KEY, '1'); } catch (e) {}
           });
         })();
       </script>

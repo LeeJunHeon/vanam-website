@@ -109,7 +109,7 @@ export default config({
           ],
           defaultValue: 'brand',
         }),
-        dismissible: fields.checkbox({ label: '"오늘 하루 보지 않기" 허용', description: '방문자가 배너를 하루 동안 닫을 수 있게 합니다.', defaultValue: true }),
+        dismissible: fields.checkbox({ label: '닫기 버튼 표시', description: '방문자가 배너를 닫을 수 있게 합니다. 닫아도 새로고침하거나 다시 접속하면 표시됩니다.', defaultValue: true }),
       },
     }),
   },
