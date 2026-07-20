@@ -1,0 +1,32 @@
+{
+  "name": "사파이어 웨이퍼",
+  "name_en": "Sapphire Wafer",
+  "summary": "질화물 박막 성장에 적합한 사파이어 웨이퍼입니다. (예시 데이터)",
+  "summary_en": "Sapphire wafer suitable for nitride thin-film growth. (Sample data)",
+  "description": "AlN, GaN 등 질화물 박막 성장에 적합한 사파이어(Al₂O₃) 웨이퍼입니다. 상세 사양은 준비 중입니다. (예시 데이터입니다)",
+  "description_en": "Sapphire (Al₂O₃) wafer suitable for nitride thin-film growth such as AlN and GaN. Detailed specs are being prepared. (Sample data)",
+  "specs": [
+    {
+      "label": "직경",
+      "value": "-",
+      "label_en": "Diameter",
+      "value_en": "-"
+    },
+    {
+      "label": "결정 방향",
+      "value": "-",
+      "label_en": "Orientation",
+      "value_en": "-"
+    },
+    {
+      "label": "표면 조도",
+      "value": "-",
+      "label_en": "Roughness",
+      "value_en": "-"
+    }
+  ],
+  "leadTime": "문의",
+  "leadTime_en": "Contact us",
+  "published": true,
+  "order": 3
+}

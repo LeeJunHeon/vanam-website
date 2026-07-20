@@ -1,0 +1,32 @@
+{
+  "name": "산화막 웨이퍼 (SiO₂)",
+  "name_en": "Thermal Oxide Wafer (SiO₂)",
+  "summary": "열산화막이 형성된 실리콘 웨이퍼입니다. (예시 데이터)",
+  "summary_en": "Silicon wafer with thermally grown oxide layer. (Sample data)",
+  "description": "표면에 열산화막(SiO₂)이 형성된 웨이퍼입니다. 산화막 두께 등 상세 사양은 준비 중입니다. (예시 데이터입니다)",
+  "description_en": "Wafer with a thermally grown SiO₂ layer on the surface. Detailed specs such as oxide thickness are being prepared. (Sample data)",
+  "specs": [
+    {
+      "label": "직경",
+      "value": "-",
+      "label_en": "Diameter",
+      "value_en": "-"
+    },
+    {
+      "label": "산화막 두께",
+      "value": "-",
+      "label_en": "Oxide thickness",
+      "value_en": "-"
+    },
+    {
+      "label": "종류",
+      "value": "-",
+      "label_en": "Type",
+      "value_en": "-"
+    }
+  ],
+  "leadTime": "문의",
+  "leadTime_en": "Contact us",
+  "published": true,
+  "order": 2
+}

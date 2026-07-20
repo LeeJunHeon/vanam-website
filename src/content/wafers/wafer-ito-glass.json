@@ -1,0 +1,32 @@
+{
+  "name": "ITO 코팅 웨이퍼",
+  "name_en": "ITO-Coated Wafer",
+  "summary": "투명 전극용 ITO 박막이 코팅된 웨이퍼입니다. (예시 데이터)",
+  "summary_en": "Wafer coated with transparent ITO electrode film. (Sample data)",
+  "description": "투명 전도성 산화물(ITO) 박막이 코팅된 웨이퍼로, 디스플레이·센서 응용에 사용됩니다. 상세 사양은 준비 중입니다. (예시 데이터입니다)",
+  "description_en": "Wafer coated with a transparent conductive oxide (ITO) film, used in display and sensor applications. Detailed specs are being prepared. (Sample data)",
+  "specs": [
+    {
+      "label": "직경",
+      "value": "-",
+      "label_en": "Diameter",
+      "value_en": "-"
+    },
+    {
+      "label": "면저항",
+      "value": "-",
+      "label_en": "Sheet resistance",
+      "value_en": "-"
+    },
+    {
+      "label": "ITO 두께",
+      "value": "-",
+      "label_en": "ITO thickness",
+      "value_en": "-"
+    }
+  ],
+  "leadTime": "문의",
+  "leadTime_en": "Contact us",
+  "published": true,
+  "order": 6
+}

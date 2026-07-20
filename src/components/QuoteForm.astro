@@ -260,7 +260,18 @@ const deliveryOpts = DELIVERY_METHODS.map((d) => ({ value: d.value, label: isKo 
     }
   }
 
-  type ProcessDef = { name: string; materials: string[]; unit: 'nm' | 'min' | null };
+  type MatPair = [string, string]; // [물질명, 분류(Oxide/Nitride/Metal/gas)]
+  type ProcessDef = { name: string; materials: MatPair[]; unit: 'nm' | 'min' | null };
+
+  // 분류 → 표시 라벨 (드롭다운 optgroup 제목). 언어에 맞춰 고른다.
+  const CAT_LABELS: Record<string, { en: string; ko: string }> = {
+    Oxide: { en: 'Oxides', ko: '산화물' },
+    Nitride: { en: 'Nitrides', ko: '질화물' },
+    Metal: { en: 'Metals', ko: '금속' },
+    gas: { en: 'Gases', ko: '가스' },
+  };
+  const CAT_ORDER = ['Oxide', 'Nitride', 'Metal', 'gas'];
+  const isKoDoc = () => (document.documentElement.lang || 'en') === 'ko';
 
   const form = document.getElementById("quote-form") as HTMLFormElement | null;
   const statusEl = document.getElementById("quote-status")!;
@@ -347,9 +358,28 @@ const deliveryOpts = DELIVERY_METHODS.map((d) => ({ value: d.value, label: isKo 
 
     if (def.materials.length > 0) {
       matWrap.hidden = false;
-      matSel.innerHTML =
-        `<option value="" disabled selected>${L.materialPh}</option>` +
-        def.materials.map((m) => `<option value="${m}">${m}</option>`).join("");
+      const ko = isKoDoc();
+      // 물질을 분류별로 묶는다. 실제 존재하는 분류만, 정해진 순서로.
+      const groups = new Map<string, string[]>();
+      for (const [mat, cat] of def.materials) {
+        if (!groups.has(cat)) groups.set(cat, []);
+        groups.get(cat)!.push(mat);
+      }
+      const cats = CAT_ORDER.filter((c) => groups.has(c));
+      let html = `<option value="" disabled selected>${L.materialPh}</option>`;
+      // 분류가 2개 이상이면 optgroup 으로 묶고, 1개뿐이면 그냥 나열
+      if (cats.length > 1) {
+        html += cats
+          .map((cat) => {
+            const lbl = CAT_LABELS[cat] ? (ko ? CAT_LABELS[cat].ko : CAT_LABELS[cat].en) : cat;
+            const opts = groups.get(cat)!.map((m) => `<option value="${m}">${m}</option>`).join("");
+            return `<optgroup label="${lbl}">${opts}</optgroup>`;
+          })
+          .join("");
+      } else {
+        html += def.materials.map(([m]) => `<option value="${m}">${m}</option>`).join("");
+      }
+      matSel.innerHTML = html;
     } else {
       matWrap.hidden = true;
       matSel.innerHTML = "";

@@ -1,0 +1,32 @@
+{
+  "name": "GaN 템플릿 웨이퍼",
+  "name_en": "GaN Template Wafer",
+  "summary": "사파이어 기판 위에 GaN 박막이 성장된 템플릿입니다. (예시 데이터)",
+  "summary_en": "GaN epitaxial template grown on a sapphire substrate. (Sample data)",
+  "description": "사파이어 기판 위에 GaN 박막층을 성장시킨 템플릿 웨이퍼로, 광전자·전력 소자에 활용됩니다. 상세 사양은 준비 중입니다. (예시 데이터입니다)",
+  "description_en": "Template wafer with a GaN epitaxial layer grown on a sapphire substrate, used in optoelectronic and power devices. Detailed specs are being prepared. (Sample data)",
+  "specs": [
+    {
+      "label": "직경",
+      "value": "-",
+      "label_en": "Diameter",
+      "value_en": "-"
+    },
+    {
+      "label": "GaN 두께",
+      "value": "-",
+      "label_en": "GaN thickness",
+      "value_en": "-"
+    },
+    {
+      "label": "기판",
+      "value": "-",
+      "label_en": "Substrate",
+      "value_en": "-"
+    }
+  ],
+  "leadTime": "문의",
+  "leadTime_en": "Contact us",
+  "published": true,
+  "order": 5
+}
