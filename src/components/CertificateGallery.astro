@@ -62,8 +62,8 @@ const kindLabel = (k: string) =>
                     <span class="rounded border border-ink/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink/60">{c.data.country}</span>
                   )}
                 </div>
-                <p class="mt-1 line-clamp-2 text-sm font-medium leading-snug text-ink/80">{label(c)}</p>
-                {c.data.number && <p class="mt-0.5 text-xs text-ink/50">{c.data.number}</p>}
+                <p class="mt-1 text-sm font-medium leading-snug text-ink/80 break-words">{label(c)}</p>
+                {c.data.number && <p class="mt-0.5 text-xs text-ink/50 break-words">{c.data.number}</p>}
               </div>
             </li>
           );
