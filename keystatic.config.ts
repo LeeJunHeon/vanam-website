@@ -27,7 +27,7 @@ export default config({
   ui: {
     brand: { name: 'VANAM 콘텐츠 관리' },
     navigation: {
-      '콘텐츠': ['banner', 'news', 'team', 'faq'],
+      '콘텐츠': ['banner', 'news', 'blog', 'team', 'faq'],
       '회사 정보': ['history', 'achievements', 'partners', 'certificates'],
       '기술 데이터': ['services', 'materials'],
       '스토어': ['products'],
@@ -291,6 +291,28 @@ export default config({
         date: fields.date({ label: '게재일' }),
         order: fields.integer({ label: '노출 순서', description: '숫자가 작을수록 위에 표시', defaultValue: 99, validation: { isRequired: true } }),
         thumbnail: fields.text({ label: '썸네일 경로 (선택, 개발자용)' }),
+      },
+    }),
+
+    // ── 블로그 ────────────────────────────────────────
+    blog: collection({
+      label: '블로그',
+      path: 'src/content/blog/*',
+      format: { data: 'json' },
+      slugField: 'title',
+      columns: ['title_ko', 'date', 'order'],
+      schema: {
+        title: fields.slug({
+          name: { label: '제목 (영문)', validation: { isRequired: true } },
+          slug: { label: '파일 ID (영문/숫자)', description: '예: blog-1 — 만든 뒤에는 바꾸지 마세요' },
+        }),
+        title_ko: fields.text({ label: '제목 (한글)', description: '비우면 영문 제목이 표시됩니다' }),
+        url: fields.url({ label: '원문 링크 (LinkedIn 등)', description: '있으면 글 클릭 시 새 창으로 이동합니다. 비우면 링크 없이 표시만 됩니다' }),
+        excerpt: fields.text({ label: '요약 (영문)', multiline: true, description: '목록에 표시되는 짧은 소개' }),
+        excerpt_ko: fields.text({ label: '요약 (한글)', multiline: true }),
+        date: fields.date({ label: '작성일' }),
+        published: fields.checkbox({ label: '공개', description: '끄면 목록에서 숨겨집니다(초안용)', defaultValue: true }),
+        order: fields.integer({ label: '노출 순서', description: '같은 날짜일 때 숫자가 작을수록 위', defaultValue: 99, validation: { isRequired: true } }),
       },
     }),
 
