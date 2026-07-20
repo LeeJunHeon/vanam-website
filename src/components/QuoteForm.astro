@@ -76,20 +76,20 @@ const deliveryOpts = DELIVERY_METHODS.map((d) => ({ value: d.value, label: isKo 
         <legend class={legendClass}>{c.sectionContact}</legend>
         <div class="mt-6 grid gap-6 md:grid-cols-2">
           <div>
-            <label for="q-name" class={labelClass}>{c.name}</label>
+            <label for="q-name" class={labelClass}>{c.name} <span class="text-danger">*</span></label>
             <input id="q-name" name="name" type="text" required class={inputClass} placeholder={c.namePlaceholder} />
           </div>
           <div>
-            <label for="q-email" class={labelClass}>{c.email}</label>
+            <label for="q-email" class={labelClass}>{c.email} <span class="text-danger">*</span></label>
             <input id="q-email" name="email" type="email" required class={inputClass} placeholder={c.emailPlaceholder} />
           </div>
           <div>
-            <label for="q-phone" class={labelClass}>{c.phone}</label>
-            <input id="q-phone" name="phone" type="tel" class={inputClass} />
+            <label for="q-phone" class={labelClass}>{c.phone} <span class="text-danger">*</span></label>
+            <input id="q-phone" name="phone" type="tel" required class={inputClass} />
           </div>
           <div>
-            <label for="q-company" class={labelClass}>{c.company}</label>
-            <input id="q-company" name="company" type="text" class={inputClass} placeholder={c.companyPlaceholder} />
+            <label for="q-company" class={labelClass}>{c.company} <span class="text-danger">*</span></label>
+            <input id="q-company" name="company" type="text" required class={inputClass} placeholder={c.companyPlaceholder} />
           </div>
         </div>
       </fieldset>
@@ -156,7 +156,7 @@ const deliveryOpts = DELIVERY_METHODS.map((d) => ({ value: d.value, label: isKo 
         <input type="hidden" name="processSequence" id="q-process-sequence" />
       </fieldset>
 
-      <!-- ④ 측정 (선택) -->
+      <!-- ④ 분석 (선택) -->
       <fieldset>
         <legend class={legendClass}>{q.sectionMeasure}</legend>
         <p class="mt-4 text-sm leading-relaxed text-ink/50">{q.measureIntro}</p>
@@ -451,7 +451,7 @@ const deliveryOpts = DELIVERY_METHODS.map((d) => ({ value: d.value, label: isKo 
     const sizeLabel = sizeMap[data.substrateSize] || data.substrateSize || "";
     const deliveryLabel = deliveryMap[data.delivery] || data.delivery || "";
 
-    // 측정 항목(체크박스 다중) 수집
+    // 분석 항목(체크박스 다중) 수집
     const measures = Array.from(form.querySelectorAll<HTMLInputElement>('input[name="measurements"]:checked')).map((el) => el.value);
 
     // 서버 호환: 시퀀스 텍스트를 details 에, 대표 물질을 material 에
@@ -461,7 +461,7 @@ const deliveryOpts = DELIVERY_METHODS.map((d) => ({ value: d.value, label: isKo 
     data.details = [
       "[공정 시퀀스]",
       seq.text,
-      measures.length ? `\n[측정] ${measures.join(", ")}` : "",
+      measures.length ? `\n[분석] ${measures.join(", ")}` : "",
       "",
       deliveryLabel ? `기판 전달: ${deliveryLabel}` : "",
       data.sampleCount ? `총 샘플 수량: ${data.sampleCount}` : "",

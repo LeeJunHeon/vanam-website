@@ -191,4 +191,9 @@ html {
 .iti {
   display: block;
   width: 100%;
+  margin-top: 0.5rem; /* = Tailwind mt-2, 다른 입력칸의 라벨-입력 간격과 동일 */
+}
+.iti > input,
+.iti > .iti__tel-input {
+  margin-top: 0 !important; /* wrapper 로 여백을 올렸으니 내부 input 여백 제거 */
 }
