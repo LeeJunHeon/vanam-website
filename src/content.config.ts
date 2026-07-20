@@ -30,6 +30,7 @@ const news = defineCollection({
   loader: glob({ pattern: '*.json', base: './src/content/news' }),
   schema: z.object({
     title: z.string(),
+    title_en: opt(z.string()),     // 영문 제목 (한글 기사의 번역본). EN 페이지에서 우선 사용
     url: z.string().url(),
     tag: opt(z.string()),          // Press / Investment / Feature — 분류는 수기, 없어도 통과
     date: opt(z.coerce.date()),    // 게재일 — 소스에 없음, 없어도 통과
