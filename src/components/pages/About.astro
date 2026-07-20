@@ -12,8 +12,8 @@ const about = site.about;
 const title = about.metaTitle;
 const description = about.metaDescription;
 
-// 파트너 로고 에셋 매핑: partners.json 의 logo 경로(/src/assets/partners/*.png) → ImageMetadata
-const partnerLogos = import.meta.glob<{ default: ImageMetadata }>('/src/assets/partners/*.png', { eager: true });
+// 파트너 로고 에셋 매핑: partners.json 의 logo 경로(/src/assets/partners/*.{png,webp,...}) → ImageMetadata
+const partnerLogos = import.meta.glob<{ default: ImageMetadata }>('/src/assets/partners/*.{png,webp,jpg,jpeg,svg,avif}', { eager: true });
 
 const team = (await getCollection('team')).sort((a, b) => a.data.order - b.data.order);
 

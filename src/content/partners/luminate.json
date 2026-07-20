@@ -1,4 +1,5 @@
 {
   "name": "Luminate",
-  "order": 11
+  "order": 11,
+  "logo": "/src/assets/partners/luminate.webp"
 }
