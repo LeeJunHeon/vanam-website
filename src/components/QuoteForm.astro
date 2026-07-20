@@ -1,31 +1,26 @@
 ---
-// 견적가 상품 전용 견적 요청 폼.
-// 상품 상세 페이지의 한 섹션으로 들어간다(모달 아님). 위쪽 "견적 요청" 버튼이 여기로 스크롤한다.
-// #quote 앵커가 있으므로 메일·광고에서 폼으로 바로 링크할 수 있다.
-import { getCollection } from 'astro:content';
+// 증착 공정 견적 요청 폼 (구글 폼 "증착 공정 의뢰서" + 엑셀 "공정 의뢰 양식"을 웹으로 구현).
+// Product 4종(Oxides/Nitrides/Metals/Multilayers) 상세 페이지의 한 섹션으로 들어간다.
+// 구성: ①연락처 ②기판 정보 ③공정 시퀀스 빌더(엑셀 대체) ④기타 요청.
+// 공정 시퀀스는 "공정 추가"로 행을 쌓고, 공정을 고르면 그에 맞는 물질/단위가 자동으로 바뀐다.
+// 제출 시 시퀀스를 사람이 읽을 수 있는 텍스트로 정리해 details 에, 원본은 JSON 으로 함께 보낸다.
 import siteData from '../data/site.json';
+import { PROCESSES, SUBSTRATES, SUBSTRATE_SIZES, DELIVERY_METHODS } from '../lib/processes';
 
 const { product, productName } = Astro.props;
 const locale = Astro.currentLocale ?? 'en';
 const site = siteData[locale] ?? siteData.en;
-const c = site.contact.form;   // 연락처 필드 라벨 (문의 폼과 공용 — 번역 재사용)
+const c = site.contact.form;   // 연락처 필드 라벨 (문의 폼과 공용)
 const q = site.quote.form;     // 견적 전용
-
-const materials = (await getCollection('materials')).sort((a, b) => a.data.order - b.data.order);
-const grouped = (['Oxide', 'Nitride', 'Metal'] as const)
-  .map((cat) => ({ cat, items: materials.filter((m) => m.data.category === cat) }))
-  .filter((g) => g.items.length > 0);
-
-const methods = [
-  { value: 'PVD (Sputtering / Evaporation)', label: q.methodPvd },
-  { value: 'ALD', label: q.methodAld },
-  { value: 'Undecided', label: q.methodOther },
-];
 
 const inputClass =
   'mt-2 w-full rounded-lg border border-ink/10 bg-ink/[0.03] px-4 py-3 text-ink placeholder-ink/30 outline-none transition focus:border-accent focus:ring-1 focus:ring-accent';
+const selectClass = inputClass;
 const labelClass = 'block text-sm font-medium text-ink/80';
 const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
+
+// 공정 데이터를 클라이언트 스크립트로 넘기기 위해 JSON 으로 직렬화
+const processData = JSON.stringify(PROCESSES);
 ---
 
 <section id="quote" class="mt-20 scroll-mt-24 border-t border-ink/10 pt-16">
@@ -42,15 +37,26 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
       data-msg-error={c.msgError}
       data-msg-required={c.msgRequired}
       data-msg-captcha={c.msgCaptcha}
+      data-msg-noprocess={q.msgNoProcess}
       data-label-send={q.submit}
-      data-label-sending={c.sending}>
-      <!-- Honeypot: hidden from humans (spam trap) -->
+      data-label-sending={c.sending}
+      data-lbl-step={q.processStep}
+      data-lbl-process={q.processType}
+      data-lbl-process-ph={q.processTypePlaceholder}
+      data-lbl-material={q.processMaterial}
+      data-lbl-material-ph={q.processMaterialPlaceholder}
+      data-lbl-value={q.processValue}
+      data-lbl-etc={q.processEtc}
+      data-lbl-etc-ph={q.processEtcPlaceholder}
+      data-lbl-remove={q.processRemove}>
+      <!-- Honeypot: 사람에겐 안 보임 (스팸 트랩) -->
       <div class="absolute left-[-9999px]" aria-hidden="true">
         <label>{c.honeypot}
           <input type="text" name="vanam_hp_email" tabindex="-1" autocomplete="off" />
         </label>
       </div>
 
+      <!-- ① 연락처 -->
       <fieldset>
         <legend class={legendClass}>{c.sectionContact}</legend>
         <div class="mt-6 grid gap-6 md:grid-cols-2">
@@ -73,71 +79,79 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
         </div>
       </fieldset>
 
+      <!-- ② 기판 정보 -->
       <fieldset>
-        <legend class={legendClass}>{q.sectionSpec}</legend>
+        <legend class={legendClass}>{q.sectionSubstrate}</legend>
         <div class="mt-6 space-y-6">
           <div class="grid gap-6 md:grid-cols-2">
             <div>
-              <label for="q-material" class={labelClass}>{q.material}</label>
-              <select id="q-material" name="material" required class={inputClass}>
-                <option value="" disabled selected>{q.materialPlaceholder}</option>
-                {grouped.map((g) => (
-                  <optgroup label={g.cat}>
-                    {g.items.map((m) => <option value={m.data.formula}>{m.data.formula}</option>)}
-                  </optgroup>
-                ))}
-                <option value="__other__">{q.materialOther}</option>
+              <label for="q-substrate-type" class={labelClass}>{q.substrateType}</label>
+              <select id="q-substrate-type" name="substrateType" class={selectClass}>
+                <option value="" disabled selected>{q.substrateTypePlaceholder}</option>
+                {SUBSTRATES.map((s) => <option value={s}>{s}</option>)}
+                <option value="__other__">{q.substrateTypeOther}</option>
               </select>
+              <input id="q-substrate-type-other" name="substrateTypeOther" type="text" hidden
+                class={`${inputClass} mt-3`} placeholder={q.substrateTypeOtherPlaceholder} />
             </div>
             <div>
-              <label for="q-method" class={labelClass}>{q.method}</label>
-              <select id="q-method" name="method" class={inputClass}>
-                <option value="" selected>{q.methodPlaceholder}</option>
-                {methods.map((m) => <option value={m.value}>{m.label}</option>)}
+              <label for="q-substrate-size" class={labelClass}>{q.substrateSize}</label>
+              <select id="q-substrate-size" name="substrateSize" class={selectClass}>
+                <option value="" disabled selected>{q.substrateSizePlaceholder}</option>
+                {SUBSTRATE_SIZES.map((s) => <option value={s}>{s}</option>)}
+                <option value="__other__">{q.substrateSizeOther}</option>
               </select>
-            </div>
-          </div>
-
-          <!-- 소재에서 "기타"를 고를 때만 노출 -->
-          <div id="q-other-wrap" hidden>
-            <label for="q-material-other" class={labelClass}>{q.materialOtherLabel}</label>
-            <input id="q-material-other" name="materialOther" type="text" class={inputClass} placeholder={q.materialOtherPlaceholder} />
-          </div>
-
-          <div class="grid gap-6 md:grid-cols-2">
-            <div>
-              <label for="q-substrate" class={labelClass}>{q.substrate}</label>
-              <input id="q-substrate" name="substrate" type="text" class={inputClass} placeholder={q.substratePlaceholder} />
-            </div>
-            <div>
-              <label for="q-thickness" class={labelClass}>{q.thickness}</label>
-              <input id="q-thickness" name="thickness" type="text" class={inputClass} placeholder={q.thicknessPlaceholder} />
-            </div>
-          </div>
-        </div>
-      </fieldset>
-
-      <fieldset>
-        <legend class={legendClass}>{q.sectionSchedule}</legend>
-        <div class="mt-6 space-y-6">
-          <div class="grid gap-6 md:grid-cols-2">
-            <div>
-              <label for="q-quantity" class={labelClass}>{q.quantity}</label>
-              <input id="q-quantity" name="quantity" type="text" class={inputClass} placeholder={q.quantityPlaceholder} />
-            </div>
-            <div>
-              <label for="q-deadline" class={labelClass}>{q.deadline}</label>
-              <input id="q-deadline" name="deadline" type="text" class={inputClass} placeholder={q.deadlinePlaceholder} />
+              <input id="q-substrate-size-other" name="substrateSizeOther" type="text" hidden
+                class={`${inputClass} mt-3`} placeholder={q.substrateSizeOtherPlaceholder} />
             </div>
           </div>
           <div>
-            <label for="q-details" class={labelClass}>{q.details}</label>
-            <textarea id="q-details" name="details" rows="5" class={`${inputClass} resize-y`} placeholder={q.detailsPlaceholder}></textarea>
-            <p class="mt-2 text-xs leading-relaxed text-ink/40">{q.attachmentNote}</p>
+            <label for="q-delivery" class={labelClass}>{q.delivery}</label>
+            <select id="q-delivery" name="delivery" class={selectClass}>
+              <option value="" disabled selected>{q.deliveryPlaceholder}</option>
+              {DELIVERY_METHODS.map((m) => <option value={m}>{m}</option>)}
+            </select>
           </div>
         </div>
       </fieldset>
 
+      <!-- ③ 공정 시퀀스 빌더 (엑셀 대체) -->
+      <fieldset>
+        <legend class={legendClass}>{q.sectionProcess}</legend>
+        <p class="mt-4 text-sm leading-relaxed text-ink/50">{q.processIntro}</p>
+
+        <!-- 공정 행이 여기에 동적으로 추가된다 -->
+        <div id="q-process-list" class="mt-6 space-y-4"></div>
+
+        <!-- 비어 있을 때 안내 -->
+        <p id="q-process-empty" class="mt-6 rounded-lg border border-dashed border-ink/15 py-8 text-center text-sm text-ink/40">{q.processEmpty}</p>
+
+        <button type="button" id="q-process-add"
+          class="mt-4 inline-flex items-center gap-2 rounded-lg border border-accent/40 bg-accent/5 px-5 py-2.5 text-sm font-medium text-accent transition hover:bg-accent/10">
+          {q.processAdd}
+        </button>
+        <p class="mt-3 text-xs leading-relaxed text-ink/40">{q.processSampleNote}</p>
+
+        <!-- 직렬화된 시퀀스가 담기는 hidden 필드 (제출용) -->
+        <input type="hidden" name="processSequence" id="q-process-sequence" />
+      </fieldset>
+
+      <!-- ④ 기타 요청 -->
+      <fieldset>
+        <legend class={legendClass}>{q.sectionEtc}</legend>
+        <div class="mt-6 space-y-6">
+          <div>
+            <label for="q-completion" class={labelClass}>{q.completionDate}</label>
+            <input id="q-completion" name="completionDate" type="text" class={inputClass} placeholder={q.completionDatePlaceholder} />
+          </div>
+          <div>
+            <label for="q-notes" class={labelClass}>{q.notes}</label>
+            <textarea id="q-notes" name="notes" rows="4" class={`${inputClass} resize-y`} placeholder={q.notesPlaceholder}></textarea>
+          </div>
+        </div>
+      </fieldset>
+
+      <!-- 개인정보 동의 + Turnstile + 제출 -->
       <div class="space-y-6 border-t border-ink/10 pt-8">
         <label class="flex cursor-pointer items-start gap-3 text-sm text-ink/70">
           <input type="checkbox" name="privacy" required value="agreed"
@@ -165,26 +179,77 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
   </div>
 </section>
 
+{/* 공정 행 템플릿 — JS 가 복제해서 사용 */}
+<template id="q-process-row-template">
+  <div class="q-process-row rounded-xl border border-ink/10 bg-ink/[0.02] p-5">
+    <div class="flex items-center justify-between">
+      <span class="q-step-label text-xs font-semibold uppercase tracking-wider text-accent"></span>
+      <button type="button" class="q-process-remove text-xs font-medium text-ink/40 transition hover:text-danger"></button>
+    </div>
+    <div class="mt-4 grid gap-4 md:grid-cols-4">
+      <div class="md:col-span-1">
+        <label class="q-lbl-type block text-xs font-medium text-ink/60"></label>
+        <select class="q-row-process mt-1.5 w-full rounded-lg border border-ink/10 bg-ink/[0.03] px-3 py-2.5 text-sm text-ink outline-none transition focus:border-accent focus:ring-1 focus:ring-accent"></select>
+      </div>
+      <div class="q-material-wrap md:col-span-1">
+        <label class="q-lbl-material block text-xs font-medium text-ink/60"></label>
+        <select class="q-row-material mt-1.5 w-full rounded-lg border border-ink/10 bg-ink/[0.03] px-3 py-2.5 text-sm text-ink outline-none transition focus:border-accent focus:ring-1 focus:ring-accent"></select>
+      </div>
+      <div class="q-value-wrap md:col-span-1">
+        <label class="q-lbl-value block text-xs font-medium text-ink/60"></label>
+        <div class="mt-1.5 flex items-center gap-2">
+          <input type="text" inputmode="decimal" class="q-row-value w-full rounded-lg border border-ink/10 bg-ink/[0.03] px-3 py-2.5 text-sm text-ink outline-none transition focus:border-accent focus:ring-1 focus:ring-accent" />
+          <span class="q-row-unit shrink-0 text-sm text-ink/50"></span>
+        </div>
+      </div>
+      <div class="md:col-span-1">
+        <label class="q-lbl-etc block text-xs font-medium text-ink/60"></label>
+        <input type="text" class="q-row-etc mt-1.5 w-full rounded-lg border border-ink/10 bg-ink/[0.03] px-3 py-2.5 text-sm text-ink outline-none transition focus:border-accent focus:ring-1 focus:ring-accent" />
+      </div>
+    </div>
+  </div>
+</template>
+
+{/* 공정 데이터 (클라이언트 스크립트에서 사용) */}
+<script type="application/json" id="q-process-data" is:inline set:html={processData}></script>
+
 <script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 
 <script>
   import { initTelInput, normalizeTelInputs } from '../lib/telInput';
 
-  // Turnstile 전역 API 타입 (api.js 가 window.turnstile 을 주입한다)
+  // Turnstile 전역 API 타입
   declare global {
     interface Window {
       turnstile?: { reset: (widgetId?: string) => void };
     }
   }
 
+  type ProcessDef = { name: string; materials: string[]; unit: 'nm' | 'min' | null };
+
   const form = document.getElementById("quote-form") as HTMLFormElement | null;
   const statusEl = document.getElementById("quote-status")!;
   const btn = document.getElementById("quote-submit") as HTMLButtonElement;
   const label = document.getElementById("quote-submit-label")!;
-  const materialSel = document.getElementById("q-material") as HTMLSelectElement | null;
-  const otherWrap = document.getElementById("q-other-wrap") as HTMLElement | null;
-  const otherInput = document.getElementById("q-material-other") as HTMLInputElement | null;
   const M = form ? form.dataset : ({} as DOMStringMap);
+
+  // 공정 데이터 로드
+  const PROCESSES: ProcessDef[] = JSON.parse(
+    document.getElementById("q-process-data")?.textContent || "[]"
+  );
+
+  // 라벨(번역) — 폼의 data 속성에서 가져온다
+  const L = {
+    step: M.lblStep || "Step",
+    process: M.lblProcess || "Process",
+    processPh: M.lblProcessPh || "Select process",
+    material: M.lblMaterial || "Material / Gas",
+    materialPh: M.lblMaterialPh || "Select",
+    value: M.lblValue || "Thickness / Time",
+    etc: M.lblEtc || "Notes",
+    etcPh: M.lblEtcPh || "Conditions, etc.",
+    remove: M.lblRemove || "Remove",
+  };
 
   // 전화번호 입력에 국가번호 드롭다운 적용
   const qPhoneEl = document.getElementById("q-phone") as HTMLInputElement | null;
@@ -195,30 +260,132 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
     statusEl.style.color = ok ? 'var(--color-accent)' : 'var(--color-danger)';
   }
 
-  // 상단 "견적 요청" 버튼 → 폼으로 부드럽게 스크롤 + 첫 칸에 포커스
+  // 상단 "견적 요청" 버튼 → 폼으로 스크롤 + 첫 칸 포커스
   document.querySelectorAll("[data-open-quote]").forEach((el) =>
     el.addEventListener("click", (e) => {
       e.preventDefault();
-      const target = document.getElementById("quote");
-      target?.scrollIntoView({ behavior: "smooth", block: "start" });
+      document.getElementById("quote")?.scrollIntoView({ behavior: "smooth", block: "start" });
       setTimeout(() => (document.getElementById("q-name") as HTMLInputElement | null)?.focus({ preventScroll: true }), 500);
     }),
   );
 
-  // 소재 "기타" 선택 시 직접 입력 칸을 연다
-  materialSel?.addEventListener("change", () => {
-    const isOther = materialSel.value === "__other__";
-    if (otherWrap) otherWrap.hidden = !isOther;
-    if (otherInput) {
-      otherInput.required = isOther;
-      if (!isOther) otherInput.value = "";
+  // ── 기판 종류/크기 "기타" 선택 시 직접입력 칸 토글 ──
+  function bindOther(selectId: string, otherId: string) {
+    const sel = document.getElementById(selectId) as HTMLSelectElement | null;
+    const other = document.getElementById(otherId) as HTMLInputElement | null;
+    sel?.addEventListener("change", () => {
+      const isOther = sel.value === "__other__";
+      if (other) {
+        other.hidden = !isOther;
+        if (!isOther) other.value = "";
+      }
+    });
+  }
+  bindOther("q-substrate-type", "q-substrate-type-other");
+  bindOther("q-substrate-size", "q-substrate-size-other");
+
+  // ── 공정 시퀀스 빌더 ──────────────────────────────
+  const listEl = document.getElementById("q-process-list")!;
+  const emptyEl = document.getElementById("q-process-empty")!;
+  const addBtn = document.getElementById("q-process-add")!;
+  const tmpl = document.getElementById("q-process-row-template") as HTMLTemplateElement;
+  const seqInput = document.getElementById("q-process-sequence") as HTMLInputElement;
+
+  function refreshStepLabels() {
+    const rows = listEl.querySelectorAll(".q-process-row");
+    rows.forEach((row, i) => {
+      const lbl = row.querySelector(".q-step-label") as HTMLElement;
+      if (lbl) lbl.textContent = `${L.step} ${i + 1}`;
+    });
+    emptyEl.hidden = rows.length > 0;
+  }
+
+  // 공정 선택 시 물질 드롭다운 + 단위 + 값 입력 노출을 그 공정에 맞게 바꾼다
+  function applyProcess(row: HTMLElement) {
+    const procSel = row.querySelector(".q-row-process") as HTMLSelectElement;
+    const matSel = row.querySelector(".q-row-material") as HTMLSelectElement;
+    const matWrap = row.querySelector(".q-material-wrap") as HTMLElement;
+    const valWrap = row.querySelector(".q-value-wrap") as HTMLElement;
+    const unitEl = row.querySelector(".q-row-unit") as HTMLElement;
+    const def = PROCESSES.find((p) => p.name === procSel.value);
+    if (!def) return;
+
+    if (def.materials.length > 0) {
+      matWrap.hidden = false;
+      matSel.innerHTML =
+        `<option value="" disabled selected>${L.materialPh}</option>` +
+        def.materials.map((m) => `<option value="${m}">${m}</option>`).join("");
+    } else {
+      matWrap.hidden = true;
+      matSel.innerHTML = "";
     }
-  });
+
+    if (def.unit) {
+      valWrap.hidden = false;
+      unitEl.textContent = def.unit;
+    } else {
+      valWrap.hidden = true;
+    }
+  }
+
+  function addRow() {
+    const frag = tmpl.content.cloneNode(true) as DocumentFragment;
+    const row = frag.querySelector(".q-process-row") as HTMLElement;
+
+    (row.querySelector(".q-lbl-type") as HTMLElement).textContent = L.process;
+    (row.querySelector(".q-lbl-material") as HTMLElement).textContent = L.material;
+    (row.querySelector(".q-lbl-value") as HTMLElement).textContent = L.value;
+    (row.querySelector(".q-lbl-etc") as HTMLElement).textContent = L.etc;
+    (row.querySelector(".q-row-etc") as HTMLInputElement).placeholder = L.etcPh;
+    (row.querySelector(".q-process-remove") as HTMLElement).textContent = L.remove;
+
+    const procSel = row.querySelector(".q-row-process") as HTMLSelectElement;
+    procSel.innerHTML =
+      `<option value="" disabled selected>${L.processPh}</option>` +
+      PROCESSES.map((p) => `<option value="${p.name}">${p.name}</option>`).join("");
+
+    procSel.addEventListener("change", () => applyProcess(row));
+
+    (row.querySelector(".q-process-remove") as HTMLElement).addEventListener("click", () => {
+      row.remove();
+      refreshStepLabels();
+    });
+
+    listEl.appendChild(row);
+    refreshStepLabels();
+  }
+
+  addBtn.addEventListener("click", addRow);
+
+  // 제출 시: 시퀀스를 사람이 읽을 텍스트 + 구조화 JSON 으로
+  function collectSequence(): { text: string; json: any[] } {
+    const rows = listEl.querySelectorAll(".q-process-row");
+    const json: any[] = [];
+    const lines: string[] = [];
+    rows.forEach((row, i) => {
+      const proc = (row.querySelector(".q-row-process") as HTMLSelectElement).value;
+      if (!proc) return;
+      const matSel = row.querySelector(".q-row-material") as HTMLSelectElement;
+      const mat = matSel && !(row.querySelector(".q-material-wrap") as HTMLElement).hidden ? matSel.value : "";
+      const valInput = row.querySelector(".q-row-value") as HTMLInputElement;
+      const val = valInput && !(row.querySelector(".q-value-wrap") as HTMLElement).hidden ? valInput.value.trim() : "";
+      const unit = (row.querySelector(".q-row-unit") as HTMLElement).textContent || "";
+      const etc = (row.querySelector(".q-row-etc") as HTMLInputElement).value.trim();
+
+      json.push({ step: i + 1, process: proc, material: mat, value: val, unit: val ? unit : "", etc });
+
+      let line = `${i + 1}. ${proc}`;
+      if (mat) line += ` | ${mat}`;
+      if (val) line += ` | ${val}${unit}`;
+      if (etc) line += ` | ${etc}`;
+      lines.push(line);
+    });
+    return { text: lines.join("\n"), json };
+  }
 
   form?.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    // 허니팟이 채워졌으면 봇 → 조용히 성공한 척
     const hp = form.elements.namedItem("vanam_hp_email") as HTMLInputElement | null;
     if (hp && hp.value.trim() !== "") {
       setStatus(M.msgHoneypot!, true);
@@ -226,26 +393,41 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
       return;
     }
 
-    // 전화번호를 국제표준(+82...)으로 변환한 뒤 수집
+    // 공정 시퀀스 (최소 1개)
+    const seq = collectSequence();
+    if (seq.json.length === 0) {
+      setStatus(M.msgNoprocess!, false);
+      return;
+    }
+    seqInput.value = JSON.stringify(seq.json);
+
     normalizeTelInputs(form);
     const data = Object.fromEntries(new FormData(form).entries()) as Record<string, string>;
     delete data.vanam_hp_email;
 
-    if (data.material === "__other__") {
-      if (!otherInput?.value.trim()) {
-        setStatus(M.msgRequired!, false);
-        return;
-      }
-      data.material = otherInput.value.trim();
-    }
-    delete data.materialOther;
+    if (data.substrateType === "__other__") data.substrateType = (data.substrateTypeOther || "").trim();
+    if (data.substrateSize === "__other__") data.substrateSize = (data.substrateSizeOther || "").trim();
+    delete data.substrateTypeOther;
+    delete data.substrateSizeOther;
+
+    // 서버 호환: 시퀀스 텍스트를 details 에, 대표 물질을 material 에
+    const firstMat = seq.json.find((s) => s.material)?.material || seq.json[0]?.process || "Process request";
+    data.material = firstMat;
+    data.substrate = [data.substrateType, data.substrateSize].filter(Boolean).join(" / ");
+    data.details = [
+      "[공정 시퀀스]",
+      seq.text,
+      "",
+      data.delivery ? `기판 전달: ${data.delivery}` : "",
+      data.completionDate ? `완료 희망일: ${data.completionDate}` : "",
+      data.notes ? `주의사항: ${data.notes}` : "",
+    ].filter(Boolean).join("\n");
 
     data.type = "quote";
     data.product = M.product!;
     data.productName = M.productName!;
     data.locale = document.documentElement.lang || "en";
 
-    // Turnstile 토큰 확인 (FormData 가 cf-turnstile-response 를 자동 수집한다)
     if (!data["cf-turnstile-response"]) {
       setStatus(M.msgCaptcha!, false);
       return;
@@ -263,7 +445,8 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
       });
       if (!res.ok) throw new Error("HTTP " + res.status);
       form.reset();
-      if (otherWrap) otherWrap.hidden = true;
+      listEl.innerHTML = "";
+      refreshStepLabels();
       window.turnstile?.reset();
       setStatus(M.msgSuccess!, true);
     } catch (err) {
