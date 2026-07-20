@@ -49,6 +49,7 @@ const blog = defineCollection({
     title: z.string(),                 // 글 제목 (EN)
     title_ko: opt(z.string()),   // 글 제목 (KO)
     url: opt(z.string().url()),  // 링크드인 등 원문 링크 (있으면 클릭 시 이동)
+    linkedinUrl: opt(z.string()),// 링크드인 게시물 URL — 넣으면 글 내용이 임베드로 바로 표시됨
     excerpt: opt(z.string()),    // 요약 (EN)
     excerpt_ko: opt(z.string()), // 요약 (KO)
     date: opt(z.coerce.date()),

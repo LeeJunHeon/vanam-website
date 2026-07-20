@@ -350,6 +350,7 @@ export default config({
         }),
         title_ko: fields.text({ label: '제목 (한글)', description: '비우면 영문 제목이 표시됩니다' }),
         url: fields.url({ label: '원문 링크 (LinkedIn 등)', description: '있으면 글 클릭 시 새 창으로 이동합니다. 비우면 링크 없이 표시만 됩니다' }),
+        linkedinUrl: fields.text({ label: 'LinkedIn 게시물 URL (임베드)', description: 'LinkedIn 게시물 주소를 붙여넣으면 글 내용이 블로그에 그대로 표시됩니다. (공개 게시물만 · 아티클/뉴스레터는 안 됨)' }),
         excerpt: fields.text({ label: '요약 (영문)', multiline: true, description: '목록에 표시되는 짧은 소개' }),
         excerpt_ko: fields.text({ label: '요약 (한글)', multiline: true }),
         date: fields.date({ label: '작성일' }),

@@ -23,6 +23,17 @@ const fmtDate = (d) =>
 const title = (p) => (isKo ? (p.data.title_ko ?? p.data.title) : p.data.title);
 const excerpt = (p) => (isKo ? (p.data.excerpt_ko ?? p.data.excerpt) : p.data.excerpt);
 
+// 링크드인 게시물 URL → 임베드 URL 변환.
+// 게시물 URL 안의 activity-<숫자>(또는 urn:li:activity:<숫자>)에서 ID를 뽑아
+// 공식 임베드 주소(/embed/feed/update/urn:li:activity:<ID>)로 바꾼다.
+// 형식이 안 맞으면 null 을 돌려주고, 그 경우 기존 링크 카드로 표시된다.
+const toLinkedInEmbed = (raw?: string): string | null => {
+  if (!raw) return null;
+  const m = raw.match(/(?:activity[-:]|urn:li:activity:)(\d+)/);
+  if (!m) return null;
+  return `https://www.linkedin.com/embed/feed/update/urn:li:activity:${m[1]}`;
+};
+
 const t = {
   metaTitle: isKo ? '블로그 | VANAM' : 'Blog | VANAM',
   metaDesc: isKo ? 'VANAM의 기술 이야기와 소식' : 'Stories and updates from VANAM',
@@ -52,6 +63,29 @@ const t = {
     {posts.length > 0 ? (
       <div class="space-y-4">
         {posts.map((p) => {
+          const embed = toLinkedInEmbed(p.data.linkedinUrl);
+          // 링크드인 임베드가 있으면: 글 내용을 iframe 으로 그대로 보여준다.
+          if (embed) {
+            return (
+              <div class="v-reveal overflow-hidden rounded-2xl border border-ink/10 bg-ink/[0.03]">
+                {(title(p) || excerpt(p)) && (
+                  <div class="border-b border-ink/10 px-6 py-4">
+                    <span class="block text-base font-medium leading-relaxed text-ink/85">{title(p)}</span>
+                    {excerpt(p) && <span class="mt-1 block text-sm leading-relaxed text-ink/55">{excerpt(p)}</span>}
+                  </div>
+                )}
+                <iframe
+                  src={embed}
+                  class="block h-[560px] w-full"
+                  frameborder="0"
+                  allowfullscreen
+                  title={title(p) || 'LinkedIn post'}
+                  loading="lazy"
+                ></iframe>
+              </div>
+            );
+          }
+          // 임베드가 없으면: 기존 링크 카드(원문으로 이동)
           const Tag = p.data.url ? 'a' : 'div';
           return (
             <Tag
