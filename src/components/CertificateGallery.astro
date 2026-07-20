@@ -11,7 +11,7 @@ const locale = Astro.currentLocale ?? 'en';
 const isKo = locale === 'ko';
 
 const certImages = import.meta.glob<{ default: ImageMetadata }>(
-  '/src/assets/certificates/*.{png,jpg,jpeg,webp,avif}',
+  '/src/assets/certificates/**/*.{png,jpg,jpeg,webp,avif}',
   { eager: true },
 );
 

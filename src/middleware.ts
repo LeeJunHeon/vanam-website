@@ -35,7 +35,7 @@ const CSP =
   "img-src 'self' data:; " +
   "connect-src 'self' https://challenges.cloudflare.com; " +
   "object-src 'none'; " +
-  "frame-src https://challenges.cloudflare.com https://www.google.com https://maps.google.com; " +
+  "frame-src https://challenges.cloudflare.com https://www.google.com https://maps.google.com https://www.linkedin.com; " +
   "frame-ancestors 'none'; " +
   "base-uri 'self'; " +
   "form-action 'self'";

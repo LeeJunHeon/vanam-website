@@ -7,8 +7,9 @@ const site = siteData[locale] ?? siteData.en;
 const copy = site.news;
 const title = copy.metaTitle;
 const description = copy.metaDescription;
-// 엑셀(Press Release List) 행 순서를 그대로 따른다: order 오름차순.
-const news = (await getCollection('news')).sort((a, b) => a.data.order - b.data.order);
+// 최신 기사가 위로 오도록 order 내림차순 정렬.
+// (order 는 엑셀 Press Release List 행 순서 = 오래된→최신이므로, 내림차순이면 최신이 맨 위)
+const news = (await getCollection('news')).sort((a, b) => b.data.order - a.data.order);
 // 제목: EN 페이지는 영문(title_en, 없으면 title), KO 페이지는 원문(title)
 const newsTitle = (n) => (locale === 'ko' ? n.data.title : (n.data.title_en ?? n.data.title));
 const fmtDate = (d) =>
