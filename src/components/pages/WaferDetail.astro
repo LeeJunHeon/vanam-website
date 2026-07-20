@@ -1,0 +1,97 @@
+---
+// 웨이퍼 상세 페이지. /wafers/[id]. 전부 견적(가격 문의)이라 장바구니 없이
+// 견적 요청(QuoteForm)만 제공한다. 구조는 ProductDetail 과 동일하되 fixed 로직을 뺐다.
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+import siteData from '../../data/site.json';
+import QuoteForm from '../QuoteForm.astro';
+
+const { wafer } = Astro.props;
+const locale = Astro.currentLocale ?? 'en';
+const site = siteData[locale] ?? siteData.en;
+const s = site.shop;
+const isKo = locale === 'ko';
+const base = isKo ? '/ko' : '';
+
+const waferImages = import.meta.glob<{ default: ImageMetadata }>(
+  '/src/assets/wafers/*.{png,jpg,jpeg,webp,avif}',
+  { eager: true },
+);
+
+const d = wafer.data;
+const name = isKo ? d.name : (d.name_en ?? d.name);
+const summary = isKo ? (d.summary ?? '') : (d.summary_en ?? d.summary ?? '');
+const description = isKo ? d.description : (d.description_en ?? d.description);
+const leadTime = isKo ? d.leadTime : (d.leadTime_en ?? d.leadTime);
+const img = d.image ? waferImages[d.image]?.default : undefined;
+---
+
+<BaseLayout title={`${name} | VANAM`} description={summary}>
+  <section class="relative mx-auto max-w-6xl px-6 py-28 md:py-32">
+    <a href={`${base}/wafers`} class="text-sm text-ink/50 transition hover:text-accent">← {s.catWafer}</a>
+
+    <div class="mt-8 grid gap-12 lg:grid-cols-2">
+      <!-- 이미지 -->
+      <div class="overflow-hidden rounded-xl border border-ink/10 bg-gradient-to-br from-panel2 to-canvas">
+        <div class="aspect-[4/3]">
+          {img ? (
+            <Image src={img} alt={name} width={900} height={675} class="h-full w-full object-cover" />
+          ) : (
+            <div class="flex h-full w-full items-center justify-center">
+              <span class="text-4xl font-bold text-ink/15">VANAM</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <!-- 정보 -->
+      <div>
+        <h1 class="text-3xl font-bold leading-tight text-ink md:text-4xl">{name}</h1>
+        {summary && <p class="mt-4 text-base leading-relaxed text-ink/60">{summary}</p>}
+
+        <div class="mt-8 border-y border-ink/10 py-6">
+          <p class="text-2xl font-semibold text-accent">{s.priceOnRequest}</p>
+        </div>
+
+        <div class="mt-8">
+          <a href="#quote" data-open-quote
+            class="inline-flex items-center gap-2 rounded-lg bg-brand px-7 py-3 font-semibold text-onbrand transition hover:brightness-110">
+            {s.requestQuote} ↓
+          </a>
+        </div>
+
+        <p class="mt-6 text-sm text-ink/40">{s.guestNote}</p>
+
+        {leadTime && (
+          <dl class="mt-8 space-y-2 text-sm">
+            <div class="flex gap-3">
+              <dt class="w-20 shrink-0 text-ink/40">{s.leadTimeLabel}</dt>
+              <dd class="text-ink/70">{leadTime}</dd>
+            </div>
+          </dl>
+        )}
+      </div>
+    </div>
+
+    {d.specs.length > 0 && (
+      <div class="mt-20 max-w-3xl">
+        <h2 class="text-sm font-medium uppercase tracking-widest text-accent">{s.specs}</h2>
+        <dl class="mt-6 divide-y divide-ink/10 border-t border-ink/10">
+          {d.specs.map((sp) => (
+            <div class="grid grid-cols-3 gap-4 py-4">
+              <dt class="text-sm text-ink/50">{isKo ? sp.label : (sp.label_en ?? sp.label)}</dt>
+              <dd class="col-span-2 text-sm text-ink/90">{isKo ? sp.value : (sp.value_en ?? sp.value)}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    )}
+
+    {description && (
+      <div class="mt-16 max-w-3xl whitespace-pre-line text-base leading-relaxed text-ink/70">{description}</div>
+    )}
+
+    <QuoteForm product={wafer} productName={name} />
+  </section>
+</BaseLayout>

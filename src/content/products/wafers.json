@@ -1,7 +1,7 @@
 {
   "name": "웨이퍼",
   "name_en": "Wafers",
-  "category": "coating",
+  "category": "wafer",
   "pricingType": "quote",
   "requiresShipping": true,
   "summary": "박막 증착 웨이퍼.",

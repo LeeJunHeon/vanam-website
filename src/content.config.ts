@@ -157,7 +157,7 @@ const products = defineCollection({
   schema: z.object({
     name: z.string(),                                   // KO 상품명 (파일 ID = SKU)
     name_en: opt(z.string()),
-    category: z.enum(['sample', 'coating', 'analysis', 'etc']).default('etc'),
+    category: z.enum(['sample', 'coating', 'analysis', 'wafer', 'etc']).default('etc'),
     pricingType: z.enum(['fixed', 'quote']).default('fixed'),
     requiresShipping: z.boolean().default(true),        // 실물 배송이 필요한가 (분석 서비스는 false)
     price: opt(z.number()),                             // fixed일 때 판매가 (원, VAT 포함)
@@ -171,6 +171,26 @@ const products = defineCollection({
     leadTime_en: opt(z.string()),
     shipping: opt(z.string()),                          // 배송 안내
     shipping_en: opt(z.string()),
+    published: z.boolean().default(true),
+    order: z.number().default(0),
+  }),
+});
+
+// 웨이퍼 카탈로그. Product 의 'Wafers' 카드를 클릭하면 이 목록(/wafers)이 뜬다.
+// 전부 견적(가격 문의)이라 가격/pricingType 없이 사양 위주. Keystatic '웨이퍼'에서 편집.
+const wafers = defineCollection({
+  loader: glob({ pattern: '*.json', base: './src/content/wafers' }),
+  schema: z.object({
+    name: z.string(),                                   // KO 웨이퍼명 (파일 ID = 코드)
+    name_en: opt(z.string()),
+    summary: opt(z.string()),                           // KO 한 줄 소개
+    summary_en: opt(z.string()),
+    description: opt(z.string()),                        // KO 상세 설명
+    description_en: opt(z.string()),
+    image: opt(z.string()),                             // 대표 이미지 (Keystatic 업로드)
+    specs: z.array(z.object({ label: z.string(), value: z.string(), label_en: z.string().optional(), value_en: z.string().optional() })).default([]),
+    leadTime: opt(z.string()),                          // 납기 안내
+    leadTime_en: opt(z.string()),
     published: z.boolean().default(true),
     order: z.number().default(0),
   }),
@@ -252,4 +272,5 @@ const analysis = defineCollection({
 export const collections = {
   team, news, blog, history, materials, partners, achievements, services, faq,
   products, certificates, policies, comparison, equipment, analysis,
+  wafers,
 };

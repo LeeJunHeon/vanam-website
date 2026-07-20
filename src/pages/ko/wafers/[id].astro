@@ -1,0 +1,12 @@
+---
+import { getCollection } from 'astro:content';
+import WaferDetail from '../../../components/pages/WaferDetail.astro';
+export async function getStaticPaths() {
+  const wafers = await getCollection('wafers');
+  return wafers
+    .filter((w) => w.data.published)
+    .map((w) => ({ params: { id: w.id }, props: { wafer: w } }));
+}
+const { wafer } = Astro.props;
+---
+<WaferDetail wafer={wafer} />
