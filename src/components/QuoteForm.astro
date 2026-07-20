@@ -168,6 +168,8 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
 <script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 
 <script>
+  import { initTelInput, normalizeTelInputs } from '../lib/telInput';
+
   // Turnstile 전역 API 타입 (api.js 가 window.turnstile 을 주입한다)
   declare global {
     interface Window {
@@ -183,6 +185,10 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
   const otherWrap = document.getElementById("q-other-wrap") as HTMLElement | null;
   const otherInput = document.getElementById("q-material-other") as HTMLInputElement | null;
   const M = form ? form.dataset : ({} as DOMStringMap);
+
+  // 전화번호 입력에 국가번호 드롭다운 적용
+  const qPhoneEl = document.getElementById("q-phone") as HTMLInputElement | null;
+  if (qPhoneEl) initTelInput(qPhoneEl, document.documentElement.lang || "en");
 
   function setStatus(msg: string, ok: boolean) {
     statusEl.textContent = msg;
@@ -220,6 +226,8 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
       return;
     }
 
+    // 전화번호를 국제표준(+82...)으로 변환한 뒤 수집
+    normalizeTelInputs(form);
     const data = Object.fromEntries(new FormData(form).entries()) as Record<string, string>;
     delete data.vanam_hp_email;
 

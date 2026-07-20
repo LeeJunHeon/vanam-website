@@ -195,6 +195,8 @@ const labelClass = 'block text-sm font-medium text-ink/80';
 <script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 
 <script>
+  import { initTelInput, normalizeTelInputs } from '../../lib/telInput';
+
   // Turnstile 전역 API 타입 (api.js 가 window.turnstile 을 주입한다)
   declare global {
     interface Window {
@@ -212,6 +214,10 @@ const labelClass = 'block text-sm font-medium text-ink/80';
   const label = document.getElementById("submit-label")!;
   const M = form ? form.dataset : ({} as DOMStringMap);
 
+  // 전화번호 입력에 국가번호 드롭다운 적용
+  const phoneEl = document.getElementById("phone") as HTMLInputElement | null;
+  if (phoneEl) initTelInput(phoneEl, document.documentElement.lang || "en");
+
   function setStatus(msg: string, ok: boolean) {
     statusEl.textContent = msg;
     statusEl.style.color = ok ? 'var(--color-accent)' : 'var(--color-danger)';
@@ -228,6 +234,8 @@ const labelClass = 'block text-sm font-medium text-ink/80';
       return;
     }
 
+    // 전화번호를 국제표준(+82...)으로 변환한 뒤 수집
+    normalizeTelInputs(form);
     const data = Object.fromEntries(new FormData(form).entries()) as Record<string, string>;
     delete data.vanam_hp_email;
     data.type = "general";

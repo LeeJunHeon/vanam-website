@@ -411,6 +411,8 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
 <script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 
 <script>
+  import { initTelInput, normalizeTelInputs } from '../../lib/telInput';
+
   // Turnstile 전역 API 타입 (api.js 가 window.turnstile 을 주입한다)
   declare global {
     interface Window {
@@ -426,6 +428,13 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
     const M = form.dataset;
     const quoteId = M.quote || '';
     const CART_KEY = 'vanam_cart';
+
+    // 전화번호 입력(구매자·수령인)에 국가번호 드롭다운 적용
+    const lang = document.documentElement.lang || "en";
+    const buyerPhoneEl = document.getElementById('buyerPhone') as HTMLInputElement | null;
+    if (buyerPhoneEl) initTelInput(buyerPhoneEl, lang);
+    const shipPhoneEl = document.getElementById('shipPhone') as HTMLInputElement | null;
+    if (shipPhoneEl) initTelInput(shipPhoneEl, lang);
 
     const catalog: Product[] = JSON.parse(document.getElementById('catalog')?.textContent ?? '[]');
     const fees = JSON.parse(document.getElementById('ship-fees')?.textContent ?? '{}');
@@ -565,6 +574,8 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
       const hp = form.elements.namedItem('vanam_hp_email') as HTMLInputElement | null;
       if (hp && hp.value.trim() !== '') { form.reset(); return; }
 
+      // 전화번호(구매자·수령인)를 국제표준(+82...)으로 변환한 뒤 수집
+      normalizeTelInputs(form);
       const data = Object.fromEntries(new FormData(form).entries()) as Record<string, string>;
       delete data.vanam_hp_email;
 
