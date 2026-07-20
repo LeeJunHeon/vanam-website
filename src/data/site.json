@@ -293,7 +293,9 @@
         "completionDatePlaceholder": "e.g. within 3 weeks / by a specific date",
         "notes": "Notes & precautions",
         "notesPlaceholder": "Anything we should know — handling precautions, special requirements, etc.",
-        "msgNoProcess": "Please add at least one process step."
+        "msgNoProcess": "Please add at least one process step.",
+        "sectionMeasure": "Measurement (optional)",
+        "measureIntro": "Select any measurements you would like included with the process. This is optional."
       }
     },
     "shop": {
@@ -642,7 +644,9 @@
         "completionDatePlaceholder": "예: 3주 이내 / 특정 날짜까지",
         "notes": "주의사항 및 요청사항",
         "notesPlaceholder": "핸들링 주의사항, 특별 요구사항 등 알려주실 내용을 적어 주세요.",
-        "msgNoProcess": "공정을 최소 1개 이상 추가해 주세요."
+        "msgNoProcess": "공정을 최소 1개 이상 추가해 주세요.",
+        "sectionMeasure": "측정 (선택)",
+        "measureIntro": "공정과 함께 진행할 측정을 선택하세요. 선택 사항입니다."
       }
     },
     "shop": {
