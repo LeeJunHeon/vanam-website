@@ -205,6 +205,7 @@ const certificates = defineCollection({
     name: z.string(),                    // KO 명칭
     name_en: opt(z.string()),
     kind: z.enum(['patent', 'certification']).default('patent'),
+    country: opt(z.string()),            // 국가 코드/명 (예: KR, US, JP) — 배지로 표시
     number: opt(z.string()),             // 등록/확인 번호
     date: opt(z.string()),               // 등록일
     image: z.string(),                   // 증서 이미지 (Keystatic 업로드)

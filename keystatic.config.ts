@@ -181,6 +181,7 @@ export default config({
           ],
           defaultValue: 'patent',
         }),
+        country: fields.text({ label: '국가', description: '특허 등록 국가. 예: KR, US, JP, EP, CN, WO (증서 우측에 배지로 표시됩니다)' }),
         number: fields.text({ label: '등록·확인 번호', description: '예: 10-2663966' }),
         date: fields.text({ label: '등록일', description: '예: 2024-05-02' }),
         image: fields.image({

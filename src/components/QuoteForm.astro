@@ -127,6 +127,11 @@ const deliveryOpts = DELIVERY_METHODS.map((d) => ({ value: d.value, label: isKo 
               {deliveryOpts.map((m) => <option value={m.value}>{m.label}</option>)}
             </select>
           </div>
+          <div>
+            <label for="q-sample-count" class={labelClass}>{q.sampleCount} <span class="text-danger">*</span></label>
+            <input id="q-sample-count" name="sampleCount" type="number" min="1" step="1" required
+              class={inputClass} placeholder={q.sampleCountPlaceholder} />
+          </div>
         </div>
       </fieldset>
 
@@ -459,6 +464,7 @@ const deliveryOpts = DELIVERY_METHODS.map((d) => ({ value: d.value, label: isKo 
       measures.length ? `\n[측정] ${measures.join(", ")}` : "",
       "",
       deliveryLabel ? `기판 전달: ${deliveryLabel}` : "",
+      data.sampleCount ? `총 샘플 수량: ${data.sampleCount}` : "",
       data.completionDate ? `완료 희망일: ${data.completionDate}` : "",
       data.notes ? `주의사항: ${data.notes}` : "",
     ].filter(Boolean).join("\n");

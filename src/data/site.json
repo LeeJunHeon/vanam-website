@@ -295,7 +295,9 @@
         "notesPlaceholder": "Anything we should know — handling precautions, special requirements, etc.",
         "msgNoProcess": "Please add at least one process step.",
         "sectionMeasure": "Measurement (optional)",
-        "measureIntro": "Select any measurements you would like included with the process. This is optional."
+        "measureIntro": "Select any measurements you would like included with the process. This is optional.",
+        "sampleCount": "Total number of samples",
+        "sampleCountPlaceholder": "e.g. 5"
       }
     },
     "shop": {
@@ -646,7 +648,9 @@
         "notesPlaceholder": "핸들링 주의사항, 특별 요구사항 등 알려주실 내용을 적어 주세요.",
         "msgNoProcess": "공정을 최소 1개 이상 추가해 주세요.",
         "sectionMeasure": "측정 (선택)",
-        "measureIntro": "공정과 함께 진행할 측정을 선택하세요. 선택 사항입니다."
+        "measureIntro": "공정과 함께 진행할 측정을 선택하세요. 선택 사항입니다.",
+        "sampleCount": "총 샘플 수량",
+        "sampleCountPlaceholder": "예: 5"
       }
     },
     "shop": {
