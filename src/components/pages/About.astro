@@ -166,17 +166,23 @@ function initials(name){ const p = name.replace('Dr. ','').split(' '); return (p
         return (
           <div class="marquee group" data-dir={row === 0 ? 'left' : 'right'}>
             <div class="marquee-track">
-              {/* 끊김 없는 무한 루프를 위해 같은 목록을 두 번 렌더 */}
-              {[...rowItems, ...rowItems].map((p) => {
-                const logo = p.data.logo ? partnerLogos[p.data.logo]?.default : undefined;
-                return logo ? (
-                  <div class="flex shrink-0 items-center justify-center rounded-lg border border-ink/10 bg-plate px-6 py-4">
-                    <Image src={logo} alt={p.data.name} class="max-h-9 w-auto" />
-                  </div>
-                ) : (
-                  <div class={`flex shrink-0 items-center justify-center rounded-lg border px-6 py-4 text-center text-sm font-medium ${p.data.needsCheck ? 'border-danger/40 bg-danger/[0.05] text-danger' : 'border-ink/10 bg-ink/[0.03] text-ink/60'}`}>{p.data.name}</div>
-                );
-              })}
+              {/* 끊김 없는 무한 루프: 같은 세트를 2번 렌더하고 정확히 한 세트 너비만큼 이동.
+                  간격은 트랙 gap이 아니라 각 박스의 mr-3 로 줘야 -50% 지점이 세트 경계와 정확히 일치한다.
+                  두 번째 세트는 시각용 복제라 aria-hidden 처리(스크린리더 중복 방지). */}
+              {[0, 1].map((copy) => (
+                <div class="flex" aria-hidden={copy === 1 ? 'true' : undefined} data-dup={copy === 1 ? '1' : undefined}>
+                  {rowItems.map((p) => {
+                    const logo = p.data.logo ? partnerLogos[p.data.logo]?.default : undefined;
+                    return logo ? (
+                      <div class="mr-3 flex h-16 w-44 shrink-0 items-center justify-center rounded-lg border border-ink/10 bg-plate px-3">
+                        <Image src={logo} alt={p.data.name} class="max-h-9 max-w-[80%] w-auto object-contain" />
+                      </div>
+                    ) : (
+                      <div class={`mr-3 flex h-16 w-44 shrink-0 items-center justify-center rounded-lg border px-3 text-center text-sm font-medium leading-tight ${p.data.needsCheck ? 'border-danger/40 bg-danger/[0.05] text-danger' : 'border-ink/10 bg-ink/[0.03] text-ink/60'}`}>{p.data.name}</div>
+                    );
+                  })}
+                </div>
+              ))}
             </div>
           </div>
         );
@@ -196,15 +202,21 @@ function initials(name){ const p = name.replace('Dr. ','').split(' '); return (p
 </BaseLayout>
 
 <style>
-  /* 협력사 로고 무한 회전(마퀴): 목록을 2번 렌더하고 -50% 이동해 끊김 없이 반복 */
+  /* 협력사 로고 무한 회전(마퀴):
+     같은 세트를 2번 렌더하고 -50%(=정확히 한 세트 너비) 이동해 끊김 없이 반복.
+     ⚠️ 간격을 track 의 gap 으로 주면 세트 경계에 반 칸 오차가 생겨 루프마다 튄다 —
+        간격은 각 박스의 margin(mr-3)으로. 박스 크기(h-16 w-44)를 통일해 한 세트 너비를
+        컨테이너보다 넓게 고정 → 회전 중 빈 구간도 생기지 않는다. */
   .marquee { overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); }
-  .marquee-track { display: flex; gap: 0.75rem; width: max-content; animation: marquee-left 42s linear infinite; }
+  .marquee-track { display: flex; width: max-content; animation: marquee-left 48s linear infinite; }
   .marquee[data-dir="right"] .marquee-track { animation-name: marquee-right; }
   .marquee:hover .marquee-track { animation-play-state: paused; }
   @keyframes marquee-left { from { transform: translateX(0); } to { transform: translateX(-50%); } }
   @keyframes marquee-right { from { transform: translateX(-50%); } to { transform: translateX(0); } }
   @media (prefers-reduced-motion: reduce) {
-    .marquee-track { animation: none; flex-wrap: wrap; width: auto; }
+    .marquee-track { animation: none; width: auto; }
+    .marquee-track > [data-dup] { display: none; }   /* 복제 세트 숨김(중복 방지) */
+    .marquee-track > div { flex-wrap: wrap; row-gap: 0.75rem; }
     .marquee { -webkit-mask-image: none; mask-image: none; }
   }
 </style>
