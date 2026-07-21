@@ -50,6 +50,9 @@ const catLabel = locale === 'ko'
   ? { Oxide: '산화물', Nitride: '질화물', Metal: '금속' }
   : { Oxide: 'Oxide', Nitride: 'Nitride', Metal: 'Metal' };
 
+// 물질 분류 → 해당 제품 페이지 ID. 견적 CTA 를 그 제품(견적 폼)으로 보낸다.
+const matToProduct: Record<string, string> = { Oxide: 'oxides', Nitride: 'nitrides', Metal: 'metals' };
+
 // ── 물질 상세 팝업(모달)용 데이터 ──────────────────────────
 //   배지를 누르면 페이지 이동 대신 모달로 표시한다.
 //   빌드 타임에 물질 데이터를 JSON 으로 만들어 페이지에 심고, 클릭 시 클라이언트에서 채운다.
@@ -74,6 +77,8 @@ for (const m of allMaterials) {
     system: d.system === 'ald' ? 'ALD' : 'PVD — Sputter & Evaporator',
     desc: (locale === 'ko' ? (d.description_ko ?? d.description) : d.description) ?? '',
     img,
+    // 견적 CTA 목적지: 물질 분류에 맞는 제품(견적 폼). 분류 없으면 contact.
+    quoteHref: lhref(matToProduct[d.category] ? `/product/${matToProduct[d.category]}` : '/contact'),
   };
 }
 const mt = {
@@ -260,16 +265,35 @@ const contactHref = lhref('/contact');
         <p class="mt-3 max-w-3xl text-base text-ink/55">{tech.equipmentSub}</p>
       </div>
 
-      <div class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {equipment.filter((e) => e.data.category === 'deposition').map((e) => (
-          <div class="v-reveal flex h-full flex-col rounded-xl border border-ink/10 bg-ink/[0.03] p-5">
-            <h3 class="text-base font-bold text-ink">{locale === 'ko' ? (e.data.name_ko ?? e.data.name) : e.data.name}</h3>
-            <p class="mt-2 whitespace-pre-line text-xs leading-relaxed text-ink/50">
-              {locale === 'ko' ? (e.data.description_ko ?? e.data.description) : e.data.description}
-            </p>
+      {(() => {
+        const deposition = equipment.filter((e) => e.data.category === 'deposition');
+        const first = deposition[0];        // Sputter — 전체 폭
+        const rest = deposition.slice(1);   // ALD, Evaporator — 아래 2열
+        return (
+          <div class="mt-10 space-y-4">
+            {first && (
+              <div class="v-reveal rounded-xl border border-ink/10 bg-ink/[0.03] p-5">
+                <h3 class="text-base font-bold text-ink">{locale === 'ko' ? (first.data.name_ko ?? first.data.name) : first.data.name}</h3>
+                <p class="mt-2 whitespace-pre-line text-xs leading-relaxed text-ink/50">
+                  {locale === 'ko' ? (first.data.description_ko ?? first.data.description) : first.data.description}
+                </p>
+              </div>
+            )}
+            {rest.length > 0 && (
+              <div class="grid gap-4 sm:grid-cols-2">
+                {rest.map((e) => (
+                  <div class="v-reveal flex h-full flex-col rounded-xl border border-ink/10 bg-ink/[0.03] p-5">
+                    <h3 class="text-base font-bold text-ink">{locale === 'ko' ? (e.data.name_ko ?? e.data.name) : e.data.name}</h3>
+                    <p class="mt-2 whitespace-pre-line text-xs leading-relaxed text-ink/50">
+                      {locale === 'ko' ? (e.data.description_ko ?? e.data.description) : e.data.description}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        ))}
-      </div>
+        );
+      })()}
 
       {equipment.filter((e) => e.data.category === 'data').map((e) => (
         <div class="v-reveal mt-4 rounded-xl border border-accent/25 bg-accent/[0.05] p-6">
@@ -380,7 +404,7 @@ const contactHref = lhref('/contact');
       </div>
 
       <div class="mt-8">
-        <a href={contactHref} class="inline-flex items-center gap-2 rounded-lg bg-brand px-5 py-3 text-sm font-semibold text-onbrand transition hover:brightness-110">
+        <a data-slot="quote" href={contactHref} class="inline-flex items-center gap-2 rounded-lg bg-brand px-5 py-3 text-sm font-semibold text-onbrand transition hover:brightness-110">
           {mt.cta} →
         </a>
       </div>
@@ -413,6 +437,10 @@ const contactHref = lhref('/contact');
         const formula = slot('formula'); if (formula) formula.textContent = m.formula;
         const system = slot('system'); if (system) system.textContent = m.system;
         const category = slot('category'); if (category) category.textContent = m.category;
+
+        // 견적 CTA 링크를 이 물질의 제품 페이지로 교체
+        const quote = slot('quote') as HTMLAnchorElement | null;
+        if (quote && m.quoteHref) quote.href = m.quoteHref;
 
         if (m.img && imgEl) {
           imgEl.src = m.img; imgEl.alt = m.name; show(imgEl); hide(imgPh);
