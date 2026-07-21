@@ -90,7 +90,7 @@ const won = (n: number) => new Intl.NumberFormat('ko-KR').format(n);
                         {waferSlides.map((sl, i) => (
                           <Image src={sl.src} alt={sl.alt} width={600} height={450}
                             data-slide={i}
-                            class:list={["wafer-slide absolute inset-0 h-full w-full object-cover transition-opacity duration-500", i === 0 ? "opacity-100" : "opacity-0"]} />
+                            class:list={["wafer-slide absolute inset-0 h-full w-full object-contain transition-opacity duration-500", i === 0 ? "opacity-100" : "opacity-0"]} />
                         ))}
                         {waferSlides.length > 1 && (
                           <>
@@ -188,8 +188,17 @@ const won = (n: number) => new Intl.NumberFormat('ko-KR').format(n);
     };
     // 카드 전체가 링크(<a>)라 화살표·점 클릭이 페이지 이동으로 새지 않게 막는다
     const stop = (e: Event) => { e.preventDefault(); e.stopPropagation(); };
-    slider.querySelector('[data-wafer-prev]')?.addEventListener('click', (e) => { stop(e); go(cur - 1); });
-    slider.querySelector('[data-wafer-next]')?.addEventListener('click', (e) => { stop(e); go(cur + 1); });
-    dots.forEach((d, i) => d.addEventListener('click', (e) => { stop(e); go(i); }));
+
+    // 3초 간격 자동 넘김. 수동 조작 시 타이머를 리셋해 바로 넘어가지 않게 한다.
+    let timer = window.setInterval(() => go(cur + 1), 3000);
+    const reset = () => { clearInterval(timer); timer = window.setInterval(() => go(cur + 1), 3000); };
+
+    slider.querySelector('[data-wafer-prev]')?.addEventListener('click', (e) => { stop(e); go(cur - 1); reset(); });
+    slider.querySelector('[data-wafer-next]')?.addEventListener('click', (e) => { stop(e); go(cur + 1); reset(); });
+    dots.forEach((d, i) => d.addEventListener('click', (e) => { stop(e); go(i); reset(); }));
+
+    // 마우스 올리면 잠깐 멈춤(읽기 편하게), 벗어나면 재개
+    slider.addEventListener('mouseenter', () => clearInterval(timer));
+    slider.addEventListener('mouseleave', reset);
   });
 </script>

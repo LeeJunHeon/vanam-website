@@ -250,7 +250,7 @@
         "thickness": "Target thickness",
         "thicknessPlaceholder": "e.g. 100 nm (or 50–150 nm)",
         "quantity": "Quantity",
-        "quantityPlaceholder": "e.g. 20 pcs",
+        "quantityPlaceholder": "e.g. 10",
         "deadline": "Preferred lead time",
         "deadlinePlaceholder": "e.g. within 2 weeks",
         "details": "Additional requirements",
@@ -297,7 +297,8 @@
         "sectionMeasure": "Analysis (optional)",
         "measureIntro": "Select any analysis you would like included with the process. This is optional.",
         "sampleCount": "Total number of samples",
-        "sampleCountPlaceholder": "e.g. 5"
+        "sampleCountPlaceholder": "e.g. 5",
+        "sectionQuantity": "Quantity"
       }
     },
     "shop": {
@@ -604,7 +605,7 @@
         "thickness": "목표 두께",
         "thicknessPlaceholder": "예: 100 nm (또는 50~150 nm)",
         "quantity": "수량",
-        "quantityPlaceholder": "예: 20매",
+        "quantityPlaceholder": "예: 10",
         "deadline": "희망 납기",
         "deadlinePlaceholder": "예: 2주 이내",
         "details": "상세 요청사항",
@@ -651,7 +652,8 @@
         "sectionMeasure": "분석 (선택)",
         "measureIntro": "공정과 함께 진행할 분석을 선택하세요. 선택 사항입니다.",
         "sampleCount": "총 샘플 수량",
-        "sampleCountPlaceholder": "예: 5"
+        "sampleCountPlaceholder": "예: 5",
+        "sectionQuantity": "수량"
       }
     },
     "shop": {

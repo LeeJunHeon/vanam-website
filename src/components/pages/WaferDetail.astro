@@ -37,7 +37,7 @@ const img = d.image ? waferImages[d.image]?.default : undefined;
       <div class="overflow-hidden rounded-xl border border-ink/10 bg-gradient-to-br from-panel2 to-canvas">
         <div class="aspect-[4/3]">
           {img ? (
-            <Image src={img} alt={name} width={900} height={675} class="h-full w-full object-cover" />
+            <Image src={img} alt={name} width={900} height={675} class="h-full w-full object-contain" />
           ) : (
             <div class="flex h-full w-full items-center justify-center">
               <span class="text-4xl font-bold text-ink/15">VANAM</span>
@@ -100,6 +100,6 @@ const img = d.image ? waferImages[d.image]?.default : undefined;
       </div>
     )}
 
-    <QuoteForm product={wafer} productName={name} />
+    <QuoteForm product={wafer} productName={name} simple={true} />
   </section>
 </BaseLayout>

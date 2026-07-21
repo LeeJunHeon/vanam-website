@@ -7,7 +7,7 @@
 import siteData from '../data/site.json';
 import { PROCESSES, MEASUREMENTS, SUBSTRATES, SUBSTRATE_SIZES, DELIVERY_METHODS, PRODUCT_MAT_FILTER, type MatCat } from '../lib/processes';
 
-const { product, productName } = Astro.props;
+const { product, productName, simple = false } = Astro.props;
 const locale = Astro.currentLocale ?? 'en';
 const site = siteData[locale] ?? siteData.en;
 const isKo = locale === 'ko';
@@ -45,6 +45,7 @@ const deliveryOpts = DELIVERY_METHODS.map((d) => ({ value: d.value, label: isKo 
     <form id="quote-form" class="mt-12 space-y-12"
       data-product={product.id}
       data-product-name={productName}
+      data-simple={simple ? '1' : ''}
       data-msg-honeypot={c.msgHoneypot}
       data-msg-success={q.msgSuccess}
       data-msg-error={c.msgError}
@@ -94,7 +95,8 @@ const deliveryOpts = DELIVERY_METHODS.map((d) => ({ value: d.value, label: isKo 
         </div>
       </fieldset>
 
-      <!-- ② 기판 정보 (필수) -->
+      <!-- ② 기판 정보 (필수) — 공정 제품 전용. 단일 상품(웨이퍼 등)은 수량만 받는다. -->
+      {!simple ? (
       <fieldset>
         <legend class={legendClass}>{q.sectionSubstrate}</legend>
         <div class="mt-6 space-y-6">
@@ -134,7 +136,19 @@ const deliveryOpts = DELIVERY_METHODS.map((d) => ({ value: d.value, label: isKo 
           </div>
         </div>
       </fieldset>
+      ) : (
+      <fieldset>
+        <legend class={legendClass}>{q.sectionQuantity}</legend>
+        <div class="mt-6">
+          <label for="q-sample-count" class={labelClass}>{q.quantity} <span class="text-danger">*</span></label>
+          <input id="q-sample-count" name="sampleCount" type="number" min="1" step="1" required
+            class={inputClass} placeholder={q.quantityPlaceholder} />
+        </div>
+      </fieldset>
+      )}
 
+      {!simple && (
+      <>
       <!-- ③ 공정 시퀀스 빌더 (엑셀 대체) — 필수 -->
       <fieldset>
         <legend class={legendClass}>{q.sectionProcess} <span class="text-danger">*</span></legend>
@@ -170,6 +184,8 @@ const deliveryOpts = DELIVERY_METHODS.map((d) => ({ value: d.value, label: isKo 
           ))}
         </div>
       </fieldset>
+      </>
+      )}
 
       <!-- ④ 기타 요청 -->
       <fieldset>
@@ -331,19 +347,21 @@ const deliveryOpts = DELIVERY_METHODS.map((d) => ({ value: d.value, label: isKo 
   bindOther("q-substrate-size", "q-substrate-size-other");
 
   // ── 공정 시퀀스 빌더 ──────────────────────────────
-  const listEl = document.getElementById("q-process-list")!;
-  const emptyEl = document.getElementById("q-process-empty")!;
-  const addBtn = document.getElementById("q-process-add")!;
-  const tmpl = document.getElementById("q-process-row-template") as HTMLTemplateElement;
-  const seqInput = document.getElementById("q-process-sequence") as HTMLInputElement;
+  // 단일 상품(simple) 폼에는 이 요소들이 없다 → 옵셔널 처리
+  const listEl = document.getElementById("q-process-list");
+  const emptyEl = document.getElementById("q-process-empty");
+  const addBtn = document.getElementById("q-process-add");
+  const tmpl = document.getElementById("q-process-row-template") as HTMLTemplateElement | null;
+  const seqInput = document.getElementById("q-process-sequence") as HTMLInputElement | null;
 
   function refreshStepLabels() {
+    if (!listEl) return;
     const rows = listEl.querySelectorAll(".q-process-row");
     rows.forEach((row, i) => {
       const lbl = row.querySelector(".q-step-label") as HTMLElement;
       if (lbl) lbl.textContent = `${L.step} ${i + 1}`;
     });
-    emptyEl.hidden = rows.length > 0;
+    if (emptyEl) emptyEl.hidden = rows.length > 0;
   }
 
   // 공정 선택 시 물질 드롭다운 + 단위 + 값 입력 노출을 그 공정에 맞게 바꾼다
@@ -394,6 +412,7 @@ const deliveryOpts = DELIVERY_METHODS.map((d) => ({ value: d.value, label: isKo 
   }
 
   function addRow() {
+    if (!tmpl || !listEl) return;
     const frag = tmpl.content.cloneNode(true) as DocumentFragment;
     const row = frag.querySelector(".q-process-row") as HTMLElement;
 
@@ -420,10 +439,11 @@ const deliveryOpts = DELIVERY_METHODS.map((d) => ({ value: d.value, label: isKo 
     refreshStepLabels();
   }
 
-  addBtn.addEventListener("click", addRow);
+  addBtn?.addEventListener("click", addRow);
 
   // 제출 시: 시퀀스를 사람이 읽을 텍스트 + 구조화 JSON 으로
   function collectSequence(): { text: string; json: any[] } {
+    if (!listEl) return { text: "", json: [] };
     const rows = listEl.querySelectorAll(".q-process-row");
     const json: any[] = [];
     const lines: string[] = [];
@@ -458,13 +478,15 @@ const deliveryOpts = DELIVERY_METHODS.map((d) => ({ value: d.value, label: isKo 
       return;
     }
 
-    // 공정 시퀀스 (최소 1개)
+    const isSimple = !!M.simple;
+
+    // 공정 시퀀스 (최소 1개) — 단일 상품(simple)은 공정이 없으므로 건너뛴다
     const seq = collectSequence();
-    if (seq.json.length === 0) {
+    if (!isSimple && seq.json.length === 0) {
       setStatus(M.msgNoprocess!, false);
       return;
     }
-    seqInput.value = JSON.stringify(seq.json);
+    if (seqInput) seqInput.value = JSON.stringify(seq.json);
 
     normalizeTelInputs(form);
     const data = Object.fromEntries(new FormData(form).entries()) as Record<string, string>;
@@ -484,20 +506,31 @@ const deliveryOpts = DELIVERY_METHODS.map((d) => ({ value: d.value, label: isKo 
     // 분석 항목(체크박스 다중) 수집
     const measures = Array.from(form.querySelectorAll<HTMLInputElement>('input[name="measurements"]:checked')).map((el) => el.value);
 
-    // 서버 호환: 시퀀스 텍스트를 details 에, 대표 물질을 material 에
-    const firstMat = seq.json.find((s) => s.material)?.material || seq.json[0]?.process || "Process request";
-    data.material = firstMat;
-    data.substrate = [data.substrateType, sizeLabel].filter(Boolean).join(" / ");
-    data.details = [
-      "[공정 시퀀스]",
-      seq.text,
-      measures.length ? `\n[분석] ${measures.join(", ")}` : "",
-      "",
-      deliveryLabel ? `기판 전달: ${deliveryLabel}` : "",
-      data.sampleCount ? `총 샘플 수량: ${data.sampleCount}` : "",
-      data.completionDate ? `완료 희망일: ${data.completionDate}` : "",
-      data.notes ? `주의사항: ${data.notes}` : "",
-    ].filter(Boolean).join("\n");
+    if (isSimple) {
+      // 단일 상품: 공정/기판 없이 수량·메모만 정리
+      data.material = M.productName || "Product request";
+      data.substrate = "";
+      data.details = [
+        data.sampleCount ? `수량: ${data.sampleCount}` : "",
+        data.completionDate ? `완료 희망일: ${data.completionDate}` : "",
+        data.notes ? `요청사항: ${data.notes}` : "",
+      ].filter(Boolean).join("\n");
+    } else {
+      // 서버 호환: 시퀀스 텍스트를 details 에, 대표 물질을 material 에
+      const firstMat = seq.json.find((s) => s.material)?.material || seq.json[0]?.process || "Process request";
+      data.material = firstMat;
+      data.substrate = [data.substrateType, sizeLabel].filter(Boolean).join(" / ");
+      data.details = [
+        "[공정 시퀀스]",
+        seq.text,
+        measures.length ? `\n[분석] ${measures.join(", ")}` : "",
+        "",
+        deliveryLabel ? `기판 전달: ${deliveryLabel}` : "",
+        data.sampleCount ? `총 샘플 수량: ${data.sampleCount}` : "",
+        data.completionDate ? `완료 희망일: ${data.completionDate}` : "",
+        data.notes ? `주의사항: ${data.notes}` : "",
+      ].filter(Boolean).join("\n");
+    }
 
     data.type = "quote";
     data.product = M.product!;
