@@ -102,7 +102,7 @@ const popupImages = import.meta.glob<{ default: ImageMetadata }>(
 let popupImg: Awaited<ReturnType<typeof getImage>> | null = null;
 if (popup.enabled && popup.image && popupImages[popup.image]) {
   const meta = popupImages[popup.image].default;
-  popupImg = await getImage({ src: meta, width: Math.min(1040, meta.width), format: 'webp', quality: 85 });
+  popupImg = await getImage({ src: meta, width: Math.min(640, meta.width), format: 'webp', quality: 85 });
 }
 // 팝업 이미지 클릭 시 열릴 주소 — 요구사항상 항상 새 탭. 내부 경로는 locale 을 붙여준다.
 const popupHref = popup.linkUrl
@@ -271,8 +271,15 @@ const childHref = (path) => {
         to   { transform: translateY(0); }
       }
       .banner-slide { animation: banner-slide-down .45s cubic-bezier(0.22, 1, 0.36, 1) both; }
+      /* 공지 팝업(좌하단 카드) 등장 — hidden 이 풀리는 순간 실행된다 */
+      @keyframes popup-slide-up {
+        from { transform: translateY(14px); opacity: 0; }
+        to   { transform: translateY(0); opacity: 1; }
+      }
+      .popup-card:not(.hidden) { animation: popup-slide-up .45s cubic-bezier(0.22, 1, 0.36, 1) both; }
       @media (prefers-reduced-motion: reduce) {
         .banner-slide { animation: none; }
+        .popup-card:not(.hidden) { animation: none; }
       }
     </style>
   </head>
@@ -322,30 +329,30 @@ const childHref = (path) => {
       <>
       <!-- ── 공지 팝업 ──────────────────────────────────────
            Keystatic '공지 팝업'에서 이미지·링크를 관리한다.
+           화면을 가리는 중앙 모달 대신 좌하단에 뜨는 소형 카드.
+           (배경 차단·스크롤 잠금 없음 — 페이지를 보면서 닫을 수 있다.
+            우하단 스크롤·SNS 버튼과 겹치지 않게 max-w 로 우측 104px 를 비워 둔다)
            기본은 숨김(hidden)으로 렌더하고, 아래 스크립트가 억제 조건
            (세션 닫기 / 하루 닫기)을 통과했을 때만 연다 → 깜빡임 없음. -->
-      <div id="site-popup" class="fixed inset-0 z-[95] hidden items-center justify-center p-4"
-        role="dialog" aria-modal="true" aria-label={popupAlt} data-key={popupImg.src}>
-        <div id="popup-backdrop" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
-        <div class="relative w-full max-w-[520px] overflow-hidden rounded-2xl border border-ink/10 bg-canvas shadow-2xl">
-          {popupHref ? (
-            <a href={popupHref} target="_blank" rel="noopener noreferrer" aria-label={popupAlt}
-              class="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent">
-              <img src={popupImg.src} width={popupImg.attributes.width} height={popupImg.attributes.height}
-                alt={popupAlt} loading="eager" decoding="async"
-                class="block h-auto max-h-[72vh] w-full bg-ink/[0.03] object-contain" />
-            </a>
-          ) : (
+      <div id="site-popup" aria-label={popupAlt} data-key={popupImg.src}
+        class="popup-card fixed bottom-6 left-6 z-[95] hidden w-[320px] max-w-[calc(100vw-6.5rem)] overflow-hidden rounded-2xl border border-ink/10 bg-canvas shadow-2xl shadow-ink/10">
+        {popupHref ? (
+          <a href={popupHref} target="_blank" rel="noopener noreferrer" aria-label={popupAlt}
+            class="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent">
             <img src={popupImg.src} width={popupImg.attributes.width} height={popupImg.attributes.height}
               alt={popupAlt} loading="eager" decoding="async"
-              class="block h-auto max-h-[72vh] w-full bg-ink/[0.03] object-contain" />
-          )}
-          <div class="flex divide-x divide-ink/10 border-t border-ink/10 text-sm">
-            <button type="button" id="popup-day"
-              class="flex-1 px-4 py-3.5 text-ink/55 transition hover:bg-ink/[0.04] hover:text-ink">{ui.popupDay}</button>
-            <button type="button" id="popup-close"
-              class="flex-1 px-4 py-3.5 font-semibold text-ink/85 transition hover:bg-ink/[0.04] hover:text-ink">{ui.popupClose}</button>
-          </div>
+              class="block h-auto max-h-[55vh] w-full bg-ink/[0.03] object-contain" />
+          </a>
+        ) : (
+          <img src={popupImg.src} width={popupImg.attributes.width} height={popupImg.attributes.height}
+            alt={popupAlt} loading="eager" decoding="async"
+            class="block h-auto max-h-[55vh] w-full bg-ink/[0.03] object-contain" />
+        )}
+        <div class="flex divide-x divide-ink/10 border-t border-ink/10 text-[13px]">
+          <button type="button" id="popup-day"
+            class="flex-1 px-3 py-2.5 text-ink/55 transition hover:bg-ink/[0.04] hover:text-ink">{ui.popupDay}</button>
+          <button type="button" id="popup-close"
+            class="flex-1 px-3 py-2.5 font-semibold text-ink/85 transition hover:bg-ink/[0.04] hover:text-ink">{ui.popupClose}</button>
         </div>
       </div>
       <script is:inline>
@@ -369,21 +376,14 @@ const childHref = (path) => {
 
           var closeBtn = document.getElementById('popup-close');
           var dayBtn = document.getElementById('popup-day');
-          var backdrop = document.getElementById('popup-backdrop');
 
-          el.classList.remove('hidden');
-          el.classList.add('flex');
-          document.body.style.overflow = 'hidden';
-          if (closeBtn) closeBtn.focus();
+          el.classList.remove('hidden');   // 카드형: 배경 잠금·포커스 이동 없음
 
           function close() {
             el.classList.add('hidden');
-            el.classList.remove('flex');
-            document.body.style.overflow = '';
             try { sessionStorage.setItem(KEY_S, '1'); } catch (e) {}
           }
           if (closeBtn) closeBtn.addEventListener('click', close);
-          if (backdrop) backdrop.addEventListener('click', close);
           document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape' && !el.classList.contains('hidden')) close();
           });
