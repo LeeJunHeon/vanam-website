@@ -197,3 +197,19 @@ html {
 .iti > .iti__tel-input {
   margin-top: 0 !important; /* wrapper 로 여백을 올렸으니 내부 input 여백 제거 */
 }
+
+/* ── 섹션 자동 줄무늬(zebra) — 배경 구분의 중앙화 ─────────────
+   BaseLayout 에 zebra 프롭을 주면 <body class="… v-zebra"> 가 되고,
+   본문(main) 바로 아래 <section> 들이 홀수=기본 배경 / 짝수=옅은 회색 판으로
+   자동 교차된다. 섹션을 추가·이동·삭제해도 이 규칙 하나가 줄무늬를 스스로 재배정.
+   ⚠️ 중앙화 규칙 (재발 방지):
+     1) zebra 페이지의 <section> 에는 배경·구분선 클래스(bg-ink/[0.02],
+        border-y border-ink/10 등)를 개별로 하드코딩하지 말 것.
+     2) <section> 은 전체 폭 유지 — 폭 제한·패딩은 섹션 안쪽
+        <div class="mx-auto max-w-6xl px-6 py-20"> 에 줄 것.
+   색은 --v-ink 기반 color-mix 라 라이트/다크 테마에 자동 대응한다. */
+body.v-zebra main > section:nth-of-type(even) {
+  background: color-mix(in srgb, var(--v-ink) 2.5%, transparent);
+  border-top: 1px solid color-mix(in srgb, var(--v-ink) 10%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--v-ink) 10%, transparent);
+}

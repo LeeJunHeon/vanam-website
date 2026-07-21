@@ -76,17 +76,20 @@ const mt = {
 };
 const contactHref = lhref('/contact');
 ---
-<BaseLayout title={title} description={description}>
+<BaseLayout title={title} description={description} zebra>
 
-  <section class="mx-auto max-w-6xl px-6 pt-28 pb-16 md:pt-36">
+  <section>
+  <div class="mx-auto max-w-6xl px-6 pt-28 pb-16 md:pt-36">
     <div class="v-reveal">
       <p class="text-sm font-medium uppercase tracking-[0.2em] text-accent">Technology &amp; Solution</p>
       <h1 class="mt-5 text-4xl font-bold leading-tight text-ink md:text-6xl">{tech.heroTitle.line1}<br/>{tech.heroTitle.line2}</h1>
       <p class="mt-6 max-w-2xl whitespace-pre-line text-lg leading-relaxed text-ink/60">{tech.heroSubtitle}</p>
     </div>
+  </div>
   </section>
 
-  <section class="mx-auto max-w-6xl px-6 py-16">
+  <section>
+  <div class="mx-auto max-w-6xl px-6 py-16">
     <h2 class="sr-only">{tech.keyAdvantages}</h2>
     <div class="grid gap-5 md:grid-cols-2">
       {valueProps.map((v) => (
@@ -96,9 +99,10 @@ const contactHref = lhref('/contact');
         </div>
       ))}
     </div>
+  </div>
   </section>
 
-  <section id="core" class="scroll-mt-24 border-y border-ink/10 bg-ink/[0.02]">
+  <section id="core" class="scroll-mt-24">
     <div class="mx-auto max-w-6xl px-6 py-20">
       <div class="v-reveal max-w-3xl">
         <p class="text-sm font-medium uppercase tracking-[0.2em] text-accent">Core Technology</p>
@@ -110,7 +114,7 @@ const contactHref = lhref('/contact');
 
   <!-- ── Project 2: Quantum Photonics ──────────────────
        Core Technology 바로 다음. (Core 와 이 섹션 사이가 추후 IR 자료로 채울 Project 1 자리) -->
-  <section id="project2" class="scroll-mt-24 border-t border-ink/10">
+  <section id="project2" class="scroll-mt-24">
     <div class="mx-auto max-w-6xl px-6 py-20">
     <div class="v-reveal max-w-3xl">
       <p class="text-sm font-medium uppercase tracking-[0.2em] text-accent">{tech.quantumEyebrow}</p>
@@ -138,7 +142,8 @@ const contactHref = lhref('/contact');
     </div>
   </section>
 
-  <section id="materials" class="scroll-mt-24 mx-auto max-w-6xl px-6 py-20">
+  <section id="materials" class="scroll-mt-24">
+  <div class="mx-auto max-w-6xl px-6 py-20">
     <div class="v-reveal">
       <h2 class="text-2xl font-bold text-ink">{tech.materialsHeading}</h2>
       <p class="mt-3 max-w-2xl text-base text-ink/55">{tech.materialsLibraryDesc}</p>
@@ -179,10 +184,11 @@ const contactHref = lhref('/contact');
         ))}
       </div>
     </div>
+  </div>
   </section>
 
 
-  <section class="border-t border-ink/10">
+  <section>
     <div class="mx-auto max-w-6xl px-6 py-24 text-center">
       <div class="v-reveal">
         <h2 class="text-3xl font-bold text-ink md:text-4xl">{tech.ctaHeading}</h2>

@@ -10,7 +10,7 @@ import logoLight from '../assets/brand/logo-light.png';
 import company from '../data/company.json';
 import banner from '../data/banner.json';
 import popup from '../data/popup.json';
-const { title = 'VANAM — 차세대 반도체 박막 소재', description = 'VANA Materials LAB. 친환경 진공 증착 기반 차세대 반도체 박막 소재·공정 기술 기업.' } = Astro.props;
+const { title = 'VANAM — 차세대 반도체 박막 소재', description = 'VANA Materials LAB. 친환경 진공 증착 기반 차세대 반도체 박막 소재·공정 기술 기업.', zebra = false } = Astro.props;
 // 각 페이지의 실제 경로를 절대 URL로 (canonical / og:url)
 const canonicalURL = new URL(Astro.url.pathname, Astro.site).href;
 // i18n: 현재 locale + 같은 페이지의 양쪽 언어 URL (locale 접두사 제거한 경로 기준)
@@ -289,7 +289,7 @@ const childHref = (path) => {
       }
     </style>
   </head>
-  <body class="min-h-screen bg-canvas text-ink/90 antialiased">
+  <body class:list={['min-h-screen bg-canvas text-ink/90 antialiased', zebra && 'v-zebra']}>
     {showBanner && (
       <>
       <div id="top-banner" data-dismissible={banner.dismissible ? '1' : '0'} class={`banner-slide relative ${bannerTone}`} style={bannerStyle}>
