@@ -84,7 +84,7 @@ const won = (n: number) => new Intl.NumberFormat('ko-KR').format(n);
               <article data-cat={p.data.category}
                 class="product-card group flex flex-col overflow-hidden rounded-xl border border-ink/10 bg-ink/[0.02] transition hover:border-accent/50">
                 <a href={href} class="block">
-                  <div class="relative aspect-[3/4] overflow-hidden bg-gradient-to-br from-panel2 to-canvas">
+                  <div class="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-panel2 to-canvas">
                     {p.data.category === 'wafer' && waferSlides.length > 0 ? (
                       <div class="wafer-slider absolute inset-0" data-wafer-slider>
                         {waferSlides.map((sl, i) => (
