@@ -191,10 +191,12 @@ const deliveryOpts = DELIVERY_METHODS.map((d) => ({ value: d.value, label: isKo 
       <fieldset>
         <legend class={legendClass}>{q.sectionEtc}</legend>
         <div class="mt-6 space-y-6">
+          {!simple && (
           <div>
             <label for="q-completion" class={labelClass}>{q.completionDate}</label>
             <input id="q-completion" name="completionDate" type="text" class={inputClass} placeholder={q.completionDatePlaceholder} />
           </div>
+          )}
           <div>
             <label for="q-notes" class={labelClass}>{q.notes}</label>
             <textarea id="q-notes" name="notes" rows="4" class={`${inputClass} resize-y`} placeholder={q.notesPlaceholder}></textarea>
@@ -512,7 +514,6 @@ const deliveryOpts = DELIVERY_METHODS.map((d) => ({ value: d.value, label: isKo 
       data.substrate = "";
       data.details = [
         data.sampleCount ? `수량: ${data.sampleCount}` : "",
-        data.completionDate ? `완료 희망일: ${data.completionDate}` : "",
         data.notes ? `요청사항: ${data.notes}` : "",
       ].filter(Boolean).join("\n");
     } else {
