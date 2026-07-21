@@ -86,6 +86,12 @@ export default config({
 
         withdrawDays: fields.integer({ label: '청약철회 기간 (일)', defaultValue: 7, validation: { isRequired: true } }),
         refundDays: fields.integer({ label: '환불 처리 기간 (영업일)', defaultValue: 3, validation: { isRequired: true } }),
+
+        usdRate: fields.integer({
+          label: '달러 환율 (원/$)',
+          description: '달러 표시 가격 환산에 사용합니다. 예: 1500 → ₩429,000 = $286',
+          defaultValue: 1500,
+        }),
       },
     }),
     banner: singleton({
@@ -332,6 +338,10 @@ export default config({
         leadTime_en: fields.text({ label: '납기 안내 (영문)' }),
         refundPolicy: fields.text({ label: '환불 규정 (한글)', description: '상세 하단에 표시됩니다', multiline: true }),
         refundPolicy_en: fields.text({ label: '환불 규정 (영문)', multiline: true }),
+        priceKrw: fields.integer({
+          label: '판매가 (원)',
+          description: '원화 숫자만 입력 (예: 429000). 사이트에는 달러($)로 환산 표시됩니다 — 환율은 [사업자 정보 → 달러 환율]에서 관리. 비우면 "가격 문의"로 표시.',
+        }),
         published: fields.checkbox({ label: '사이트에 공개', defaultValue: true }),
         order: fields.integer({ label: '표시 순서', defaultValue: 99, validation: { isRequired: true } }),
       },

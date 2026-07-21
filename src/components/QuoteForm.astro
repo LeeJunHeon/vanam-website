@@ -6,6 +6,7 @@
 // 제출 시 시퀀스를 사람이 읽을 수 있는 텍스트로 정리해 details 에, 원본은 JSON 으로 함께 보낸다.
 import siteData from '../data/site.json';
 import { PROCESSES, MEASUREMENTS, SUBSTRATES, SUBSTRATE_SIZES, DELIVERY_METHODS, PRODUCT_MAT_FILTER, type MatCat } from '../lib/processes';
+import { COUNTRIES } from '../lib/countries';
 
 const { product, productName, simple = false } = Astro.props;
 const locale = Astro.currentLocale ?? 'en';
@@ -34,25 +35,27 @@ const measurementData = JSON.stringify(MEASUREMENTS);
 // 기판 크기·전달 방식은 언어별 라벨을 미리 고른다
 const sizeOpts = SUBSTRATE_SIZES.map((s) => ({ value: s.value, label: isKo ? s.ko : s.en }));
 const deliveryOpts = DELIVERY_METHODS.map((d) => ({ value: d.value, label: isKo ? d.ko : d.en }));
+// 배송 국가 (simple=고정가 주문 폼 전용)
+const countryOpts = COUNTRIES.map((cn) => ({ value: cn.code, label: isKo ? cn.ko : cn.en }));
 ---
 
 <section id="quote" class="mt-20 scroll-mt-24 border-t border-ink/10 pt-16">
   <div class="max-w-3xl">
-    <p class="text-sm font-medium uppercase tracking-widest text-accent">{q.title}</p>
+    <p class="text-sm font-medium uppercase tracking-widest text-accent">{simple ? q.titleOrder : q.title}</p>
     <h2 class="mt-4 text-3xl font-bold leading-tight text-ink">{productName}</h2>
-    <p class="mt-4 text-base leading-relaxed text-ink/60">{q.intro}</p>
+    <p class="mt-4 text-base leading-relaxed text-ink/60">{simple ? q.introOrder : q.intro}</p>
 
     <form id="quote-form" class="mt-12 space-y-12"
       data-product={product.id}
       data-product-name={productName}
       data-simple={simple ? '1' : ''}
       data-msg-honeypot={c.msgHoneypot}
-      data-msg-success={q.msgSuccess}
+      data-msg-success={simple ? q.msgSuccessOrder : q.msgSuccess}
       data-msg-error={c.msgError}
       data-msg-required={c.msgRequired}
       data-msg-captcha={c.msgCaptcha}
       data-msg-noprocess={q.msgNoProcess}
-      data-label-send={q.submit}
+      data-label-send={simple ? q.submitOrder : q.submit}
       data-label-sending={c.sending}
       data-lbl-step={q.processStep}
       data-lbl-process={q.processType}
@@ -64,7 +67,8 @@ const deliveryOpts = DELIVERY_METHODS.map((d) => ({ value: d.value, label: isKo 
       data-lbl-etc-ph={q.processEtcPlaceholder}
       data-lbl-remove={q.processRemove}
       data-map-size={JSON.stringify(Object.fromEntries(sizeOpts.map((s) => [s.value, s.label])))}
-      data-map-delivery={JSON.stringify(Object.fromEntries(deliveryOpts.map((d) => [d.value, d.label])))}>
+      data-map-delivery={JSON.stringify(Object.fromEntries(deliveryOpts.map((d) => [d.value, d.label])))}
+      data-map-country={JSON.stringify(Object.fromEntries(countryOpts.map((cn) => [cn.value, cn.label])))}>
       <!-- Honeypot: 사람에겐 안 보임 (스팸 트랩) -->
       <div class="absolute left-[-9999px]" aria-hidden="true">
         <label>{c.honeypot}
@@ -147,6 +151,49 @@ const deliveryOpts = DELIVERY_METHODS.map((d) => ({ value: d.value, label: isKo 
       </fieldset>
       )}
 
+      {simple && (
+      <!-- ②-b 배송 주소 — 고정가 상품 주문용. 국제 주소 대응(국가 선택 + 자유 서식 입력) -->
+      <fieldset>
+        <legend class={legendClass}>{q.sectionShipping}</legend>
+        <div class="mt-6 space-y-6">
+          <div class="grid gap-6 md:grid-cols-2">
+            <div>
+              <label for="q-country" class={labelClass}>{q.country} <span class="text-danger">*</span></label>
+              <select id="q-country" name="shipCountry" required class={selectClass}>
+                <option value="" disabled selected>{q.countryPlaceholder}</option>
+                {countryOpts.map((cn) => <option value={cn.value}>{cn.label}</option>)}
+                <option value="__other__">{q.countryOther}</option>
+              </select>
+              <input id="q-country-other" name="shipCountryOther" type="text" hidden
+                class={`${inputClass} mt-3`} placeholder={q.countryOtherPlaceholder} />
+            </div>
+            <div>
+              <label for="q-postal" class={labelClass}>{q.postal} <span class="text-danger">*</span></label>
+              <input id="q-postal" name="shipPostal" type="text" required class={inputClass} placeholder={q.postalPlaceholder} autocomplete="postal-code" />
+            </div>
+          </div>
+          <div>
+            <label for="q-addr1" class={labelClass}>{q.addr1} <span class="text-danger">*</span></label>
+            <input id="q-addr1" name="shipAddr1" type="text" required class={inputClass} placeholder={q.addr1Placeholder} autocomplete="address-line1" />
+          </div>
+          <div>
+            <label for="q-addr2" class={labelClass}>{q.addr2}</label>
+            <input id="q-addr2" name="shipAddr2" type="text" class={inputClass} placeholder={q.addr2Placeholder} autocomplete="address-line2" />
+          </div>
+          <div class="grid gap-6 md:grid-cols-2">
+            <div>
+              <label for="q-city" class={labelClass}>{q.city} <span class="text-danger">*</span></label>
+              <input id="q-city" name="shipCity" type="text" required class={inputClass} placeholder={q.cityPlaceholder} autocomplete="address-level2" />
+            </div>
+            <div>
+              <label for="q-state" class={labelClass}>{q.state}</label>
+              <input id="q-state" name="shipState" type="text" class={inputClass} placeholder={q.statePlaceholder} autocomplete="address-level1" />
+            </div>
+          </div>
+        </div>
+      </fieldset>
+      )}
+
       {!simple && (
       <>
       <!-- ③ 공정 시퀀스 빌더 (엑셀 대체) — 필수 -->
@@ -223,7 +270,7 @@ const deliveryOpts = DELIVERY_METHODS.map((d) => ({ value: d.value, label: isKo 
         <div class="flex flex-wrap items-center gap-4">
           <button type="submit" id="quote-submit"
             class="inline-flex items-center gap-2 rounded-lg bg-brand px-7 py-3 font-semibold text-onbrand transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60">
-            <span id="quote-submit-label">{q.submit}</span>
+            <span id="quote-submit-label">{simple ? q.submitOrder : q.submit}</span>
           </button>
           <p id="quote-status" class="text-sm" role="status" aria-live="polite"></p>
         </div>
@@ -347,6 +394,7 @@ const deliveryOpts = DELIVERY_METHODS.map((d) => ({ value: d.value, label: isKo 
   }
   bindOther("q-substrate-type", "q-substrate-type-other");
   bindOther("q-substrate-size", "q-substrate-size-other");
+  bindOther("q-country", "q-country-other");   // 배송 국가 "기타" (simple 폼 전용 — 없으면 no-op)
 
   // ── 공정 시퀀스 빌더 ──────────────────────────────
   // 단일 상품(simple) 폼에는 이 요소들이 없다 → 옵셔널 처리
@@ -509,13 +557,27 @@ const deliveryOpts = DELIVERY_METHODS.map((d) => ({ value: d.value, label: isKo 
     const measures = Array.from(form.querySelectorAll<HTMLInputElement>('input[name="measurements"]:checked')).map((el) => el.value);
 
     if (isSimple) {
-      // 단일 상품: 공정/기판 없이 수량·메모만 정리
+      // 단일 상품(고정가 주문): 수량 + 배송 주소 + 메모를 details 로 정리
+      const countryMap: Record<string, string> = JSON.parse(M.mapCountry || "{}");
+      const shipCountry = data.shipCountry === "__other__"
+        ? String(data.shipCountryOther || "").trim()
+        : (countryMap[String(data.shipCountry)] || String(data.shipCountry || ""));
+      const shipAddr = [data.shipAddr1, data.shipAddr2].filter(Boolean).join(", ");
+      const shipCityLine = [data.shipCity, data.shipState].filter(Boolean).join(" / ");
       data.material = M.productName || "Product request";
       data.substrate = "";
       data.details = [
         data.sampleCount ? `수량: ${data.sampleCount}` : "",
+        "[배송 주소]",
+        shipCountry ? `국가: ${shipCountry}` : "",
+        shipAddr ? `주소: ${shipAddr}` : "",
+        shipCityLine ? `도시/주: ${shipCityLine}` : "",
+        data.shipPostal ? `우편번호: ${data.shipPostal}` : "",
         data.notes ? `요청사항: ${data.notes}` : "",
       ].filter(Boolean).join("\n");
+      delete data.shipCountry; delete data.shipCountryOther;
+      delete data.shipAddr1; delete data.shipAddr2;
+      delete data.shipCity; delete data.shipState; delete data.shipPostal;
     } else {
       // 서버 호환: 시퀀스 텍스트를 details 에, 대표 물질을 material 에
       const firstMat = seq.json.find((s) => s.material)?.material || seq.json[0]?.process || "Process request";

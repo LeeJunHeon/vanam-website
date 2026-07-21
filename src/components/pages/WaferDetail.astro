@@ -1,10 +1,12 @@
 ---
-// 웨이퍼 상세 페이지. /wafers/[id]. 전부 견적(가격 문의)이라 장바구니 없이
-// 견적 요청(QuoteForm)만 제공한다. 구조는 ProductDetail 과 동일하되 fixed 로직을 뺐다.
+// 웨이퍼 상세 페이지. /wafers/[id]. 고정가(달러 표시) 판매 — 주문 요청 폼(QuoteForm simple)으로
+// 연락처·수량·배송 주소(국제 대응)를 받는다. 실결제(PayPal 등)는 추후 연동 예정.
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { Image } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
 import siteData from '../../data/site.json';
+import company from '../../data/company.json';
+import { formatUsd } from '../../lib/price';
 import QuoteForm from '../QuoteForm.astro';
 
 const { wafer } = Astro.props;
@@ -13,6 +15,7 @@ const site = siteData[locale] ?? siteData.en;
 const s = site.shop;
 const isKo = locale === 'ko';
 const base = isKo ? '/ko' : '';
+const usdRate = company.usdRate || 1500;   // 달러 환산 환율 (Keystatic '사업자 정보')
 
 const waferImages = import.meta.glob<{ default: ImageMetadata }>(
   '/src/assets/wafers/**/*.{png,jpg,jpeg,webp,avif}',
@@ -52,13 +55,17 @@ const img = d.image ? waferImages[d.image]?.default : undefined;
         {summary && <p class="mt-4 text-base leading-relaxed text-ink/60">{summary}</p>}
 
         <div class="mt-8 border-y border-ink/10 py-6">
-          <p class="text-2xl font-semibold text-accent">{s.priceOnRequest}</p>
+          {typeof d.priceKrw === 'number' && d.priceKrw > 0 ? (
+            <p class="text-3xl font-bold text-ink">{formatUsd(d.priceKrw, usdRate)}<span class="ml-1.5 text-sm font-normal text-ink/40">USD</span></p>
+          ) : (
+            <p class="text-2xl font-semibold text-accent">{s.priceOnRequest}</p>
+          )}
         </div>
 
         <div class="mt-8">
           <a href="#quote" data-open-quote
             class="inline-flex items-center gap-2 rounded-lg bg-brand px-7 py-3 font-semibold text-onbrand transition hover:brightness-110">
-            {s.requestQuote} ↓
+            {typeof d.priceKrw === 'number' && d.priceKrw > 0 ? s.orderRequest : s.requestQuote} ↓
           </a>
         </div>
 

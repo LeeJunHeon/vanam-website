@@ -20,5 +20,6 @@
   "shipLeadKo": "결제 확인 후 영업일 기준 7~14일 이내 발송 (주문 제작품은 별도 안내)",
   "shipLeadEn": "Shipped within 7–14 business days after payment (made-to-order items are advised separately)",
   "withdrawDays": 7,
-  "refundDays": 3
+  "refundDays": 3,
+  "usdRate": 1500
 }

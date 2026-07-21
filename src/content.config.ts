@@ -178,7 +178,7 @@ const products = defineCollection({
 });
 
 // 웨이퍼 카탈로그. Product 의 'Wafers' 카드를 클릭하면 이 목록(/wafers)이 뜬다.
-// 전부 견적(가격 문의)이라 가격/pricingType 없이 사양 위주. Keystatic '웨이퍼'에서 편집.
+// 고정가 판매 — priceKrw(원)를 입력하면 사이트에 달러($)로 환산 표시된다(환율=company.usdRate). Keystatic '웨이퍼'에서 편집.
 const wafers = defineCollection({
   loader: glob({ pattern: '*.json', base: './src/content/wafers' }),
   schema: z.object({
@@ -194,6 +194,7 @@ const wafers = defineCollection({
     leadTime_en: opt(z.string()),
     refundPolicy: opt(z.string()),                      // 환불 규정 (스펙과 별도로 하단 표시)
     refundPolicy_en: opt(z.string()),
+    priceKrw: opt(z.number()),                          // 판매가(원) — 사이트에는 달러($) 환산 표시. 비우면 '가격 문의'
     published: z.boolean().default(true),
     order: z.number().default(0),
   }),
