@@ -27,7 +27,7 @@ export default config({
   ui: {
     brand: { name: 'VANAM 콘텐츠 관리' },
     navigation: {
-      '콘텐츠': ['banner', 'news', 'blog', 'team', 'faq'],
+      '콘텐츠': ['banner', 'popup', 'news', 'blog', 'team', 'faq'],
       '회사 정보': ['history', 'achievements', 'partners', 'certificates'],
       '기술 데이터': ['services', 'materials'],
       '스토어': ['products', 'wafers'],
@@ -113,6 +113,33 @@ export default config({
         customBg: fields.text({ label: '직접 지정 — 배경색', description: '"직접 지정"일 때만 적용. HEX 코드로 입력 (예: #1E3A8A).' }),
         customText: fields.text({ label: '직접 지정 — 글자색', description: '"직접 지정"일 때만 적용. HEX 코드로 입력 (예: #FFFFFF).' }),
         dismissible: fields.checkbox({ label: '닫기 버튼 표시', description: '방문자가 배너를 닫을 수 있게 합니다. 닫아도 새로고침하거나 다시 접속하면 표시됩니다.', defaultValue: true }),
+      },
+    }),
+    // ── 공지 팝업 (사이트 접속 시 뜨는 이미지 팝업) ──────────
+    popup: singleton({
+      label: '공지 팝업',
+      path: 'src/data/popup',
+      format: { data: 'json' },
+      schema: {
+        enabled: fields.checkbox({
+          label: '팝업 표시',
+          description: '체크하면 사이트 접속 시 이미지 공지 팝업이 뜹니다. "닫기"는 이번 방문 동안, "하루 동안 닫기"는 24시간 동안 숨겨집니다.',
+          defaultValue: false,
+        }),
+        image: fields.image({
+          label: '팝업 이미지',
+          description: '팝업에 표시할 이미지 한 장. 세로형·가로형 모두 가능하며, 이미지를 바꾸면 "하루 동안 닫기"를 눌렀던 방문자에게도 새 공지로 다시 표시됩니다.',
+          directory: 'src/assets/popup',
+          publicPath: '/src/assets/popup/',
+        }),
+        linkUrl: fields.text({
+          label: '링크 주소 (선택)',
+          description: '이미지를 누르면 새 탭으로 열리는 주소. 비우면 클릭해도 이동하지 않습니다. 예: /news 또는 https://…',
+        }),
+        alt: fields.text({
+          label: '이미지 설명 (대체 텍스트)',
+          description: '스크린리더·검색엔진용 한 줄 설명. 예: SEDEX 참가 안내',
+        }),
       },
     }),
   },

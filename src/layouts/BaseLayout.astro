@@ -2,11 +2,13 @@
 import '../styles/global.css';
 import OrganizationSchema from '../components/OrganizationSchema.astro';
 import { getRelativeLocaleUrl, getAbsoluteLocaleUrl } from 'astro:i18n';
-import { Image } from 'astro:assets';
+import { Image, getImage } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
 import logo from '../assets/brand/logo.png';
 import logoLight from '../assets/brand/logo-light.png';
 import company from '../data/company.json';
 import banner from '../data/banner.json';
+import popup from '../data/popup.json';
 const { title = 'VANAM — 차세대 반도체 박막 소재', description = 'VANA Materials LAB. 친환경 진공 증착 기반 차세대 반도체 박막 소재·공정 기술 기업.' } = Astro.props;
 // 각 페이지의 실제 경로를 절대 URL로 (canonical / og:url)
 const canonicalURL = new URL(Astro.url.pathname, Astro.site).href;
@@ -55,9 +57,11 @@ const breadcrumbSchema = (cleanPath !== '/' && crumbLabels[cleanPath]) ? {
 // 내비/햄버거 aria 라벨 (스크린리더용 — locale별)
 const ui = currentLocale === 'ko'
   ? { mainMenu: '주 메뉴', mobileMenu: '모바일 메뉴', lang: '언어 선택', openMenu: '메뉴 열기', closeMenu: '메뉴 닫기', theme: '라이트 / 다크 테마 전환',
-      tagline: 'VANA Materials LAB. — 차세대 반도체 박막 소재·공정' }
+      tagline: 'VANA Materials LAB. — 차세대 반도체 박막 소재·공정',
+      popupClose: '닫기', popupDay: '하루 동안 닫기' }
   : { mainMenu: 'Main menu', mobileMenu: 'Mobile menu', lang: 'Language', openMenu: 'Open menu', closeMenu: 'Close menu', theme: 'Toggle light / dark theme',
-      tagline: 'VANA Materials LAB. — Next-generation semiconductor thin films & processes' };
+      tagline: 'VANA Materials LAB. — Next-generation semiconductor thin films & processes',
+      popupClose: 'Close', popupDay: "Don't show for a day" };
 // 푸터 사업자 정보 (전자상거래법 표시 의무 항목) — Keystatic '사업자 정보'에서 관리
 const isKo = currentLocale === 'ko';
 const biz = {
@@ -81,9 +85,30 @@ const bannerStyle = bannerIsCustom
   ? `background-color:${banner.customBg};color:${banner.customText || '#ffffff'};`
   : '';
 // 배너 링크: 앵커·외부·내부 경로 모두 지원 (외부는 http로 시작)
+// 외부 링크는 새 탭으로 연다(사이트 이탈 방지). 내부 경로는 같은 탭 유지.
+const bannerIsExternal = !!banner.linkUrl && /^https?:\/\//.test(banner.linkUrl);
 const bannerHref = banner.linkUrl
-  ? (/^https?:\/\//.test(banner.linkUrl) ? banner.linkUrl : localizedHref(banner.linkUrl))
+  ? (bannerIsExternal ? banner.linkUrl : localizedHref(banner.linkUrl))
   : null;
+
+// ── 공지 팝업 (Keystatic '공지 팝업'에서 관리) ──────────────
+// 이미지 하나짜리 공지창. enabled + 이미지가 실제로 있을 때만 렌더한다.
+// 이미지는 빌드 타임에 webp 최적화하고, 최적화된 src(콘텐츠 해시 포함)를
+// "하루 동안 닫기" 억제 키로 쓴다 → 편집자가 이미지를 바꾸면 새 공지로 인식해 다시 표시.
+const popupImages = import.meta.glob<{ default: ImageMetadata }>(
+  '/src/assets/popup/*.{png,jpg,jpeg,webp,avif,gif}',
+  { eager: true },
+);
+let popupImg: Awaited<ReturnType<typeof getImage>> | null = null;
+if (popup.enabled && popup.image && popupImages[popup.image]) {
+  const meta = popupImages[popup.image].default;
+  popupImg = await getImage({ src: meta, width: Math.min(1040, meta.width), format: 'webp', quality: 85 });
+}
+// 팝업 이미지 클릭 시 열릴 주소 — 요구사항상 항상 새 탭. 내부 경로는 locale 을 붙여준다.
+const popupHref = popup.linkUrl
+  ? (/^https?:\/\//.test(popup.linkUrl) ? popup.linkUrl : localizedHref(popup.linkUrl))
+  : null;
+const popupAlt = popup.alt || (isKo ? 'VANAM 공지' : 'VANAM notice');
 const fl = isKo
   ? { ceo: '대표', bizNo: '사업자등록번호', mailOrder: '통신판매업 신고번호',
       privacy: '개인정보처리방침', terms: '이용약관', refund: '환불·교환 정책' }
@@ -172,6 +197,7 @@ const childHref = (path) => {
           if (isReload) {
             sessionStorage.removeItem('vanam-banner-hidden');
             sessionStorage.removeItem('vanam-sns-hinted');
+            sessionStorage.removeItem('vanam-popup-closed');
             // 새로고침 시 브라우저가 이전 스크롤 위치를 복원하지 않도록 하고 맨 위로 올린다.
             // (그래야 다시 나타나는 배너가 화면에 보인다.)
             if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
@@ -258,7 +284,10 @@ const childHref = (path) => {
           <p class="font-medium">
             {bannerText}
             {bannerHref && (
-              <a href={bannerHref} class="ml-2 inline-flex items-center gap-1 whitespace-nowrap font-semibold underline underline-offset-2 hover:opacity-80">
+              <a href={bannerHref}
+                target={bannerIsExternal ? '_blank' : undefined}
+                rel={bannerIsExternal ? 'noopener noreferrer' : undefined}
+                class="ml-2 inline-flex items-center gap-1 whitespace-nowrap font-semibold underline underline-offset-2 hover:opacity-80">
                 {bannerLinkLabel}
                 <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
               </a>
@@ -284,6 +313,83 @@ const childHref = (path) => {
           if (btn) btn.addEventListener('click', function () {
             el.style.display = 'none';
             try { sessionStorage.setItem(KEY, '1'); } catch (e) {}
+          });
+        })();
+      </script>
+      </>
+    )}
+    {popupImg && (
+      <>
+      <!-- ── 공지 팝업 ──────────────────────────────────────
+           Keystatic '공지 팝업'에서 이미지·링크를 관리한다.
+           기본은 숨김(hidden)으로 렌더하고, 아래 스크립트가 억제 조건
+           (세션 닫기 / 하루 닫기)을 통과했을 때만 연다 → 깜빡임 없음. -->
+      <div id="site-popup" class="fixed inset-0 z-[95] hidden items-center justify-center p-4"
+        role="dialog" aria-modal="true" aria-label={popupAlt} data-key={popupImg.src}>
+        <div id="popup-backdrop" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+        <div class="relative w-full max-w-[520px] overflow-hidden rounded-2xl border border-ink/10 bg-canvas shadow-2xl">
+          {popupHref ? (
+            <a href={popupHref} target="_blank" rel="noopener noreferrer" aria-label={popupAlt}
+              class="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent">
+              <img src={popupImg.src} width={popupImg.attributes.width} height={popupImg.attributes.height}
+                alt={popupAlt} loading="eager" decoding="async"
+                class="block h-auto max-h-[72vh] w-full bg-ink/[0.03] object-contain" />
+            </a>
+          ) : (
+            <img src={popupImg.src} width={popupImg.attributes.width} height={popupImg.attributes.height}
+              alt={popupAlt} loading="eager" decoding="async"
+              class="block h-auto max-h-[72vh] w-full bg-ink/[0.03] object-contain" />
+          )}
+          <div class="flex divide-x divide-ink/10 border-t border-ink/10 text-sm">
+            <button type="button" id="popup-day"
+              class="flex-1 px-4 py-3.5 text-ink/55 transition hover:bg-ink/[0.04] hover:text-ink">{ui.popupDay}</button>
+            <button type="button" id="popup-close"
+              class="flex-1 px-4 py-3.5 font-semibold text-ink/85 transition hover:bg-ink/[0.04] hover:text-ink">{ui.popupClose}</button>
+          </div>
+        </div>
+      </div>
+      <script is:inline>
+        // 공지 팝업 표시 제어.
+        //   "닫기"           → 이번 세션 동안 숨김 (배너와 동일 규칙: 새로고침·새 탭이면 다시 표시)
+        //   "하루 동안 닫기" → 이 브라우저에서 24시간 숨김 (localStorage)
+        //   억제 키 = 최적화된 이미지 src(콘텐츠 해시 포함) → 편집자가 이미지를 바꾸면
+        //   같은 24시간 안이라도 새 공지로 인식해 다시 표시된다.
+        (function () {
+          var el = document.getElementById('site-popup');
+          if (!el) return;
+          var KEY_S = 'vanam-popup-closed';   // 세션 닫기 (새로고침 시 head 스크립트가 지움)
+          var KEY_D = 'vanam-popup-day';      // 하루 닫기 { u: 만료시각(ms), k: 이미지 키 }
+          var key = el.getAttribute('data-key') || '';
+          try {
+            var d = JSON.parse(localStorage.getItem(KEY_D) || 'null');
+            if (d && d.k === key && Date.now() < d.u) return;   // 24시간 억제 중
+            if (d) localStorage.removeItem(KEY_D);              // 만료됐거나 공지가 바뀜 → 정리
+          } catch (e) {}
+          try { if (sessionStorage.getItem(KEY_S) === '1') return; } catch (e) {}
+
+          var closeBtn = document.getElementById('popup-close');
+          var dayBtn = document.getElementById('popup-day');
+          var backdrop = document.getElementById('popup-backdrop');
+
+          el.classList.remove('hidden');
+          el.classList.add('flex');
+          document.body.style.overflow = 'hidden';
+          if (closeBtn) closeBtn.focus();
+
+          function close() {
+            el.classList.add('hidden');
+            el.classList.remove('flex');
+            document.body.style.overflow = '';
+            try { sessionStorage.setItem(KEY_S, '1'); } catch (e) {}
+          }
+          if (closeBtn) closeBtn.addEventListener('click', close);
+          if (backdrop) backdrop.addEventListener('click', close);
+          document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && !el.classList.contains('hidden')) close();
+          });
+          if (dayBtn) dayBtn.addEventListener('click', function () {
+            try { localStorage.setItem(KEY_D, JSON.stringify({ u: Date.now() + 86400000, k: key })); } catch (e) {}
+            close();
           });
         })();
       </script>
