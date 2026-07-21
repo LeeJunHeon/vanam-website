@@ -35,9 +35,9 @@ const img = d.image ? waferImages[d.image]?.default : undefined;
     <div class="mt-8 grid gap-12 lg:grid-cols-2">
       <!-- 이미지 -->
       <div class="overflow-hidden rounded-xl border border-ink/10 bg-gradient-to-br from-panel2 to-canvas">
-        <div class="aspect-[4/3]">
+        <div class="aspect-[3/4]">
           {img ? (
-            <Image src={img} alt={name} width={900} height={675} class="h-full w-full object-contain" />
+            <Image src={img} alt={name} width={900} height={1200} class="h-full w-full object-cover" />
           ) : (
             <div class="flex h-full w-full items-center justify-center">
               <span class="text-4xl font-bold text-ink/15">VANAM</span>
