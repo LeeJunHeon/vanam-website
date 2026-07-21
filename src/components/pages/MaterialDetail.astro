@@ -25,7 +25,7 @@ const sysLabel = d.system === 'ald' ? 'ALD' : 'PVD — Sputter & Evaporator';
 
 // 상세 이미지: 파일이 실제로 있을 때만 최적화 생성. 없으면 null → placeholder 표시.
 const matImages = import.meta.glob<{ default: ImageMetadata }>(
-  '/src/assets/materials/*.{png,jpg,jpeg,webp,avif}',
+  '/src/assets/materials/**/*.{png,jpg,jpeg,webp,avif}',
 );
 let detailImg: Awaited<ReturnType<typeof getImage>> | null = null;
 if (d.image && matImages[d.image]) {

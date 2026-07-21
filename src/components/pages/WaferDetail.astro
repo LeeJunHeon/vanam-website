@@ -15,7 +15,7 @@ const isKo = locale === 'ko';
 const base = isKo ? '/ko' : '';
 
 const waferImages = import.meta.glob<{ default: ImageMetadata }>(
-  '/src/assets/wafers/*.{png,jpg,jpeg,webp,avif}',
+  '/src/assets/wafers/**/*.{png,jpg,jpeg,webp,avif}',
   { eager: true },
 );
 

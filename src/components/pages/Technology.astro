@@ -58,7 +58,7 @@ const matToProduct: Record<string, string> = { Oxide: 'oxides', Nitride: 'nitrid
 //   빌드 타임에 물질 데이터를 JSON 으로 만들어 페이지에 심고, 클릭 시 클라이언트에서 채운다.
 //   이미지는 파일이 실제로 있을 때만 최적화 생성 → 없으면 placeholder. (MaterialDetail 과 동일 로직)
 const matImages = import.meta.glob<{ default: ImageMetadata }>(
-  '/src/assets/materials/*.{png,jpg,jpeg,webp,avif}',
+  '/src/assets/materials/**/*.{png,jpg,jpeg,webp,avif}',
 );
 const materialInfo: Record<string, {
   formula: string; name: string; category: string; system: string; desc: string; img: string;

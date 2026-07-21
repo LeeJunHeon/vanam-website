@@ -15,7 +15,7 @@ const base = isKo ? '/ko' : '';
 
 // 웨이퍼 이미지 에셋 매핑: wafers/*.json 의 image 경로 → ImageMetadata
 const waferImages = import.meta.glob<{ default: ImageMetadata }>(
-  '/src/assets/wafers/*.{png,jpg,jpeg,webp,avif}',
+  '/src/assets/wafers/**/*.{png,jpg,jpeg,webp,avif}',
   { eager: true },
 );
 

@@ -96,7 +96,7 @@ const bannerHref = banner.linkUrl
 // 이미지는 빌드 타임에 webp 최적화하고, 최적화된 src(콘텐츠 해시 포함)를
 // "하루 동안 닫기" 억제 키로 쓴다 → 편집자가 이미지를 바꾸면 새 공지로 인식해 다시 표시.
 const popupImages = import.meta.glob<{ default: ImageMetadata }>(
-  '/src/assets/popup/*.{png,jpg,jpeg,webp,avif,gif}',
+  '/src/assets/popup/**/*.{png,jpg,jpeg,webp,avif,gif}',
   { eager: true },
 );
 let popupImg: Awaited<ReturnType<typeof getImage>> | null = null;

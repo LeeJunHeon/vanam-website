@@ -13,7 +13,7 @@ const isKo = locale === 'ko';
 const base = isKo ? '/ko' : '';
 
 const productImages = import.meta.glob<{ default: ImageMetadata }>(
-  '/src/assets/products/*.{png,jpg,jpeg,webp,avif}',
+  '/src/assets/products/**/*.{png,jpg,jpeg,webp,avif}',
   { eager: true },
 );
 
