@@ -49,6 +49,14 @@ const name = (p) => (isKo ? p.data.name : (p.data.name_en ?? p.data.name));
 const summary = (p) => (isKo ? p.data.summary : (p.data.summary_en ?? p.data.summary));
 const won = (n: number) => new Intl.NumberFormat('ko-KR').format(n);
 
+// ── Technology 에서 옮겨온 섹션들(주문 절차·분석·장비) — 문구는 site.json tech.* 그대로 사용
+const tech = site.technology;
+const processSteps = (tech.process ?? []) as { t: string; d: string }[];
+const analysisAll = (await getCollection('analysis')).sort((a, b) => a.data.order - b.data.order);
+const analysisMaterial = analysisAll.filter((a) => a.data.group === 'material');
+const analysisDevice = analysisAll.filter((a) => a.data.group === 'device');
+const equipment = (await getCollection('equipment')).sort((a, b) => a.data.order - b.data.order);
+
 // 웨이퍼 카드 가격: 등록된 웨이퍼 최저가를 "From $X"/"$X 부터" 로 표시 (환율=사업자 정보 usdRate)
 const usdRate = company.usdRate || 1500;
 const waferKrws = allWafers
@@ -60,7 +68,7 @@ const waferFromLabel = waferKrws.length
 ---
 
 <BaseLayout title={s.metaTitle} description={s.metaDescription}>
-  <section class="relative mx-auto max-w-6xl px-6 py-28 md:py-36">
+  <section id="products" class="scroll-mt-24 relative mx-auto max-w-6xl px-6 py-28 md:py-36">
     <div class="flex flex-wrap items-end justify-between gap-6">
       <div class="v-reveal">
         <p class="text-sm font-medium uppercase tracking-widest text-accent">{s.eyebrow}</p>
@@ -154,6 +162,117 @@ const waferFromLabel = waferKrws.length
         </div>
       </>
     )}
+  </section>
+
+  <!-- ── 증착 의뢰 프로세스 ──────────────────────────────
+       WP의 "Deposition Process" 설명을 6단계로 정리했다.
+       마지막에 견적 요청으로 이어진다 — 제품과 연결되는 지점. -->
+  <section id="process" class="scroll-mt-24 mx-auto max-w-6xl px-6 py-20">
+    <div class="v-reveal">
+      <h2 class="text-2xl font-bold text-ink">{tech.processHeading}</h2>
+      <p class="mt-3 text-base text-ink/55">{tech.processSub}</p>
+    </div>
+
+    <ol class="mt-12 grid gap-px overflow-hidden rounded-2xl border border-ink/10 bg-ink/10 sm:grid-cols-2 lg:grid-cols-3">
+      {processSteps.map((st, i) => (
+        <li class="v-reveal bg-canvas p-6">
+          <div class="flex items-baseline gap-3">
+            <span class="font-mono text-xs font-bold text-accent">{String(i + 1).padStart(2, '0')}</span>
+            <h3 class="text-base font-bold text-ink">{st.t}</h3>
+          </div>
+          <p class="mt-2.5 text-sm leading-relaxed text-ink/50">{st.d}</p>
+        </li>
+      ))}
+    </ol>
+
+    <div class="v-reveal mt-8 flex flex-wrap items-center gap-4">
+      <a href={`${base}/product`}
+        class="inline-flex items-center gap-2 rounded-lg bg-brand px-6 py-3 text-sm font-semibold text-onbrand transition hover:brightness-110">
+        {tech.processCta}
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
+    </div>
+  </section>
+
+  <!-- ── 분석 · 측정 ─────────────────────────────────────
+       WP에만 있던 장비 목록(SEM/TEM/XRD/XPS…)을 옮겨왔다.
+       제품의 분석 서비스 상품과 직결되는 정보라, 칩 형태로 한눈에 보이게 한다. -->
+  <section id="analysis" class="scroll-mt-24 mx-auto max-w-6xl px-6 py-20">
+    <div class="v-reveal">
+      <h2 class="text-2xl font-bold text-ink">{tech.analysisHeading}</h2>
+      <p class="mt-3 text-base text-ink/55">{tech.analysisSub}</p>
+    </div>
+
+    <div class="mt-10 grid gap-4 md:grid-cols-2">
+      {[
+        { title: tech.analysisMaterial, items: analysisMaterial },
+        { title: tech.analysisDevice, items: analysisDevice },
+      ].map((g) => (
+        <div class="v-reveal rounded-2xl border border-ink/10 bg-ink/[0.03] p-6">
+          <p class="text-xs font-medium uppercase tracking-widest text-accent">{g.title}</p>
+          <ul class="mt-5 space-y-3">
+            {g.items.map((a) => (
+              <li class="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 border-b border-ink/[0.06] pb-3 last:border-b-0 last:pb-0">
+                <span class="font-mono text-sm font-semibold text-ink">{a.data.name}</span>
+                <span class="text-xs text-ink/40">
+                  {locale === 'ko' ? (a.data.description_ko ?? a.data.description) : a.data.description}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <!-- ── 장비 ────────────────────────────────────────────
+       "30년 경력 진공장비 전문가와 자체 개발" — WP에 묻혀 있던 강력한 신뢰 요소. -->
+  <section id="equipment" class="scroll-mt-24 border-y border-ink/10 bg-ink/[0.02]">
+    <div class="mx-auto max-w-6xl px-6 py-20">
+      <div class="v-reveal">
+        <h2 class="text-2xl font-bold text-ink">{tech.equipmentHeading}</h2>
+        <p class="mt-3 max-w-3xl text-base text-ink/55">{tech.equipmentSub}</p>
+      </div>
+
+      {(() => {
+        const deposition = equipment.filter((e) => e.data.category === 'deposition');
+        const first = deposition[0];        // Sputter — 전체 폭
+        const rest = deposition.slice(1);   // ALD, Evaporator — 아래 2열
+        return (
+          <div class="mt-10 space-y-4">
+            {first && (
+              <div class="v-reveal rounded-xl border border-ink/10 bg-ink/[0.03] p-5">
+                <h3 class="text-base font-bold text-ink">{locale === 'ko' ? (first.data.name_ko ?? first.data.name) : first.data.name}</h3>
+                <p class="mt-2 whitespace-pre-line text-xs leading-relaxed text-ink/50">
+                  {locale === 'ko' ? (first.data.description_ko ?? first.data.description) : first.data.description}
+                </p>
+              </div>
+            )}
+            {rest.length > 0 && (
+              <div class="grid gap-4 sm:grid-cols-2">
+                {rest.map((e) => (
+                  <div class="v-reveal flex h-full flex-col rounded-xl border border-ink/10 bg-ink/[0.03] p-5">
+                    <h3 class="text-base font-bold text-ink">{locale === 'ko' ? (e.data.name_ko ?? e.data.name) : e.data.name}</h3>
+                    <p class="mt-2 whitespace-pre-line text-xs leading-relaxed text-ink/50">
+                      {locale === 'ko' ? (e.data.description_ko ?? e.data.description) : e.data.description}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
+      {equipment.filter((e) => e.data.category === 'data').map((e) => (
+        <div class="v-reveal mt-4 rounded-xl border border-accent/25 bg-accent/[0.05] p-6">
+          <h3 class="text-base font-bold text-accent">{locale === 'ko' ? (e.data.name_ko ?? e.data.name) : e.data.name}</h3>
+          <p class="mt-2 max-w-3xl text-sm leading-relaxed text-ink/60">
+            {locale === 'ko' ? (e.data.description_ko ?? e.data.description) : e.data.description}
+          </p>
+        </div>
+      ))}
+    </div>
   </section>
 </BaseLayout>
 

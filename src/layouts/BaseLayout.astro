@@ -133,18 +133,23 @@ const nav = [
     href: '/technology', label: 'Technology', labelKo: '기술',
     children: [
       { href: '/technology#core', label: 'Core Technology', labelKo: '핵심 기술' },
+      { href: '/technology#project2', label: 'Project 2: Quantum', labelKo: '프로젝트 2 (양자)' },
       { href: '/technology#materials', label: 'Material Library', labelKo: '소재 라이브러리' },
-      { href: '/technology#fs', label: 'Services', labelKo: '서비스' },
-      { href: '/technology#analysis', label: 'Analysis', labelKo: '분석·측정' },
-      { href: '/technology#equipment', label: 'Equipment', labelKo: '장비' },
-      { href: '/technology#rt', label: 'Applications', labelKo: '응용 분야' },
     ],
   },
-  { href: '/product', label: 'Product', labelKo: '제품' },
+  {
+    href: '/product', label: 'Product & Solution', labelKo: '제품 · 솔루션',
+    children: [
+      { href: '/product#products', label: 'Products', labelKo: '제품' },
+      { href: '/product#process', label: 'Order Process', labelKo: '주문 절차' },
+      { href: '/product#analysis', label: 'Analysis & Measurement Solution', labelKo: '분석·측정 솔루션' },
+      { href: '/product#equipment', label: 'Equipment Solution', labelKo: '장비 솔루션' },
+    ],
+  },
   { href: '/news', label: 'News', labelKo: '뉴스' },
   { href: '/blog', label: 'Blog', labelKo: '블로그' },
   {
-    href: '/contact', label: 'Contact & FAQ', labelKo: '문의 · FAQ',
+    href: '/contact', label: 'Contact', labelKo: '문의',
     children: [
       { href: '/contact#inquiry', label: 'Contact', labelKo: '문의하기' },
       { href: '/contact#location', label: 'Location', labelKo: '오시는 길' },
@@ -660,6 +665,12 @@ const childHref = (path) => {
         if (home && ABOUT.indexOf(h) >= 0) {
           location.replace(base + '/about#' + h);
           return;
+        }
+        // Technology 에서 Product 로 옮겨간 섹션 → 새 위치로 (2026-07 개편)
+        //   #analysis / #equipment 는 /product 의 같은 앵커, #fs(서비스, 삭제됨)는 /product 상단
+        if (p === base + '/technology') {
+          if (h === 'analysis' || h === 'equipment') { location.replace(base + '/product#' + h); return; }
+          if (h === 'fs') { location.replace(base + '/product'); return; }
         }
         // 이미 목적지 페이지인데 해당 요소가 있으면 스크롤만 맞춘다
         var el = document.getElementById(h);

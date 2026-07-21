@@ -28,22 +28,7 @@ function groupBySystem(system) {
 const sputter = groupBySystem('sputter');
 const ald = groupBySystem('ald');
 
-const services = (await getCollection('services')).sort((a, b) => a.data.order - b.data.order);
-
-
-
-// 증착 장비 · 공정 데이터 수집 시스템
-const equipment = (await getCollection('equipment')).sort((a, b) => a.data.order - b.data.order);
-
-// 분석·측정 항목 (제품의 분석 상품과 연결)
-const analysisAll = (await getCollection('analysis')).sort((a, b) => a.data.order - b.data.order);
-const analysisMaterial = analysisAll.filter((a) => a.data.group === 'material');
-const analysisDevice = analysisAll.filter((a) => a.data.group === 'device');
-
-// 증착 프로세스 6단계
-const processSteps = (tech.process ?? []) as { t: string; d: string }[];
-
-const applications = tech.applications;
+// 서비스·분석·장비·주문절차·응용분야 섹션은 Product 페이지로 이동/삭제됨 (2026-07 개편)
 
 // 소재 카테고리 라벨 (표시용) — 로직(enum)은 그대로, 표시만 locale별.
 const catLabel = locale === 'ko'
@@ -123,6 +108,36 @@ const contactHref = lhref('/contact');
     </div>
   </section>
 
+  <!-- ── Project 2: Quantum Photonics ──────────────────
+       Core Technology 바로 다음. (Core 와 이 섹션 사이가 추후 IR 자료로 채울 Project 1 자리) -->
+  <section id="project2" class="scroll-mt-24 border-t border-ink/10">
+    <div class="mx-auto max-w-6xl px-6 py-20">
+    <div class="v-reveal max-w-3xl">
+      <p class="text-sm font-medium uppercase tracking-[0.2em] text-accent">{tech.quantumEyebrow}</p>
+      <h2 class="mt-5 text-3xl font-bold leading-snug text-ink">{tech.quantumHeading}</h2>
+      <p class="mt-5 text-base leading-relaxed text-ink/65">{tech.quantumBody}</p>
+    </div>
+
+    <div class="v-reveal mt-12 grid gap-5 sm:grid-cols-2">
+      {tech.quantumItems.map((q) => (
+        <div class="rounded-2xl border border-ink/10 bg-ink/[0.03] p-6 transition hover:border-accent/50">
+          <h3 class="text-lg font-bold text-accent">{q.name}</h3>
+          <p class="mt-2 text-base leading-relaxed text-ink/65">{q.desc}</p>
+        </div>
+      ))}
+    </div>
+
+    <div class="v-reveal mt-8">
+      <p class="text-sm font-medium text-ink/50">{tech.quantumTargetLabel}</p>
+      <div class="mt-3 flex flex-wrap gap-2">
+        {tech.quantumTargets.map((t) => (
+          <span class="rounded-full border border-accent/30 bg-accent/10 px-3 py-1.5 text-sm text-ink/80">{t}</span>
+        ))}
+      </div>
+    </div>
+    </div>
+  </section>
+
   <section id="materials" class="scroll-mt-24 mx-auto max-w-6xl px-6 py-20">
     <div class="v-reveal">
       <h2 class="text-2xl font-bold text-ink">{tech.materialsHeading}</h2>
@@ -166,189 +181,6 @@ const contactHref = lhref('/contact');
     </div>
   </section>
 
-  <!-- ── 기존 벌크 vs 반암 박막 ─────────────────────────
-       VANAM의 경쟁력을 숫자로 증명하는 표. "1개월 → 6시간", "15단계 → 4단계".
-       왼쪽(기존)은 흐리게, 오른쪽(반암)은 시안으로 — 눈이 오른쪽으로 가게 만든다. -->
-  <section class="border-t border-ink/10">
-    <div class="mx-auto max-w-6xl px-6 py-20">
-    <div class="v-reveal max-w-3xl">
-      <p class="text-sm font-medium uppercase tracking-[0.2em] text-accent">{tech.quantumEyebrow}</p>
-      <h2 class="mt-5 text-3xl font-bold leading-snug text-ink">{tech.quantumHeading}</h2>
-      <p class="mt-5 text-base leading-relaxed text-ink/65">{tech.quantumBody}</p>
-    </div>
-
-    <div class="v-reveal mt-12 grid gap-5 sm:grid-cols-2">
-      {tech.quantumItems.map((q) => (
-        <div class="rounded-2xl border border-ink/10 bg-ink/[0.03] p-6 transition hover:border-accent/50">
-          <h3 class="text-lg font-bold text-accent">{q.name}</h3>
-          <p class="mt-2 text-base leading-relaxed text-ink/65">{q.desc}</p>
-        </div>
-      ))}
-    </div>
-
-    <div class="v-reveal mt-8">
-      <p class="text-sm font-medium text-ink/50">{tech.quantumTargetLabel}</p>
-      <div class="mt-3 flex flex-wrap gap-2">
-        {tech.quantumTargets.map((t) => (
-          <span class="rounded-full border border-accent/30 bg-accent/10 px-3 py-1.5 text-sm text-ink/80">{t}</span>
-        ))}
-      </div>
-    </div>
-    </div>
-  </section>
-
-  <section id="fs" class="scroll-mt-24 border-t border-ink/10 bg-ink/[0.02]">
-    <div class="mx-auto max-w-6xl px-6 py-20">
-      <div class="v-reveal"><h2 class="text-2xl font-bold text-ink">{tech.servicesHeading}</h2></div>
-      <div class="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {services.map((s, i) => (
-          <div class="v-reveal rounded-2xl border border-ink/10 bg-ink/[0.03] p-6">
-            <div class="text-sm font-bold text-accent">0{i+1}</div>
-            <h3 class="mt-3 text-lg font-bold text-ink">{locale === 'ko' ? (s.data.title_ko ?? s.data.title) : s.data.title}</h3>
-            <p class="mt-2 text-sm leading-relaxed text-ink/60">{locale === 'ko' ? (s.data.description_ko ?? s.data.description) : s.data.description}</p>
-            {(() => {
-              const bl = (locale === 'ko' ? s.data.bullets_ko : s.data.bullets) ?? s.data.bullets ?? [];
-              return bl.length > 0 && (
-                <ul class="mt-4 space-y-1.5 border-t border-ink/[0.08] pt-4">
-                  {bl.map((b) => (
-                    <li class="flex gap-2 text-xs leading-relaxed text-ink/45">
-                      <span class="mt-[7px] size-1 shrink-0 rounded-full bg-accent/50"></span>
-                      <span>{b}</span>
-                    </li>
-                  ))}
-                </ul>
-              );
-            })()}
-          </div>
-        ))}
-      </div>
-    </div>
-  </section>
-
-  <!-- ── 분석 · 측정 ─────────────────────────────────────
-       WP에만 있던 장비 목록(SEM/TEM/XRD/XPS…)을 옮겨왔다.
-       제품의 분석 서비스 상품과 직결되는 정보라, 칩 형태로 한눈에 보이게 한다. -->
-  <section id="analysis" class="scroll-mt-24 mx-auto max-w-6xl px-6 py-20">
-    <div class="v-reveal">
-      <h2 class="text-2xl font-bold text-ink">{tech.analysisHeading}</h2>
-      <p class="mt-3 text-base text-ink/55">{tech.analysisSub}</p>
-    </div>
-
-    <div class="mt-10 grid gap-4 md:grid-cols-2">
-      {[
-        { title: tech.analysisMaterial, items: analysisMaterial },
-        { title: tech.analysisDevice, items: analysisDevice },
-      ].map((g) => (
-        <div class="v-reveal rounded-2xl border border-ink/10 bg-ink/[0.03] p-6">
-          <p class="text-xs font-medium uppercase tracking-widest text-accent">{g.title}</p>
-          <ul class="mt-5 space-y-3">
-            {g.items.map((a) => (
-              <li class="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 border-b border-ink/[0.06] pb-3 last:border-b-0 last:pb-0">
-                <span class="font-mono text-sm font-semibold text-ink">{a.data.name}</span>
-                <span class="text-xs text-ink/40">
-                  {locale === 'ko' ? (a.data.description_ko ?? a.data.description) : a.data.description}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ))}
-    </div>
-  </section>
-
-  <!-- ── 장비 ────────────────────────────────────────────
-       "30년 경력 진공장비 전문가와 자체 개발" — WP에 묻혀 있던 강력한 신뢰 요소. -->
-  <section id="equipment" class="scroll-mt-24 border-y border-ink/10 bg-ink/[0.02]">
-    <div class="mx-auto max-w-6xl px-6 py-20">
-      <div class="v-reveal">
-        <h2 class="text-2xl font-bold text-ink">{tech.equipmentHeading}</h2>
-        <p class="mt-3 max-w-3xl text-base text-ink/55">{tech.equipmentSub}</p>
-      </div>
-
-      {(() => {
-        const deposition = equipment.filter((e) => e.data.category === 'deposition');
-        const first = deposition[0];        // Sputter — 전체 폭
-        const rest = deposition.slice(1);   // ALD, Evaporator — 아래 2열
-        return (
-          <div class="mt-10 space-y-4">
-            {first && (
-              <div class="v-reveal rounded-xl border border-ink/10 bg-ink/[0.03] p-5">
-                <h3 class="text-base font-bold text-ink">{locale === 'ko' ? (first.data.name_ko ?? first.data.name) : first.data.name}</h3>
-                <p class="mt-2 whitespace-pre-line text-xs leading-relaxed text-ink/50">
-                  {locale === 'ko' ? (first.data.description_ko ?? first.data.description) : first.data.description}
-                </p>
-              </div>
-            )}
-            {rest.length > 0 && (
-              <div class="grid gap-4 sm:grid-cols-2">
-                {rest.map((e) => (
-                  <div class="v-reveal flex h-full flex-col rounded-xl border border-ink/10 bg-ink/[0.03] p-5">
-                    <h3 class="text-base font-bold text-ink">{locale === 'ko' ? (e.data.name_ko ?? e.data.name) : e.data.name}</h3>
-                    <p class="mt-2 whitespace-pre-line text-xs leading-relaxed text-ink/50">
-                      {locale === 'ko' ? (e.data.description_ko ?? e.data.description) : e.data.description}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        );
-      })()}
-
-      {equipment.filter((e) => e.data.category === 'data').map((e) => (
-        <div class="v-reveal mt-4 rounded-xl border border-accent/25 bg-accent/[0.05] p-6">
-          <h3 class="text-base font-bold text-accent">{locale === 'ko' ? (e.data.name_ko ?? e.data.name) : e.data.name}</h3>
-          <p class="mt-2 max-w-3xl text-sm leading-relaxed text-ink/60">
-            {locale === 'ko' ? (e.data.description_ko ?? e.data.description) : e.data.description}
-          </p>
-        </div>
-      ))}
-    </div>
-  </section>
-
-  <!-- ── 증착 의뢰 프로세스 ──────────────────────────────
-       WP의 "Deposition Process" 설명을 6단계로 정리했다.
-       마지막에 견적 요청으로 이어진다 — 제품과 연결되는 지점. -->
-  <section class="mx-auto max-w-6xl px-6 py-20">
-    <div class="v-reveal">
-      <h2 class="text-2xl font-bold text-ink">{tech.processHeading}</h2>
-      <p class="mt-3 text-base text-ink/55">{tech.processSub}</p>
-    </div>
-
-    <ol class="mt-12 grid gap-px overflow-hidden rounded-2xl border border-ink/10 bg-ink/10 sm:grid-cols-2 lg:grid-cols-3">
-      {processSteps.map((st, i) => (
-        <li class="v-reveal bg-canvas p-6">
-          <div class="flex items-baseline gap-3">
-            <span class="font-mono text-xs font-bold text-accent">{String(i + 1).padStart(2, '0')}</span>
-            <h3 class="text-base font-bold text-ink">{st.t}</h3>
-          </div>
-          <p class="mt-2.5 text-sm leading-relaxed text-ink/50">{st.d}</p>
-        </li>
-      ))}
-    </ol>
-
-    <div class="v-reveal mt-8 flex flex-wrap items-center gap-4">
-      <a href={lhref('/product')}
-        class="inline-flex items-center gap-2 rounded-lg bg-brand px-6 py-3 text-sm font-semibold text-onbrand transition hover:brightness-110">
-        {tech.processCta}
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-      </a>
-    </div>
-  </section>
-
-  <section id="rt" class="scroll-mt-24 border-t border-ink/10">
-    <div class="mx-auto max-w-6xl px-6 py-20">
-    <div class="v-reveal">
-      <h2 class="text-2xl font-bold text-ink">{tech.applicationsHeading}</h2>
-      <p class="mt-3 text-base text-ink/55">{tech.applicationsDesc}</p>
-    </div>
-    <div class="mt-8 flex flex-wrap gap-3">
-      {applications.map((a) => (
-        <span class="v-reveal rounded-full border border-accent/30 bg-accent/10 px-4 py-2 text-sm font-medium text-ink/80">{a}</span>
-      ))}
-    </div>
-    </div>
-  </section>
 
   <section class="border-t border-ink/10">
     <div class="mx-auto max-w-6xl px-6 py-24 text-center">
@@ -391,7 +223,7 @@ const contactHref = lhref('/contact');
       </div>
 
       <div class="mt-6 overflow-hidden rounded-xl border border-ink/10 bg-ink/[0.03]">
-        <img data-slot="img" alt="" class="hidden w-full" loading="lazy" />
+        <img data-slot="img" alt="" class="hidden max-h-[65vh] w-full object-contain" loading="lazy" />
         <div data-slot="img-ph" class="flex aspect-[16/9] flex-col items-center justify-center gap-3 text-center">
           <svg class="h-12 w-12 text-ink/20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
           <p class="text-sm text-ink/40">{mt.imgSoon}</p>
