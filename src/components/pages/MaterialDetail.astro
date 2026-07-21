@@ -43,7 +43,12 @@ const t = {
   descSoon: isKo ? '상세 설명이 곧 추가됩니다.' : 'A detailed description will be added soon.',
   cta: isKo ? '이 물질로 견적 문의' : 'Request a quote for this material',
 };
-const contactHref = isKo ? '/ko/contact' : '/contact';
+// 물질 분류 → 해당 제품 페이지. 견적 CTA 를 그 제품(견적 폼)으로 보낸다.
+const catToProduct: Record<string, string> = { Oxide: 'oxides', Nitride: 'nitrides', Metal: 'metals' };
+const productId = catToProduct[d.category] ?? null;
+const quoteHref = productId
+  ? (isKo ? `/ko/product/${productId}` : `/product/${productId}`)
+  : (isKo ? '/ko/contact' : '/contact');
 ---
 
 <BaseLayout title={`${displayName} | VANAM`} description={desc ?? `${displayName} — VANAM thin-film material`}>
@@ -87,7 +92,7 @@ const contactHref = isKo ? '/ko/contact' : '/contact';
 
     <!-- 견적 문의 CTA -->
     <div class="mt-12">
-      <a href={contactHref}
+      <a href={quoteHref}
         class="inline-flex items-center gap-2 rounded-lg bg-brand px-5 py-3 text-sm font-semibold text-onbrand transition hover:brightness-110">
         {t.cta} →
       </a>

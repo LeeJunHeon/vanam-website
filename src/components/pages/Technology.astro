@@ -157,7 +157,6 @@ const contactHref = lhref('/contact');
             </div>
           </div>
         ))}
-        <p class="mt-6 text-xs text-ink/55">{tech.alsoAvailable}</p>
       </div>
     </div>
   </section>
@@ -263,7 +262,7 @@ const contactHref = lhref('/contact');
 
       <div class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {equipment.filter((e) => e.data.category === 'deposition').map((e) => (
-          <div class="v-reveal rounded-xl border border-ink/10 bg-ink/[0.03] p-5">
+          <div class="v-reveal flex h-full flex-col rounded-xl border border-ink/10 bg-ink/[0.03] p-5">
             <h3 class="text-base font-bold text-ink">{locale === 'ko' ? (e.data.name_ko ?? e.data.name) : e.data.name}</h3>
             <p class="mt-2 whitespace-pre-line text-xs leading-relaxed text-ink/50">
               {locale === 'ko' ? (e.data.description_ko ?? e.data.description) : e.data.description}
