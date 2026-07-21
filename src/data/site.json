@@ -336,7 +336,8 @@
       "waferBack": "Back to Products",
       "waferMetaTitle": "Wafers — VANAM",
       "waferMetaDescription": "Silicon and specialty wafers from VANAM. Quote-based; request pricing for your exact specification.",
-      "viewList": "View lineup"
+      "viewList": "View lineup",
+      "refundLabel": "Refund Policy"
     },
     "cartPage": {
       "metaTitle": "Cart | VANAM",
@@ -689,7 +690,8 @@
       "waferBack": "제품으로 돌아가기",
       "waferMetaTitle": "웨이퍼 — 반암",
       "waferMetaDescription": "반암의 실리콘·특수 웨이퍼. 견적 방식으로, 필요하신 사양에 맞춰 가격을 문의해 주세요.",
-      "viewList": "목록 보기"
+      "viewList": "목록 보기",
+      "refundLabel": "환불 규정"
     },
     "cartPage": {
       "metaTitle": "장바구니 | VANAM",

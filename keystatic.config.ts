@@ -303,6 +303,8 @@ export default config({
         ),
         leadTime: fields.text({ label: '납기 안내 (한글)', description: '예: 사양 확정 후 협의' }),
         leadTime_en: fields.text({ label: '납기 안내 (영문)' }),
+        refundPolicy: fields.text({ label: '환불 규정 (한글)', description: '상세 하단에 표시됩니다', multiline: true }),
+        refundPolicy_en: fields.text({ label: '환불 규정 (영문)', multiline: true }),
         published: fields.checkbox({ label: '사이트에 공개', defaultValue: true }),
         order: fields.integer({ label: '표시 순서', defaultValue: 99, validation: { isRequired: true } }),
       },

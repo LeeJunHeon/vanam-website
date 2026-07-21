@@ -1,0 +1,47 @@
+{
+  "name": "6인치 실리콘 웨이퍼 (Prime)",
+  "name_en": "6\" Silicon Wafer (Prime)",
+  "summary": "",
+  "summary_en": "",
+  "description": "",
+  "description_en": "",
+  "image": "/src/assets/wafers/wafer-si-6inch-prime.webp",
+  "specs": [
+    {
+      "label": "Type/Dopant",
+      "value": "P/Boron"
+    },
+    {
+      "label": "Grade",
+      "value": "Prime"
+    },
+    {
+      "label": "Diameter",
+      "value": "150mm ± Semi Std"
+    },
+    {
+      "label": "Thickness",
+      "value": "650-700um"
+    },
+    {
+      "label": "Resistivity",
+      "value": "1-10 Ω.cm"
+    },
+    {
+      "label": "Orientation",
+      "value": "1-0-0"
+    },
+    {
+      "label": "Surface",
+      "value": "SSP"
+    },
+    {
+      "label": "Quantity",
+      "value": "25EA"
+    }
+  ],
+  "refundPolicy": "※ 제품 수령 후 진공팩 개봉 시 환불이 불가합니다.",
+  "refundPolicy_en": "Returns are not accepted once the vacuum pack has been opened after delivery.",
+  "published": true,
+  "order": 4
+}

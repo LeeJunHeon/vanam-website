@@ -192,6 +192,8 @@ const wafers = defineCollection({
     specs: z.array(z.object({ label: z.string(), value: z.string(), label_en: z.string().optional(), value_en: z.string().optional() })).default([]),
     leadTime: opt(z.string()),                          // 납기 안내
     leadTime_en: opt(z.string()),
+    refundPolicy: opt(z.string()),                      // 환불 규정 (스펙과 별도로 하단 표시)
+    refundPolicy_en: opt(z.string()),
     published: z.boolean().default(true),
     order: z.number().default(0),
   }),

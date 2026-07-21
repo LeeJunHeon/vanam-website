@@ -16,6 +16,19 @@ const productImages = import.meta.glob<{ default: ImageMetadata }>(
   { eager: true },
 );
 
+// 웨이퍼 세부 제품 이미지: Wafers 카드의 대표 이미지를 이 사진들의 슬라이드쇼로 보여준다.
+const waferImages = import.meta.glob<{ default: ImageMetadata }>(
+  '/src/assets/wafers/*.{png,jpg,jpeg,webp,avif}',
+  { eager: true },
+);
+const waferSlides = (await getCollection('wafers'))
+  .filter((w) => w.data.published && w.data.image && waferImages[w.data.image])
+  .sort((a, b) => a.data.order - b.data.order)
+  .map((w) => ({
+    src: waferImages[w.data.image!].default,
+    alt: isKo ? w.data.name : (w.data.name_en ?? w.data.name),
+  }));
+
 const products = (await getCollection('products'))
   .filter((p) => p.data.published)
   .sort((a, b) => a.data.order - b.data.order);
@@ -72,7 +85,33 @@ const won = (n: number) => new Intl.NumberFormat('ko-KR').format(n);
                 class="product-card group flex flex-col overflow-hidden rounded-xl border border-ink/10 bg-ink/[0.02] transition hover:border-accent/50">
                 <a href={href} class="block">
                   <div class="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-panel2 to-canvas">
-                    {img ? (
+                    {p.data.category === 'wafer' && waferSlides.length > 0 ? (
+                      <div class="wafer-slider absolute inset-0" data-wafer-slider>
+                        {waferSlides.map((sl, i) => (
+                          <Image src={sl.src} alt={sl.alt} width={600} height={450}
+                            data-slide={i}
+                            class:list={["wafer-slide absolute inset-0 h-full w-full object-cover transition-opacity duration-500", i === 0 ? "opacity-100" : "opacity-0"]} />
+                        ))}
+                        {waferSlides.length > 1 && (
+                          <>
+                            <button type="button" data-wafer-prev aria-label="Previous"
+                              class="absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/35 p-1.5 text-white opacity-0 backdrop-blur transition hover:bg-black/55 group-hover:opacity-100">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                            </button>
+                            <button type="button" data-wafer-next aria-label="Next"
+                              class="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/35 p-1.5 text-white opacity-0 backdrop-blur transition hover:bg-black/55 group-hover:opacity-100">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                            </button>
+                            <div class="absolute bottom-2.5 left-1/2 z-10 flex -translate-x-1/2 gap-1.5">
+                              {waferSlides.map((_, i) => (
+                                <button type="button" data-wafer-dot={i} aria-label={`Slide ${i + 1}`}
+                                  class:list={["h-1.5 w-1.5 rounded-full transition", i === 0 ? "bg-white" : "bg-white/45"]}></button>
+                              ))}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    ) : img ? (
                       <Image src={img} alt={name(p)} width={600} height={450} class="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
                     ) : (
                       <div class="flex h-full w-full items-center justify-center">
@@ -129,4 +168,28 @@ const won = (n: number) => new Intl.NumberFormat('ko-KR').format(n);
     const n = cart.reduce((sum: number, i: { qty: number }) => sum + i.qty, 0);
     document.querySelectorAll('.cart-count').forEach((el) => { el.textContent = String(n); });
   } catch {}
+
+  // 웨이퍼 카드 슬라이드쇼 (세부 제품 대표사진 순환)
+  document.querySelectorAll<HTMLElement>('[data-wafer-slider]').forEach((slider) => {
+    const slides = slider.querySelectorAll<HTMLElement>('.wafer-slide');
+    const dots = slider.querySelectorAll<HTMLElement>('[data-wafer-dot]');
+    if (slides.length < 2) return;
+    let cur = 0;
+    const go = (n: number) => {
+      cur = (n + slides.length) % slides.length;
+      slides.forEach((sl, i) => {
+        sl.classList.toggle('opacity-100', i === cur);
+        sl.classList.toggle('opacity-0', i !== cur);
+      });
+      dots.forEach((d, i) => {
+        d.classList.toggle('bg-white', i === cur);
+        d.classList.toggle('bg-white/45', i !== cur);
+      });
+    };
+    // 카드 전체가 링크(<a>)라 화살표·점 클릭이 페이지 이동으로 새지 않게 막는다
+    const stop = (e: Event) => { e.preventDefault(); e.stopPropagation(); };
+    slider.querySelector('[data-wafer-prev]')?.addEventListener('click', (e) => { stop(e); go(cur - 1); });
+    slider.querySelector('[data-wafer-next]')?.addEventListener('click', (e) => { stop(e); go(cur + 1); });
+    dots.forEach((d, i) => d.addEventListener('click', (e) => { stop(e); go(i); }));
+  });
 </script>

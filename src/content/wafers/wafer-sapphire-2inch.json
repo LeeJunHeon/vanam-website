@@ -1,0 +1,35 @@
+{
+  "name": "2인치 사파이어 웨이퍼",
+  "name_en": "2\" Sapphire Wafer",
+  "summary": "",
+  "summary_en": "",
+  "description": "",
+  "description_en": "",
+  "image": "/src/assets/wafers/wafer-sapphire-2inch.webp",
+  "specs": [
+    {
+      "label": "Diameter",
+      "value": "50mm ± Semi Std"
+    },
+    {
+      "label": "Thickness",
+      "value": "0.43mm"
+    },
+    {
+      "label": "Orientation",
+      "value": "C"
+    },
+    {
+      "label": "Surface",
+      "value": "SSP"
+    },
+    {
+      "label": "Quantity",
+      "value": "25EA"
+    }
+  ],
+  "refundPolicy": "※ 제품 수령 후 진공팩 개봉 시 환불이 불가합니다.",
+  "refundPolicy_en": "Returns are not accepted once the vacuum pack has been opened after delivery.",
+  "published": true,
+  "order": 1
+}
