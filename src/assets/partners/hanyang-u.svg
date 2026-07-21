@@ -1,0 +1,850 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="_레이어_1" data-name="레이어_1" xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 283.46 283.46">
+  <!-- Generator: Adobe Illustrator 30.2.1, SVG Export Plug-In . SVG Version: 2.1.1 Build 1)  -->
+  <defs>
+    <style>
+      .st0 {
+        clip-path: url(#clippath-51);
+      }
+
+      .st1 {
+        clip-path: url(#clippath-34);
+      }
+
+      .st2 {
+        clip-path: url(#clippath-38);
+      }
+
+      .st3 {
+        clip-path: url(#clippath-21);
+      }
+
+      .st4 {
+        clip-path: url(#clippath-6);
+      }
+
+      .st5 {
+        clip-path: url(#clippath-7);
+      }
+
+      .st6 {
+        clip-path: url(#clippath-17);
+      }
+
+      .st7 {
+        clip-path: url(#clippath-31);
+      }
+
+      .st8 {
+        fill: url(#radial-gradient20);
+      }
+
+      .st9 {
+        clip-path: url(#clippath-15);
+      }
+
+      .st10 {
+        fill: url(#radial-gradient30);
+      }
+
+      .st11 {
+        clip-path: url(#clippath-33);
+      }
+
+      .st12 {
+        fill: url(#radial-gradient28);
+      }
+
+      .st13 {
+        clip-path: url(#clippath-18);
+      }
+
+      .st14 {
+        clip-path: url(#clippath-47);
+      }
+
+      .st15 {
+        clip-path: url(#clippath-4);
+      }
+
+      .st16 {
+        clip-path: url(#clippath-22);
+      }
+
+      .st17 {
+        fill: url(#radial-gradient45);
+      }
+
+      .st18 {
+        clip-path: url(#clippath-23);
+      }
+
+      .st19 {
+        fill: url(#radial-gradient39);
+      }
+
+      .st20 {
+        fill: url(#radial-gradient48);
+      }
+
+      .st21 {
+        clip-path: url(#clippath-9);
+      }
+
+      .st22 {
+        clip-path: url(#clippath-10);
+      }
+
+      .st23 {
+        clip-path: url(#clippath-42);
+      }
+
+      .st24 {
+        fill: url(#radial-gradient10);
+      }
+
+      .st25 {
+        fill: url(#radial-gradient41);
+      }
+
+      .st26 {
+        clip-path: url(#clippath-43);
+      }
+
+      .st27 {
+        fill: url(#linear-gradient1);
+      }
+
+      .st28 {
+        clip-path: url(#clippath-25);
+      }
+
+      .st29 {
+        fill: url(#radial-gradient24);
+      }
+
+      .st30 {
+        clip-path: url(#clippath-27);
+      }
+
+      .st31 {
+        fill: url(#radial-gradient11);
+      }
+
+      .st32 {
+        fill: url(#radial-gradient49);
+      }
+
+      .st33 {
+        clip-path: url(#clippath-11);
+      }
+
+      .st34 {
+        fill: url(#radial-gradient46);
+      }
+
+      .st35 {
+        fill: none;
+      }
+
+      .st36 {
+        fill: url(#radial-gradient34);
+      }
+
+      .st37 {
+        clip-path: url(#clippath-36);
+      }
+
+      .st38 {
+        clip-path: url(#clippath-35);
+      }
+
+      .st39 {
+        clip-path: url(#clippath-48);
+      }
+
+      .st40 {
+        fill: url(#radial-gradient);
+      }
+
+      .st41 {
+        fill: url(#radial-gradient21);
+      }
+
+      .st42 {
+        clip-path: url(#clippath-28);
+      }
+
+      .st43 {
+        fill: url(#radial-gradient19);
+      }
+
+      .st44 {
+        fill: url(#radial-gradient22);
+      }
+
+      .st45 {
+        fill: url(#radial-gradient5);
+      }
+
+      .st46 {
+        fill: url(#radial-gradient1);
+      }
+
+      .st47 {
+        clip-path: url(#clippath-1);
+      }
+
+      .st48 {
+        fill: url(#radial-gradient42);
+      }
+
+      .st49 {
+        clip-path: url(#clippath-45);
+      }
+
+      .st50 {
+        clip-path: url(#clippath-46);
+      }
+
+      .st51 {
+        clip-path: url(#clippath-40);
+      }
+
+      .st52 {
+        fill: url(#radial-gradient33);
+      }
+
+      .st53 {
+        clip-path: url(#clippath-5);
+      }
+
+      .st54 {
+        fill: url(#radial-gradient47);
+      }
+
+      .st55 {
+        clip-path: url(#clippath-20);
+      }
+
+      .st56 {
+        fill: url(#radial-gradient38);
+      }
+
+      .st57 {
+        fill: url(#radial-gradient31);
+      }
+
+      .st58 {
+        clip-path: url(#clippath-8);
+      }
+
+      .st59 {
+        fill: url(#radial-gradient35);
+      }
+
+      .st60 {
+        fill: url(#radial-gradient26);
+      }
+
+      .st61 {
+        clip-path: url(#clippath-52);
+      }
+
+      .st62 {
+        clip-path: url(#clippath-41);
+      }
+
+      .st63 {
+        fill: url(#radial-gradient7);
+      }
+
+      .st64 {
+        fill: url(#radial-gradient37);
+      }
+
+      .st65 {
+        fill: url(#radial-gradient18);
+      }
+
+      .st66 {
+        clip-path: url(#clippath-3);
+      }
+
+      .st67 {
+        fill: url(#radial-gradient14);
+      }
+
+      .st68 {
+        clip-path: url(#clippath-26);
+      }
+
+      .st69 {
+        fill: url(#radial-gradient13);
+      }
+
+      .st70 {
+        clip-path: url(#clippath-12);
+      }
+
+      .st71 {
+        clip-path: url(#clippath-50);
+      }
+
+      .st72 {
+        clip-path: url(#clippath-14);
+      }
+
+      .st73 {
+        fill: url(#radial-gradient32);
+      }
+
+      .st74 {
+        clip-path: url(#clippath-30);
+      }
+
+      .st75 {
+        fill: url(#radial-gradient27);
+      }
+
+      .st76 {
+        clip-path: url(#clippath-19);
+      }
+
+      .st77 {
+        fill: url(#radial-gradient8);
+      }
+
+      .st78 {
+        fill: url(#radial-gradient12);
+      }
+
+      .st79 {
+        fill: url(#radial-gradient43);
+      }
+
+      .st80 {
+        clip-path: url(#clippath-32);
+      }
+
+      .st81 {
+        fill: url(#radial-gradient25);
+      }
+
+      .st82 {
+        fill: url(#radial-gradient23);
+      }
+
+      .st83 {
+        fill: url(#radial-gradient17);
+      }
+
+      .st84 {
+        fill: url(#radial-gradient6);
+      }
+
+      .st85 {
+        fill: url(#radial-gradient2);
+      }
+
+      .st86 {
+        fill: url(#radial-gradient40);
+      }
+
+      .st87 {
+        clip-path: url(#clippath-39);
+      }
+
+      .st88 {
+        fill: url(#radial-gradient50);
+      }
+
+      .st89 {
+        fill: url(#radial-gradient15);
+      }
+
+      .st90 {
+        fill: url(#radial-gradient44);
+      }
+
+      .st91 {
+        clip-path: url(#clippath-16);
+      }
+
+      .st92 {
+        clip-path: url(#clippath-2);
+      }
+
+      .st93 {
+        clip-path: url(#clippath-29);
+      }
+
+      .st94 {
+        fill: url(#radial-gradient4);
+      }
+
+      .st95 {
+        clip-path: url(#clippath-49);
+      }
+
+      .st96 {
+        clip-path: url(#clippath-37);
+      }
+
+      .st97 {
+        fill: url(#radial-gradient3);
+      }
+
+      .st98 {
+        fill: url(#radial-gradient29);
+      }
+
+      .st99 {
+        clip-path: url(#clippath-13);
+      }
+
+      .st100 {
+        fill: url(#radial-gradient9);
+      }
+
+      .st101 {
+        fill: url(#linear-gradient);
+      }
+
+      .st102 {
+        clip-path: url(#clippath-24);
+      }
+
+      .st103 {
+        clip-path: url(#clippath);
+      }
+
+      .st104 {
+        fill: url(#radial-gradient36);
+      }
+
+      .st105 {
+        fill: url(#radial-gradient16);
+      }
+
+      .st106 {
+        clip-path: url(#clippath-44);
+      }
+    </style>
+    <clipPath id="clippath">
+      <path class="st35" d="M8.65,141.14c0,73.34,59.48,132.81,132.82,132.81s132.8-59.46,132.8-132.81S214.8,8.32,141.47,8.32,8.65,67.79,8.65,141.14"/>
+    </clipPath>
+    <radialGradient id="radial-gradient" cx="-155.41" cy="563.73" fx="-155.41" fy="563.73" r=".76" gradientTransform="translate(44945.95 162799.76) scale(288.66 -288.66)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff"/>
+      <stop offset=".26" stop-color="#fff"/>
+      <stop offset=".36" stop-color="#f1f1f1"/>
+      <stop offset=".9" stop-color="#aaabab"/>
+      <stop offset="1" stop-color="#aaabab"/>
+    </radialGradient>
+    <clipPath id="clippath-1">
+      <path class="st35" d="M9.16,141.14C9.16,68.19,68.51,8.83,141.47,8.83s132.29,59.35,132.29,132.3-59.34,132.3-132.29,132.3S9.16,214.09,9.16,141.14M8.14,141.14c0,73.51,59.81,133.32,133.33,133.32s133.31-59.81,133.31-133.32S214.98,7.81,141.47,7.81,8.14,67.62,8.14,141.14"/>
+    </clipPath>
+    <radialGradient id="radial-gradient1" cx="-155.41" cy="563.73" fx="-155.41" fy="563.73" r=".76" gradientTransform="translate(45520.68 164902.52) scale(292.39 -292.38)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#96b3dd"/>
+      <stop offset=".1" stop-color="#5c8cc1"/>
+      <stop offset=".2" stop-color="#2465a7"/>
+      <stop offset=".25" stop-color="#0f579d"/>
+      <stop offset=".57" stop-color="#004989"/>
+      <stop offset=".75" stop-color="#002561"/>
+      <stop offset=".91" stop-color="#000a44"/>
+      <stop offset="1" stop-color="#000039"/>
+    </radialGradient>
+    <clipPath id="clippath-2">
+      <path class="st35" d="M13.91,141.14c0,70.45,57.12,127.56,127.56,127.56s127.56-57.11,127.56-127.56S211.9,13.57,141.46,13.57,13.91,70.68,13.91,141.14"/>
+    </clipPath>
+    <linearGradient id="linear-gradient" x1="-155.07" y1="563.4" x2="-153.86" y2="563.4" gradientTransform="translate(-118676.48 32717.98) rotate(90) scale(210.9 -210.9)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#c9caca"/>
+      <stop offset=".27" stop-color="#a2a2a2"/>
+      <stop offset=".59" stop-color="#7a7979"/>
+      <stop offset=".85" stop-color="#626060"/>
+      <stop offset="1" stop-color="#595757"/>
+    </linearGradient>
+    <clipPath id="clippath-3">
+      <path class="st35" d="M15.48,141.14c0,69.58,56.42,125.99,125.99,125.99s125.99-56.4,125.99-125.99S211.04,15.14,141.46,15.14,15.48,71.54,15.48,141.14"/>
+    </clipPath>
+    <radialGradient id="radial-gradient2" cx="-155.38" cy="563.71" fx="-155.38" fy="563.71" r=".76" gradientTransform="translate(48604.17 176095.64) scale(312.26 -312.26)" xlink:href="#radial-gradient1"/>
+    <clipPath id="clippath-4">
+      <path class="st35" d="M53.54,141.14c0,48.56,39.36,87.93,87.93,87.93s87.91-39.37,87.91-87.93-39.36-87.93-87.91-87.93-87.93,39.37-87.93,87.93"/>
+    </clipPath>
+    <linearGradient id="linear-gradient1" x1="-155.15" y1="563.65" x2="-153.94" y2="563.65" gradientTransform="translate(81782 -22243.16) rotate(-90) scale(144.84 -144.84)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff"/>
+      <stop offset=".16" stop-color="#dcdcdc"/>
+      <stop offset=".45" stop-color="#a4a3a3"/>
+      <stop offset=".69" stop-color="#7b7979"/>
+      <stop offset=".88" stop-color="#626060"/>
+      <stop offset="1" stop-color="#595757"/>
+    </linearGradient>
+    <clipPath id="clippath-5">
+      <path class="st35" d="M55.7,141.06c0,47.36,38.41,85.77,85.77,85.77s85.75-38.41,85.75-85.77-38.39-85.77-85.75-85.77-85.77,38.41-85.77,85.77"/>
+    </clipPath>
+    <radialGradient id="radial-gradient3" cx="-155.41" cy="563.73" fx="-155.41" fy="563.73" r=".76" gradientTransform="translate(44945.89 162795.92) scale(288.65 -288.65)" xlink:href="#radial-gradient"/>
+    <clipPath id="clippath-6">
+      <path class="st35" d="M179.44,102.21v4.23h-51.4v-4.23h-12.25v4.23h-32.26v10.88h9.71c-6.73,2.94-11.07,9.36-11.07,18.74,0,12.58,11.84,19.74,21.37,19.74h35.59v-3.82h10.08v3.82h50.89v-10.88h-8.38v-27.61h8.38v-10.88h-8.38v-4.23h-12.25Z"/>
+    </clipPath>
+    <radialGradient id="radial-gradient4" cx="-155.57" cy="563.82" fx="-155.57" fy="563.82" r=".76" gradientTransform="translate(33396.56 120785.4) scale(214.08 -214.08)" xlink:href="#radial-gradient1"/>
+    <clipPath id="clippath-7">
+      <path class="st35" d="M176.6,103.53v-4.42c.97,0,17.87-.03,18.84-.04v4.46h8.29c0,.96-.03,15.89-.04,16.86h-8.54v22.19h8.51c0,.96.03,16.1.03,17.08-1.03,0-55.95-.1-56.97-.1v-3.9h-4.37v4h-38.93c-7.61,0-14.92-3.36-19.1-8.76-3.6-4.2-5.72-9.62-5.72-14.53,0-6.52,1.66-11.47,5.22-15.57l.76-.87s-3.53.01-4.31.01v-16.41h32.69v-4.42c.97,0,17.57.03,18.54.04v4.38h45.1ZM175.55,98.06v4.42h-42.99v-4.38l-20.65-.04v4.42h-32.69v18.52s2.1,0,3.17,0c-3.26,4.12-4.85,9.02-4.85,15.38,0,5.15,2.23,10.83,5.96,15.19,4.35,5.64,12,9.15,19.92,9.15h39.98v-4h2.27v3.9l59.09.1-.04-19.18h-8.5v-20.08h8.54l.04-18.96h-8.29v-4.46l-20.95.04Z"/>
+    </clipPath>
+    <radialGradient id="radial-gradient5" cx="-155.41" cy="563.74" fx="-155.41" fy="563.74" r=".76" gradientTransform="translate(45055.7 163231.81) scale(289.41 -289.41)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#96b3dd"/>
+      <stop offset=".1" stop-color="#5c8cc1"/>
+      <stop offset=".2" stop-color="#2465a7"/>
+      <stop offset=".25" stop-color="#0f579d"/>
+      <stop offset=".57" stop-color="#004989"/>
+      <stop offset=".75" stop-color="#002561"/>
+      <stop offset=".91" stop-color="#000a44"/>
+      <stop offset="1" stop-color="#000039"/>
+    </radialGradient>
+    <clipPath id="clippath-8">
+      <path class="st35" d="M107.35,135.51v6.65c0,3.34,2.17,5.37,5.7,5.37l17.08.02v-2.88h-17.37v-9.17h-5.41ZM108.22,125.88c0-2.86,1.97-5.03,4.41-5.03s4.41,2.17,4.41,5.03-1.97,5.04-4.41,5.04-4.41-2.12-4.41-5.04M103.47,117.55v2.88h3.45c-2.08,1.28-3.38,3.24-3.38,5.45,0,3.85,3.91,6.97,9.08,6.97s9.08-3.12,9.08-6.97c0-2.21-1.29-4.17-3.37-5.45h3.46v-2.88h-18.33ZM154.27,122.12c0-3.35,2.16-5.6,4.81-5.6s4.82,2.25,4.82,5.6-2.16,5.62-4.82,5.62-4.81-2.19-4.81-5.62M149.19,122.12c0,4.47,4.27,8.08,9.9,8.08s9.91-3.61,9.91-8.08-4.26-8.08-9.91-8.08-9.9,3.62-9.9,8.08M107.76,116.36h9.75v-2.87h-9.75v2.87ZM124.83,113.49v23.43h4.98v-12.21h4.06v-2.87h-4.06v-8.35h-4.98ZM158.86,140.53c0-3.25,2.73-5.2,5.75-5.2s5.75,1.95,5.75,5.2-2.72,5.2-5.75,5.2-5.75-1.98-5.75-5.2M170.37,113.49v20.33c-1.66-.79-3.63-1.25-5.75-1.25-5.95,0-10.7,3.58-10.73,7.97.03,4.39,4.78,7.97,10.73,7.97s10.69-3.58,10.73-7.97h0v-12.96h4.22v-2.87h-4.22v-4.13h4.22v-2.88h-4.22v-4.21h-4.99Z"/>
+    </clipPath>
+    <radialGradient id="radial-gradient6" cx="-155.42" cy="563.73" fx="-155.42" fy="563.73" r=".76" gradientTransform="translate(44945.85 162792.51) scale(288.65 -288.65)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff"/>
+      <stop offset=".1" stop-color="#fff"/>
+      <stop offset=".25" stop-color="#f4f5f5"/>
+      <stop offset=".51" stop-color="#d9dbdc"/>
+      <stop offset=".84" stop-color="#acb0b3"/>
+      <stop offset="1" stop-color="#949a9d"/>
+    </radialGradient>
+    <clipPath id="clippath-9">
+      <path class="st35" d="M243.5,159.82c-.04,3.43,2.1,6.22,2.1,6.22,0,0,2.2-2.75,2.23-6.18.04-3.42-2.09-6.22-2.09-6.22,0,0-2.2,2.76-2.24,6.18"/>
+    </clipPath>
+    <radialGradient id="radial-gradient7" cx="-155.28" cy="563.1" fx="-155.28" fy="563.1" r=".77" gradientTransform="translate(-162396.2 44809.13) rotate(90.02) scale(288.54 -288.54)" xlink:href="#radial-gradient"/>
+    <clipPath id="clippath-10">
+      <path class="st35" d="M248.36,167.91c-4.13,4.68-4.98,10.68-4.98,10.68,0,0,5.85-1.58,9.98-6.25,4.13-4.68,4.74-10.09,4.74-10.09,0,0-5.61,1-9.75,5.67"/>
+    </clipPath>
+    <radialGradient id="radial-gradient8" cx="-155.28" cy="563.11" fx="-155.28" fy="563.11" r=".76" gradientTransform="translate(-162404.01 44893.03) rotate(89.99) scale(288.59 -288.59)" xlink:href="#radial-gradient"/>
+    <clipPath id="clippath-11">
+      <path class="st35" d="M236.95,169.24c1.2,5.16,4.83,8.72,4.83,8.72,0,0,1.48-4.31.28-9.46-1.19-5.17-4.9-8.01-4.9-8.01,0,0-1.4,3.59-.21,8.74"/>
+    </clipPath>
+    <radialGradient id="radial-gradient9" cx="-155.28" cy="563.12" fx="-155.28" fy="563.12" r=".76" gradientTransform="translate(-162429.61 44892.41) rotate(89.99) scale(288.63 -288.63)" xlink:href="#radial-gradient"/>
+    <clipPath id="clippath-12">
+      <path class="st35" d="M242.48,184.54c-4.88,3.89-6.76,9.65-6.76,9.65,0,0,6.04-.55,10.91-4.44,4.89-3.89,6.44-9.1,6.44-9.1,0,0-5.7,0-10.59,3.88"/>
+    </clipPath>
+    <radialGradient id="radial-gradient10" cx="-155.28" cy="563.11" fx="-155.28" fy="563.11" r=".76" gradientTransform="translate(-155805.58 64310.28) rotate(83.02) scale(288.64 -288.65)" xlink:href="#radial-gradient"/>
+    <clipPath id="clippath-13">
+      <path class="st35" d="M231,183.74c.28,5.29,3.24,9.43,3.24,9.43,0,0,2.2-3.98,1.92-9.29-.28-5.28-3.45-8.72-3.45-8.72,0,0-2,3.3-1.72,8.58"/>
+    </clipPath>
+    <radialGradient id="radial-gradient11" cx="-155.28" cy="563.12" fx="-155.28" fy="563.12" r=".76" gradientTransform="translate(-162461.06 44873.38) rotate(90) scale(288.67 -288.68)" xlink:href="#radial-gradient"/>
+    <clipPath id="clippath-14">
+      <path class="st35" d="M211.96,225.89c-5.74,1.32-9.7,5.45-9.7,5.45,0,0,5.37,2,11.09.69,5.75-1.32,9.19-5.12,9.19-5.12,0,0-2.96-1.42-6.99-1.42-1.12,0-2.33.11-3.59.39"/>
+    </clipPath>
+    <radialGradient id="radial-gradient12" cx="-155.28" cy="563.12" fx="-155.28" fy="563.12" r=".76" gradientTransform="translate(-162507.31 44911.25) rotate(90) scale(288.77 -288.78)" xlink:href="#radial-gradient"/>
+    <clipPath id="clippath-15">
+      <path class="st35" d="M201.96,219.93c-2.07,5-1.17,10.1-1.17,10.1,0,0,3.77-2.7,5.86-7.68,2.07-4.97.68-9.54.68-9.54,0,0-3.29,2.16-5.36,7.11"/>
+    </clipPath>
+    <radialGradient id="radial-gradient13" cx="-155.27" cy="563.11" fx="-155.27" fy="563.11" r=".76" gradientTransform="translate(-162472.21 44908.37) rotate(89.99) scale(288.71 -288.72)" xlink:href="#radial-gradient"/>
+    <clipPath id="clippath-16">
+      <path class="st35" d="M187.09,238.83s4.55,3.01,10.15,3.03c5.62.01,9.63-2.78,9.63-2.78,0,0-4-3.2-9.61-3.2h-.09c-5.57,0-10.08,2.96-10.08,2.96"/>
+    </clipPath>
+    <radialGradient id="radial-gradient14" cx="-155.27" cy="563.11" fx="-155.27" fy="563.11" r=".75" gradientTransform="translate(-162411.95 44968.48) rotate(89.97) scale(288.65 -288.65)" xlink:href="#radial-gradient"/>
+    <clipPath id="clippath-17">
+      <path class="st35" d="M189.44,227.45c-3.14,4.38-3.42,9.56-3.42,9.56,0,0,4.3-1.77,7.42-6.16,3.16-4.37,2.83-9.12,2.83-9.12,0,0-3.7,1.34-6.84,5.72"/>
+    </clipPath>
+    <radialGradient id="radial-gradient15" cx="-155.27" cy="563.11" fx="-155.27" fy="563.11" r=".76" gradientTransform="translate(-162411.39 44866.16) rotate(90) scale(288.6 -288.6)" xlink:href="#radial-gradient"/>
+    <clipPath id="clippath-18">
+      <path class="st35" d="M172.61,246.85c-1.76-.85-2.49-2.99-1.63-4.74.87-1.76,2.99-2.48,4.76-1.62,1.76.87,2.48,2.99,1.62,4.75-.62,1.25-1.87,1.97-3.18,1.97-.53,0-1.07-.12-1.57-.37M173.95,236.2c-.7,1.4-1.01,2.84-.95,4.05-.7-.98-1.8-1.95-3.21-2.64-2.94-1.45-7.12-1.75-7.97-.02-.87,1.75,1.92,4.87,4.86,6.31,1.42.69,2.84,1,4.06.95-.99.69-1.95,1.8-2.64,3.21-1.45,2.95-1.77,7.12-.02,7.96,1.73.88,4.86-1.92,6.3-4.85.69-1.42,1.01-2.85.95-4.06.7.99,1.81,1.95,3.23,2.64,2.93,1.45,7.1,1.75,7.96.02.85-1.73-1.92-4.86-4.87-6.32-1.41-.7-2.84-.99-4.05-.93,1-.7,1.94-1.81,2.64-3.22,1.44-2.94,1.76-7.12.02-7.98-.22-.11-.46-.15-.71-.15-1.78,0-4.32,2.45-5.59,5.03"/>
+    </clipPath>
+    <radialGradient id="radial-gradient16" cx="-155.28" cy="563.11" fx="-155.28" fy="563.11" r=".76" gradientTransform="translate(-162414.3 44891.21) rotate(90) scale(288.61 -288.62)" xlink:href="#radial-gradient"/>
+    <clipPath id="clippath-19">
+      <path class="st35" d="M223.11,206.07c-.29-1.98,1.09-3.81,3.07-4.12,1.98-.28,3.82,1.11,4.1,3.09.29,1.98-1.08,3.82-3.07,4.11-.17.02-.34.03-.51.03-1.78,0-3.32-1.3-3.58-3.11M224.7,191.62c-1.96.28-3,4.43-2.52,7.75.23,1.59.8,2.97,1.55,3.95-1.16-.44-2.65-.59-4.24-.36-3.32.46-7.02,2.62-6.73,4.57.27,1.96,4.42,2.99,7.75,2.51,1.6-.22,2.97-.79,3.97-1.54-.44,1.16-.6,2.66-.37,4.25.47,3.31,2.62,7,4.58,6.71,1.96-.28,2.98-4.42,2.51-7.74-.23-1.58-.8-2.98-1.55-3.97,1.16.45,2.65.6,4.23.38,3.33-.48,7.03-2.64,6.74-4.59-.28-1.95-4.43-2.98-7.75-2.5-1.6.22-2.98.79-3.96,1.54.43-1.15.6-2.65.37-4.23-.47-3.2-2.47-6.75-4.38-6.75-.07,0-.14,0-.21.02"/>
+    </clipPath>
+    <radialGradient id="radial-gradient17" cx="-155.27" cy="563.12" fx="-155.27" fy="563.12" r=".76" gradientTransform="translate(-162458.16 44862.24) rotate(90.01) scale(288.67 -288.67)" xlink:href="#radial-gradient"/>
+    <clipPath id="clippath-20">
+      <path class="st35" d="M35.89,159.86c.05,3.43,2.23,6.18,2.23,6.18,0,0,2.14-2.79,2.1-6.22-.04-3.42-2.24-6.18-2.24-6.18,0,0-2.13,2.81-2.1,6.22"/>
+    </clipPath>
+    <radialGradient id="radial-gradient18" cx="-155.18" cy="563.94" fx="-155.18" fy="563.94" r=".76" gradientTransform="translate(-44707.39 163022.77) rotate(-179.99) scale(288.74)" xlink:href="#radial-gradient"/>
+    <clipPath id="clippath-21">
+      <path class="st35" d="M30.36,172.34c4.13,4.67,9.98,6.25,9.98,6.25,0,0-.86-5.99-4.99-10.68-4.13-4.67-9.73-5.67-9.73-5.67,0,0,.6,5.42,4.75,10.09"/>
+    </clipPath>
+    <radialGradient id="radial-gradient19" cx="-155.18" cy="563.94" fx="-155.18" fy="563.94" r=".76" gradientTransform="translate(-44694.16 162990.82) rotate(-179.99) scale(288.66)" xlink:href="#radial-gradient"/>
+    <clipPath id="clippath-22">
+      <path class="st35" d="M41.67,168.5c-1.2,5.15.28,9.46.28,9.46,0,0,3.64-3.56,4.84-8.72,1.19-5.15-.21-8.74-.21-8.74,0,0-3.71,2.84-4.9,8.01"/>
+    </clipPath>
+    <radialGradient id="radial-gradient20" cx="-155.18" cy="563.94" fx="-155.18" fy="563.94" r=".76" gradientTransform="translate(-44634.84 162976.61) rotate(180) scale(288.64)" xlink:href="#radial-gradient"/>
+    <clipPath id="clippath-23">
+      <path class="st35" d="M30.65,180.65s1.54,5.21,6.42,9.1c4.89,3.89,10.92,4.44,10.92,4.44,0,0-1.88-5.76-6.76-9.65-4.88-3.88-10.58-3.88-10.59-3.88h0"/>
+    </clipPath>
+    <radialGradient id="radial-gradient21" cx="-155.18" cy="563.94" fx="-155.18" fy="563.94" r=".76" gradientTransform="translate(-44589.56 163020.96) rotate(179.98) scale(288.66)" xlink:href="#radial-gradient"/>
+    <clipPath id="clippath-24">
+      <path class="st35" d="M47.55,183.88c-.27,5.3,1.93,9.29,1.93,9.29,0,0,2.96-4.14,3.24-9.43.27-5.28-1.71-8.58-1.71-8.58,0,0-3.17,3.44-3.46,8.72"/>
+    </clipPath>
+    <radialGradient id="radial-gradient22" cx="-155.17" cy="563.94" fx="-155.17" fy="563.94" r=".76" gradientTransform="translate(-44624.47 163031.9) rotate(180) scale(288.72)" xlink:href="#radial-gradient"/>
+    <clipPath id="clippath-25">
+      <path class="st35" d="M61.19,226.91s3.43,3.8,9.18,5.12c5.73,1.31,11.09-.69,11.09-.69,0,0-3.96-4.13-9.7-5.45-1.25-.29-2.46-.39-3.59-.39-4.03,0-6.99,1.42-6.99,1.42"/>
+    </clipPath>
+    <radialGradient id="radial-gradient23" cx="-155.17" cy="563.94" fx="-155.17" fy="563.94" r=".76" gradientTransform="translate(-44599.71 163085.96) rotate(-180) scale(288.8)" xlink:href="#radial-gradient"/>
+    <clipPath id="clippath-26">
+      <path class="st35" d="M77.08,222.36c2.08,4.98,5.85,7.68,5.85,7.68,0,0,.9-5.11-1.17-10.1-2.07-4.96-5.36-7.11-5.36-7.11,0,0-1.39,4.57.68,9.54"/>
+    </clipPath>
+    <radialGradient id="radial-gradient24" cx="-155.17" cy="563.94" fx="-155.17" fy="563.94" r=".76" gradientTransform="translate(-44575.31 163046.74) rotate(180) scale(288.75)" xlink:href="#radial-gradient"/>
+    <clipPath id="clippath-27">
+      <path class="st35" d="M86.46,235.88c-5.61,0-9.61,3.2-9.61,3.2,0,0,4.01,2.8,9.63,2.78,5.6-.01,10.16-3.03,10.16-3.03,0,0-4.51-2.96-10.09-2.96h-.09"/>
+    </clipPath>
+    <radialGradient id="radial-gradient25" cx="-155.17" cy="563.94" fx="-155.17" fy="563.94" r=".75" gradientTransform="translate(-44512.29 162999.7) rotate(179.99) scale(288.64)" xlink:href="#radial-gradient"/>
+    <clipPath id="clippath-28">
+      <path class="st35" d="M90.27,230.85c3.14,4.39,7.43,6.16,7.43,6.16,0,0-.28-5.18-3.42-9.56-3.15-4.38-6.84-5.72-6.84-5.72,0,0-.32,4.75,2.83,9.12"/>
+    </clipPath>
+    <radialGradient id="radial-gradient26" cx="-155.17" cy="563.94" fx="-155.17" fy="563.94" r=".75" gradientTransform="translate(-44533.37 162948.75) rotate(180) scale(288.58)" xlink:href="#radial-gradient"/>
+    <clipPath id="clippath-29">
+      <path class="st35" d="M106.36,245.25c-.86-1.76-.14-3.89,1.62-4.75,1.78-.87,3.89-.15,4.76,1.62.86,1.75.14,3.88-1.61,4.74-.51.25-1.05.37-1.58.37-1.3,0-2.56-.72-3.19-1.97M103.47,231.33c-1.74.86-1.44,5.04.01,7.98.7,1.41,1.65,2.52,2.64,3.22-1.22-.05-2.65.24-4.05.93-2.95,1.45-5.72,4.58-4.87,6.32.86,1.73,5.03,1.43,7.97-.02,1.42-.69,2.53-1.65,3.22-2.64-.06,1.21.25,2.64.95,4.06,1.45,2.93,4.57,5.73,6.32,4.85,1.73-.84,1.42-5.01-.03-7.96-.69-1.4-1.64-2.52-2.64-3.21,1.22.05,2.65-.26,4.06-.95,2.94-1.44,5.73-4.57,4.87-6.31-.85-1.73-5.03-1.43-7.97.02-1.42.69-2.53,1.66-3.22,2.64.06-1.21-.24-2.64-.94-4.05-1.28-2.58-3.82-5.03-5.6-5.03-.25,0-.49.05-.71.15"/>
+    </clipPath>
+    <radialGradient id="radial-gradient27" cx="-155.18" cy="563.94" fx="-155.18" fy="563.94" r=".76" gradientTransform="translate(-44506.2 162967.15) rotate(180) scale(288.62)" xlink:href="#radial-gradient"/>
+    <clipPath id="clippath-30">
+      <path class="st35" d="M56.51,209.15c-1.99-.29-3.35-2.13-3.06-4.11.27-1.98,2.11-3.37,4.1-3.09,1.97.3,3.35,2.13,3.06,4.12-.26,1.81-1.81,3.11-3.58,3.11-.17,0-.34,0-.52-.03M54.44,198.36c-.23,1.58-.07,3.08.37,4.23-.98-.75-2.36-1.32-3.96-1.54-3.31-.47-7.46.55-7.74,2.5-.29,1.96,3.41,4.12,6.73,4.59,1.58.22,3.07.07,4.23-.38-.75.99-1.31,2.38-1.56,3.97-.47,3.32.56,7.46,2.53,7.74,1.95.28,4.11-3.41,4.58-6.71.22-1.59.07-3.09-.37-4.25.98.75,2.38,1.33,3.96,1.54,3.32.49,7.47-.54,7.75-2.51.27-1.95-3.42-4.11-6.73-4.57-1.59-.24-3.08-.08-4.25.36.76-.99,1.32-2.37,1.55-3.95.48-3.33-.55-7.47-2.51-7.75-.07-.01-.14-.02-.21-.02-1.9,0-3.91,3.55-4.38,6.75"/>
+    </clipPath>
+    <radialGradient id="radial-gradient28" cx="-155.18" cy="563.94" fx="-155.18" fy="563.94" r=".76" gradientTransform="translate(156223.19 64313.09) rotate(96.98) scale(288.66)" xlink:href="#radial-gradient"/>
+    <clipPath id="clippath-31">
+      <path class="st35" d="M137.01,249.49c0,2.47,2,4.46,4.46,4.46s4.45-1.99,4.45-4.46-1.99-4.45-4.45-4.45-4.46,1.99-4.46,4.45"/>
+    </clipPath>
+    <radialGradient id="radial-gradient29" cx="-155.42" cy="563.72" fx="-155.42" fy="563.72" r=".75" gradientTransform="translate(44940.57 162774.79) scale(288.62 -288.61)" xlink:href="#radial-gradient"/>
+    <clipPath id="clippath-32">
+      <polygon class="st35" points="25.17 123.27 34.14 124.43 33.56 128.86 24.65 127.7 24.25 131.94 46.3 134.83 46.64 130.59 37.5 129.38 38.09 124.95 47.22 126.16 48.01 121.91 25.95 119.02 25.17 123.27"/>
+    </clipPath>
+    <radialGradient id="radial-gradient30" cx="-155.41" cy="563.73" fx="-155.41" fy="563.73" r=".76" gradientTransform="translate(44947.15 162799.21) scale(288.66 -288.66)" xlink:href="#radial-gradient"/>
+    <clipPath id="clippath-33">
+      <path class="st35" d="M38.71,107.04c-1.14-.62-3.2-1.67-4.52-2.36l.03-.09c1.46.29,3.63.71,4.96.93l4.59.79-1.01,2.97-4.07-2.24ZM29.37,105.47l19.71,11.88,1.18-4.06-4.45-2.54,1.27-3.75,5.07.72,1.49-3.9-22.64-3.06-1.61,4.72Z"/>
+    </clipPath>
+    <radialGradient id="radial-gradient31" cx="-155.41" cy="563.73" fx="-155.41" fy="563.73" r=".76" gradientTransform="translate(44942.31 162783.75) scale(288.63 -288.63)" xlink:href="#radial-gradient"/>
+    <clipPath id="clippath-34">
+      <polygon class="st35" points="40.92 80.09 54.37 87.27 54.34 87.33 38.19 84.77 36.38 88.22 55.74 99.3 57.44 95.92 44.3 88.7 44.48 88.79 60.12 91.24 62.26 87.92 42.93 76.88 40.92 80.09"/>
+    </clipPath>
+    <radialGradient id="radial-gradient32" cx="-155.41" cy="563.73" fx="-155.41" fy="563.73" r=".76" gradientTransform="translate(44949.43 162809.23) scale(288.68 -288.67)" xlink:href="#radial-gradient"/>
+    <clipPath id="clippath-35">
+      <path class="st35" d="M53.72,62.81l3.17,4.41c.94,1.31,1.93,2.63,2.98,3.87l-.03.04c-1.46-.81-2.97-1.54-4.31-2.15l-5.11-2.31-2.83,3.54,13.49,5.11,6.47,5.51,2.79-3.26-6.61-5.61-7.01-12.37-2.99,3.23Z"/>
+    </clipPath>
+    <radialGradient id="radial-gradient33" cx="-155.42" cy="563.73" fx="-155.42" fy="563.73" r=".76" gradientTransform="translate(44951.43 162815.23) scale(288.69 -288.69)" xlink:href="#radial-gradient"/>
+    <clipPath id="clippath-36">
+      <path class="st35" d="M70.98,58.73c-.65-1.12-1.87-3.08-2.65-4.34l.08-.07c1.1,1,2.74,2.48,3.77,3.36l3.52,3.06-2.4,2.02-2.33-4.02ZM63.85,52.78l10.8,20.26,3.07-2.89-2.58-4.58,3.02-2.56,4.07,3.34,3.37-2.57-17.84-14.31-3.92,3.3Z"/>
+    </clipPath>
+    <radialGradient id="radial-gradient34" cx="-155.42" cy="563.73" fx="-155.42" fy="563.73" r=".76" gradientTransform="translate(44936.9 162761.97) scale(288.59 -288.59)" xlink:href="#radial-gradient"/>
+    <clipPath id="clippath-37">
+      <path class="st35" d="M86.93,36.9l2.39,4.32c1.96,3.54,4.07,6.75,5.31,8.71l-.06.03c-1.47-1.38-3.78-3.31-5.17-4.49l-7.21-5.95-3.34,2.03,10.78,19.46,3.22-1.97-2.46-4.43c-2.16-3.89-3.94-6.78-5.1-8.67l.05-.04c1.4,1.51,3.63,3.45,5.16,4.73l7.11,5.77,3.5-1.71-10.82-19.48-3.36,1.71Z"/>
+    </clipPath>
+    <radialGradient id="radial-gradient35" cx="-155.41" cy="563.73" fx="-155.41" fy="563.73" r=".76" gradientTransform="translate(44948.12 162806.08) scale(288.67 -288.67)" xlink:href="#radial-gradient"/>
+    <clipPath id="clippath-38">
+      <path class="st35" d="M107.93,28.24c-4.45,1.43-7.78,6-5.43,13.65,1.09,3.63,3.06,6.43,5.41,7.59,1.85.95,3.87,1.05,6.27.28,1.52-.49,3.33-1.48,4.11-2.14l-3.59-11.2-5.63,1.81,1.07,3.33,1.87-.6,1.63,5.07c-.14.11-.41.23-.78.35-1.9.61-4.44-.56-6.06-5.6-1.75-5.48-.15-8.08,2.61-8.97,1.03-.33,1.87-.39,2.55-.3l-.41-3.75c-.19-.02-.4-.04-.65-.04-.75,0-1.77.14-2.98.51"/>
+    </clipPath>
+    <radialGradient id="radial-gradient36" cx="-155.42" cy="563.73" fx="-155.42" fy="563.73" r=".76" gradientTransform="translate(44940.53 162774.62) scale(288.62 -288.61)" xlink:href="#radial-gradient"/>
+    <clipPath id="clippath-39">
+      <path class="st35" d="M140.03,37.85c.12,3.33-.74,4.24-1.97,4.29-1.11.04-2.13-.91-2.24-4.14l-.48-14.36-4.28.33.46,13.46c.19,5.52,2.09,8.63,6.7,8.46,4.24-.15,6.26-3.29,6.07-8.93l-.46-13.42-4.3-.03.51,14.34Z"/>
+    </clipPath>
+    <radialGradient id="radial-gradient37" cx="-155.42" cy="563.73" fx="-155.42" fy="563.73" r=".76" gradientTransform="translate(44951.29 162814.02) scale(288.69 -288.68)" xlink:href="#radial-gradient"/>
+    <clipPath id="clippath-40">
+      <polygon class="st35" points="150.83 46.14 154.58 46.58 156.85 31.64 156.91 31.65 159.92 47.51 163.72 48.31 167.46 26.38 163.75 25.6 161.65 40.61 161.59 40.6 158.4 24.71 154.58 24.23 150.83 46.14"/>
+    </clipPath>
+    <radialGradient id="radial-gradient38" cx="-155.42" cy="563.73" fx="-155.42" fy="563.73" r=".76" gradientTransform="translate(44936.09 162758.07) scale(288.59 -288.58)" xlink:href="#radial-gradient"/>
+    <clipPath id="clippath-41">
+      <rect class="st35" x="164.4" y="38.06" width="22.21" height="4.28" transform="translate(80.84 193.35) rotate(-71.18)"/>
+    </clipPath>
+    <radialGradient id="radial-gradient39" cx="-155.42" cy="563.73" fx="-155.42" fy="563.73" r=".76" gradientTransform="translate(44944.62 162790.54) scale(288.64 -288.64)" xlink:href="#radial-gradient"/>
+    <clipPath id="clippath-42">
+      <polygon class="st35" points="182.72 55.07 186.94 57.24 201.51 39.97 197.45 37.63 187.24 51.85 187.18 51.82 192.67 35.16 188.36 33.22 182.72 55.07"/>
+    </clipPath>
+    <radialGradient id="radial-gradient40" cx="-155.41" cy="563.73" fx="-155.41" fy="563.73" r=".76" gradientTransform="translate(44953.33 162822.87) scale(288.7 -288.7)" xlink:href="#radial-gradient"/>
+    <clipPath id="clippath-43">
+      <polygon class="st35" points="195.1 62.2 203.06 68.19 205.35 65.11 200.81 61.69 204.39 56.95 208.41 59.98 210.55 57.13 206.53 54.1 209.58 50.06 213.81 53.24 216.12 50.2 208.48 44.44 195.1 62.2"/>
+    </clipPath>
+    <radialGradient id="radial-gradient41" cx="-155.42" cy="563.73" fx="-155.42" fy="563.73" r=".76" gradientTransform="translate(44940.5 162772.36) scale(288.61 -288.61)" xlink:href="#radial-gradient"/>
+    <clipPath id="clippath-44">
+      <path class="st35" d="M220.21,68.03l-.52-.55,4.81-4.48c.22.1.54.39.78.66,1.27,1.46.8,2.92-.56,4.19-.76.71-1.65,1.1-2.5,1.1-.73,0-1.43-.29-2.01-.92M207.79,72.69l3.06,3.01,6.43-5.98.42.46c.97,1.06.87,2.09-.87,4.25-1.55,1.89-2.85,3.76-3.12,4.37l2.94,3.58c.33-.84,2.02-3.42,3.53-5.39,1.43-1.92,1.96-3.42,1.36-4.93l.06-.04c2.29.93,4.62.33,6.35-1.28,1.39-1.29,2.2-2.58,2.17-4.38-.02-1.94-1.11-3.77-2.71-5.49-1.11-1.19-2.33-2.36-3.31-3.31l-16.3,15.13Z"/>
+    </clipPath>
+    <radialGradient id="radial-gradient42" cx="-155.41" cy="563.73" fx="-155.41" fy="563.73" r=".76" gradientTransform="translate(44941.98 162783.68) scale(288.63 -288.63)" xlink:href="#radial-gradient"/>
+    <clipPath id="clippath-45">
+      <path class="st35" d="M232.23,76.97c-1.67,1.08-3.01,3.3-2.92,6.82,0,2.21-.13,3.46-1.48,4.33-1.21.79-2.62.52-3.72-1.18-.68-1.05-1.18-2.51-1.24-3.51l-3.45,1.47c.03.83.59,2.54,1.54,4.02,2.33,3.63,6.17,4.69,9.55,2.52,1.95-1.25,3.23-3.36,3.14-6.76-.08-2.78.14-3.71,1.24-4.41.99-.64,2.41-.5,3.39,1.04.68,1.05.89,2.04.9,2.77l3.47-1.42c-.02-.76-.44-2.13-1.21-3.34-1.55-2.4-3.58-3.47-5.61-3.47-1.24,0-2.48.4-3.6,1.12"/>
+    </clipPath>
+    <radialGradient id="radial-gradient43" cx="-155.42" cy="563.73" fx="-155.42" fy="563.73" r=".76" gradientTransform="translate(44944.42 162790.24) scale(288.64 -288.64)" xlink:href="#radial-gradient"/>
+    <clipPath id="clippath-46">
+      <polygon class="st35" points="227.37 99.57 229.17 103.45 249.22 94.11 247.42 90.22 227.37 99.57"/>
+    </clipPath>
+    <radialGradient id="radial-gradient44" cx="-155.42" cy="563.73" fx="-155.42" fy="563.73" r=".76" gradientTransform="translate(44941.67 162777.99) scale(288.62 -288.62)" xlink:href="#radial-gradient"/>
+    <clipPath id="clippath-47">
+      <polygon class="st35" points="248.52 102.9 249.75 106.59 232.29 111.95 233.55 116.04 251.01 110.67 252.03 114.46 255.82 113.3 252.3 101.74 248.52 102.9"/>
+    </clipPath>
+    <radialGradient id="radial-gradient45" cx="-155.42" cy="563.73" fx="-155.42" fy="563.73" r=".76" gradientTransform="translate(44952.58 162819.08) scale(288.69 -288.69)" xlink:href="#radial-gradient"/>
+    <clipPath id="clippath-48">
+      <polygon class="st35" points="244.18 125.72 235.82 126.75 236.38 131.01 244.88 129.95 258.8 133.2 258.45 128.82 248.12 127.7 248.11 127.64 257.84 123.79 257.09 119.26 244.18 125.72"/>
+    </clipPath>
+    <radialGradient id="radial-gradient46" cx="-155.41" cy="563.73" fx="-155.41" fy="563.73" r=".76" gradientTransform="translate(44943.31 162788.35) scale(288.64 -288.64)" xlink:href="#radial-gradient"/>
+    <clipPath id="clippath-49">
+      <path class="st35" d="M127.85,187.58c-.46-.1-.87-.27-1.23-.49-.36-.24-.65-.54-.86-.92-.21-.39-.31-.87-.31-1.44s.11-1.05.31-1.44c.21-.39.5-.7.86-.92.36-.23.77-.41,1.23-.5.47-.1.93-.16,1.41-.16s.94.06,1.41.16c.46.09.87.27,1.23.5.36.23.64.53.86.92.2.39.3.86.3,1.44s-.1,1.05-.3,1.44c-.21.38-.49.69-.86.92-.36.23-.77.39-1.23.49-.47.1-.93.15-1.41.15s-.94-.05-1.41-.15M126.88,179.21c-.89.24-1.68.62-2.4,1.14-.72.53-1.31,1.18-1.75,1.98-.46.79-.68,1.77-.68,2.88,0,.94.2,1.74.58,2.4.38.66.88,1.21,1.49,1.63.61.43,1.3.73,2.06.93.76.19,1.5.29,2.22.29.92,0,1.79-.17,2.64-.5.84-.33,1.67-.73,2.52-1.2-.2,3.49-1.86,5.24-4.97,5.24-.31,0-.68-.03-1.08-.09-.4-.04-.8-.15-1.18-.29-.39-.13-.75-.3-1.09-.51-.34-.21-.61-.46-.81-.74-.08-.11-.13-.25-.15-.4-.04-.16-.05-.29-.05-.4l-.36-.2-1.79,3.65.24.23c.15-.13.35-.21.56-.21.16,0,.37.09.64.25.25.17.59.35,1.01.55.41.22.94.39,1.57.54.62.14,1.39.21,2.28.21,1.29,0,2.47-.22,3.51-.65,1.05-.44,1.95-1.06,2.71-1.9.75-.82,1.33-1.83,1.74-2.98.41-1.15.62-2.46.62-3.9,0-1.23-.19-2.34-.55-3.37-.35-1.01-.86-1.9-1.52-2.64-.66-.74-1.44-1.32-2.35-1.72-.91-.41-1.92-.61-3.01-.61-.87,0-1.75.11-2.65.36"/>
+    </clipPath>
+    <radialGradient id="radial-gradient47" cx="-155.38" cy="563.71" fx="-155.38" fy="563.71" r=".76" gradientTransform="translate(48898.41 177159.2) scale(314.14 -314.14)" xlink:href="#radial-gradient1"/>
+    <clipPath id="clippath-50">
+      <path class="st35" d="M160.29,187.58c-.47-.1-.87-.27-1.24-.49-.34-.24-.64-.54-.85-.92-.2-.39-.31-.87-.31-1.44s.11-1.05.31-1.44c.21-.39.51-.7.85-.92.36-.23.77-.41,1.24-.5.46-.1.92-.16,1.41-.16s.94.06,1.4.16c.46.09.87.27,1.23.5.36.23.64.53.86.92.2.39.31.86.31,1.44s-.11,1.05-.31,1.44c-.22.38-.5.69-.86.92-.36.23-.78.39-1.23.49-.47.1-.92.15-1.4.15s-.95-.05-1.41-.15M159.31,179.21c-.89.24-1.69.62-2.41,1.14-.72.53-1.31,1.18-1.75,1.98-.46.79-.68,1.77-.68,2.88,0,.94.2,1.74.58,2.4.39.66.88,1.21,1.5,1.63.6.43,1.3.73,2.05.93.77.19,1.5.29,2.22.29.91,0,1.79-.17,2.64-.5.83-.33,1.68-.73,2.51-1.2-.2,3.49-1.85,5.24-4.96,5.24-.32,0-.68-.03-1.08-.09-.4-.04-.79-.15-1.18-.29-.39-.13-.75-.3-1.09-.51-.34-.21-.6-.46-.81-.74-.08-.11-.13-.25-.16-.4-.03-.16-.05-.29-.05-.4l-.36-.2-1.79,3.65.24.23c.16-.13.35-.21.57-.21.16,0,.37.09.63.25.25.17.59.35,1.01.55.42.22.95.39,1.58.54.63.14,1.39.21,2.28.21,1.29,0,2.47-.22,3.52-.65,1.04-.44,1.94-1.06,2.7-1.9.76-.82,1.34-1.83,1.74-2.98.42-1.15.62-2.46.62-3.9,0-1.23-.18-2.34-.54-3.37-.36-1.01-.87-1.9-1.52-2.64-.66-.74-1.44-1.32-2.36-1.72-.91-.41-1.92-.61-3.01-.61-.87,0-1.76.11-2.64.36"/>
+    </clipPath>
+    <radialGradient id="radial-gradient48" cx="-155.38" cy="563.71" fx="-155.38" fy="563.71" r=".76" gradientTransform="translate(48899.59 177161.37) scale(314.15 -314.15)" xlink:href="#radial-gradient1"/>
+    <clipPath id="clippath-51">
+      <path class="st35" d="M142.8,179.23c-.82.25-1.47.53-1.99.85-.52.31-.91.59-1.18.86-.27.25-.45.38-.56.38-.17,0-.35-.06-.51-.17l-.35.3,2.4,3.4.26-.21c-.04-.1-.06-.22-.09-.35-.01-.11-.03-.22-.03-.31,0-.26.15-.53.45-.8.29-.26.68-.52,1.13-.73.46-.22.98-.4,1.53-.53.56-.14,1.11-.21,1.64-.21.46,0,.92.04,1.36.09.45.05.85.16,1.22.32.37.15.67.36.89.64.23.28.34.63.34,1.07s-.13.85-.39,1.15c-.26.31-.57.56-.93.73-.37.17-.75.3-1.17.36-.43.07-.8.1-1.11.1-.48,0-.92-.06-1.31-.22-.39-.14-.6-.43-.64-.87h-.36v4.51h.36c.12-.4.35-.65.7-.74.35-.11.77-.15,1.25-.15.33,0,.74.03,1.21.08.46.05.9.17,1.32.34.41.19.76.43,1.05.76.28.32.42.75.42,1.29s-.16,1-.45,1.35c-.3.34-.66.6-1.08.81-.42.2-.88.34-1.37.42-.49.09-.92.12-1.28.12-.45,0-1.01-.08-1.69-.21-.65-.16-1.3-.37-1.91-.64-.61-.27-1.13-.6-1.57-1.01-.44-.39-.66-.86-.66-1.37v-.23c0-.12.01-.19.03-.23l-.33-.2-1.74,4.78.28.09c.08-.04.15-.08.21-.12.08-.05.16-.07.26-.07.15,0,.44.11.83.31.39.21.88.45,1.48.7.6.25,1.27.48,2.06.66.78.19,1.62.28,2.52.28.79,0,1.64-.07,2.54-.22.9-.14,1.74-.42,2.49-.86.74-.42,1.38-1.01,1.89-1.74.5-.73.76-1.66.76-2.79,0-1-.27-1.82-.82-2.48-.54-.66-1.24-1.1-2.09-1.32v-.07c.72-.18,1.29-.6,1.71-1.28.42-.67.62-1.4.62-2.21,0-.86-.2-1.59-.61-2.21-.4-.61-.93-1.1-1.58-1.49-.64-.4-1.35-.68-2.13-.86-.79-.17-1.56-.25-2.34-.25-1.16,0-2.13.12-2.94.38"/>
+    </clipPath>
+    <radialGradient id="radial-gradient49" cx="-155.39" cy="563.71" fx="-155.39" fy="563.71" r=".75" gradientTransform="translate(48898.22 177157.89) scale(314.14 -314.14)" xlink:href="#radial-gradient1"/>
+    <clipPath id="clippath-52">
+      <path class="st35" d="M115.27,178.85v.38c.22.05.4.12.53.21.13.08.19.28.19.58,0,.34-.11.62-.35.85-.23.23-.52.35-.85.35-.17,0-.33-.04-.51-.12-.19-.07-.28-.21-.28-.41h-.35v4.18h.35c.06-.18.17-.32.31-.41.16-.1.31-.17.49-.24.19-.05.37-.09.56-.1.19-.03.34-.04.49-.04v11.1c0,.38-.08.63-.23.75-.15.12-.32.18-.52.18v.4h4.94v-.4c-.2,0-.38-.06-.54-.18-.15-.12-.24-.37-.24-.75v-15.23c0-.23.08-.39.24-.5.16-.1.36-.19.59-.24v-.38h-4.82Z"/>
+    </clipPath>
+    <radialGradient id="radial-gradient50" cx="-155.38" cy="563.71" fx="-155.38" fy="563.71" r=".76" gradientTransform="translate(48896.57 177153.89) scale(314.13 -314.13)" xlink:href="#radial-gradient1"/>
+  </defs>
+  <g class="st103">
+    <rect class="st40" x="8.65" y="8.32" width="265.61" height="265.62"/>
+  </g>
+  <g class="st47">
+    <rect class="st46" x="8.14" y="7.81" width="266.64" height="266.65"/>
+  </g>
+  <g class="st92">
+    <rect class="st101" x="-38.93" y="-39.26" width="360.79" height="360.79" transform="translate(-58.36 141.37) rotate(-45)"/>
+  </g>
+  <g class="st66">
+    <rect class="st85" x="15.48" y="15.14" width="251.97" height="251.99"/>
+  </g>
+  <g class="st15">
+    <rect class="st27" x="17.12" y="16.79" width="248.68" height="248.68" transform="translate(-58.36 141.37) rotate(-45)"/>
+  </g>
+  <g class="st53">
+    <rect class="st97" x="55.7" y="55.29" width="171.51" height="171.54"/>
+  </g>
+  <g class="st4">
+    <rect class="st94" x="82.16" y="102.21" width="117.92" height="53.6"/>
+  </g>
+  <g class="st5">
+    <rect class="st45" x="77.53" y="98.02" width="127.25" height="62.68"/>
+  </g>
+  <g class="st58">
+    <rect class="st84" x="103.47" y="113.49" width="76.11" height="35.01"/>
+  </g>
+  <g class="st21">
+    <rect class="st63" x="242.72" y="153.41" width="5.88" height="12.85" transform="translate(-17.64 31.11) rotate(-7)"/>
+  </g>
+  <g class="st22">
+    <rect class="st77" x="242.45" y="161.42" width="16.61" height="18.01" transform="translate(-18.83 31.68) rotate(-6.97)"/>
+  </g>
+  <g class="st33">
+    <rect class="st100" x="234.73" y="160.1" width="9.56" height="18.25" transform="translate(-18.77 30.32) rotate(-6.97)"/>
+  </g>
+  <g class="st70">
+    <polygon class="st24" points="252.81 178.56 254.7 193.99 235.97 196.29 234.09 180.85 252.81 178.56"/>
+  </g>
+  <g class="st99">
+    <rect class="st31" x="229.66" y="174.88" width="7.87" height="18.57" transform="translate(-20.65 29.76) rotate(-6.98)"/>
+  </g>
+  <g class="st72">
+    <rect class="st78" x="201.86" y="224.29" width="21.08" height="10.26" transform="translate(-26.29 27.49) rotate(-6.97)"/>
+  </g>
+  <g class="st9">
+    <rect class="st69" x="198.88" y="212.34" width="10.85" height="18.16" transform="translate(-25.37 26.44) rotate(-6.97)"/>
+  </g>
+  <g class="st91">
+    <rect class="st67" x="186.8" y="234.69" width="20.37" height="8.36" transform="translate(-27.45 25.58) rotate(-6.95)"/>
+  </g>
+  <g class="st6">
+    <rect class="st89" x="185.13" y="221.14" width="12.36" height="16.46" transform="translate(-26.46 24.95) rotate(-6.98)"/>
+  </g>
+  <g class="st13">
+    <rect class="st105" x="159.49" y="229.66" width="29.35" height="28.74" transform="translate(-28.34 22.96) rotate(-6.97)"/>
+  </g>
+  <g class="st76">
+    <rect class="st83" x="210.88" y="189.98" width="31.64" height="31.39" transform="translate(-23.33 29.09) rotate(-6.98)"/>
+  </g>
+  <g class="st55">
+    <rect class="st65" x="31.64" y="156.9" width="12.85" height="5.88" transform="translate(-125.21 178.23) rotate(-83.03)"/>
+  </g>
+  <g class="st3">
+    <rect class="st43" x="23.98" y="162.12" width="18.01" height="16.6" transform="translate(-140.18 182.49) rotate(-83.03)"/>
+  </g>
+  <g class="st16">
+    <rect class="st8" x="35.1" y="164.44" width="18.25" height="9.57" transform="translate(-129.13 192.54) rotate(-83.02)"/>
+  </g>
+  <g class="st18">
+    <rect class="st41" x="31.56" y="177.99" width="15.54" height="18.86" transform="translate(-151.49 203.64) rotate(-83.01)"/>
+  </g>
+  <g class="st102">
+    <rect class="st44" x="40.86" y="180.23" width="18.56" height="7.86" transform="translate(-138.75 211.54) rotate(-83.02)"/>
+  </g>
+  <g class="st28">
+    <rect class="st82" x="66.2" y="218.88" width="10.25" height="21.08" transform="translate(-165.05 272.37) rotate(-83.03)"/>
+  </g>
+  <g class="st68">
+    <rect class="st29" x="70.34" y="216.01" width="18.16" height="10.84" transform="translate(-150.02 273.35) rotate(-83.02)"/>
+  </g>
+  <g class="st30">
+    <rect class="st81" x="82.57" y="228.69" width="8.36" height="20.37" transform="translate(-160.91 295.91) rotate(-83.01)"/>
+  </g>
+  <g class="st42">
+    <rect class="st60" x="84.19" y="223.19" width="16.46" height="12.36" transform="translate(-146.48 293.23) rotate(-83.02)"/>
+  </g>
+  <g class="st93">
+    <rect class="st75" x="95.19" y="229.36" width="28.74" height="29.35" transform="translate(-145.98 323.12) rotate(-83.02)"/>
+  </g>
+  <g class="st74">
+    <polygon class="st12" points="43.24 188.18 39.42 219.34 70.82 223.19 74.63 192.02 43.24 188.18"/>
+  </g>
+  <g class="st7">
+    <rect class="st98" x="137.01" y="245.04" width="8.91" height="8.9"/>
+  </g>
+  <g class="st80">
+    <rect class="st10" x="24.25" y="119.02" width="23.76" height="15.81"/>
+  </g>
+  <g class="st11">
+    <rect class="st57" x="29.37" y="100.75" width="24.26" height="16.6"/>
+  </g>
+  <g class="st1">
+    <rect class="st73" x="36.38" y="76.88" width="25.88" height="22.42"/>
+  </g>
+  <g class="st38">
+    <rect class="st52" x="47.59" y="59.58" width="22.75" height="21.24"/>
+  </g>
+  <g class="st37">
+    <rect class="st36" x="63.85" y="49.47" width="21.76" height="23.56"/>
+  </g>
+  <g class="st96">
+    <rect class="st59" x="78.84" y="35.18" width="22.27" height="25.82"/>
+  </g>
+  <g class="st2">
+    <rect class="st104" x="100.15" y="27.73" width="18.15" height="22.81"/>
+  </g>
+  <g class="st87">
+    <rect class="st64" x="131.06" y="23.51" width="13.42" height="22.54"/>
+  </g>
+  <g class="st51">
+    <rect class="st56" x="150.83" y="24.23" width="16.62" height="24.08"/>
+  </g>
+  <g class="st62">
+    <rect class="st19" x="169.9" y="29" width="11.2" height="22.4"/>
+  </g>
+  <g class="st23">
+    <rect class="st86" x="182.72" y="33.22" width="18.79" height="24.02"/>
+  </g>
+  <g class="st26">
+    <rect class="st25" x="195.1" y="44.44" width="21.02" height="23.75"/>
+  </g>
+  <g class="st106">
+    <rect class="st48" x="207.79" y="57.56" width="22.36" height="24.81"/>
+  </g>
+  <g class="st49">
+    <rect class="st79" x="219.43" y="75.85" width="23.22" height="17.77"/>
+  </g>
+  <g class="st50">
+    <rect class="st90" x="227.37" y="90.22" width="21.85" height="13.23"/>
+  </g>
+  <g class="st14">
+    <rect class="st17" x="232.29" y="101.74" width="23.52" height="14.3"/>
+  </g>
+  <g class="st39">
+    <rect class="st34" x="235.82" y="119.26" width="22.98" height="13.94"/>
+  </g>
+  <g class="st95">
+    <rect class="st54" x="122.05" y="178.85" width="14.91" height="17.77"/>
+  </g>
+  <g class="st71">
+    <rect class="st20" x="154.48" y="178.85" width="14.91" height="17.77"/>
+  </g>
+  <g class="st0">
+    <rect class="st32" x="137.67" y="178.85" width="15.31" height="17.77"/>
+  </g>
+  <g class="st61">
+    <rect class="st88" x="113.65" y="178.85" width="6.44" height="17.68"/>
+  </g>
+</svg>
