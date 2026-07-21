@@ -389,6 +389,21 @@ export default config({
           slug: { label: '파일 ID (영문/숫자)', description: '예: blog-1 — 만든 뒤에는 바꾸지 마세요' },
         }),
         title_ko: fields.text({ label: '제목 (한글)', description: '비우면 영문 제목이 표시됩니다' }),
+        category: fields.select({
+          label: '카테고리',
+          description: 'LinkedIn = 링크드인 글 링크 / Agent = AI 에이전트가 작성한 글(추후)',
+          options: [
+            { label: 'LinkedIn', value: 'linkedin' },
+            { label: 'Agent (AI 작성)', value: 'agent' },
+          ],
+          defaultValue: 'linkedin',
+        }),
+        thumbnail: fields.image({
+          label: '썸네일 (선택)',
+          description: '카드 상단에 표시할 이미지. 비우면 카테고리 아이콘이 표시됩니다.',
+          directory: 'src/assets/blog',
+          publicPath: '/src/assets/blog/',
+        }),
         url: fields.url({ label: '원문 링크 (LinkedIn 등)', description: '있으면 글 클릭 시 새 창으로 이동합니다. 비우면 링크 없이 표시만 됩니다' }),
         linkedinUrl: fields.text({ label: 'LinkedIn 게시물 URL (임베드)', description: 'LinkedIn 게시물 주소를 붙여넣으면 글 내용이 블로그에 그대로 표시됩니다. (공개 게시물만 · 아티클/뉴스레터는 안 됨)' }),
         excerpt: fields.text({ label: '요약 (영문)', multiline: true, description: '목록에 표시되는 짧은 소개' }),
