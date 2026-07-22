@@ -17,6 +17,12 @@ const partnerLogos = import.meta.glob<{ default: ImageMetadata }>('/src/assets/p
 
 const team = (await getCollection('team')).sort((a, b) => a.data.order - b.data.order);
 
+// 팀원 프로필 사진 (Keystatic 업로드, 항목별 하위폴더 대응)
+const teamPhotos = import.meta.glob<{ default: ImageMetadata }>(
+  '/src/assets/team/**/*.{png,jpg,jpeg,webp,avif}',
+  { eager: true },
+);
+
 // history: items(영문) 정본을 사용. (index 는 같은 컬렉션의 summaryKo 한글본을 사용)
 const history = (await getCollection('history')).sort((a, b) => a.data.order - b.data.order);
 
@@ -67,11 +73,17 @@ function initials(name){ const p = name.replace('Dr. ','').split(' '); return (p
         const m = member.data;
         const role = locale === 'ko' ? (m.role_ko ?? m.role) : m.role;
         const affil = locale === 'ko' ? (m.affiliation_ko ?? m.affiliation) : m.affiliation;
+        const photo = m.photo ? teamPhotos[m.photo]?.default : undefined;
         return (
           <div class="v-reveal flex gap-4 rounded-xl border border-ink/10 bg-ink/[0.03] p-5">
-            <div class="flex size-12 shrink-0 items-center justify-center rounded-full bg-accent/15 text-sm font-bold text-accent">
-              {initials(m.name)}
-            </div>
+            {photo ? (
+              <Image src={photo} alt={m.name} width={160} height={160}
+                class="size-20 shrink-0 rounded-xl border border-ink/10 bg-ink/[0.03] object-cover" />
+            ) : (
+              <div class="flex size-20 shrink-0 items-center justify-center rounded-xl bg-accent/15 text-lg font-bold text-accent">
+                {initials(m.name)}
+              </div>
+            )}
             <div class="min-w-0">
               <p class="text-sm font-semibold text-ink">{m.name}</p>
               {role && <p class="mt-0.5 text-xs font-medium text-accent">{role}</p>}
