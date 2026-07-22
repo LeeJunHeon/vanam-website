@@ -3,5 +3,6 @@
   "name_ko": "인라인 스퍼터",
   "category": "deposition",
   "description": "",
+  "image": "/src/assets/equipment/inline-sputter/image.png",
   "order": 2
 }

@@ -4,5 +4,6 @@
   "category": "data",
   "description": "In-situ collection of plasma emission, residual gas, and key process parameters. The collected data supports machine-learning-based process optimization and material-property prediction.",
   "description_ko": "플라즈마 발광, 잔류 가스, 주요 공정 변수를 인시투로 수집합니다. 수집된 데이터는 머신러닝 기반 공정 최적화와 물성 예측에 활용됩니다.",
+  "image": "/src/assets/equipment/bigdata/image.png",
   "order": 4
 }

@@ -3,5 +3,6 @@
   "name_ko": "열 증발 증착기",
   "category": "deposition",
   "description": "",
+  "image": "/src/assets/equipment/thermal-evaporator/image.png",
   "order": 3
 }
