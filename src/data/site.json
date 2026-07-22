@@ -49,12 +49,12 @@
           "d": "Low MOQ prototyping and small batch production reduce early-stage cost, waiting time, and iteration risk."
         },
         {
-          "h": "Project 1: Energy-Responsive Thin Film",
-          "d": "The world's 1<sup>st</sup> multifunctional thin film that responds to changes on thermal and electrical energy, enabling sensing, switching, system simplification and protection."
+          "h": "Project 1: Quantum Photonics",
+          "d": "Developing key thin films for next-generation PICs: SNSPDs, waveguides, cryogenic modulators, and DBR mirrors for future quantum systems."
         },
         {
-          "h": "Project 2: Quantum Photonics",
-          "d": "Developing key thin films for next-generation PICs: SNSPDs, waveguides, cryogenic modulators, and DBR mirrors for future quantum systems."
+          "h": "Project 2: Energy-Responsive Thin Film",
+          "d": "The world's 1<sup>st</sup> multifunctional thin film that responds to changes on thermal and electrical energy, enabling sensing, switching, system simplification and protection."
         }
       ],
       "coreTechBody": "VanaM combines proprietary sputtering/ALD processes, pre- and post-treatment, in-situ process sensing, and thin film metrology to develop high-quality materials with faster optimization cycles and stronger process reproducibility.",
@@ -423,12 +423,12 @@
           "d": "소량(low-MOQ) 시제품과 소규모 배치 생산으로 초기 비용·대기 시간·반복 리스크를 줄입니다."
         },
         {
-          "h": "Project 1: 에너지 반응형 박막",
-          "d": "열·전기 에너지 변화에 반응하는 세계 최초의 다기능 박막으로, 감지·스위칭·시스템 단순화·보호 기능을 구현합니다."
+          "h": "Project 1: 양자 포토닉스",
+          "d": "차세대 PIC를 위한 핵심 박막을 개발합니다: SNSPD, 도파로, 극저온 변조기, DBR 미러 등 미래 양자 시스템용 소재."
         },
         {
-          "h": "Project 2: 양자 포토닉스",
-          "d": "차세대 PIC를 위한 핵심 박막을 개발합니다: SNSPD, 도파로, 극저온 변조기, DBR 미러 등 미래 양자 시스템용 소재."
+          "h": "Project 2: 에너지 반응형 박막",
+          "d": "열·전기 에너지 변화에 반응하는 세계 최초의 다기능 박막으로, 감지·스위칭·시스템 단순화·보호 기능을 구현합니다."
         }
       ],
       "coreTechBody": "반암은 독자적인 스퍼터링/ALD 공정, 전·후처리, 인시투 공정 센싱, 박막 계측을 결합하여 더 빠른 최적화 사이클과 강력한 공정 재현성으로 고품질 소재를 개발합니다.",
