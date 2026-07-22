@@ -1,5 +1,6 @@
 {
   "name": "Stratio Inc",
+  "logo": "/src/assets/partners/stratio/logo.png",
   "order": 12,
   "needsCheck": false
 }
