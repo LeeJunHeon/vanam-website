@@ -1,0 +1,12 @@
+---
+import { getCollection } from 'astro:content';
+import BlogPost from '../../components/pages/BlogPost.astro';
+export async function getStaticPaths() {
+  const posts = await getCollection('blog');
+  return posts
+    .filter((p) => p.data.published && p.data.body)   // 본문 있는 글만 상세 페이지 생성
+    .map((p) => ({ params: { id: p.id }, props: { post: p } }));
+}
+const { post } = Astro.props;
+---
+<BlogPost post={post} />

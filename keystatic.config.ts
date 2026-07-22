@@ -400,10 +400,20 @@ export default config({
         }),
         thumbnail: fields.image({
           label: '썸네일 (선택)',
-          description: '카드 상단에 표시할 이미지. 비우면 카테고리 아이콘이 표시됩니다.',
+          description: '카드 상단에 표시할 이미지. 비우면 카테고리 아이콘이 표시됩니다. 상세 페이지에서는 대표 이미지로도 쓰입니다.',
           directory: 'src/assets/blog',
           publicPath: '/src/assets/blog/',
         }),
+        body: fields.text({
+          label: '본문 (마크다운, 선택)',
+          multiline: true,
+          description: '채우면 이 글의 상세 페이지(/blog/…)가 생기고 카드가 그리로 연결됩니다 — 검색엔진 색인 대상. 비우면 카드가 원문 링크(새 탭)로만 열립니다. 서식: ## 소제목, **굵게**, [링크](https://…), - 목록',
+        }),
+        body_ko: fields.text({ label: '본문 (한글, 선택)', multiline: true, description: '비우면 영문 본문이 표시됩니다' }),
+        images: fields.array(
+          fields.image({ label: '사진', directory: 'src/assets/blog', publicPath: '/src/assets/blog/' }),
+          { label: '본문 사진 (선택)', itemLabel: () => '사진', description: '상세 페이지에서 본문 아래 갤러리로 표시됩니다' },
+        ),
         url: fields.url({ label: '원문 링크 (LinkedIn 등)', description: '있으면 글 클릭 시 새 창으로 이동합니다. 비우면 링크 없이 표시만 됩니다' }),
         linkedinUrl: fields.text({ label: 'LinkedIn 게시물 URL (임베드)', description: 'LinkedIn 게시물 주소를 붙여넣으면 글 내용이 블로그에 그대로 표시됩니다. (공개 게시물만 · 아티클/뉴스레터는 안 됨)' }),
         excerpt: fields.text({ label: '요약 (영문)', multiline: true, description: '목록에 표시되는 짧은 소개' }),

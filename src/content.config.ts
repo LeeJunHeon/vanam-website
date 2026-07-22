@@ -51,6 +51,9 @@ const blog = defineCollection({
     url: opt(z.string().url()),  // 링크드인 등 원문 링크 (있으면 클릭 시 이동)
     linkedinUrl: opt(z.string()),// (구) 링크드인 임베드 URL — 카드형 개편 후 링크 폴백으로만 사용
     category: z.enum(['linkedin', 'agent']).default('linkedin'),  // 글 출처 — 목록 필터 칩
+    body: opt(z.string()),        // 본문(마크다운) — 있으면 상세 페이지(/blog/…) 생성 + 카드가 내부로 연결(SEO 색인)
+    body_ko: opt(z.string()),     // 본문 한글판 — 비우면 영문 본문 폴백
+    images: opt(z.array(z.string())),  // 본문 아래 사진 갤러리 (Keystatic 업로드 경로 배열)
     excerpt: opt(z.string()),    // 요약 (EN)
     excerpt_ko: opt(z.string()), // 요약 (KO)
     date: opt(z.coerce.date()),

@@ -12,6 +12,7 @@ import type { ImageMetadata } from 'astro';
 
 const locale = Astro.currentLocale ?? 'en';
 const isKo = locale === 'ko';
+const base = isKo ? '/ko' : '';
 
 // 썸네일(Keystatic 업로드, 항목별 하위폴더 대응)
 const thumbs = import.meta.glob<{ default: ImageMetadata }>(
@@ -33,6 +34,10 @@ const fmtDate = (d) =>
 const title = (p) => (isKo ? (p.data.title_ko ?? p.data.title) : p.data.title);
 const excerpt = (p) => (isKo ? (p.data.excerpt_ko ?? p.data.excerpt) : p.data.excerpt);
 const postHref = (p) => p.data.url || p.data.linkedinUrl || '';
+// 본문이 있는 글 → 우리 상세 페이지(같은 탭), 없는 글 → 원문 링크(새 탭)
+const hasBody = (p) => !!p.data.body;
+const detailHref = (p) => `${base}/blog/${p.id}`;
+const hasExternalOnly = () => posts.some((p) => !hasBody(p) && postHref(p));
 const postCat = (p) => p.data.category ?? 'linkedin';
 
 // 카테고리 칩 — 글이 있는 카테고리만 노출 (Agent 는 첫 글이 등록되면 자동으로 나타난다)
@@ -56,7 +61,9 @@ const blogLd = {
     '@type': 'BlogPosting',
     headline: title(p),
     ...(p.data.date ? { datePublished: p.data.date.toISOString().slice(0, 10) } : {}),
-    ...(postHref(p) ? { url: postHref(p) } : {}),
+    ...(hasBody(p)
+      ? { url: new URL(detailHref(p), Astro.site).href }
+      : postHref(p) ? { url: postHref(p) } : {}),
   })),
 };
 
@@ -97,20 +104,21 @@ const t = {
                 i === 0 ? 'border-accent bg-accent/10 text-accent' : 'border-ink/15 text-ink/60 hover:border-ink/40 hover:text-ink',
               ]}>{c.label}</button>
           ))}
-          <span class="ml-2 text-xs text-ink/35">{t.openNote}</span>
+          {hasExternalOnly() && <span class="ml-2 text-xs text-ink/35">{t.openNote}</span>}
         </div>
 
         <div class="v-reveal mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {posts.map((p) => {
-            const href = postHref(p);
+            const internal = hasBody(p);
+            const href = internal ? detailHref(p) : postHref(p);
             const cat = postCat(p);
             const th = p.data.thumbnail ? thumbs[p.data.thumbnail]?.default : undefined;
             const Tag = href ? 'a' : 'div';
             return (
               <Tag
                 href={href || undefined}
-                target={href ? '_blank' : undefined}
-                rel={href ? 'noopener noreferrer' : undefined}
+                target={!internal && href ? '_blank' : undefined}
+                rel={!internal && href ? 'noopener noreferrer' : undefined}
                 data-cat={cat}
                 class="blog-card group flex flex-col overflow-hidden rounded-2xl border border-ink/10 bg-ink/[0.02] transition hover:border-accent/50 hover:bg-ink/[0.04]"
               >
@@ -139,7 +147,9 @@ const t = {
                   <div class="mt-auto flex items-center justify-between pt-4 text-xs text-ink/40">
                     <span>{p.data.date ? fmtDate(p.data.date) : ''}</span>
                     {href && (
-                      <svg class="h-4 w-4 shrink-0 text-ink/30 transition group-hover:text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg>
+                      <svg class="h-4 w-4 shrink-0 text-ink/30 transition group-hover:text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        {internal ? <path d="M5 12h14M13 6l6 6-6 6" /> : <path d="M7 17 17 7M7 7h10v10" />}
+                      </svg>
                     )}
                   </div>
                 </div>
