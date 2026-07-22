@@ -1,5 +1,6 @@
 {
   "name": "UIUC",
+  "logo": "/src/assets/partners/uiuc/logo.png",
   "order": 16,
   "needsCheck": false
 }
