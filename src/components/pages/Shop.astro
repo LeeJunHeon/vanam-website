@@ -57,6 +57,12 @@ const analysisMaterial = analysisAll.filter((a) => a.data.group === 'material');
 const analysisDevice = analysisAll.filter((a) => a.data.group === 'device');
 const equipment = (await getCollection('equipment')).sort((a, b) => a.data.order - b.data.order);
 
+// 장비 사진 (배경 제거 투명 PNG — plate 흰 박스에 표시, 미등록 시 카드 자동 숨김)
+const equipImages = import.meta.glob<{ default: ImageMetadata }>(
+  '/src/assets/equipment/**/*.{png,jpg,jpeg,webp,avif}',
+  { eager: true },
+);
+
 // 웨이퍼 카드 가격: 등록된 웨이퍼 최저가를 "From $X"/"$X 부터" 로 표시 (환율=사업자 정보 usdRate)
 const usdRate = company.usdRate || 1500;
 const waferKrws = allWafers
@@ -244,27 +250,23 @@ const waferFromLabel = waferKrws.length
       </div>
 
       {(() => {
-        const deposition = equipment.filter((e) => e.data.category === 'deposition');
-        const first = deposition[0];        // Sputter — 전체 폭
-        const rest = deposition.slice(1);   // ALD, Evaporator — 아래 2열
+        // 재편(지시서 슬라이드 5): 증착 3카드 → "PVD & ALD" 그룹 + 개별 장비 카드(특허 갤러리 문법).
+        // 사진이 등록된 장비만 카드로 표시 — 사진이 없으면 그룹 타이틀·설명만 보인다 (빈 박스 노출 없음).
+        const label = (e: (typeof equipment)[number]) => (locale === 'ko' ? (e.data.name_ko ?? e.data.name) : e.data.name);
+        const img = (e: (typeof equipment)[number]) => (e.data.image ? equipImages[e.data.image]?.default : undefined);
+        const cards = equipment.filter((e) => e.data.category === 'deposition' && img(e));
         return (
-          <div class="mt-10 space-y-4">
-            {first && (
-              <div class="v-reveal rounded-xl border border-ink/10 bg-ink/[0.03] p-5">
-                <h3 class="text-base font-bold text-ink">{locale === 'ko' ? (first.data.name_ko ?? first.data.name) : first.data.name}</h3>
-                <p class="mt-2 whitespace-pre-line text-xs leading-relaxed text-ink/50">
-                  {locale === 'ko' ? (first.data.description_ko ?? first.data.description) : first.data.description}
-                </p>
-              </div>
-            )}
-            {rest.length > 0 && (
-              <div class="grid gap-4 sm:grid-cols-2">
-                {rest.map((e) => (
-                  <div class="v-reveal flex h-full flex-col rounded-xl border border-ink/10 bg-ink/[0.03] p-5">
-                    <h3 class="text-base font-bold text-ink">{locale === 'ko' ? (e.data.name_ko ?? e.data.name) : e.data.name}</h3>
-                    <p class="mt-2 whitespace-pre-line text-xs leading-relaxed text-ink/50">
-                      {locale === 'ko' ? (e.data.description_ko ?? e.data.description) : e.data.description}
-                    </p>
+          <div class="v-reveal mt-10">
+            <h3 class="text-lg font-bold text-ink">{tech.equipGroupTitle}</h3>
+            <p class="mt-2 max-w-3xl text-sm leading-relaxed text-ink/55">{tech.equipGroupDesc}</p>
+            {cards.length > 0 && (
+              <div class="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+                {cards.map((e) => (
+                  <div>
+                    <div class="rounded-xl border border-ink/10 bg-plate p-3">
+                      <Image src={img(e)!} alt={label(e)} width={480} class="aspect-square w-full object-contain" />
+                    </div>
+                    <p class="mt-2.5 text-sm font-semibold leading-snug text-ink/80">{label(e)}</p>
                   </div>
                 ))}
               </div>
@@ -274,7 +276,12 @@ const waferFromLabel = waferKrws.length
       })()}
 
       {equipment.filter((e) => e.data.category === 'data').map((e) => (
-        <div class="v-reveal mt-4 rounded-xl border border-accent/25 bg-accent/[0.05] p-6">
+        <div class="v-reveal mt-6 rounded-xl border border-accent/25 bg-accent/[0.05] p-6">
+          {e.data.image && equipImages[e.data.image] && (
+            <div class="mb-4 max-w-[220px] rounded-xl border border-ink/10 bg-plate p-3">
+              <Image src={equipImages[e.data.image].default} alt={locale === 'ko' ? (e.data.name_ko ?? e.data.name) : e.data.name} width={440} class="aspect-square w-full object-contain" />
+            </div>
+          )}
           <h3 class="text-base font-bold text-accent">{locale === 'ko' ? (e.data.name_ko ?? e.data.name) : e.data.name}</h3>
           <p class="mt-2 max-w-3xl text-sm leading-relaxed text-ink/60">
             {locale === 'ko' ? (e.data.description_ko ?? e.data.description) : e.data.description}

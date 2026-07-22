@@ -668,6 +668,12 @@ export default config({
         }),
         description: fields.text({ label: '설명 (영문)', multiline: true }),
         description_ko: fields.text({ label: '설명 (한글)', multiline: true }),
+        image: fields.image({
+          label: '사진 (선택)',
+          description: '배경 제거된 투명 PNG 권장 — 등록하면 카드가 자동 표시됩니다',
+          directory: 'src/assets/equipment',
+          publicPath: '/src/assets/equipment/',
+        }),
         order: fields.integer({ label: '표시 순서', defaultValue: 0 }),
       },
     }),

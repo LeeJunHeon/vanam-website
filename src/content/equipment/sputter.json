@@ -1,8 +1,7 @@
 {
-  "name": "Sputter & PVD",
-  "name_ko": "스퍼터 · PVD",
+  "name": "Sputter",
+  "name_ko": "스퍼터",
   "category": "deposition",
-  "description": "Magnetron sputtering and large-area PVD systems for high-crystallinity oxide, nitride, and metal thin films.\n\nSupports RF, DC, Pulsed DC, and Pulsed RF deposition, with in-situ plasma cleaning, multilayer deposition, automated process control, and data collection.",
-  "description_ko": "고결정성 산화물·질화물·금속 박막을 위한 마그네트론 스퍼터링 및 대면적 PVD 시스템.\n\nRF, DC, 펄스 DC, 펄스 RF 증착을 지원하며 인시투 플라즈마 세정, 다층 증착, 자동 공정 제어 및 데이터 수집을 갖췄습니다.",
+  "description": "",
   "order": 1
 }

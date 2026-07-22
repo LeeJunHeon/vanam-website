@@ -1,0 +1,7 @@
+{
+  "name": "Thermal Evaporator",
+  "name_ko": "열 증발 증착기",
+  "category": "deposition",
+  "description": "",
+  "order": 3
+}

@@ -1,8 +1,0 @@
-{
-  "name": "ALD",
-  "name_ko": "ALD",
-  "category": "deposition",
-  "description": "Batch-type 12-inch and showerhead 6-inch ALD systems for highly uniform, conformal thin films with precise thickness control. Integrated with in-house equipment automation and robotic handling.",
-  "description_ko": "균일하고 등각성이 뛰어난 박막을 정밀한 두께 제어로 구현하는 배치형 12인치·샤워헤드 6인치 ALD 시스템. 자체 장비 자동화 및 로봇 핸들링과 통합돼 있습니다.",
-  "order": 2
-}

@@ -262,6 +262,7 @@ const equipment = defineCollection({
     category: z.enum(['deposition', 'data', 'infra']).default('deposition'),
     description: z.string(),
     description_ko: opt(z.string()),
+    image: opt(z.string()),  // 장비 사진 (배경 제거 투명 PNG 권장) — 없으면 카드 자동 숨김
     order: z.number().default(0),
   }),
 });
