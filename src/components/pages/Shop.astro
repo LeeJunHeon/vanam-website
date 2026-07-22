@@ -256,7 +256,7 @@ const waferFromLabel = waferKrws.length
         const img = (e: (typeof equipment)[number]) => (e.data.image ? equipImages[e.data.image]?.default : undefined);
         const cards = equipment.filter((e) => e.data.category === 'deposition' && img(e));
         return (
-          <div class="v-reveal mt-10">
+          <div class="v-reveal mt-10 rounded-xl border border-ink/10 bg-ink/[0.03] p-6">
             <h3 class="text-lg font-bold text-ink">{tech.equipGroupTitle}</h3>
             <p class="mt-2 max-w-3xl text-sm leading-relaxed text-ink/55">{tech.equipGroupDesc}</p>
             {cards.length > 0 && (
@@ -276,7 +276,7 @@ const waferFromLabel = waferKrws.length
       })()}
 
       {equipment.filter((e) => e.data.category === 'data').map((e) => (
-        <div class="v-reveal mt-6 rounded-xl border border-accent/25 bg-accent/[0.05] p-6">
+        <div class="v-reveal mt-4 rounded-xl border border-accent/25 bg-accent/[0.05] p-6">
           {e.data.image && equipImages[e.data.image] && (
             <div class="mb-4 max-w-[220px] rounded-xl border border-ink/10 bg-plate p-3">
               <Image src={equipImages[e.data.image].default} alt={locale === 'ko' ? (e.data.name_ko ?? e.data.name) : e.data.name} width={440} class="aspect-square w-full object-contain" />

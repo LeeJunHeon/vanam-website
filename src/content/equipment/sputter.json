@@ -3,5 +3,6 @@
   "name_ko": "스퍼터",
   "category": "deposition",
   "description": "",
+  "image": "/src/assets/equipment/sputter/image.png",
   "order": 1
 }
