@@ -16,8 +16,8 @@ const t = isKo
   ? {
       meta: '주문 조회 | VANAM', metaDesc: '주문번호와 이메일로 주문 상태를 확인하세요.',
       eyebrow: '주문 조회', heading: '주문 확인',
-      lead: '주문번호와 주문 시 입력하신 이메일을 넣으시면 주문 내역과 진행 상태를 확인하실 수 있습니다.',
-      orderNo: '주문번호', email: '이메일',
+      lead: '주문번호(ORD-…) 또는 견적·주문 요청 접수번호(INQ-…)와 입력하신 이메일을 넣으시면 진행 상태를 확인하실 수 있습니다.',
+      orderNo: '주문/접수번호', email: '이메일',
       submit: '조회하기', loading: '조회 중…',
       notFound: '주문번호와 이메일이 일치하지 않습니다. 다시 확인해 주세요.',
       fail: '조회에 실패했습니다. 잠시 후 다시 시도해 주세요.',
@@ -25,6 +25,12 @@ const t = isKo
       items: '주문 내역', shipTo: '배송지', taxYes: '세금계산서 요청됨',
       noShip: '실물 배송 없음 (결과는 이메일로 안내)',
       help: '주문번호를 잊으셨나요? 아래로 연락 주시면 확인해 드립니다.',
+      inq: {
+        title: '견적·주문 요청', received: '접수일', product: '요청 상품',
+        amount: '견적 금액', vat: '(부가세 포함)',
+        pending: '산정 중입니다 — 견적이 확정되면 이메일로 안내드립니다.',
+        st: { new: '접수됨 (검토 대기)', quoted: '견적 발송됨', replied: '회신 완료', closed: '종료' },
+      } as Record<string, unknown>,
       st: {
         pending: '결제 대기', paid: '결제 완료', preparing: '제작 중',
         shipped: '발송 완료', done: '완료', cancelled: '취소됨', refunded: '환불됨',
@@ -33,8 +39,8 @@ const t = isKo
   : {
       meta: 'Track your order | VANAM', metaDesc: 'Check your order status with your order number and email.',
       eyebrow: 'Order lookup', heading: 'Track your order',
-      lead: 'Enter your order number and the email you used at checkout to see your order and its status.',
-      orderNo: 'Order number', email: 'Email',
+      lead: 'Enter your order number (ORD-…) or request number (INQ-…) with the email you used, to check the status.',
+      orderNo: 'Order / request number', email: 'Email',
       submit: 'Look up', loading: 'Searching…',
       notFound: 'The order number and email do not match. Please check and try again.',
       fail: 'Lookup failed. Please try again shortly.',
@@ -42,6 +48,12 @@ const t = isKo
       items: 'Items', shipTo: 'Ship to', taxYes: 'Tax invoice requested',
       noShip: 'No physical delivery (results sent by email)',
       help: 'Lost your order number? Contact us and we will look it up for you.',
+      inq: {
+        title: 'Quote / order request', received: 'Received', product: 'Requested item',
+        amount: 'Quoted amount', vat: '(VAT included)',
+        pending: 'Being prepared — we will email you once the quote is ready.',
+        st: { new: 'Received (in review)', quoted: 'Quote sent', replied: 'Replied', closed: 'Closed' },
+      } as Record<string, unknown>,
       st: {
         pending: 'Awaiting payment', paid: 'Paid', preparing: 'In production',
         shipped: 'Shipped', done: 'Completed', cancelled: 'Cancelled', refunded: 'Refunded',
@@ -64,6 +76,7 @@ const inputClass =
       data-label-send={t.submit}
       data-label-loading={t.loading}
       data-labels={JSON.stringify(t.st)}
+      data-inq={JSON.stringify(t.inq)}
       data-copy={JSON.stringify({
         status: t.status, amount: t.amount, ordered: t.ordered,
         items: t.items, shipTo: t.shipTo, taxYes: t.taxYes, noShip: t.noShip,
@@ -71,7 +84,7 @@ const inputClass =
       <div>
         <label for="lk-id" class="block text-sm font-medium text-ink/80">{t.orderNo} *</label>
         <input id="lk-id" name="id" type="text" required value={prefill}
-          placeholder="ORD-20260714-ABCD" class={`${inputClass} font-mono`} />
+          placeholder="ORD-… / INQ-…" class={`${inputClass} font-mono`} />
       </div>
       <div>
         <label for="lk-email" class="block text-sm font-medium text-ink/80">{t.email} *</label>
@@ -99,6 +112,7 @@ const inputClass =
     const M = form.dataset;
     const ST: Record<string, string> = JSON.parse(M.labels ?? '{}');
     const C = JSON.parse(M.copy ?? '{}');
+    const INQ = JSON.parse(M.inq ?? '{}');
 
     const btn = document.getElementById('lk-btn') as HTMLButtonElement;
     const label = document.getElementById('lk-label')!;
@@ -147,6 +161,46 @@ const inputClass =
           return;
         }
         if (!res.ok || !j.ok) throw new Error(j.error ?? res.status);
+
+        // 견적·주문 요청(INQ-) 결과 — 접수 상태 카드
+        if (j.inquiry) {
+          const q = j.inquiry;
+          const ICOLOR: Record<string, string> = {
+            new: 'border-warn/30 bg-warn/10 text-warn',
+            quoted: 'border-accent/30 bg-accent/10 text-accent',
+            replied: 'border-ok/30 bg-ok/10 text-ok',
+            closed: 'border-ink/10 bg-ink/5 text-ink/40',
+          };
+          const amt = q.quoted_amount == null ? null
+            : q.quote_currency === 'USD'
+              ? `$${Number(q.quoted_amount).toLocaleString('en-US', { maximumFractionDigits: 2 })}`
+              : won(q.quoted_amount);
+          resEl.innerHTML = `
+            <div class="rounded-xl border border-ink/10 bg-ink/[0.02] p-7">
+              <div class="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <p class="text-xs font-medium uppercase tracking-widest text-accent">${esc(INQ.title)}</p>
+                  <p class="mt-1 font-mono text-lg font-semibold text-ink">${esc(q.id)}</p>
+                  <p class="mt-1 text-sm text-ink/40">${esc(INQ.received)} ${when(q.created_at)}</p>
+                </div>
+                <span class="rounded-full border px-3 py-1 text-sm font-medium ${ICOLOR[q.status] ?? ICOLOR.closed}">
+                  ${esc(INQ.st?.[q.status] ?? q.status)}
+                </span>
+              </div>
+              ${q.product_name || q.material ? `
+                <p class="mt-6 border-t border-ink/10 pt-5 text-sm text-ink/60">
+                  ${esc(INQ.product)}: <span class="text-ink/80">${esc(q.product_name ?? q.material)}</span>
+                </p>` : ''}
+              <div class="mt-5 flex items-center justify-between border-t border-ink/10 pt-5">
+                <span class="text-sm text-ink/60">${esc(INQ.amount)} <span class="text-ink/35">${esc(INQ.vat)}</span></span>
+                <span class="text-xl font-bold text-ink">${amt ?? `<span class="text-base font-medium text-ink/45">${esc(INQ.pending)}</span>`}</span>
+              </div>
+              ${q.quote_note ? `
+                <p class="mt-5 rounded-lg bg-ink/[0.05] p-4 text-sm leading-relaxed text-ink/65">${esc(q.quote_note)}</p>` : ''}
+            </div>`;
+          resEl.hidden = false;
+          return;
+        }
 
         const o = j.order;
         const items = j.items ?? [];

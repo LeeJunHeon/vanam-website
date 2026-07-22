@@ -25,12 +25,46 @@ export const POST: APIRoute = async ({ request }) => {
   const id = typeof body.id === 'string' ? body.id.trim().toUpperCase() : '';
   const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
 
-  if (!/^ORD-\d{8}-[A-Z0-9]{4}$/.test(id) || !email) {
+  const isOrd = /^ORD-\d{8}-[A-Z0-9]{4}$/.test(id);
+  const isInq = /^INQ-\d{8}-[A-Z0-9]{4}$/.test(id);
+  if ((!isOrd && !isInq) || !email) {
     return json({ ok: false, error: 'not_found' }, 404);
   }
 
   const d = await db();
   if (!d) return json({ ok: false, error: 'no_db' }, 503);
+
+  // 견적·주문 요청(INQ-) 조회 — 접수 상태·견적 금액·안내 메모를 보여준다.
+  // SELECT * 인 이유: quote_currency 컬럼이 아직 없는 DB에서도 동작해야 해서 (마이그레이션 순서 무관)
+  if (isInq) {
+    try {
+      const q = await d
+        .prepare(`SELECT * FROM inquiries WHERE id = ?`)
+        .bind(id)
+        .first<Record<string, unknown>>();
+      if (!q || String(q.email ?? '').toLowerCase() !== email) {
+        await new Promise((r) => setTimeout(r, 500));
+        return json({ ok: false, error: 'not_found' }, 404);
+      }
+      return json({
+        ok: true,
+        inquiry: {
+          id: q.id,
+          type: q.type,
+          status: q.status,
+          product_name: q.product_name ?? null,
+          material: q.material ?? null,
+          quoted_amount: q.quoted_amount ?? null,
+          quote_currency: (q.quote_currency as string) ?? 'KRW',
+          quote_note: q.quote_note ?? null,
+          created_at: q.created_at,
+        },
+      });
+    } catch (e) {
+      console.error('[order/lookup] 문의 조회 실패:', e);
+      return json({ ok: false, error: 'db_error' }, 500);
+    }
+  }
 
   try {
     const o = await d
