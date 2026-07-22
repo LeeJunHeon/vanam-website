@@ -19,7 +19,7 @@ type Row = {
   material: string | null; method: string | null; substrate: string | null;
   thickness: string | null; quantity: string | null; deadline: string | null;
   details: string | null;
-  quoted_amount: number | null; quote_note: string | null;
+  quoted_amount: number | null; quote_currency: string | null; quote_note: string | null;
   locale: string | null; created_at: string; updated_at: string | null;
 };
 
@@ -308,7 +308,7 @@ const spec = (r: Row) =>
                     </div>
                     <div class="text-right">
                       <p class="text-xs text-ink/35">견적 금액</p>
-                      <p class="text-lg font-bold text-ink">{won(r.quoted_amount)}</p>
+                      <p class="text-lg font-bold text-ink">{r.quoted_amount == null ? '—' : (r.quote_currency === 'USD' ? '$' + r.quoted_amount.toLocaleString('en-US', { maximumFractionDigits: 2 }) : '₩' + r.quoted_amount.toLocaleString('ko-KR'))}</p>
                     </div>
                   </div>
 
@@ -317,8 +317,16 @@ const spec = (r: Row) =>
 
                   <form class="quote-form mt-4 flex flex-wrap items-end gap-3 border-t border-ink/10 pt-4" data-id={r.id}>
                     <div>
-                      <label class="block text-xs text-ink/45">견적 금액 (원, 부가세 포함)</label>
-                      <input name="amount" type="number" min="0" step="1000" value={r.quoted_amount ?? ''}
+                      <label class="block text-xs text-ink/45">통화</label>
+                      <select name="currency"
+                        class="mt-1 rounded-lg border border-ink/10 bg-ink/[0.03] px-3 py-2 text-sm text-ink outline-none focus:border-accent">
+                        <option value="KRW" selected={(r.quote_currency ?? 'KRW') === 'KRW'}>₩ 원</option>
+                        <option value="USD" selected={r.quote_currency === 'USD'}>$ 달러</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label class="block text-xs text-ink/45">견적 금액 (부가세 포함)</label>
+                      <input name="amount" type="number" min="0" step="any" value={r.quoted_amount ?? ''}
                         class="mt-1 w-44 rounded-lg border border-ink/10 bg-ink/[0.03] px-3 py-2 text-sm text-ink outline-none focus:border-accent" />
                     </div>
                     <div class="min-w-[16rem] flex-1">

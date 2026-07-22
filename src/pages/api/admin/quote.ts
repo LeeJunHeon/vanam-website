@@ -36,6 +36,9 @@ export const POST: APIRoute = async ({ request }) => {
     amount = n;
   }
 
+  // 통화 — KRW/USD 만 허용 (기본 KRW)
+  const currency = body.currency === 'USD' ? 'USD' : 'KRW';
+
   const note = typeof body.note === 'string' ? body.note.slice(0, 2000) : '';
   const status = typeof body.status === 'string' && STATUSES.includes(body.status) ? body.status : null;
   if (!status) return json({ ok: false, error: 'bad_status' }, 400);
@@ -44,10 +47,10 @@ export const POST: APIRoute = async ({ request }) => {
     await d
       .prepare(
         `UPDATE inquiries
-            SET quoted_amount = ?, quote_note = ?, status = ?, updated_at = ?
+            SET quoted_amount = ?, quote_currency = ?, quote_note = ?, status = ?, updated_at = ?
           WHERE id = ?`,
       )
-      .bind(amount, note || null, status, nowIso(), id)
+      .bind(amount, currency, note || null, status, nowIso(), id)
       .run();
     return json({ ok: true, id, amount, status });
   } catch (e) {

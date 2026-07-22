@@ -37,6 +37,8 @@ const sizeOpts = SUBSTRATE_SIZES.map((s) => ({ value: s.value, label: isKo ? s.k
 const deliveryOpts = DELIVERY_METHODS.map((d) => ({ value: d.value, label: isKo ? d.ko : d.en }));
 // 배송 국가 (simple=고정가 주문 폼 전용)
 const countryOpts = COUNTRIES.map((cn) => ({ value: cn.code, label: isKo ? cn.ko : cn.en }));
+// 증착 공정 목록(두께 nm 단위) — 대표 소재 판정용 (세정 가스가 '소재'로 잡히던 문제 방지)
+const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name);
 ---
 
 <section id="quote" class="mt-20 scroll-mt-24 border-t border-ink/10 pt-16">
@@ -68,7 +70,8 @@ const countryOpts = COUNTRIES.map((cn) => ({ value: cn.code, label: isKo ? cn.ko
       data-lbl-remove={q.processRemove}
       data-map-size={JSON.stringify(Object.fromEntries(sizeOpts.map((s) => [s.value, s.label])))}
       data-map-delivery={JSON.stringify(Object.fromEntries(deliveryOpts.map((d) => [d.value, d.label])))}
-      data-map-country={JSON.stringify(Object.fromEntries(countryOpts.map((cn) => [cn.value, cn.label])))}>
+      data-map-country={JSON.stringify(Object.fromEntries(countryOpts.map((cn) => [cn.value, cn.label])))}
+      data-dep-processes={JSON.stringify(DEP_PROCESSES)}>
       <!-- Honeypot: 사람에겐 안 보임 (스팸 트랩) -->
       <div class="absolute left-[-9999px]" aria-hidden="true">
         <label>{c.honeypot}
@@ -580,8 +583,15 @@ const countryOpts = COUNTRIES.map((cn) => ({ value: cn.code, label: isKo ? cn.ko
       delete data.shipCity; delete data.shipState; delete data.shipPostal;
     } else {
       // 서버 호환: 시퀀스 텍스트를 details 에, 대표 물질을 material 에
-      const firstMat = seq.json.find((s) => s.material)?.material || seq.json[0]?.process || "Process request";
-      data.material = firstMat;
+      //   대표 소재 = "증착 공정"(nm 단위)의 물질만 — 세정 가스(Ar 등)가 소재로 잡히던 문제 수정
+      const depSet = new Set(JSON.parse(M.depProcesses || "[]") as string[]);
+      const uniq = (xs: string[]) => [...new Set(xs)];
+      const depRows = seq.json.filter((s) => depSet.has(s.process) && s.material);
+      data.material = uniq(depRows.map((s) => s.material as string)).join(", ")
+        || seq.json.find((s) => s.material)?.material
+        || seq.json[0]?.process
+        || "Process request";
+      data.method = uniq(depRows.map((s) => s.process)).join(", ");
       data.substrate = [data.substrateType, sizeLabel].filter(Boolean).join(" / ");
       data.details = [
         "[공정 시퀀스]",
