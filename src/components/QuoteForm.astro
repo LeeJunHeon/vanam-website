@@ -627,8 +627,12 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
       });
       if (!res.ok) throw new Error("HTTP " + res.status);
       form.reset();
-      listEl.innerHTML = "";
-      refreshStepLabels();
+      // 공정 빌더는 풀 모드에만 존재 — simple(웨이퍼 주문) 폼에서는 null 이라
+      // 여기서 예외가 나면 "성공했는데 실패 메시지"가 뜨는 버그가 됨 (가드 필수)
+      if (listEl) {
+        listEl.innerHTML = "";
+        refreshStepLabels();
+      }
       window.turnstile?.reset();
       setStatus(M.msgSuccess!, true);
     } catch (err) {
