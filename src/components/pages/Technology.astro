@@ -70,7 +70,6 @@ const mt = {
   system: locale === 'ko' ? '증착 방식' : 'Deposition',
   category: locale === 'ko' ? '분류' : 'Category',
   imgSoon: locale === 'ko' ? '상세 이미지 준비 중입니다.' : 'Detailed image coming soon.',
-  descSoon: locale === 'ko' ? '상세 설명이 곧 추가됩니다.' : 'A detailed description will be added soon.',
   cta: locale === 'ko' ? '이 물질로 견적 문의' : 'Request a quote for this material',
   close: locale === 'ko' ? '닫기' : 'Close',
 };
@@ -228,18 +227,17 @@ const contactHref = lhref('/contact');
         <div><span class="text-ink/45">{mt.category}: </span><span class="text-ink/80" data-slot="category"></span></div>
       </div>
 
-      <div class="mt-6 overflow-hidden rounded-xl border border-ink/10 bg-ink/[0.03]">
-        <img data-slot="img" alt="" class="hidden max-h-[65vh] w-full object-contain" loading="lazy" />
-        <div data-slot="img-ph" class="flex aspect-[16/9] flex-col items-center justify-center gap-3 text-center">
+      <!-- 자료 이미지: A4 세로형 기준 — 원본 비율 그대로 세로 최대 75vh 까지 키우고
+           폭은 비율에 따라 자동(가운데 정렬). 설명 대기 문구를 없앤 만큼 이미지가 커진다. -->
+      <div class="mt-6">
+        <img data-slot="img" alt="" class="hidden mx-auto max-h-[75vh] w-auto max-w-full rounded-xl border border-ink/10 object-contain" loading="lazy" />
+        <div data-slot="img-ph" class="flex aspect-[16/9] flex-col items-center justify-center gap-3 rounded-xl border border-ink/10 bg-ink/[0.03] text-center">
           <svg class="h-12 w-12 text-ink/20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
           <p class="text-sm text-ink/40">{mt.imgSoon}</p>
         </div>
       </div>
 
-      <div class="mt-6">
-        <p class="hidden whitespace-pre-line text-base leading-relaxed text-ink/75" data-slot="desc"></p>
-        <p class="text-base text-ink/40" data-slot="desc-ph">{mt.descSoon}</p>
-      </div>
+      <p class="mt-6 hidden whitespace-pre-line text-base leading-relaxed text-ink/75" data-slot="desc"></p>
 
       <div class="mt-8">
         <a data-slot="quote" href={contactHref} class="inline-flex items-center gap-2 rounded-lg bg-brand px-5 py-3 text-sm font-semibold text-onbrand transition hover:brightness-110">
@@ -260,7 +258,6 @@ const contactHref = lhref('/contact');
       const imgEl = slot('img') as HTMLImageElement | null;
       const imgPh = slot('img-ph');
       const descEl = slot('desc');
-      const descPh = slot('desc-ph');
       const closeBtn = modal.querySelector<HTMLElement>('.mat-close');
       const backdrop = modal.querySelector<HTMLElement>('.mat-backdrop');
       let lastFocused: HTMLElement | null = null;
@@ -287,9 +284,9 @@ const contactHref = lhref('/contact');
         }
 
         if (m.desc && descEl) {
-          descEl.textContent = m.desc; show(descEl); hide(descPh);
+          descEl.textContent = m.desc; show(descEl);
         } else {
-          hide(descEl); show(descPh);
+          hide(descEl);
         }
 
         lastFocused = document.activeElement as HTMLElement;
