@@ -6,8 +6,8 @@
         "line2": "All Around"
       },
       "heroSubtitle": {
-        "line1": "Advanced thin films for AI, photonics,",
-        "line2": "quantum and power electronics."
+        "line1": "Advanced thin films for semiconductors,",
+        "line2": "quantum, photonics, AI and power electronics."
       },
       "heroCtaPrimary": "Explore the technology →",
       "heroCtaSecondary": "Contact",
@@ -24,7 +24,7 @@
         },
         {
           "title": "Foundry Manufacturing",
-          "desc": "We support low-MOQ prototyping, pilot wafers, and small to medium batch production from our Seoul foundry. Mass production and U.S. expansion are in progress."
+          "desc": "We support low-MOQ prototyping, pilot wafers, and small to medium batch production from our Seoul foundry. Next step: U.S. expansion & mass production."
         }
       ],
       "ctaHeading": "Thin-film solutions, built together",
@@ -36,7 +36,7 @@
     "technology": {
       "heroTitle": {
         "line1": "Advanced thin films",
-        "line2": "for emerging hardware"
+        "line2": "for next-generation hardware"
       },
       "heroSubtitle": "VanaM provides process technology, custom deposition recipes, and pilot manufacturing for thin films that conventional suppliers cannot easily deliver.\n\nOur platform integrates vacuum deposition, pre/post treatment, in-situ process monitoring, metrology, and AI-assisted optimization.",
       "valueProps": [
@@ -54,7 +54,7 @@
         },
         {
           "h": "Project 2: Energy-Responsive Thin Film",
-          "d": "The world's 1<sup>st</sup> multifunctional thin film that responds to changes on thermal and electrical energy, enabling sensing, switching, system simplification and protection."
+          "d": "The world's 1<sup>st</sup> multifunctional thin film that responds to changes in thermal and electrical energy, enabling sensing, switching, system simplification and protection."
         }
       ],
       "coreTechBody": "VanaM combines proprietary sputtering/ALD processes, pre- and post-treatment, in-situ process sensing, and thin film metrology to develop high-quality materials with faster optimization cycles and stronger process reproducibility.",
@@ -134,7 +134,7 @@
         },
         {
           "name": "Waveguides",
-          "desc": "Ta₂O₅, SiO₂ and TiO₂ films for low-loss optical waveguides."
+          "desc": "Ta₂O₅, SiN and TiO₂ films for low-loss optical waveguides."
         },
         {
           "name": "Modulators",
@@ -142,7 +142,7 @@
         },
         {
           "name": "DBR Mirrors",
-          "desc": "Si, SiO₂ and TiO₂ multilayer stacks for high-reflectance mirrors."
+          "desc": "Si, SiO₂, TiO₂ and Ta₂O₅ multilayer stacks for high-reflectance mirrors."
         }
       ],
       "quantumTargetLabel": "Target applications",
@@ -152,7 +152,18 @@
         "quantum sensing",
         "laser/LiDAR",
         "silicon photonics"
-      ]
+      ],
+      "p2Eyebrow": "THE MULTIFUNCTIONAL ENERGY-RESPONSIVE SEMICONDUCTOR PROJECT",
+      "p2Heading": "Multifunctional thin films that sense, respond, and protect.",
+      "p2Body": "VanaM developed the world's first multifunctional semiconductor thin-film that responds to changes in thermal and electrical energy, enabling sensing, switching, protection, and energy-management functions to be integrated into compact devices and surfaces.",
+      "p2Items": [
+        { "name": "Thermal & Electrical Sensing & Smart Switching", "desc": "Energy-responsive thin films that detect changes in temperature and electrical conditions for real-time sensing and monitoring." },
+        { "name": "One Thin Film, Multiple Functions", "desc": "Multifunctional thin film that can replace several traditional active and passive components, for simplified, less energy-consuming systems." },
+        { "name": "Safety & Protection", "desc": "Responsive thin films for early heat and abnormal-condition detection, supporting applications such as fire detection and electronic system protection." },
+        { "name": "Energy Management", "desc": "Functional coatings that help control heat, light, and energy flow for more efficient buildings, electronics, and intelligent surfaces." }
+      ],
+      "p2TargetLabel": "Target applications",
+      "p2Targets": ["Thermal sensing", "Fire & safety systems", "Battery protection circuits", "Smart electronics", "IR sensing", "Smart glass"]
     },
     "about": {
       "heroTitle": {
@@ -166,7 +177,7 @@
         "highlight": "",
         "after": ""
       },
-      "visionBody": "Connect the next world with semiconductor materials — localizing new materials and components, and leading the industry.",
+      "visionBody": "Shaping the future of deep tech through advanced thin film materials.",
       "teamDesc": "Ph.D.-level semiconductor researchers, IP & patent attorneys, and facility engineers — combining deep expertise across thin-film materials, intellectual property, and fab construction.",
       "globalActivityDesc": "Exhibitions, conferences, and accelerator programs worldwide.",
       "ctaHeadingHtml": "Let's build what's next.",
@@ -381,7 +392,7 @@
         "line2": "All Around"
       },
       "heroSubtitle": {
-        "line1": "AI·포토닉스·양자·전력반도체를 위한",
+        "line1": "반도체·양자·포토닉스·AI·전력전자를 위한",
         "line2": "첨단 박막 소재"
       },
       "heroCtaPrimary": "기술 살펴보기 →",
@@ -399,7 +410,7 @@
         },
         {
           "title": "파운드리 제조",
-          "desc": "서울 파운드리에서 소량(low-MOQ) 시제품, 파일럿 웨이퍼, 중소량 배치 생산을 지원합니다. 대량 양산과 미국 진출을 준비하고 있습니다."
+          "desc": "서울 파운드리에서 소량(low-MOQ) 시제품, 파일럿 웨이퍼, 중소량 배치 생산을 지원합니다. 다음 단계: 미국 진출과 대량 양산."
         }
       ],
       "ctaHeading": "함께 만들 박막 솔루션",
@@ -410,7 +421,7 @@
     },
     "technology": {
       "heroTitle": {
-        "line1": "새로운 하드웨어를 위한",
+        "line1": "차세대 하드웨어를 위한",
         "line2": "첨단 박막 소재"
       },
       "heroSubtitle": "반암(VanaM)은 기존 공급사가 쉽게 제공하지 못하는 박막을 위한 공정 기술과 맞춤형 증착 레시피, 파일럿 제조를 제공합니다.\n\n진공 증착, 전·후처리, 인시투(in-situ) 공정 모니터링, 계측, AI 기반 최적화를 하나의 플랫폼으로 통합했습니다.",
@@ -509,7 +520,7 @@
         },
         {
           "name": "도파로",
-          "desc": "저손실 광도파로를 위한 Ta₂O₅, SiO₂, TiO₂ 박막."
+          "desc": "저손실 광도파로를 위한 Ta₂O₅, SiN, TiO₂ 박막."
         },
         {
           "name": "변조기",
@@ -517,7 +528,7 @@
         },
         {
           "name": "DBR 미러",
-          "desc": "고반사 미러를 위한 Si, SiO₂, TiO₂ 다층 적층."
+          "desc": "고반사 미러를 위한 Si, SiO₂, TiO₂, Ta₂O₅ 다층 적층."
         }
       ],
       "quantumTargetLabel": "타겟 응용 분야",
@@ -527,7 +538,18 @@
         "양자 센싱",
         "레이저/라이다",
         "실리콘 포토닉스"
-      ]
+      ],
+      "p2Eyebrow": "다기능 에너지 반응형 반도체 프로젝트",
+      "p2Heading": "감지하고, 반응하고, 보호하는 다기능 박막",
+      "p2Body": "반암은 열·전기 에너지 변화에 반응하는 세계 최초의 다기능 반도체 박막을 개발했습니다. 감지·스위칭·보호·에너지 관리 기능을 소형 소자와 표면에 통합할 수 있습니다.",
+      "p2Items": [
+        { "name": "열·전기 감지 & 스마트 스위칭", "desc": "온도와 전기적 조건의 변화를 감지해 실시간 센싱과 모니터링을 구현하는 에너지 반응형 박막." },
+        { "name": "하나의 박막, 다수의 기능", "desc": "여러 전통적인 능동·수동 소자를 대체할 수 있는 다기능 박막 — 시스템을 단순화하고 에너지 소비를 줄입니다." },
+        { "name": "안전 & 보호", "desc": "열과 이상 상태를 조기에 감지하는 반응형 박막으로, 화재 감지와 전자 시스템 보호 등에 활용됩니다." },
+        { "name": "에너지 관리", "desc": "열·빛·에너지 흐름 제어를 돕는 기능성 코팅으로, 더 효율적인 건물·전자기기·지능형 표면을 구현합니다." }
+      ],
+      "p2TargetLabel": "타겟 응용 분야",
+      "p2Targets": ["열 감지", "화재·안전 시스템", "배터리 보호 회로", "스마트 전자기기", "IR 센싱", "스마트 글라스"]
     },
     "about": {
       "metaTitle": "회사 소개 | VANAM",
@@ -543,7 +565,7 @@
         "highlight": "",
         "after": ""
       },
-      "visionBody": "반도체 소재로 다음 세상을 연결합니다 — 신소재·부품을 국산화하고 산업을 선도합니다.",
+      "visionBody": "첨단 박막 소재로 딥테크의 미래를 만들어 갑니다.",
       "teamDesc": "박막 소재, 지식재산(IP), 설비 구축 분야의 박사급 반도체 연구진과 IP·특허 변리사, 설비 엔지니어가 모여 깊이 있는 전문성을 결합합니다.",
       "globalActivityDesc": "전 세계 전시회, 학술대회, 액셀러레이터 프로그램에 참가합니다.",
       "ctaHeadingHtml": "함께 다음을 만들어 갑니다.",

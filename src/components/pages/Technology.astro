@@ -112,7 +112,7 @@ const contactHref = lhref('/contact');
   </section>
 
   <!-- ── Project 1: Quantum Photonics ──────────────────
-       Core Technology 바로 다음. (이 섹션과 Materials 사이가 추후 IR 자료로 채울 Project 2: 에너지 반응형 박막 자리) -->
+       Core Technology 바로 다음. (바로 아래에 Project 2: 에너지 반응형 상세 섹션이 이어진다) -->
   <section id="project1" class="scroll-mt-24">
     <div class="mx-auto max-w-6xl px-6 py-20">
     <div class="v-reveal max-w-3xl">
@@ -134,6 +134,36 @@ const contactHref = lhref('/contact');
       <p class="text-sm font-medium text-ink/50">{tech.quantumTargetLabel}</p>
       <div class="mt-3 flex flex-wrap gap-2">
         {tech.quantumTargets.map((t) => (
+          <span class="rounded-full border border-accent/30 bg-accent/10 px-3 py-1.5 text-sm text-ink/80">{t}</span>
+        ))}
+      </div>
+    </div>
+    </div>
+  </section>
+
+  <!-- ── Project 2: Energy-Responsive Semiconductor ──────
+       Project 1(양자)과 동일한 문법: 아이브로우 → 헤딩 → 본문 → 2열 카드 → 타깃 칩. -->
+  <section id="project2" class="scroll-mt-24">
+    <div class="mx-auto max-w-6xl px-6 py-20">
+    <div class="v-reveal max-w-3xl">
+      <p class="text-sm font-medium uppercase tracking-[0.2em] text-accent">{tech.p2Eyebrow}</p>
+      <h2 class="mt-5 text-3xl font-bold leading-snug text-ink">{tech.p2Heading}</h2>
+      <p class="mt-5 text-base leading-relaxed text-ink/65">{tech.p2Body}</p>
+    </div>
+
+    <div class="v-reveal mt-12 grid gap-5 sm:grid-cols-2">
+      {tech.p2Items.map((q) => (
+        <div class="rounded-2xl border border-ink/10 bg-ink/[0.03] p-6 transition hover:border-accent/50">
+          <h3 class="text-lg font-bold text-accent">{q.name}</h3>
+          <p class="mt-2 text-base leading-relaxed text-ink/65">{q.desc}</p>
+        </div>
+      ))}
+    </div>
+
+    <div class="v-reveal mt-8">
+      <p class="text-sm font-medium text-ink/50">{tech.p2TargetLabel}</p>
+      <div class="mt-3 flex flex-wrap gap-2">
+        {tech.p2Targets.map((t) => (
           <span class="rounded-full border border-accent/30 bg-accent/10 px-3 py-1.5 text-sm text-ink/80">{t}</span>
         ))}
       </div>
