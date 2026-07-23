@@ -32,11 +32,11 @@
 #               cdn.jsdelivr.net — Pretendard CSS.
 #   font-src    cdn.jsdelivr.net — Pretendard woff. data: 는 폰트 폴백 대비.
 #   img-src     data: — 인라인 SVG/이미지 대비. (외부 이미지 없음 — 뉴스/소셜은 <a> 링크뿐)
-#   connect-src 'self' — fetch 는 전부 /api/* 내부.
+#   connect-src 'self' + PayPal — fetch 는 /api/* 내부 + PayPal SDK 통신.
 #   frame-ancestors 'none' — 클릭재킹 완전 차단. (사이트에 iframe·YouTube 임베드 0개라 안전)
 #   frame-src   'none' — iframe 임베드 없음.
 /*
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net data:; img-src 'self' data:; connect-src 'self' https://challenges.cloudflare.com; object-src 'none'; frame-src https://challenges.cloudflare.com https://www.google.com https://maps.google.com https://www.linkedin.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://www.paypal.com https://www.sandbox.paypal.com https://www.paypalobjects.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net data:; img-src 'self' data: https://www.paypalobjects.com https://www.paypal.com; connect-src 'self' https://challenges.cloudflare.com https://www.paypal.com https://www.sandbox.paypal.com; object-src 'none'; frame-src https://challenges.cloudflare.com https://www.google.com https://maps.google.com https://www.linkedin.com https://www.paypal.com https://www.sandbox.paypal.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin

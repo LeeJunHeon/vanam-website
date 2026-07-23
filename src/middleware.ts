@@ -29,13 +29,13 @@ import { defineMiddleware } from 'astro:middleware';
 //   frame-ancestors 'none' : 클릭재킹 완전 차단.
 const CSP =
   "default-src 'self'; " +
-  "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com; " +
+  "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://www.paypal.com https://www.sandbox.paypal.com https://www.paypalobjects.com; " +
   "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; " +
   "font-src 'self' https://cdn.jsdelivr.net data:; " +
-  "img-src 'self' data:; " +
-  "connect-src 'self' https://challenges.cloudflare.com; " +
+  "img-src 'self' data: https://www.paypalobjects.com https://www.paypal.com; " +
+  "connect-src 'self' https://challenges.cloudflare.com https://www.paypal.com https://www.sandbox.paypal.com; " +
   "object-src 'none'; " +
-  "frame-src https://challenges.cloudflare.com https://www.google.com https://maps.google.com https://www.linkedin.com; " +
+  "frame-src https://challenges.cloudflare.com https://www.google.com https://maps.google.com https://www.linkedin.com https://www.paypal.com https://www.sandbox.paypal.com; " +
   "frame-ancestors 'none'; " +
   "base-uri 'self'; " +
   "form-action 'self'";
