@@ -123,173 +123,215 @@ for (const pth of Object.keys(techImages)) {
 
       {(() => {
         const cv = (tech as any).coreViz;
-        // 슬라이드 원본 레이아웃: [1 수집] [2·3·4 통합 박스] [5 조치] [6 검증] + 하단 피드백 순환 화살표.
+        // 세로 파이프라인: 슬라이드의 좌→우 6단계를 내용 그대로 위→아래로 재배치.
+        // 2·3·4 는 통합 강조 박스(시안), 좌측 브래킷 화살표가 5(Action Execution/Feedback)→1 순환을 표현.
+        // 각 단계가 전체 폭을 쓰므로 이미지·텍스트가 원본 24장 자산 그대로 크게 배치된다.
         const asset = (f: string) => techAsset(`core/${f}`)!;
         const large = (f: string) => techLarge[`/src/assets/tech/core/${f}`];
-        const pill = (idx: number) =>
-          `mb-3 block rounded-lg px-3 py-2 text-center text-[12px] font-bold leading-snug text-white ${[1, 2, 3].includes(idx) ? 'bg-accent' : 'bg-ink/80'}`;
-        const zoomBtn = 'tech-zoom block w-full cursor-zoom-in overflow-hidden rounded-md border border-ink/10 bg-plate p-1.5 transition hover:border-accent/60';
+        const pill = (i: number) =>
+          `grid h-9 w-9 shrink-0 place-items-center rounded-full text-[15px] font-bold ${[1, 2, 3].includes(i) ? 'bg-brand text-onbrand' : 'bg-ink/80 text-canvas'}`;
+        const card = 'rounded-xl border border-ink/15 bg-canvas p-4';
+        const cardH = 'text-[13px] font-bold text-accent';
+        const zoomBtn = 'tech-zoom block w-full cursor-zoom-in overflow-hidden rounded-lg border border-ink/10 bg-plate p-2 transition hover:border-accent/60';
+        const capCls = 'mb-1.5 text-center text-[12px] font-semibold leading-tight text-ink/60';
+        // 단계 사이 세로 흐름 화살표 — 박스 밖(중립)·박스 안(시안 구분선) 두 가지
+        const flow = () => (
+          <p class="my-4 text-center text-2xl font-bold leading-none text-ink/30" aria-hidden="true">↓</p>
+        );
+        const flowIn = () => (
+          <div class="my-6 flex items-center gap-4" aria-hidden="true">
+            <span class="h-px flex-1 bg-accent/20"></span>
+            <span class="text-xl font-bold leading-none text-accent/70">↓</span>
+            <span class="h-px flex-1 bg-accent/20"></span>
+          </div>
+        );
+        // 단계 헤더 — 번호 필(2·3·4 시안 채움, 1·5·6 남색) + 제목. 5는 우측에 피드백 라벨.
+        const head = (i: number) => (
+          <div class="flex flex-wrap items-center gap-3">
+            <span class={pill(i)}>{cv.heads[i].no}</span>
+            <h3 class="text-[15px] font-bold text-ink md:text-base">{cv.heads[i].t}</h3>
+            {i === 4 && (
+              <span class="rounded-full border border-accent/40 bg-accent/[0.06] px-3 py-1 text-[11.5px] font-bold text-accent sm:ml-auto">{cv.s5.feedback}</span>
+            )}
+          </div>
+        );
         return (
           <div class="v-reveal mt-12">
-            <div class="grid gap-5 lg:grid-cols-[0.92fr_3.35fr_1.08fr_1.08fr] lg:gap-4">
+
+            {/* ── 1~5 래퍼 + 좌측 피드백 브래킷 (5 하단 → 좌측 상승 → 1 진입, 데스크톱) ── */}
+            <div class="relative lg:pl-12">
+              <div class="pointer-events-none absolute bottom-6 left-0 top-6 hidden w-6 rounded-l-2xl border-y-[3px] border-l-[3px] border-accent/45 lg:block" aria-hidden="true"></div>
+              <div class="pointer-events-none absolute left-[22px] top-[18.5px] hidden h-0 w-0 border-y-[7px] border-l-[10px] border-y-transparent border-l-accent/60 lg:block" aria-hidden="true"></div>
+              <span class="pointer-events-none absolute left-[1.5px] top-1/2 hidden -translate-x-1/2 -translate-y-1/2 rotate-180 rounded-full border border-accent/30 bg-canvas px-1.5 py-3 text-[11px] font-bold tracking-wide text-accent [writing-mode:vertical-rl] lg:inline-block" aria-hidden="true">↻ {cv.cycle.t}</span>
 
               {/* ── 1. 데이터 수집 ── */}
               <div>
-                <p class={pill(0)}>{cv.heads[0].no}. {cv.heads[0].t}</p>
-                <div class="space-y-3 rounded-xl border border-ink/15 p-3">
+                {head(0)}
+                <div class="mt-4 grid gap-4 sm:grid-cols-3">
                   {cv.col1.map((eq: any) => (
-                    <div class="rounded-lg border border-dashed border-ink/20 p-2.5 text-center">
-                      <p class="text-[11px] font-bold text-accent">{eq.label}</p>
-                      <Image src={asset(eq.img)} alt={`${eq.label} system`} width={220} class="mx-auto mt-1.5 h-16 w-auto object-contain md:h-20" />
+                    <div class="rounded-xl border border-dashed border-ink/25 bg-canvas p-4 text-center">
+                      <p class="text-[13px] font-bold text-accent">{eq.label}</p>
+                      <Image src={asset(eq.img)} alt={`${eq.label} system`} width={220} class="mx-auto mt-2 h-20 w-auto object-contain md:h-24" />
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* ── 2·3·4 통합 박스 ── */}
-              <div>
-                <div class="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-3 lg:grid-cols-[0.95fr_1.55fr_1fr] lg:gap-3">
-                  <p class={pill(1) + ' !mb-0'}>{cv.heads[1].no}. {cv.heads[1].t}</p>
-                  <p class={pill(2) + ' !mb-0'}>{cv.heads[2].no}. {cv.heads[2].t}</p>
-                  <p class={pill(3) + ' !mb-0'}>{cv.heads[3].no}. {cv.heads[3].t}</p>
+              {flow()}
+
+              {/* ── 2·3·4 통합 강조 박스 ── */}
+              <div class="rounded-2xl border-2 border-accent/40 bg-accent/[0.03] p-4 sm:p-6">
+
+                {/* 2 — 데이터 통합 · 전처리: A → B 가로 배치 + Data quality 배지 */}
+                {head(1)}
+                <div class="mt-4 grid gap-4 lg:grid-cols-[1fr_auto_1fr]">
+                  <div class={card}>
+                    <p class={cardH}>{cv.s2.a.h}</p>
+                    <div class="mt-3 flex items-center gap-4">
+                      <ul class="min-w-0 flex-1 space-y-1 text-[12.5px] leading-relaxed text-ink/60">
+                        {cv.s2.a.bullets.map((b: string) => <li>· {b}</li>)}
+                      </ul>
+                      <Image src={asset(cv.s2.a.img)} alt={cv.s2.a.h} width={140} class="h-14 w-14 shrink-0 object-contain md:h-16 md:w-16" />
+                    </div>
+                  </div>
+                  <div class="hidden items-center lg:flex" aria-hidden="true">
+                    <span class="text-xl font-bold text-accent/70">→</span>
+                  </div>
+                  <div class={card}>
+                    <p class={cardH}>{cv.s2.b.h}</p>
+                    <div class="mt-3 flex items-center gap-4">
+                      <Image src={asset(cv.s2.b.img)} alt={cv.s2.b.h} width={140} class="h-14 w-14 shrink-0 object-contain md:h-16 md:w-16" />
+                      <ul class="min-w-0 flex-1 space-y-1 text-[12.5px] leading-relaxed text-ink/60">
+                        {cv.s2.b.bullets.map((b: string) => <li>· {b}</li>)}
+                      </ul>
+                    </div>
+                  </div>
                 </div>
-                <div class="rounded-2xl border-2 border-accent/40 bg-accent/[0.02] p-3.5">
-                  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-[0.95fr_1.55fr_1fr] lg:gap-3.5">
+                <p class="mt-4 text-center">
+                  <span class="inline-flex items-center gap-1.5 rounded-full border border-ok bg-ok/10 px-4 py-1.5 text-[12px] font-bold text-ok">✓ {cv.s2.badge}</span>
+                </p>
 
-                    {/* 2 — 통합·전처리 */}
-                    <div class="flex flex-col">
-                      <div class="rounded-lg border border-ink/15 bg-canvas p-3">
-                        <p class="text-[11px] font-bold text-accent">{cv.s2.a.h}</p>
-                        <div class="mt-2 flex items-start gap-2">
-                          <ul class="min-w-0 flex-1 space-y-0.5 text-[10.5px] leading-relaxed text-ink/60">
-                            {cv.s2.a.bullets.map((b: string) => <li>· {b}</li>)}
-                          </ul>
-                          <Image src={asset(cv.s2.a.img)} alt={cv.s2.a.h} width={120} class="h-11 w-11 shrink-0 object-contain" />
-                        </div>
-                      </div>
-                      <p class="my-1.5 text-center text-base font-bold leading-none text-accent">↓</p>
-                      <div class="rounded-lg border border-ink/15 bg-canvas p-3">
-                        <p class="text-[11px] font-bold text-accent">{cv.s2.b.h}</p>
-                        <div class="mt-2 flex items-start gap-2">
-                          <Image src={asset(cv.s2.b.img)} alt={cv.s2.b.h} width={120} class="h-11 w-11 shrink-0 object-contain" />
-                          <ul class="min-w-0 flex-1 space-y-0.5 text-[10.5px] leading-relaxed text-ink/60">
-                            {cv.s2.b.bullets.map((b: string) => <li>· {b}</li>)}
-                          </ul>
-                        </div>
-                      </div>
-                      <p class="mt-2.5 inline-flex items-center gap-1.5 self-start rounded-full border border-ok px-3 py-1 text-[11px] font-bold text-ok">✓ {cv.s2.badge}</p>
-                    </div>
+                {flowIn()}
 
-                    {/* 3 — 다변량 분석 · 변화 감지 */}
-                    <div class="flex flex-col gap-3">
-                      <div class="rounded-lg border border-ink/15 bg-canvas p-3">
-                        <p class="text-[11px] font-bold text-accent">{cv.s3.dash.h}</p>
-                        <div class="mt-2 grid grid-cols-3 gap-2">
-                          {cv.s3.dash.panels.map((pn: any) => (
-                            <figure class="min-w-0">
-                              <figcaption class="mb-1 text-center text-[9.5px] font-semibold leading-tight text-ink/55">{pn.t}</figcaption>
-                              <button type="button" class={zoomBtn} data-full={large(pn.img)} data-name={pn.t} aria-label={`${pn.t} 확대`}>
-                                <Image src={asset(pn.img)} alt={pn.t} width={360} class="aspect-square w-full object-contain" />
-                              </button>
-                              {pn.cap && <p class="mt-1 text-center text-[8.5px] leading-tight text-ink/40">{pn.cap}</p>}
-                            </figure>
-                          ))}
-                        </div>
-                      </div>
-                      <div class="rounded-lg border border-ink/15 bg-canvas p-3">
-                        <p class="text-[11px] font-bold text-accent">{cv.s3.change.h}</p>
-                        <div class="mt-2 grid grid-cols-2 gap-2">
-                          {cv.s3.change.panels.map((pn: any) => (
-                            <figure class="min-w-0">
-                              <figcaption class="mb-1 text-center text-[9.5px] font-semibold leading-tight text-ink/55">{pn.t}</figcaption>
-                              <button type="button" class={zoomBtn} data-full={large(pn.img)} data-name={pn.t} aria-label={`${pn.t} 확대`}>
-                                <Image src={asset(pn.img)} alt={pn.t} width={420} class="aspect-square w-full object-contain" />
-                              </button>
-                            </figure>
-                          ))}
-                        </div>
-                      </div>
-                      <div class="rounded-lg border border-ink/15 bg-canvas p-3">
-                        <p class="text-center text-[11px] font-bold text-ink/70">{cv.s3.alarm.t}</p>
-                        <div class="mt-2 grid grid-cols-3 gap-1.5">
-                          {cv.s3.alarm.levels.map((lv: any, li: number) => (
-                            <div class={`rounded-md border p-1.5 text-center ${li === 0 ? 'border-ok/50 bg-ok/10' : li === 1 ? 'border-warn/50 bg-warn/10' : 'border-danger/50 bg-danger/10'}`}>
-                              <p class={`text-[10.5px] font-bold ${li === 0 ? 'text-ok' : li === 1 ? 'text-warn' : 'text-danger'}`}>{lv.t}</p>
-                              <p class="mt-0.5 text-[9px] leading-tight text-ink/60">{lv.l1}</p>
-                              <p class="text-[9px] leading-tight text-ink/45">{lv.l2}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* 4 — 진단 · 원인 추정 */}
-                    <div class="flex flex-col gap-2.5">
-                      {cv.s4.charts.map((ch: any) => (
-                        <figure class="rounded-lg border border-ink/15 bg-canvas p-2.5">
-                          <figcaption class="mb-1.5 text-center text-[9.5px] font-semibold leading-tight text-ink/55">{ch.t}</figcaption>
-                          <button type="button" class={zoomBtn} data-full={large(ch.img)} data-name={ch.t} aria-label={`${ch.t} 확대`}>
-                            <Image src={asset(ch.img)} alt={ch.t} width={420} class="max-h-24 w-full object-contain" />
+                {/* 3 — 다변량 분석 · 변화 감지: 대시보드 전폭 → 변화감지 + Alarm 표 */}
+                {head(2)}
+                <div class="mt-4 space-y-4">
+                  <div class={card}>
+                    <p class={cardH}>{cv.s3.dash.h}</p>
+                    <div class="mt-3 grid gap-4 sm:grid-cols-3">
+                      {cv.s3.dash.panels.map((pn: any) => (
+                        <figure class="min-w-0">
+                          <figcaption class={capCls}>{pn.t}</figcaption>
+                          <button type="button" class={zoomBtn} data-full={large(pn.img)} data-name={pn.t} aria-label={`${pn.t} 확대`}>
+                            <Image src={asset(pn.img)} alt={pn.t} width={480} class="aspect-square w-full object-contain" />
                           </button>
+                          {pn.cap && <p class="mt-1.5 text-center text-[11px] leading-tight text-ink/45">{pn.cap}</p>}
                         </figure>
                       ))}
-                      <div class="rounded-lg border border-accent/40 bg-canvas p-2.5">
-                        <p class="text-center text-[11px] font-bold text-accent">{cv.s4.result.h}</p>
-                        <p class="mt-1 text-center text-[9.5px] leading-relaxed text-ink/60">{cv.s4.result.s}</p>
+                    </div>
+                  </div>
+                  <div class="grid gap-4 lg:grid-cols-[1.3fr_1fr]">
+                    <div class={card}>
+                      <p class={cardH}>{cv.s3.change.h}</p>
+                      <div class="mt-3 grid grid-cols-2 gap-4">
+                        {cv.s3.change.panels.map((pn: any) => (
+                          <figure class="min-w-0">
+                            <figcaption class={capCls}>{pn.t}</figcaption>
+                            <button type="button" class={zoomBtn} data-full={large(pn.img)} data-name={pn.t} aria-label={`${pn.t} 확대`}>
+                              <Image src={asset(pn.img)} alt={pn.t} width={480} class="aspect-square w-full object-contain" />
+                            </button>
+                          </figure>
+                        ))}
+                      </div>
+                    </div>
+                    <div class={`${card} flex flex-col`}>
+                      <p class="text-center text-[13px] font-bold text-ink/75">{cv.s3.alarm.t}</p>
+                      <div class="mt-3 grid flex-1 grid-cols-3 gap-2.5">
+                        {cv.s3.alarm.levels.map((lv: any, li: number) => (
+                          <div class={`flex flex-col justify-center rounded-lg border p-2.5 text-center ${li === 0 ? 'border-ok/50 bg-ok/10' : li === 1 ? 'border-warn/50 bg-warn/10' : 'border-danger/50 bg-danger/10'}`}>
+                            <p class={`text-[13px] font-bold ${li === 0 ? 'text-ok' : li === 1 ? 'text-warn' : 'text-danger'}`}>{lv.t}</p>
+                            <p class="mt-1 text-[11.5px] leading-tight text-ink/65">{lv.l1}</p>
+                            <p class="mt-0.5 text-[11px] leading-tight text-ink/50">{lv.l2}</p>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>
                 </div>
+
+                {flowIn()}
+
+                {/* 4 — 진단 · 원인 추정: 차트 3장 가로 + Diagnosis result 밴드 */}
+                {head(3)}
+                <div class="mt-4 grid gap-4 sm:grid-cols-3">
+                  {cv.s4.charts.map((ch: any) => (
+                    <figure class={card}>
+                      <figcaption class={capCls}>{ch.t}</figcaption>
+                      <button type="button" class={zoomBtn} data-full={large(ch.img)} data-name={ch.t} aria-label={`${ch.t} 확대`}>
+                        <Image src={asset(ch.img)} alt={ch.t} width={520} class="h-36 w-full object-contain" />
+                      </button>
+                    </figure>
+                  ))}
+                </div>
+                <div class="mt-4 rounded-xl border-2 border-accent/50 bg-canvas p-4 text-center">
+                  <p class="text-[13px] font-bold text-accent">{cv.s4.result.h}</p>
+                  <p class="mx-auto mt-1 max-w-xl text-[12.5px] leading-relaxed text-ink/60">{cv.s4.result.s}</p>
+                </div>
               </div>
+
+              {flow()}
 
               {/* ── 5. 의사결정 · 조치 ── */}
               <div>
-                <p class={pill(4)}>{cv.heads[4].no}. {cv.heads[4].t}</p>
-                <div class="rounded-xl border border-ink/15 p-3">
-                  <p class="text-center text-[11px] font-bold text-accent">{cv.s5.feedback}</p>
-                  <div class="mt-2.5 rounded-lg border border-ink/15 bg-canvas p-2.5">
-                    <p class="text-[11px] font-bold text-ink/70">{cv.s5.decision.h}</p>
-                    <div class="mt-2 space-y-2.5">
+                {head(4)}
+                <div class="mt-4 grid gap-4 lg:grid-cols-[2.2fr_1fr]">
+                  <div class={card}>
+                    <p class="text-[13px] font-bold text-ink/75">{cv.s5.decision.h}</p>
+                    <div class="mt-3 grid gap-3 sm:grid-cols-2">
                       {cv.s5.decision.rows.map((r: any) => (
-                        <div class="flex items-start gap-2">
-                          <Image src={asset(r.img)} alt="" width={80} class="h-7 w-7 shrink-0 rounded border border-ink/10 bg-plate object-contain p-0.5" />
+                        <div class="flex items-center gap-3 rounded-lg border border-ink/10 p-3">
+                          <Image src={asset(r.img)} alt="" width={96} class="h-10 w-10 shrink-0 rounded-md border border-ink/10 bg-plate object-contain p-1" />
                           <div class="min-w-0">
-                            <p class="text-[10.5px] font-bold leading-tight text-accent">{r.t}</p>
-                            <p class="text-[9.5px] leading-tight text-ink/50">{r.s}</p>
+                            <p class="text-[13px] font-bold leading-tight text-accent">{r.t}</p>
+                            <p class="mt-0.5 text-[11.5px] leading-snug text-ink/55">{r.s}</p>
                           </div>
                         </div>
                       ))}
                     </div>
                   </div>
-                  <div class="mt-2.5 rounded-lg border border-ink/15 bg-canvas p-2.5">
-                    <p class="text-[11px] font-bold text-accent">{cv.s5.conduct.h}</p>
-                    <ul class="mt-1.5 space-y-0.5 text-[9.5px] leading-relaxed text-ink/60">
+                  <div class={`${card} flex flex-col justify-center`}>
+                    <p class={cardH}>{cv.s5.conduct.h}</p>
+                    <ul class="mt-2 space-y-1 text-[12.5px] leading-relaxed text-ink/60">
                       {cv.s5.conduct.lines.map((l: string) => <li>· {l}</li>)}
                     </ul>
                   </div>
                 </div>
               </div>
+            </div>
+
+            <div class="lg:pl-12">
+              {flow()}
 
               {/* ── 6. 검증 · 학습 ── */}
               <div>
-                <p class={pill(5)}>{cv.heads[5].no}. {cv.heads[5].t}</p>
-                <div class="flex flex-col gap-2.5">
+                {head(5)}
+                <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                   {cv.s6.cards.map((c: any) => (
                     c.loop ? (
-                      <div class="flex items-center gap-2.5 rounded-xl border border-ink/15 p-3">
-                        <Image src={asset(c.img)} alt={c.t} width={100} class="h-9 w-9 shrink-0 object-contain" />
-                        <p class="text-[11px] font-bold leading-tight text-accent">{c.t}</p>
+                      <div class={`${card} flex flex-col items-center justify-center gap-2.5 text-center`}>
+                        <Image src={asset(c.img)} alt={c.t} width={110} class="h-12 w-12 object-contain" />
+                        <p class="text-[13px] font-bold leading-snug text-accent">{c.t}</p>
                       </div>
                     ) : (
-                      <div class="rounded-xl border border-ink/15 p-3">
-                        <p class="text-center text-[11px] font-bold text-accent">{c.t}</p>
+                      <div class={`${card} flex flex-col`}>
+                        <p class="text-center text-[13px] font-bold leading-snug text-accent">{c.t}</p>
                         {c.img && (
-                          <button type="button" class={`${zoomBtn} mt-2`} data-full={large(c.img)} data-name={c.t} aria-label={`${c.t} 확대`}>
-                            <Image src={asset(c.img)} alt={c.t} width={420} class="max-h-24 w-full object-contain" />
+                          <button type="button" class={`${zoomBtn} mt-3`} data-full={large(c.img)} data-name={c.t} aria-label={`${c.t} 확대`}>
+                            <Image src={asset(c.img)} alt={c.t} width={480} class="h-28 w-full object-contain" />
                           </button>
                         )}
                         {c.bullets && (
-                          <ul class="mt-1.5 space-y-0.5 text-[9.5px] leading-relaxed text-ink/60">
+                          <ul class="mt-3 space-y-1 text-[12px] leading-relaxed text-ink/60">
                             {c.bullets.map((b: string) => <li>· {b}</li>)}
                           </ul>
                         )}
@@ -298,40 +340,45 @@ for (const pth of Object.keys(techImages)) {
                   ))}
                 </div>
               </div>
-            </div>
 
-            {/* ── 하단 피드백 순환 화살표 (6 → 1) ── */}
-            <div class="relative mt-5 hidden h-10 lg:block" aria-hidden="true">
-              <svg class="absolute inset-0 h-full w-full text-accent/45" viewBox="0 0 1000 40" preserveAspectRatio="none" fill="none">
-                <path d="M 985 0 L 985 22 L 22 22 L 22 8" stroke="currentColor" stroke-width="3" />
-                <path d="M 12 14 L 22 2 L 32 14" stroke="currentColor" stroke-width="3" fill="none" />
-              </svg>
-            </div>
-            <p class="mt-2 text-center lg:mt-0">
-              <span class="inline-flex items-center gap-1.5 rounded-full border border-accent/30 bg-accent/[0.06] px-3.5 py-1.5 text-xs font-bold text-accent">↻ {cv.cycle.t}</span>
-              <span class="mt-1.5 block text-[11px] leading-relaxed text-ink/50">{cv.cycle.s}</span>
-            </p>
+              {/* 순환 설명 — 모바일에선 좌측 브래킷 대신 배지로 표시 */}
+              <p class="mt-6 text-center">
+                <span class="inline-flex items-center gap-1.5 rounded-full border border-accent/30 bg-accent/[0.06] px-3.5 py-1.5 text-xs font-bold text-accent lg:hidden">↻ {cv.cycle.t}</span>
+                <span class="mt-1.5 block text-[12px] leading-relaxed text-ink/50">{cv.cycle.s}</span>
+              </p>
 
-            {/* ── Core Value 스트립 (새 아이콘 + Final goal 트로피) ── */}
-            <div class="mt-9 flex flex-wrap items-center gap-x-3 gap-y-2.5">
-              <span class="text-[11px] font-bold tracking-wide text-accent">{cv.valuesTitle}</span>
-              {cv.values.map((v: string, vi: number) => (
-                <>
-                  <span class="inline-flex items-center gap-1.5 rounded-full border border-ink/15 bg-canvas px-3 py-1.5 text-xs font-semibold text-ink/80">
-                    {techAsset(`core/value-${vi + 1}.jpg`) && (
-                      <Image src={techAsset(`core/value-${vi + 1}.jpg`)!} alt="" width={40} class="h-4.5 w-4.5 rounded-[3px] object-contain" />
+              {/* ── Core Value — 파이프라인의 결론 밴드 (가치 4종 → Final goal 3줄) ── */}
+              <div class="mt-10 rounded-2xl border border-ink/15 bg-ink/[0.03] p-5 sm:p-6">
+                <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                  <p class="text-[13px] font-bold tracking-wide text-accent">{cv.valuesTitle}</p>
+                  <p class="text-[12px] font-semibold text-ink/50">{cv.valuesSub}</p>
+                </div>
+                <div class="mt-4 grid items-stretch gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr]">
+                  {cv.values.map((v: string, vi: number) => (
+                    <>
+                      <div class="flex items-center justify-center gap-2.5 rounded-xl border border-ink/15 bg-canvas px-4 py-3">
+                        {techAsset(`core/value-${vi + 1}.jpg`) && (
+                          <Image src={techAsset(`core/value-${vi + 1}.jpg`)!} alt="" width={72} class="h-8 w-8 rounded-md object-contain" />
+                        )}
+                        <span class="text-[13px] font-bold text-ink/85">{v}</span>
+                      </div>
+                      {vi < cv.values.length - 1 && (
+                        <span class="hidden items-center justify-center text-lg font-bold text-accent/70 lg:flex" aria-hidden="true">→</span>
+                      )}
+                    </>
+                  ))}
+                </div>
+                <div class="mt-4 flex flex-col items-center gap-2 rounded-xl bg-ink/85 px-5 py-4 text-center sm:flex-row sm:justify-center sm:gap-4">
+                  <span class="flex items-center gap-2">
+                    {techAsset('core/value-goal.jpg') && (
+                      <Image src={techAsset('core/value-goal.jpg')!} alt="" width={56} class="h-7 w-7 rounded bg-white/90 object-contain p-0.5" />
                     )}
-                    {v}
+                    <span class="text-[13px] font-bold text-canvas">{cv.finalGoal.t}</span>
                   </span>
-                  <span class="text-ink/30">→</span>
-                </>
-              ))}
-              <span class="inline-flex items-center gap-1.5 rounded-full bg-accent px-4 py-1.5 text-xs font-bold text-white">
-                {techAsset('core/value-goal.jpg') && (
-                  <Image src={techAsset('core/value-goal.jpg')!} alt="" width={40} class="h-4.5 w-4.5 rounded-[3px] bg-white/90 object-contain p-0.5" />
-                )}
-                {cv.finalGoal}
-              </span>
+                  <span class="hidden h-5 w-px bg-canvas/25 sm:block" aria-hidden="true"></span>
+                  <p class="text-[12.5px] font-semibold leading-relaxed text-canvas/85">{cv.finalGoal.lines.join(' · ')}</p>
+                </div>
+              </div>
             </div>
           </div>
         );
