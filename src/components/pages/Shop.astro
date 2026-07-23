@@ -328,7 +328,7 @@ const waferFromLabel = waferKrws.length
 
               <div class="mt-5 grid gap-4 md:grid-cols-3">
                 {/* 01 — 장비 + 센서 위치 콜아웃 */}
-                <div class="rounded-xl border border-ink/10 bg-canvas p-4 shadow-lg shadow-ink/5">
+                <div class="flex flex-col rounded-xl border border-ink/10 bg-canvas p-4 shadow-lg shadow-ink/5">
                   {chamber && (
                     <div class="relative">
                       <button type="button"
@@ -344,12 +344,12 @@ const waferFromLabel = waferKrws.length
                       ))}
                     </div>
                   )}
-                  <p class="mt-3 text-sm font-bold text-ink">{bd.sputter}</p>
+                  <p class="mt-auto pt-3 text-sm font-bold text-ink">{bd.sputter}</p>
                   <p class="mt-1 text-[11px] leading-relaxed text-ink/45">{bd.sensorLegend}</p>
                 </div>
 
                 {/* 02 — 센서 실측(기기·스펙트럼) + AI */}
-                <div class="rounded-xl border border-ink/10 bg-canvas p-4 shadow-lg shadow-ink/5">
+                <div class="flex flex-col rounded-xl border border-ink/10 bg-canvas p-4 shadow-lg shadow-ink/5">
                   <div class="grid grid-cols-2 gap-2">
                     <button type="button" class="equip-zoom cursor-zoom-in overflow-hidden rounded-lg border border-ink/10 transition hover:border-accent/60"
                       data-full={equipLarge['/src/assets/equipment/bigdata/rga-device.jpg']} data-name="RGA" aria-label="RGA 확대">
@@ -372,19 +372,19 @@ const waferFromLabel = waferKrws.length
                     </button>
                   </div>
                   <p class="mt-1.5 text-[11px] text-ink/45">{bd.oesCap}</p>
-                  <div class="mt-4 rounded-lg bg-accent px-4 py-3">
+                  <div class="mt-auto pt-4"><div class="rounded-lg bg-accent px-4 py-3">
                     <p class="text-sm font-bold text-white">{bd.aiTitle}</p>
                     <p class="mt-0.5 text-[11px] text-white/75">{bd.aiSub}</p>
-                  </div>
+                  </div></div>
                 </div>
 
                 {/* 03 — 산출 */}
                 <div class="flex flex-col gap-4">
                   {bd.outputs.map((o: { t: string; s: string; img: string; alt: string }) => (
-                    <div class="flex-1 rounded-xl border border-accent/30 bg-canvas p-4 shadow-lg shadow-ink/5">
+                    <div class="flex-1 rounded-xl border border-accent/30 bg-canvas p-3.5 shadow-lg shadow-ink/5">
                       <button type="button" class="equip-zoom block w-full cursor-zoom-in overflow-hidden rounded-lg border border-ink/10 transition hover:border-accent/60"
                         data-full={equipLarge[`/src/assets/equipment/bigdata/${o.img}`]} data-name={o.t} aria-label={`${o.t} 확대`}>
-                        <Image src={bdAsset(o.img)!} alt={o.alt} width={640} class="aspect-[2/1] w-full object-cover" />
+                        <Image src={bdAsset(o.img)!} alt={o.alt} width={640} class="aspect-[5/2] w-full object-cover" />
                       </button>
                       <p class="mt-2.5 text-sm font-bold text-accent">{o.t}</p>
                       <p class="mt-0.5 text-xs text-ink/50">{o.s}</p>

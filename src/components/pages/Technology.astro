@@ -85,6 +85,36 @@ for (const pth of Object.keys(techImages)) {
   techLarge[pth] = (await getImage({ src: techImages[pth].default, width: 1200, format: 'webp' })).src;
 }
 
+// Core 6단계 — 각 스텝의 PPT 원본 비주얼 (zoom=true 는 라이트박스 확대, false 는 소형 아이콘)
+type StepMedia = { f: string; en: string; ko: string; zoom: boolean; span?: boolean };
+const STEP_MEDIA: (StepMedia[] | null)[] = [
+  [
+    { f: 'ald.jpg', en: 'ALD system', ko: 'ALD 장비', zoom: true },
+    { f: 'sputter.jpg', en: 'Sputter system', ko: '스퍼터 장비', zoom: true },
+    { f: 'measurement.jpg', en: 'Measurement system', ko: '측정 장비', zoom: true, span: true },
+  ],
+  [
+    { f: 'step2-repo.jpg', en: 'Data repository', ko: '데이터 저장소', zoom: false },
+    { f: 'step2-quality.jpg', en: 'Data quality check', ko: '데이터 품질 검증', zoom: false },
+  ],
+  [
+    { f: 'step3-dash-a.jpg', en: 'Process trend dashboard', ko: '공정 트렌드 대시보드', zoom: true },
+    { f: 'step3-dash-b.jpg', en: 'OES peak dashboard', ko: 'OES 피크 대시보드', zoom: true },
+    { f: 'plot-t2.jpg', en: "Hotelling's T² / SPE monitoring", ko: 'T²/SPE 모니터링', zoom: true },
+    { f: 'plot-pca.jpg', en: 'PCA score plot', ko: 'PCA 스코어 플롯', zoom: true },
+  ],
+  [
+    { f: 'step4-contrib.jpg', en: 'Contribution analysis', ko: '기여도 분석', zoom: true },
+    { f: 'step4-corr.jpg', en: 'Correlation analysis', ko: '상관 분석', zoom: true },
+    { f: 'step4-vip.jpg', en: 'VIP scores', ko: 'VIP 스코어', zoom: true, span: true },
+  ],
+  [{ f: 'step5-action.jpg', en: 'Decision & action items', ko: '의사결정·조치 항목', zoom: false, span: true }],
+  [
+    { f: 'step6-metric.jpg', en: 'Verification metrics', ko: '검증 지표', zoom: false },
+    { f: 'step6-loop.jpg', en: 'Continuous learning loop', ko: '순환 학습 루프', zoom: false },
+  ],
+];
+
 ---
 <BaseLayout title={title} description={description} zebra>
 
@@ -122,63 +152,62 @@ for (const pth of Object.keys(techImages)) {
 
       {(() => {
         const cv = (tech as any).coreViz;
+        const koAlt = locale === 'ko';
         return (
           <div class="v-reveal mt-12">
-            {/* 6단계 트랙 — 고스트 넘버 + 노드 (전부 실텍스트) */}
+            {/* 6단계 트랙 — 각 스텝에 PPT 원본 비주얼(장비·대시보드·진단 차트·아이콘) 배치, 전부 실텍스트+개별 alt (SEO) */}
             <div class="relative hidden h-px bg-accent/25 lg:block"></div>
-            <div class="mt-4 grid gap-x-4 gap-y-6 sm:grid-cols-2 lg:grid-cols-6">
-              {cv.stages.map((s: { no: string; t: string; s: string }) => (
-                <div>
+            <div class="mt-4 grid gap-x-4 gap-y-8 sm:grid-cols-2 lg:grid-cols-6">
+              {cv.stages.map((s: { no: string; t: string; s: string }, si: number) => (
+                <div class="flex flex-col">
                   <div class="flex items-center gap-2">
                     <span class="text-3xl font-bold leading-none text-accent/20">{s.no}</span>
                     <span class="h-2 w-2 rounded-full bg-accent"></span>
                   </div>
                   <p class="mt-2 text-sm font-bold leading-snug text-ink">{s.t}</p>
                   <p class="mt-1.5 text-xs leading-relaxed text-ink/50">{s.s}</p>
+                  {STEP_MEDIA[si] && (
+                    <div class="mt-3 grid grid-cols-2 gap-1.5">
+                      {STEP_MEDIA[si]!.map((m) =>
+                        m.zoom ? (
+                          <button
+                            type="button"
+                            class={`tech-zoom cursor-zoom-in overflow-hidden rounded-md border border-ink/10 bg-plate transition hover:border-accent/60 ${m.span ? 'col-span-2' : ''}`}
+                            data-full={techLarge[`/src/assets/tech/core/${m.f}`]}
+                            data-name={koAlt ? m.ko : m.en}
+                            aria-label={`${koAlt ? m.ko : m.en} 확대`}
+                          >
+                            <Image src={techAsset(`core/${m.f}`)!} alt={koAlt ? m.ko : m.en} width={320} class={`${m.span ? 'aspect-[5/2]' : 'aspect-square'} w-full object-cover`} />
+                          </button>
+                        ) : (
+                          <div class={`rounded-md border border-ink/10 bg-plate p-1.5 ${m.span ? 'col-span-2' : ''}`}>
+                            <Image src={techAsset(`core/${m.f}`)!} alt={koAlt ? m.ko : m.en} width={220} class="mx-auto h-12 w-auto object-contain" />
+                          </div>
+                        ),
+                      )}
+                    </div>
+                  )}
+                  {si === 2 && (
+                    <div class="mt-2.5 flex flex-wrap gap-1.5">
+                      {cv.alarms.map((a2: { t: string }, i2: number) => (
+                        <span class={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${i2 === 0 ? 'border-ok text-ok' : i2 === 1 ? 'border-warn text-warn' : 'border-danger text-danger'}`}>{a2.t}</span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
 
-            <div class="mt-8 grid gap-4 md:grid-cols-3">
-              <div class="rounded-xl border border-ink/10 bg-canvas p-4 shadow-lg shadow-ink/5">
-                <div class="grid grid-cols-3 gap-2">
-                  {['ald', 'sputter', 'measurement'].map((n) => (
-                    <button type="button" class="tech-zoom cursor-zoom-in overflow-hidden rounded-lg border border-ink/10 bg-plate transition hover:border-accent/60"
-                      data-full={techLarge[`/src/assets/tech/core/${n}.jpg`]} data-name={cv.equipCaption} aria-label="확대">
-                      <Image src={techAsset(`core/${n}.jpg`)!} alt={cv.equipCaption} width={320} class="aspect-square w-full object-cover" />
-                    </button>
-                  ))}
-                </div>
-                <p class="mt-2 text-[11px] text-ink/45">{cv.equipCaption}</p>
-              </div>
-              <div class="rounded-xl border border-ink/10 bg-canvas p-4 shadow-lg shadow-ink/5">
-                <div class="grid grid-cols-2 gap-2">
-                  {['plot-t2', 'plot-pca'].map((n) => (
-                    <button type="button" class="tech-zoom cursor-zoom-in overflow-hidden rounded-lg border border-ink/10 transition hover:border-accent/60"
-                      data-full={techLarge[`/src/assets/tech/core/${n}.jpg`]} data-name={cv.plotsCap} aria-label="확대">
-                      <Image src={techAsset(`core/${n}.jpg`)!} alt={cv.plotsCap} width={320} class="aspect-[16/9] w-full object-cover" />
-                    </button>
-                  ))}
-                </div>
-                <p class="mt-2 text-[11px] text-ink/45">{cv.plotsCap}</p>
-                <p class="mt-1 text-[11px] text-ink/45">{cv.indicators}</p>
-              </div>
-              <div class="rounded-xl border border-ink/10 bg-canvas p-4 shadow-lg shadow-ink/5">
-                <p class="text-xs font-bold text-ink/70">{cv.alarmTitle}</p>
-                <div class="mt-2.5 flex flex-wrap gap-2">
-                  {cv.alarms.map((a2: { t: string; s: string }, i: number) => (
-                    <span class={`rounded-full border-2 px-3 py-1 text-xs font-bold ${i === 0 ? 'border-ok text-ok' : i === 1 ? 'border-warn text-warn' : 'border-danger text-danger'}`}>{a2.t}</span>
-                  ))}
-                </div>
-                <p class="mt-2.5 text-[11px] leading-relaxed text-ink/45">{cv.alarms.map((a2: { s: string }) => a2.s).join(' · ')}</p>
-              </div>
-            </div>
-
-            <div class="mt-8 flex flex-wrap items-center gap-x-3 gap-y-2.5">
+            <div class="mt-9 flex flex-wrap items-center gap-x-3 gap-y-2.5">
               <span class="text-[11px] font-bold tracking-wide text-accent">{cv.valuesTitle}</span>
-              {cv.values.map((v: string) => (
+              {cv.values.map((v: string, vi: number) => (
                 <>
-                  <span class="rounded-full border border-ink/15 bg-canvas px-3.5 py-1.5 text-xs font-semibold text-ink/80">{v}</span>
+                  <span class="inline-flex items-center gap-1.5 rounded-full border border-ink/15 bg-canvas px-3 py-1.5 text-xs font-semibold text-ink/80">
+                    {techAsset(`core/value-${vi + 1}.jpg`) && (
+                      <Image src={techAsset(`core/value-${vi + 1}.jpg`)!} alt="" width={32} class="h-4 w-4 rounded-[3px] object-contain" />
+                    )}
+                    {v}
+                  </span>
                   <span class="text-ink/30">→</span>
                 </>
               ))}
@@ -235,15 +264,23 @@ for (const pth of Object.keys(techImages)) {
             </div>
 
             <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {qv.devices.map((dv: { n: string; img?: string; video?: boolean; s: string; chips: string[] }) => (
+              {qv.devices.map((dv: { n: string; img?: string; img2?: string; video?: boolean; s: string; chips: string[] }) => (
                 <div class="rounded-xl border border-ink/10 bg-canvas p-4 shadow-lg shadow-ink/5">
                   {dv.video ? (
                     <video class="aspect-[4/3] w-full rounded-lg border border-ink/10 object-cover" autoplay muted loop playsinline preload="metadata" poster="/media/dbr-poster.jpg" src="/media/dbr.mp4"></video>
                   ) : (
-                    <button type="button" class="tech-zoom block w-full cursor-zoom-in overflow-hidden rounded-lg border border-ink/10 transition hover:border-accent/60"
-                      data-full={techLarge[`/src/assets/tech/quantum/${dv.img}`]} data-name={dv.n} aria-label={`${dv.n} 확대`}>
-                      <Image src={techAsset(`quantum/${dv.img}`)!} alt={`${dv.n} — ${dv.s}`} width={480} class="aspect-[4/3] w-full object-cover" />
-                    </button>
+                    <div class="space-y-1.5">
+                      <button type="button" class="tech-zoom block w-full cursor-zoom-in overflow-hidden rounded-lg border border-ink/10 transition hover:border-accent/60"
+                        data-full={techLarge[`/src/assets/tech/quantum/${dv.img}`]} data-name={dv.n} aria-label={`${dv.n} 확대`}>
+                        <Image src={techAsset(`quantum/${dv.img}`)!} alt={`${dv.n} — ${dv.s}`} width={480} class="aspect-[4/3] w-full object-cover" />
+                      </button>
+                      {dv.img2 && techAsset(`quantum/${dv.img2}`) && (
+                        <button type="button" class="tech-zoom block w-full cursor-zoom-in overflow-hidden rounded-lg border border-ink/10 transition hover:border-accent/60"
+                          data-full={techLarge[`/src/assets/tech/quantum/${dv.img2}`]} data-name={dv.n} aria-label={`${dv.n} 상세 확대`}>
+                          <Image src={techAsset(`quantum/${dv.img2}`)!} alt={`${dv.n} — structure detail`} width={480} class="aspect-[5/2] w-full object-cover" />
+                        </button>
+                      )}
+                    </div>
                   )}
                   <p class="mt-3 text-base font-bold text-ink">{dv.n}</p>
                   <p class="mt-1 text-xs leading-relaxed text-ink/55">{dv.s}</p>
@@ -317,6 +354,11 @@ for (const pth of Object.keys(techImages)) {
                 <Image src={techAsset('p2/transform.jpg')!} alt={pv.flow[1]} width={280} class="h-14 w-auto object-cover" />
               </button>
             </div>
+
+            <button type="button" class="tech-zoom mt-5 block w-full cursor-zoom-in overflow-hidden rounded-xl border border-ink/10 transition hover:border-accent/60"
+              data-full={techLarge['/src/assets/tech/p2/band.jpg']} data-name={pv.flow[1]} aria-label="확대">
+              <Image src={techAsset('p2/band.jpg')!} alt={locale === 'ko' ? '벌크 부품에서 단일 박막으로 — 에너지 반응형 반도체 개념 비주얼' : 'From bulk components to a single thin film — energy-responsive semiconductor concept'} width={1200} class="aspect-[16/5] w-full object-cover" />
+            </button>
 
             <p class="mt-8 text-[11px] font-bold tracking-wide text-accent">{pv.benefitsTitle}</p>
             <div class="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

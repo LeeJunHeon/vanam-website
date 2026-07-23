@@ -169,9 +169,9 @@
         "picSub": "Key thin films for next-generation PICs and quantum systems — KIST Quantum Fab & UIUC collaboration.",
         "chips": "SNSPD · Waveguide · Modulator · DBR",
         "devices": [
-          { "n": "SNSPD", "img": "snspd.jpg", "s": "High-sensitivity superconductors", "chips": ["NbTiN", "T ~ 11 K"] },
-          { "n": "Waveguide", "img": "waveguide.jpg", "s": "Low-loss optical waveguides", "chips": ["Ta₂O₅", "Loss < 0.5 dB"] },
-          { "n": "Modulator", "img": "modulator.jpg", "s": "Cryogenic electro-optic modulation", "chips": ["BTO · STO", "~1000 pm/V @ 5 K"] },
+          { "n": "SNSPD", "img": "snspd.jpg", "img2": "snspd-2.jpg", "s": "High-sensitivity superconductors", "chips": ["NbTiN", "T ~ 11 K"] },
+          { "n": "Waveguide", "img": "waveguide.jpg", "img2": "waveguide-2.jpg", "s": "Low-loss optical waveguides", "chips": ["Ta₂O₅", "Loss < 0.5 dB"] },
+          { "n": "Modulator", "img": "modulator.jpg", "img2": "modulator-2.jpg", "s": "Cryogenic electro-optic modulation", "chips": ["BTO · STO", "~1000 pm/V @ 5 K"] },
           { "n": "DBR", "video": true, "s": "High-reflection DBR wafer", "chips": ["Si-SiO₂-TiO₂", "R > 99%"] }
         ],
         "marketsTitle": "SCALABLE OPPORTUNITIES",
@@ -647,9 +647,9 @@
         "picSub": "차세대 PIC·양자 시스템을 위한 핵심 박막 4종 — KIST Quantum Fab & UIUC 협력.",
         "chips": "SNSPD · Waveguide · Modulator · DBR",
         "devices": [
-          { "n": "SNSPD", "img": "snspd.jpg", "s": "고감도 초전도 단일광자 검출기", "chips": ["NbTiN", "T ~ 11 K"] },
-          { "n": "Waveguide", "img": "waveguide.jpg", "s": "저손실 광 도파로", "chips": ["Ta₂O₅", "손실 < 0.5 dB"] },
-          { "n": "Modulator", "img": "modulator.jpg", "s": "극저온 전기광학 변조", "chips": ["BTO · STO", "~1000 pm/V @ 5 K"] },
+          { "n": "SNSPD", "img": "snspd.jpg", "img2": "snspd-2.jpg", "s": "고감도 초전도 단일광자 검출기", "chips": ["NbTiN", "T ~ 11 K"] },
+          { "n": "Waveguide", "img": "waveguide.jpg", "img2": "waveguide-2.jpg", "s": "저손실 광 도파로", "chips": ["Ta₂O₅", "손실 < 0.5 dB"] },
+          { "n": "Modulator", "img": "modulator.jpg", "img2": "modulator-2.jpg", "s": "극저온 전기광학 변조", "chips": ["BTO · STO", "~1000 pm/V @ 5 K"] },
           { "n": "DBR", "video": true, "s": "고반사 DBR 웨이퍼", "chips": ["Si-SiO₂-TiO₂", "반사율 > 99%"] }
         ],
         "marketsTitle": "확장 가능 시장",
