@@ -435,14 +435,64 @@ const techAsset = (pth: string) => techImages[`/src/assets/tech/${pth}`]?.defaul
       ))}
     </div>
 
-    <!-- 슬라이드 원본 인포그래픽: 벌크→단일 박막, 핵심 이점, 시장 기회.
-         외부 자산이므로 plate 흰 판 위에 올리고, 원본에서 잘렸던 출처는 HTML 텍스트로 복원. -->
-    <div class="v-reveal mt-10">
-      <div class="overflow-hidden rounded-2xl border border-ink/10 bg-plate p-3 sm:p-4">
-        <Image src={techAsset('p2/overview.webp')!} alt={tech.p2VizAlt} width={1600} class="h-auto w-full" />
-      </div>
-      <p class="mt-2 text-right text-[11px] text-ink/45">{tech.p2VizSource}</p>
-    </div>
+    <!-- 슬라이드 4 인포그래픽 — SEO 를 위해 단일 이미지 대신 네이티브 재현:
+         텍스트는 전부 HTML, 사진·아이콘은 분리 자산. 구조는 원본 슬라이드 그대로
+         (변환 페어 → 포토 카드 2 → 이점 밴드 → 시장 6카드 → 출처). -->
+    {(() => {
+      const pv = (tech as any).p2Viz;
+      const pAsset = (f: string) => techAsset(`p2/${f}`)!;
+      const tone = { accent: 'text-accent', ink: 'text-ink/85', info: 'text-info', ok: 'text-ok' };
+      const photoCard = 'rounded-2xl border border-ink/10 bg-canvas p-3 text-center';
+      return (
+        <div class="v-reveal mt-10">
+          <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_auto_1fr_1fr_1fr] lg:items-stretch">
+            <div class={photoCard}>
+              <p class="text-[13px] font-bold text-ink">{pv.transform.fromT}</p>
+              <Image src={pAsset(pv.transform.fromImg)} alt={pv.transform.fromAlt} width={800} class="mt-2 aspect-square w-full rounded-xl object-cover" />
+            </div>
+            <div class="hidden items-center lg:flex" aria-hidden="true">
+              <span class="text-2xl font-bold text-accent/70">→</span>
+            </div>
+            <div class={photoCard}>
+              <p class="text-[13px] font-bold text-ink">{pv.transform.toT}</p>
+              <Image src={pAsset(pv.transform.toImg)} alt={pv.transform.toAlt} width={800} class="mt-2 aspect-square w-full rounded-xl object-cover" />
+            </div>
+            {pv.photos.map((ph: any) => (
+              <div class={photoCard}>
+                <p class="text-[13px] font-bold text-ink">{ph.t}</p>
+                <Image src={pAsset(ph.img)} alt={ph.alt} width={800} class="mt-2 aspect-square w-full rounded-xl object-cover" />
+              </div>
+            ))}
+          </div>
+
+          <div class="mt-3 rounded-2xl border border-ink/15 bg-ink/[0.03] p-4">
+            <div class="grid items-center gap-x-4 gap-y-3 lg:grid-cols-[auto_1fr_1fr_1fr_1fr]">
+              <p class="text-[13px] font-bold leading-snug text-accent lg:max-w-[7.5rem]">{pv.benefits.t}</p>
+              {pv.benefits.items.map((b: any) => (
+                <div class="flex items-center gap-2.5 lg:border-l lg:border-ink/10 lg:pl-4">
+                  <Image src={pAsset(b.img)} alt="" width={120} class="h-9 w-9 shrink-0 rounded-full object-cover" />
+                  <p class="text-[12px] leading-snug text-ink/75">{b.s}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div class="mt-6">
+            <p class="text-center text-[15px] font-bold text-accent md:text-base">{pv.markets.t}</p>
+            <div class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+              {pv.markets.cards.map((c: any) => (
+                <div class="flex flex-col rounded-2xl border border-ink/10 bg-canvas p-3 text-center">
+                  <p class={`flex-1 text-[12px] font-bold leading-snug ${tone[c.tone]}`}>{c.t}</p>
+                  <Image src={pAsset(c.img)} alt="" width={160} class="mx-auto mt-2 h-14 w-14 rounded-full object-cover" />
+                  <p class={`mt-2 text-lg font-extrabold ${tone[c.tone]}`}>{c.v}</p>
+                </div>
+              ))}
+            </div>
+            <p class="mt-2 text-right text-[11px] text-ink/45">{tech.p2VizSource}</p>
+          </div>
+        </div>
+      );
+    })()}
 
     <div class="v-reveal mt-8">
       <p class="text-sm font-medium text-ink/50">{tech.p2TargetLabel}</p>
