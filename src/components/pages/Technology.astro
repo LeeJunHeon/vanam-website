@@ -129,7 +129,7 @@ const techAsset = (pth: string) => techImages[`/src/assets/tech/${pth}`]?.defaul
         const card = 'rounded-xl border border-ink/15 bg-canvas p-3';
         const cardH = 'text-[12px] font-bold text-accent';
         const imgBox = 'overflow-hidden rounded-lg border border-ink/10 bg-plate p-1';
-        const capCls = 'mb-1 flex-1 text-center text-[11px] font-semibold leading-snug text-ink/60';
+        const capCls = 'mb-1 flex-1 text-center text-[11px] font-semibold leading-snug text-ink/80';
         // 단계 사이 세로 흐름 화살표 — 박스 밖(중립)·박스 안(시안 구분선) 두 가지
         const flow = () => (
           <p class="my-2.5 text-center text-xl font-bold leading-none text-ink/40" aria-hidden="true">↓</p>
@@ -185,7 +185,7 @@ const techAsset = (pth: string) => techImages[`/src/assets/tech/${pth}`]?.defaul
                     <p class={cardH}>{cv.s2.a.h}</p>
                     <div class="mt-2 flex items-center gap-3">
                       <Image src={asset(cv.s2.a.img)} alt={cv.s2.a.h} width={140} class="h-10 w-10 shrink-0 object-contain md:h-12 md:w-12" />
-                      <ul class="min-w-0 flex-1 space-y-0.5 text-[11.5px] leading-relaxed text-ink/60">
+                      <ul class="min-w-0 flex-1 space-y-0.5 text-[11.5px] leading-relaxed text-ink/75">
                         {cv.s2.a.bullets.map((b: string) => <li>· {b}</li>)}
                       </ul>
                     </div>
@@ -197,7 +197,7 @@ const techAsset = (pth: string) => techImages[`/src/assets/tech/${pth}`]?.defaul
                     <p class={cardH}>{cv.s2.b.h}</p>
                     <div class="mt-2 flex items-center gap-3">
                       <Image src={asset(cv.s2.b.img)} alt={cv.s2.b.h} width={140} class="h-10 w-10 shrink-0 object-contain md:h-12 md:w-12" />
-                      <ul class="min-w-0 flex-1 space-y-0.5 text-[11.5px] leading-relaxed text-ink/60">
+                      <ul class="min-w-0 flex-1 space-y-0.5 text-[11.5px] leading-relaxed text-ink/75">
                         {cv.s2.b.bullets.map((b: string) => <li>· {b}</li>)}
                       </ul>
                     </div>
@@ -219,7 +219,7 @@ const techAsset = (pth: string) => techImages[`/src/assets/tech/${pth}`]?.defaul
                         <figure class="flex min-w-0 flex-col">
                           <figcaption class={capCls}>
                             {pn.t}
-                            {pn.cap && <span class="mt-0.5 block text-[10px] font-medium text-ink/55">{pn.cap}</span>}
+                            {pn.cap && <span class="mt-0.5 block text-[10px] font-medium text-ink/70">{pn.cap}</span>}
                           </figcaption>
                           <div class={imgBox}>
                             <Image src={asset(pn.img)} alt={pn.t} width={360} class="h-32 w-full object-contain" />
@@ -243,13 +243,13 @@ const techAsset = (pth: string) => techImages[`/src/assets/tech/${pth}`]?.defaul
                       </div>
                     </div>
                     <div class={`${card} flex flex-col`}>
-                      <p class="text-center text-[12px] font-bold text-ink/75">{cv.s3.alarm.t}</p>
+                      <p class="text-center text-[12px] font-bold text-ink/85">{cv.s3.alarm.t}</p>
                       <div class="mt-2 grid flex-1 grid-cols-3 gap-2">
                         {cv.s3.alarm.levels.map((lv: any, li: number) => (
                           <div class={`flex flex-col justify-center rounded-lg border p-2 text-center ${li === 0 ? 'border-ok/50 bg-ok/10' : li === 1 ? 'border-warn/50 bg-warn/10' : 'border-danger/50 bg-danger/10'}`}>
                             <p class={`text-[12px] font-bold ${li === 0 ? 'text-ok' : li === 1 ? 'text-warn' : 'text-danger'}`}>{lv.t}</p>
-                            <p class="mt-0.5 text-[11px] leading-tight text-ink/65">{lv.l1}</p>
-                            <p class="mt-0.5 text-[10.5px] leading-tight text-ink/50">{lv.l2}</p>
+                            <p class="mt-0.5 text-[11px] leading-tight text-ink/75">{lv.l1}</p>
+                            <p class="mt-0.5 text-[10.5px] leading-tight text-ink/65">{lv.l2}</p>
                           </div>
                         ))}
                       </div>
@@ -273,7 +273,7 @@ const techAsset = (pth: string) => techImages[`/src/assets/tech/${pth}`]?.defaul
                 </div>
                 <div class="mt-3 rounded-xl border-2 border-accent/50 bg-canvas p-3 text-center">
                   <p class="text-[12px] font-bold text-accent">{cv.s4.result.h}</p>
-                  <p class="mx-auto mt-1 max-w-xl text-[11.5px] leading-relaxed text-ink/60">{cv.s4.result.s}</p>
+                  <p class="mx-auto mt-1 max-w-xl text-[11.5px] leading-relaxed text-ink/75">{cv.s4.result.s}</p>
                 </div>
               </div>
 
@@ -289,14 +289,14 @@ const techAsset = (pth: string) => techImages[`/src/assets/tech/${pth}`]?.defaul
               {/* ── 5. 본문 ── */}
               <div class="mt-3 grid gap-3 lg:grid-cols-[2.2fr_1fr]">
                 <div class={card}>
-                  <p class="text-[12px] font-bold text-ink/75">{cv.s5.decision.h}</p>
+                  <p class="text-[12px] font-bold text-ink/85">{cv.s5.decision.h}</p>
                   <div class="mt-2 grid gap-2.5 sm:grid-cols-2">
                     {cv.s5.decision.rows.map((r: any) => (
                       <div class="flex items-center gap-2.5 rounded-lg border border-ink/10 p-2.5">
                         <Image src={asset(r.img)} alt="" width={96} class="h-9 w-9 shrink-0 rounded-md border border-ink/10 bg-plate object-contain p-1" />
                         <div class="min-w-0">
                           <p class="text-[12px] font-bold leading-tight text-accent">{r.t}</p>
-                          <p class="mt-0.5 text-[10.5px] leading-snug text-ink/55">{r.s}</p>
+                          <p class="mt-0.5 text-[10.5px] leading-snug text-ink/70">{r.s}</p>
                         </div>
                       </div>
                     ))}
@@ -304,7 +304,7 @@ const techAsset = (pth: string) => techImages[`/src/assets/tech/${pth}`]?.defaul
                 </div>
                 <div class={`${card} flex flex-col justify-center`}>
                   <p class={cardH}>{cv.s5.conduct.h}</p>
-                  <ul class="mt-1.5 space-y-0.5 text-[11.5px] leading-relaxed text-ink/60">
+                  <ul class="mt-1.5 space-y-0.5 text-[11.5px] leading-relaxed text-ink/75">
                     {cv.s5.conduct.lines.map((l: string) => <li>· {l}</li>)}
                   </ul>
                 </div>
@@ -331,7 +331,7 @@ const techAsset = (pth: string) => techImages[`/src/assets/tech/${pth}`]?.defaul
                           </div>
                         )}
                         {c.bullets && (
-                          <ul class="mt-2.5 space-y-0.5 text-[11px] leading-relaxed text-ink/60">
+                          <ul class="mt-2.5 space-y-0.5 text-[11px] leading-relaxed text-ink/75">
                             {c.bullets.map((b: string) => <li>· {b}</li>)}
                           </ul>
                         )}
@@ -341,17 +341,16 @@ const techAsset = (pth: string) => techImages[`/src/assets/tech/${pth}`]?.defaul
                 </div>
               </div>
 
-              {/* 순환 설명 — 모바일에선 좌측 브래킷 대신 배지로 표시 */}
-              <p class="mt-5 text-center">
-                <span class="inline-flex items-center gap-1.5 rounded-full border border-accent/30 bg-accent/[0.06] px-3 py-1 text-[11.5px] font-bold text-accent lg:hidden">↻ {cv.cycle.t}</span>
-                <span class="mt-1.5 block text-[11.5px] leading-relaxed text-ink/60">{cv.cycle.s}</span>
+              {/* 모바일에선 좌측 브래킷 대신 순환 배지만 표시 */}
+              <p class="mt-5 text-center lg:hidden">
+                <span class="inline-flex items-center gap-1.5 rounded-full border border-accent/30 bg-accent/[0.06] px-3 py-1 text-[11.5px] font-bold text-accent">↻ {cv.cycle.t}</span>
               </p>
 
               {/* ── Core Value — 파이프라인의 결론 밴드 (가치 4종 → Final goal 3줄) ── */}
               <div class="mt-8 rounded-2xl border border-ink/15 bg-ink/[0.03] p-4 sm:p-5">
                 <div class="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
                   <p class="text-[12px] font-bold tracking-wide text-accent">{cv.valuesTitle}</p>
-                  <p class="text-[11px] font-semibold text-ink/60">{cv.valuesSub}</p>
+                  <p class="text-[11px] font-semibold text-ink/70">{cv.valuesSub}</p>
                 </div>
                 <div class="mt-3 grid items-stretch gap-2.5 sm:grid-cols-2 lg:grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr]">
                   {cv.values.map((v: string, vi: number) => (
