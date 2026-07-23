@@ -33,6 +33,9 @@ export const RATE_RULES = {
   inquiry: { limit: 5, windowSec: 10 * 60 },
   // 주문 생성: 정상적으로 시간당 10건을 넘기기 어렵다.
   order: { limit: 10, windowSec: 60 * 60 },
+  // PayPal 결제: 주문 생성·캡처 남용 차단. 정상 결제는 각 1~2회면 끝난다.
+  paypalCreate: { limit: 10, windowSec: 10 * 60 },
+  paypalCapture: { limit: 10, windowSec: 10 * 60 },
 } satisfies Record<string, RateRule>;
 
 export type RateBucket = keyof typeof RATE_RULES;
@@ -67,6 +70,11 @@ export async function rateLimit(
   bucket: RateBucket,
   request: Request,
 ): Promise<RateResult> {
+  const _rule = RATE_RULES[bucket as RateBucket];
+  if (!_rule) {
+    console.warn(`[rate-limit] 정의되지 않은 버킷: ${String(bucket)} — 통과 처리(규칙을 RATE_RULES에 추가하세요)`);
+    return { ok: true } as RateResult;
+  }
   const rule = RATE_RULES[bucket];
   // DB 없음 → 통과 (레이트리밋 없이도 서비스는 동작해야 함)
   if (!db) return { ok: true, remaining: rule.limit, retryAfterSec: 0 };

@@ -13,7 +13,7 @@ export const POST: APIRoute = async ({ request }) => {
   const d = await db();
   if (!d) return json({ ok: false, error: 'no_db' }, 503);
 
-  const rl = await rateLimit(d, 'paypal-capture', request);
+  const rl = await rateLimit(d, 'paypalCapture', request);
   if (!rl.ok) return tooMany(rl.retryAfterSec);
 
   let body: Record<string, unknown>;

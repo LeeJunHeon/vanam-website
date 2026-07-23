@@ -19,7 +19,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   const d = await db();
   if (!d) return json({ ok: false, error: 'no_db' }, 503);
 
-  const rl = await rateLimit(d, 'paypal-create', request);
+  const rl = await rateLimit(d, 'paypalCreate', request);
   if (!rl.ok) return tooMany(rl.retryAfterSec);
 
   if (!paypalCfg(lenv).enabled) return json({ ok: false, error: 'disabled' }, 503);
