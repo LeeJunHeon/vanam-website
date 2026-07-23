@@ -85,35 +85,6 @@ for (const pth of Object.keys(techImages)) {
   techLarge[pth] = (await getImage({ src: techImages[pth].default, width: 1200, format: 'webp' })).src;
 }
 
-// Core 6단계 — 각 스텝의 PPT 원본 비주얼 (zoom=true 는 라이트박스 확대, false 는 소형 아이콘)
-type StepMedia = { f: string; en: string; ko: string; zoom: boolean; span?: boolean };
-const STEP_MEDIA: (StepMedia[] | null)[] = [
-  [
-    { f: 'ald.jpg', en: 'ALD system', ko: 'ALD 장비', zoom: true },
-    { f: 'sputter.jpg', en: 'Sputter system', ko: '스퍼터 장비', zoom: true },
-    { f: 'measurement.jpg', en: 'Measurement system', ko: '측정 장비', zoom: true, span: true },
-  ],
-  [
-    { f: 'step2-repo.jpg', en: 'Data repository', ko: '데이터 저장소', zoom: false },
-    { f: 'step2-quality.jpg', en: 'Data quality check', ko: '데이터 품질 검증', zoom: false },
-  ],
-  [
-    { f: 'step3-dash-a.jpg', en: 'Process trend dashboard', ko: '공정 트렌드 대시보드', zoom: true },
-    { f: 'step3-dash-b.jpg', en: 'OES peak dashboard', ko: 'OES 피크 대시보드', zoom: true },
-    { f: 'plot-t2.jpg', en: "Hotelling's T² / SPE monitoring", ko: 'T²/SPE 모니터링', zoom: true },
-    { f: 'plot-pca.jpg', en: 'PCA score plot', ko: 'PCA 스코어 플롯', zoom: true },
-  ],
-  [
-    { f: 'step4-contrib.jpg', en: 'Contribution analysis', ko: '기여도 분석', zoom: true },
-    { f: 'step4-corr.jpg', en: 'Correlation analysis', ko: '상관 분석', zoom: true },
-    { f: 'step4-vip.jpg', en: 'VIP scores', ko: 'VIP 스코어', zoom: true, span: true },
-  ],
-  [{ f: 'step5-action.jpg', en: 'Decision & action items', ko: '의사결정·조치 항목', zoom: false, span: true }],
-  [
-    { f: 'step6-metric.jpg', en: 'Verification metrics', ko: '검증 지표', zoom: false },
-    { f: 'step6-loop.jpg', en: 'Continuous learning loop', ko: '순환 학습 루프', zoom: false },
-  ],
-];
 
 ---
 <BaseLayout title={title} description={description} zebra>
@@ -152,53 +123,65 @@ const STEP_MEDIA: (StepMedia[] | null)[] = [
 
       {(() => {
         const cv = (tech as any).coreViz;
-        const koAlt = locale === 'ko';
+        type Media = { f: string; cap?: string; zoom?: boolean };
+        type Item = { h?: string; bullets?: string[]; media?: Media[]; alarms?: boolean };
         return (
           <div class="v-reveal mt-12">
-            {/* 6단계 트랙 — 각 스텝에 PPT 원본 비주얼(장비·대시보드·진단 차트·아이콘) 배치, 전부 실텍스트+개별 alt (SEO) */}
+            {/* 상단 넘버 트랙(유지) + 각 스텝을 PPT 슬라이드 구조 그대로: 소항목(A/B)·불릿·원본 비율 비주얼(잘림 없음)·캡션 */}
             <div class="relative hidden h-px bg-accent/25 lg:block"></div>
-            <div class="mt-4 grid gap-x-4 gap-y-8 sm:grid-cols-2 lg:grid-cols-6">
-              {cv.stages.map((s: { no: string; t: string; s: string }, si: number) => (
-                <div class="flex flex-col">
+            <div class="mt-4 grid gap-x-5 gap-y-10 sm:grid-cols-2 lg:grid-cols-6">
+              {cv.stages.map((s: { no: string; t: string; items: Item[] }) => (
+                <div>
                   <div class="flex items-center gap-2">
                     <span class="text-3xl font-bold leading-none text-accent/20">{s.no}</span>
                     <span class="h-2 w-2 rounded-full bg-accent"></span>
                   </div>
                   <p class="mt-2 text-sm font-bold leading-snug text-ink">{s.t}</p>
-                  <p class="mt-1.5 text-xs leading-relaxed text-ink/50">{s.s}</p>
-                  {STEP_MEDIA[si] && (
-                    <div class="mt-3 grid grid-cols-2 gap-1.5">
-                      {STEP_MEDIA[si]!.map((m) =>
-                        m.zoom ? (
-                          <button
-                            type="button"
-                            class={`tech-zoom cursor-zoom-in overflow-hidden rounded-md border border-ink/10 bg-plate transition hover:border-accent/60 ${m.span ? 'col-span-2' : ''}`}
-                            data-full={techLarge[`/src/assets/tech/core/${m.f}`]}
-                            data-name={koAlt ? m.ko : m.en}
-                            aria-label={`${koAlt ? m.ko : m.en} 확대`}
-                          >
-                            <Image src={techAsset(`core/${m.f}`)!} alt={koAlt ? m.ko : m.en} width={320} class={`${m.span ? 'aspect-[5/2]' : 'aspect-square'} w-full object-cover`} />
-                          </button>
-                        ) : (
-                          <div class={`rounded-md border border-ink/10 bg-plate p-1.5 ${m.span ? 'col-span-2' : ''}`}>
-                            <Image src={techAsset(`core/${m.f}`)!} alt={koAlt ? m.ko : m.en} width={220} class="mx-auto h-12 w-auto object-contain" />
-                          </div>
-                        ),
+
+                  {s.items.map((it) => (
+                    <div class="mt-3.5">
+                      {it.h && <p class="text-[11px] font-bold tracking-wide text-accent">{it.h}</p>}
+                      {it.bullets && (
+                        <ul class="mt-1 space-y-0.5 text-[11px] leading-relaxed text-ink/60">
+                          {it.bullets.map((b) => <li>· {b}</li>)}
+                        </ul>
+                      )}
+                      {it.media && (
+                        <div class="mt-2 space-y-2.5">
+                          {it.media.map((mm) => (
+                            <figure>
+                              {mm.zoom ? (
+                                <button type="button"
+                                  class="tech-zoom block w-full cursor-zoom-in overflow-hidden rounded-md border border-ink/10 bg-plate p-1.5 transition hover:border-accent/60"
+                                  data-full={techLarge[`/src/assets/tech/core/${mm.f}`]}
+                                  data-name={`${s.t}${mm.cap ? ` — ${mm.cap}` : ''}`}
+                                  aria-label={`${mm.cap || s.t} 확대`}>
+                                  <Image src={techAsset(`core/${mm.f}`)!} alt={`${s.t}${mm.cap ? ` — ${mm.cap}` : ''}`} width={420} class="w-full object-contain" />
+                                </button>
+                              ) : (
+                                <div class="rounded-md border border-ink/10 bg-plate p-1.5">
+                                  <Image src={techAsset(`core/${mm.f}`)!} alt={`${s.t}${mm.cap ? ` — ${mm.cap}` : ''}`} width={300} class="mx-auto max-h-16 w-auto object-contain" />
+                                </div>
+                              )}
+                              {mm.cap && <figcaption class="mt-1 text-center text-[10px] text-ink/45">{mm.cap}</figcaption>}
+                            </figure>
+                          ))}
+                        </div>
+                      )}
+                      {it.alarms && (
+                        <div class="mt-2.5 flex flex-wrap gap-1.5">
+                          {cv.alarms.map((a2: { t: string }, i2: number) => (
+                            <span class={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${i2 === 0 ? 'border-ok text-ok' : i2 === 1 ? 'border-warn text-warn' : 'border-danger text-danger'}`}>{a2.t}</span>
+                          ))}
+                        </div>
                       )}
                     </div>
-                  )}
-                  {si === 2 && (
-                    <div class="mt-2.5 flex flex-wrap gap-1.5">
-                      {cv.alarms.map((a2: { t: string }, i2: number) => (
-                        <span class={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${i2 === 0 ? 'border-ok text-ok' : i2 === 1 ? 'border-warn text-warn' : 'border-danger text-danger'}`}>{a2.t}</span>
-                      ))}
-                    </div>
-                  )}
+                  ))}
                 </div>
               ))}
             </div>
 
-            <div class="mt-9 flex flex-wrap items-center gap-x-3 gap-y-2.5">
+            <div class="mt-10 flex flex-wrap items-center gap-x-3 gap-y-2.5">
               <span class="text-[11px] font-bold tracking-wide text-accent">{cv.valuesTitle}</span>
               {cv.values.map((v: string, vi: number) => (
                 <>

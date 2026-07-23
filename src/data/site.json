@@ -124,17 +124,45 @@
       "equipGroupDesc": "Sputtering, thermal evaporator, in-line sputter, 6-inch and 12-inch ALDs",
       "coreViz": {
         "stages": [
-          { "no": "01", "t": "Data Collection", "s": "ALD · Sputter · Measurement" },
-          { "no": "02", "t": "Integration & Preprocessing", "s": "Repository — raw · sync · metadata / Quality — outlier · missing" },
-          { "no": "03", "t": "Multivariate Analysis", "s": "Trend · OES · Key Index / Hotelling's T² · SPE · PCA" },
-          { "no": "04", "t": "Diagnosis & Cause", "s": "Contribution · VIP · Correlation" },
-          { "no": "05", "t": "Decision & Action", "s": "Condition · Recipe · Maintenance · DOE" },
-          { "no": "06", "t": "Verification & Learning", "s": "Electrical · TMI / dT / TCR · Yield → Standardization" }
+          { "no": "01", "t": "Data Collection", "items": [
+            { "media": [
+              { "f": "ald.jpg", "cap": "ALD", "zoom": true },
+              { "f": "sputter.jpg", "cap": "Sputter", "zoom": true },
+              { "f": "measurement.jpg", "cap": "Measurement", "zoom": true }
+            ] }
+          ] },
+          { "no": "02", "t": "Integration & Preprocessing", "items": [
+            { "h": "A. Data Repository", "bullets": ["Raw data storage", "Time synchronization", "Metadata management"],
+              "media": [ { "f": "step2-repo.jpg", "cap": "" } ] },
+            { "h": "B. Data Quality", "bullets": ["Validation", "Outlier detection", "Missing-value handling"],
+              "media": [ { "f": "step2-quality.jpg", "cap": "" } ] }
+          ] },
+          { "no": "03", "t": "Multivariate Analysis", "items": [
+            { "h": "A. Real-time Dashboard", "bullets": ["Trend · OES peak · Key Index", "Thickness · ΔR · TMI · TCR · dT"],
+              "media": [ { "f": "step3-dash-a.jpg", "cap": "Trend", "zoom": true }, { "f": "step3-dash-b.jpg", "cap": "OES peak", "zoom": true } ] },
+            { "h": "B. Change Detection", "bullets": ["Hotelling's T² · SPE", "PCA score plot"],
+              "media": [ { "f": "plot-t2.jpg", "cap": "T² / SPE", "zoom": true }, { "f": "plot-pca.jpg", "cap": "PCA", "zoom": true } ], "alarms": true }
+          ] },
+          { "no": "04", "t": "Diagnosis & Cause Estimation", "items": [
+            { "bullets": ["Contribution analysis", "VIP scores", "Correlation analysis"],
+              "media": [
+                { "f": "step4-contrib.jpg", "cap": "Contribution", "zoom": true },
+                { "f": "step4-vip.jpg", "cap": "VIP", "zoom": true },
+                { "f": "step4-corr.jpg", "cap": "Correlation", "zoom": true }
+              ] }
+          ] },
+          { "no": "05", "t": "Decision & Action", "items": [
+            { "h": "A. Condition Adjustment", "bullets": ["Power · Pressure · Temperature"] },
+            { "h": "B. Recipe", "bullets": ["Purge · Sequence"] },
+            { "h": "C. Maintenance · DOE", "bullets": ["Immediate or next-lot application"],
+              "media": [ { "f": "step5-action.jpg", "cap": "" } ] }
+          ] },
+          { "no": "06", "t": "Verification & Learning", "items": [
+            { "h": "Metrics", "bullets": ["Electrical · TMI / dT / TCR", "Yield"] },
+            { "h": "Standardization", "bullets": ["Continuous learning loop"],
+              "media": [ { "f": "step6-metric.jpg", "cap": "", "zoom": true }, { "f": "step6-loop.jpg", "cap": "" } ] }
+          ] }
         ],
-        "equipCaption": "In-situ data sources — ALD · Sputter · Measurement",
-        "plotsCap": "Multivariate monitoring — T² / SPE · PCA score plot",
-        "indicators": "Key indicators: Thickness · ΔR · TMI · TCR · dT",
-        "alarmTitle": "Alarm level",
         "alarms": [
           { "t": "Normal", "s": "Stable pattern" },
           { "t": "Warning", "s": "Minor change" },
@@ -603,17 +631,45 @@
       "equipGroupDesc": "스퍼터링 · 열 증발 증착기 · 인라인 스퍼터 · 6인치/12인치 ALD",
       "coreViz": {
         "stages": [
-          { "no": "01", "t": "데이터 수집", "s": "ALD · 스퍼터 · 측정 장비" },
-          { "no": "02", "t": "통합 · 전처리", "s": "저장소 — 원시·시간동기·메타 / 품질 — 이상치·결측 검증" },
-          { "no": "03", "t": "다변량 분석", "s": "Trend · OES · Key Index / Hotelling's T² · SPE · PCA" },
-          { "no": "04", "t": "진단 · 원인 추정", "s": "기여도 · VIP · 상관 분석" },
-          { "no": "05", "t": "의사결정 · 조치", "s": "조건 조정 · 레시피 · 정비 · DOE" },
-          { "no": "06", "t": "검증 · 학습", "s": "전기 특성 · TMI/dT/TCR · 수율 → 표준화" }
+          { "no": "01", "t": "데이터 수집", "items": [
+            { "media": [
+              { "f": "ald.jpg", "cap": "ALD", "zoom": true },
+              { "f": "sputter.jpg", "cap": "Sputter", "zoom": true },
+              { "f": "measurement.jpg", "cap": "Measurement", "zoom": true }
+            ] }
+          ] },
+          { "no": "02", "t": "통합 · 전처리", "items": [
+            { "h": "A. 데이터 저장소", "bullets": ["원시 데이터 저장", "시간 동기화", "메타데이터 관리"],
+              "media": [ { "f": "step2-repo.jpg", "cap": "" } ] },
+            { "h": "B. 데이터 품질", "bullets": ["유효성 검증", "이상치 탐지", "결측값 처리"],
+              "media": [ { "f": "step2-quality.jpg", "cap": "" } ] }
+          ] },
+          { "no": "03", "t": "다변량 분석", "items": [
+            { "h": "A. 실시간 대시보드", "bullets": ["Trend · OES peak · Key Index", "Thickness · ΔR · TMI · TCR · dT"],
+              "media": [ { "f": "step3-dash-a.jpg", "cap": "Trend", "zoom": true }, { "f": "step3-dash-b.jpg", "cap": "OES peak", "zoom": true } ] },
+            { "h": "B. 변화 감지", "bullets": ["Hotelling's T² · SPE", "PCA 스코어 플롯"],
+              "media": [ { "f": "plot-t2.jpg", "cap": "T² / SPE", "zoom": true }, { "f": "plot-pca.jpg", "cap": "PCA", "zoom": true } ], "alarms": true }
+          ] },
+          { "no": "04", "t": "진단 · 원인 추정", "items": [
+            { "bullets": ["기여도 분석", "VIP 스코어", "상관 분석"],
+              "media": [
+                { "f": "step4-contrib.jpg", "cap": "기여도", "zoom": true },
+                { "f": "step4-vip.jpg", "cap": "VIP", "zoom": true },
+                { "f": "step4-corr.jpg", "cap": "상관", "zoom": true }
+              ] }
+          ] },
+          { "no": "05", "t": "의사결정 · 조치", "items": [
+            { "h": "A. 조건 조정", "bullets": ["Power · Pressure · Temperature"] },
+            { "h": "B. 레시피", "bullets": ["Purge · Sequence"] },
+            { "h": "C. 정비 · DOE", "bullets": ["즉시 적용 또는 다음 로트 반영"],
+              "media": [ { "f": "step5-action.jpg", "cap": "" } ] }
+          ] },
+          { "no": "06", "t": "검증 · 학습", "items": [
+            { "h": "지표", "bullets": ["Electrical · TMI / dT / TCR", "Yield(수율)"] },
+            { "h": "표준화", "bullets": ["순환 학습 루프"],
+              "media": [ { "f": "step6-metric.jpg", "cap": "", "zoom": true }, { "f": "step6-loop.jpg", "cap": "" } ] }
+          ] }
         ],
-        "equipCaption": "In-situ 데이터 소스 — ALD · 스퍼터 · 측정 장비",
-        "plotsCap": "다변량 모니터링 — T² / SPE · PCA 스코어 플롯",
-        "indicators": "핵심 지표: Thickness · ΔR · TMI · TCR · dT",
-        "alarmTitle": "알람 레벨",
         "alarms": [
           { "t": "Normal", "s": "안정 패턴" },
           { "t": "Warning", "s": "경미한 변화" },
