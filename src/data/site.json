@@ -122,6 +122,23 @@
       "equipmentSub": "Deposition tools built in-house with vacuum specialists of 30+ years — every one of them instrumented for process data.",
       "equipGroupTitle": "PVD & ALD",
       "equipGroupDesc": "Sputtering, thermal evaporator, in-line sputter, 6-inch and 12-inch ALDs",
+      "bigdataViz": {
+        "stages": [
+          { "no": "01", "t": "IN-SITU SENSING", "s": "Self-developed sputter · 3 real-time sensors" },
+          { "no": "02", "t": "BIG DATA + AI", "s": "Collection · training · analysis" },
+          { "no": "03", "t": "OUTCOMES", "s": "Optimization · prediction" }
+        ],
+        "sputter": "Self-developed Sputter",
+        "sensorLegend": "RGA — Residual Gas Analyzer · OES — Optical Emission Spectrometer · TSP — Titanium Sublimation Pump",
+        "rgaCap": "RGA — analyzer · measured spectrum",
+        "oesCap": "OES — spectrometer · emission spectrum",
+        "aiTitle": "Big Data + AI",
+        "aiSub": "Process-data collection · machine-learning training",
+        "outputs": [
+          { "t": "Process Optimization", "s": "Thin film process optimization", "img": "out-optimization.jpg", "alt": "AI-driven thin film process optimization" },
+          { "t": "Property Prediction Model", "s": "Characteristic prediction model", "img": "out-prediction.jpg", "alt": "Machine-learning characteristic prediction model dashboard" }
+        ]
+      },
       "analysisHeading": "Analysis & Measurement Solution",
       "analysisSub": "From non-destructive spectroscopy to electrical characterisation.",
       "analysisMaterial": "Material analysis",
@@ -510,6 +527,23 @@
       "equipmentSub": "30년 경력 진공장비 전문가와 함께 자체 개발한 증착 장비입니다. 모든 장비가 공정 데이터를 수집합니다.",
       "equipGroupTitle": "PVD & ALD",
       "equipGroupDesc": "스퍼터링 · 열 증발 증착기 · 인라인 스퍼터 · 6인치/12인치 ALD",
+      "bigdataViz": {
+        "stages": [
+          { "no": "01", "t": "IN-SITU SENSING", "s": "자체 스퍼터 · 실시간 센서 3종" },
+          { "no": "02", "t": "BIG DATA + AI", "s": "수집 · 학습 · 분석" },
+          { "no": "03", "t": "OUTCOMES", "s": "공정 최적화 · 특성 예측" }
+        ],
+        "sputter": "자체 개발 스퍼터",
+        "sensorLegend": "RGA — 잔류 가스 분석기 · OES — 광학 발광 분광기 · TSP — 티타늄 승화 펌프",
+        "rgaCap": "RGA — 기기 · 실측 스펙트럼",
+        "oesCap": "OES — 기기 · 발광 스펙트럼",
+        "aiTitle": "Big Data + AI",
+        "aiSub": "공정 데이터 수집 · 머신러닝 학습",
+        "outputs": [
+          { "t": "공정 최적화", "s": "Thin film process optimization", "img": "out-optimization.jpg", "alt": "AI 기반 박막 공정 최적화" },
+          { "t": "특성 예측 모델", "s": "Characteristic prediction model", "img": "out-prediction.jpg", "alt": "머신러닝 특성 예측 모델 대시보드" }
+        ]
+      },
       "analysisHeading": "분석·측정 솔루션",
       "analysisSub": "비파괴 분광부터 전기적 특성 분석까지.",
       "analysisMaterial": "소재 분석",
