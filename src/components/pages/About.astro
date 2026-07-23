@@ -32,17 +32,20 @@ const partners = (await getCollection('partners')).sort((a, b) => a.data.order -
 
 function initials(name){ const p = name.replace('Dr. ','').split(' '); return (p[0][0] + (p[1] ? p[1][0] : '')).toUpperCase(); }
 ---
-<BaseLayout title={title} description={description}>
+<BaseLayout title={title} description={description} zebra>
 
-  <section class="relative mx-auto max-w-6xl px-6 pt-28 pb-16 md:pt-36">
+  <section class="relative">
+    <div class="mx-auto max-w-6xl px-6 pt-28 pb-16 md:pt-36">
     <div class="v-reveal">
       <p class="text-sm font-medium uppercase tracking-[0.2em] text-accent">{about.eyebrowAbout}</p>
       <h1 class="mt-5 text-4xl font-bold leading-tight text-ink md:text-6xl">{about.heroTitle.line1}<br/>{about.heroTitle.line2}</h1>
       <p class="mt-6 max-w-2xl text-lg leading-relaxed text-ink/60">{about.heroSubtitle}</p>
     </div>
+    </div>
   </section>
 
-  <section id="vision" class="scroll-mt-24 mx-auto max-w-6xl px-6 py-16">
+  <section id="vision" class="scroll-mt-24">
+    <div class="mx-auto max-w-6xl px-6 py-16">
     <div class="v-reveal grid gap-10 md:grid-cols-3">
       <div class="md:col-span-1"><h2 class="text-2xl font-bold text-ink">{about.companyHeading}</h2></div>
       <div class="md:col-span-2 space-y-5 text-base leading-relaxed text-ink/65">
@@ -52,18 +55,22 @@ function initials(name){ const p = name.replace('Dr. ','').split(' '); return (p
         )}
       </div>
     </div>
+    </div>
   </section>
 
-  <section class="border-y border-ink/10 bg-ink/[0.02]">
+  <section>
     <div class="mx-auto max-w-6xl px-6 py-20">
       <div class="v-reveal max-w-3xl">
         <p class="text-sm font-medium uppercase tracking-[0.2em] text-accent">{about.visionEyebrow}</p>
         <p class="mt-5 text-2xl font-semibold leading-snug text-ink md:text-3xl">{about.visionBody}</p>
       </div>
     </div>
+    </div>
+    </div>
   </section>
 
-  <section id="team" class="mx-auto max-w-6xl px-6 py-20 scroll-mt-24">
+  <section id="team" class="scroll-mt-24">
+    <div class="mx-auto max-w-6xl px-6 py-20">
     <div class="v-reveal">
       <h2 class="text-2xl font-bold text-ink">{about.teamHeading}</h2>
       <p class="mt-3 max-w-2xl text-base text-ink/55">{about.teamDesc}</p>
@@ -95,7 +102,7 @@ function initials(name){ const p = name.replace('Dr. ','').split(' '); return (p
     </div>
   </section>
 
-  <section id="history" class="scroll-mt-24 border-t border-ink/10 bg-ink/[0.02]">
+  <section id="history" class="scroll-mt-24">
     <div class="mx-auto max-w-6xl px-6 py-20">
       <div class="v-reveal"><h2 class="text-2xl font-bold text-ink">{about.historyHeading}</h2></div>
       <div class="mt-12 space-y-12">
@@ -147,7 +154,7 @@ function initials(name){ const p = name.replace('Dr. ','').split(' '); return (p
     });
   </script>
 
-  <section id="achievement" class="scroll-mt-24 border-t border-ink/10">
+  <section id="achievement" class="scroll-mt-24">
     <div class="mx-auto max-w-6xl px-6 py-20">
       <div class="v-reveal">
         <h2 class="text-2xl font-bold text-ink">{about.globalActivityHeading}</h2>
@@ -168,7 +175,8 @@ function initials(name){ const p = name.replace('Dr. ','').split(' '); return (p
     nextLabel={about.certNext}
   />
 
-  <section id="collaboration" class="scroll-mt-24 mx-auto max-w-6xl px-6 py-20">
+  <section id="collaboration" class="scroll-mt-24">
+    <div class="mx-auto max-w-6xl px-6 py-20">
     <div class="v-reveal"><h2 class="text-2xl font-bold text-ink">{about.collaborationHeading}</h2></div>
     <div class="v-reveal mt-8 space-y-4">
       {[0, 1].map((row) => {
@@ -202,7 +210,7 @@ function initials(name){ const p = name.replace('Dr. ','').split(' '); return (p
     </div>
   </section>
 
-  <section class="border-t border-ink/10 bg-ink/[0.02]">
+  <section>
     <div class="mx-auto max-w-6xl px-6 py-24 text-center">
       <div class="v-reveal">
         <h2 class="text-3xl font-bold text-ink md:text-4xl" set:html={about.ctaHeadingHtml}></h2>
