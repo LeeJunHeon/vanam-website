@@ -121,18 +121,18 @@ const techAsset = (pth: string) => techImages[`/src/assets/tech/${pth}`]?.defaul
         const cv = (tech as any).coreViz;
         // 세로 파이프라인(컴팩트): 슬라이드의 좌→우 6단계를 내용 그대로 위→아래로 재배치.
         // 2·3·4 는 통합 강조 박스(시안), 좌측 브래킷 화살표가 5(Action Execution/Feedback)→1 순환을 표현.
-        // 이미지는 분위기 전달용이므로 고정 높이로 작게 배치하고 확대(라이트박스)는 두지 않는다.
-        // 캡션은 flex-1 로 균등화해 나란한 이미지들의 세로 위치를 하단 기준으로 맞춘다.
+        // 브래킷 정렬: 래퍼 A 를 [1 헤더 시작 ~ 5 헤더 끝]으로 잡아 위·아래 스텁이 각 번호 필의
+        // 정중앙(top/bottom 14.5px = 필 반지름 16 − 선두께/2)에 정적으로 맞도록 했다. 5의 본문부터는 래퍼 B.
         const asset = (f: string) => techAsset(`core/${f}`)!;
         const pill = (i: number) =>
           `grid h-8 w-8 shrink-0 place-items-center rounded-full text-[13px] font-bold ${[1, 2, 3].includes(i) ? 'bg-brand text-onbrand' : 'bg-ink/80 text-canvas'}`;
         const card = 'rounded-xl border border-ink/15 bg-canvas p-3';
         const cardH = 'text-[12px] font-bold text-accent';
-        const imgBox = 'overflow-hidden rounded-lg border border-ink/10 bg-plate p-1.5';
+        const imgBox = 'overflow-hidden rounded-lg border border-ink/10 bg-plate p-1';
         const capCls = 'mb-1 flex-1 text-center text-[11px] font-semibold leading-snug text-ink/60';
         // 단계 사이 세로 흐름 화살표 — 박스 밖(중립)·박스 안(시안 구분선) 두 가지
         const flow = () => (
-          <p class="my-2.5 text-center text-xl font-bold leading-none text-ink/30" aria-hidden="true">↓</p>
+          <p class="my-2.5 text-center text-xl font-bold leading-none text-ink/40" aria-hidden="true">↓</p>
         );
         const flowIn = () => (
           <div class="my-4 flex items-center gap-4" aria-hidden="true">
@@ -154,10 +154,10 @@ const techAsset = (pth: string) => techImages[`/src/assets/tech/${pth}`]?.defaul
         return (
           <div class="v-reveal mt-10">
 
-            {/* ── 1~5 래퍼 + 좌측 피드백 브래킷 (5 하단 → 좌측 상승 → 1 진입, 데스크톱) ── */}
+            {/* ── 래퍼 A: 1 헤더 ~ 5 헤더 + 좌측 피드백 브래킷 (5 필 중앙 → 좌측 상승 → 1 필 중앙, 데스크톱) ── */}
             <div class="relative lg:pl-12">
-              <div class="pointer-events-none absolute bottom-5 left-0 top-5 hidden w-6 rounded-l-2xl border-y-[3px] border-l-[3px] border-accent/45 lg:block" aria-hidden="true"></div>
-              <div class="pointer-events-none absolute left-[22px] top-[14.5px] hidden h-0 w-0 border-y-[7px] border-l-[10px] border-y-transparent border-l-accent/60 lg:block" aria-hidden="true"></div>
+              <div class="pointer-events-none absolute bottom-[14.5px] left-0 top-[14.5px] hidden w-6 rounded-l-2xl border-y-[3px] border-l-[3px] border-accent/45 lg:block" aria-hidden="true"></div>
+              <div class="pointer-events-none absolute left-[22px] top-[9px] hidden h-0 w-0 border-y-[7px] border-l-[10px] border-y-transparent border-l-accent/60 lg:block" aria-hidden="true"></div>
               <span class="pointer-events-none absolute left-[1.5px] top-1/2 hidden -translate-x-1/2 -translate-y-1/2 rotate-180 rounded-full border border-accent/30 bg-canvas px-1.5 py-2.5 text-[11px] font-bold tracking-wide text-accent [writing-mode:vertical-rl] lg:inline-block" aria-hidden="true">↻ {cv.cycle.t}</span>
 
               {/* ── 1. 데이터 수집 ── */}
@@ -178,16 +178,16 @@ const techAsset = (pth: string) => techImages[`/src/assets/tech/${pth}`]?.defaul
               {/* ── 2·3·4 통합 강조 박스 ── */}
               <div class="rounded-2xl border-2 border-accent/40 bg-accent/[0.03] p-3.5 sm:p-5">
 
-                {/* 2 — 데이터 통합 · 전처리: A → B 가로 배치 + Data quality 배지 */}
+                {/* 2 — 데이터 통합 · 전처리: A → B 가로 배치(아이콘 좌측 통일) + Data quality 배지 */}
                 {head(1)}
                 <div class="mt-3 grid gap-3 lg:grid-cols-[1fr_auto_1fr]">
                   <div class={card}>
                     <p class={cardH}>{cv.s2.a.h}</p>
                     <div class="mt-2 flex items-center gap-3">
+                      <Image src={asset(cv.s2.a.img)} alt={cv.s2.a.h} width={140} class="h-10 w-10 shrink-0 object-contain md:h-12 md:w-12" />
                       <ul class="min-w-0 flex-1 space-y-0.5 text-[11.5px] leading-relaxed text-ink/60">
                         {cv.s2.a.bullets.map((b: string) => <li>· {b}</li>)}
                       </ul>
-                      <Image src={asset(cv.s2.a.img)} alt={cv.s2.a.h} width={140} class="h-10 w-10 shrink-0 object-contain md:h-12 md:w-12" />
                     </div>
                   </div>
                   <div class="hidden items-center lg:flex" aria-hidden="true">
@@ -219,10 +219,10 @@ const techAsset = (pth: string) => techImages[`/src/assets/tech/${pth}`]?.defaul
                         <figure class="flex min-w-0 flex-col">
                           <figcaption class={capCls}>
                             {pn.t}
-                            {pn.cap && <span class="mt-0.5 block text-[10px] font-medium text-ink/45">{pn.cap}</span>}
+                            {pn.cap && <span class="mt-0.5 block text-[10px] font-medium text-ink/55">{pn.cap}</span>}
                           </figcaption>
                           <div class={imgBox}>
-                            <Image src={asset(pn.img)} alt={pn.t} width={360} class="h-28 w-full object-contain" />
+                            <Image src={asset(pn.img)} alt={pn.t} width={360} class="h-32 w-full object-contain" />
                           </div>
                         </figure>
                       ))}
@@ -236,7 +236,7 @@ const techAsset = (pth: string) => techImages[`/src/assets/tech/${pth}`]?.defaul
                           <figure class="flex min-w-0 flex-col">
                             <figcaption class={capCls}>{pn.t}</figcaption>
                             <div class={imgBox}>
-                              <Image src={asset(pn.img)} alt={pn.t} width={360} class="h-28 w-full object-contain" />
+                              <Image src={asset(pn.img)} alt={pn.t} width={360} class="h-32 w-full object-contain" />
                             </div>
                           </figure>
                         ))}
@@ -266,7 +266,7 @@ const techAsset = (pth: string) => techImages[`/src/assets/tech/${pth}`]?.defaul
                     <figure class={`${card} flex flex-col`}>
                       <figcaption class={capCls}>{ch.t}</figcaption>
                       <div class={imgBox}>
-                        <Image src={asset(ch.img)} alt={ch.t} width={360} class="h-24 w-full object-contain" />
+                        <Image src={asset(ch.img)} alt={ch.t} width={360} class="h-28 w-full object-contain" />
                       </div>
                     </figure>
                   ))}
@@ -279,35 +279,37 @@ const techAsset = (pth: string) => techImages[`/src/assets/tech/${pth}`]?.defaul
 
               {flow()}
 
-              {/* ── 5. 의사결정 · 조치 ── */}
+              {/* ── 5. 의사결정 · 조치 — 헤더 (브래킷 하단 스텁이 이 필 중앙에 닿는다) ── */}
               <div>
                 {head(4)}
-                <div class="mt-3 grid gap-3 lg:grid-cols-[2.2fr_1fr]">
-                  <div class={card}>
-                    <p class="text-[12px] font-bold text-ink/75">{cv.s5.decision.h}</p>
-                    <div class="mt-2 grid gap-2.5 sm:grid-cols-2">
-                      {cv.s5.decision.rows.map((r: any) => (
-                        <div class="flex items-center gap-2.5 rounded-lg border border-ink/10 p-2.5">
-                          <Image src={asset(r.img)} alt="" width={96} class="h-9 w-9 shrink-0 rounded-md border border-ink/10 bg-plate object-contain p-1" />
-                          <div class="min-w-0">
-                            <p class="text-[12px] font-bold leading-tight text-accent">{r.t}</p>
-                            <p class="mt-0.5 text-[10.5px] leading-snug text-ink/55">{r.s}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div class={`${card} flex flex-col justify-center`}>
-                    <p class={cardH}>{cv.s5.conduct.h}</p>
-                    <ul class="mt-1.5 space-y-0.5 text-[11.5px] leading-relaxed text-ink/60">
-                      {cv.s5.conduct.lines.map((l: string) => <li>· {l}</li>)}
-                    </ul>
-                  </div>
-                </div>
               </div>
             </div>
 
             <div class="lg:pl-12">
+              {/* ── 5. 본문 ── */}
+              <div class="mt-3 grid gap-3 lg:grid-cols-[2.2fr_1fr]">
+                <div class={card}>
+                  <p class="text-[12px] font-bold text-ink/75">{cv.s5.decision.h}</p>
+                  <div class="mt-2 grid gap-2.5 sm:grid-cols-2">
+                    {cv.s5.decision.rows.map((r: any) => (
+                      <div class="flex items-center gap-2.5 rounded-lg border border-ink/10 p-2.5">
+                        <Image src={asset(r.img)} alt="" width={96} class="h-9 w-9 shrink-0 rounded-md border border-ink/10 bg-plate object-contain p-1" />
+                        <div class="min-w-0">
+                          <p class="text-[12px] font-bold leading-tight text-accent">{r.t}</p>
+                          <p class="mt-0.5 text-[10.5px] leading-snug text-ink/55">{r.s}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div class={`${card} flex flex-col justify-center`}>
+                  <p class={cardH}>{cv.s5.conduct.h}</p>
+                  <ul class="mt-1.5 space-y-0.5 text-[11.5px] leading-relaxed text-ink/60">
+                    {cv.s5.conduct.lines.map((l: string) => <li>· {l}</li>)}
+                  </ul>
+                </div>
+              </div>
+
               {flow()}
 
               {/* ── 6. 검증 · 학습 ── */}
@@ -325,7 +327,7 @@ const techAsset = (pth: string) => techImages[`/src/assets/tech/${pth}`]?.defaul
                         <p class="text-center text-[12px] font-bold leading-snug text-accent">{c.t}</p>
                         {c.img && (
                           <div class={`${imgBox} mt-2.5`}>
-                            <Image src={asset(c.img)} alt={c.t} width={360} class="h-20 w-full object-contain" />
+                            <Image src={asset(c.img)} alt={c.t} width={360} class="h-24 w-full object-contain" />
                           </div>
                         )}
                         {c.bullets && (
@@ -342,14 +344,14 @@ const techAsset = (pth: string) => techImages[`/src/assets/tech/${pth}`]?.defaul
               {/* 순환 설명 — 모바일에선 좌측 브래킷 대신 배지로 표시 */}
               <p class="mt-5 text-center">
                 <span class="inline-flex items-center gap-1.5 rounded-full border border-accent/30 bg-accent/[0.06] px-3 py-1 text-[11.5px] font-bold text-accent lg:hidden">↻ {cv.cycle.t}</span>
-                <span class="mt-1.5 block text-[11.5px] leading-relaxed text-ink/50">{cv.cycle.s}</span>
+                <span class="mt-1.5 block text-[11.5px] leading-relaxed text-ink/60">{cv.cycle.s}</span>
               </p>
 
               {/* ── Core Value — 파이프라인의 결론 밴드 (가치 4종 → Final goal 3줄) ── */}
               <div class="mt-8 rounded-2xl border border-ink/15 bg-ink/[0.03] p-4 sm:p-5">
                 <div class="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
                   <p class="text-[12px] font-bold tracking-wide text-accent">{cv.valuesTitle}</p>
-                  <p class="text-[11px] font-semibold text-ink/50">{cv.valuesSub}</p>
+                  <p class="text-[11px] font-semibold text-ink/60">{cv.valuesSub}</p>
                 </div>
                 <div class="mt-3 grid items-stretch gap-2.5 sm:grid-cols-2 lg:grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr]">
                   {cv.values.map((v: string, vi: number) => (
@@ -366,15 +368,15 @@ const techAsset = (pth: string) => techImages[`/src/assets/tech/${pth}`]?.defaul
                     </>
                   ))}
                 </div>
-                <div class="mt-3 flex flex-col items-center gap-2 rounded-xl bg-ink/85 px-4 py-3 text-center sm:flex-row sm:justify-center sm:gap-3.5">
+                <div class="mt-3 flex flex-col items-center gap-2 rounded-xl bg-ink px-4 py-3 text-center sm:flex-row sm:justify-center sm:gap-3.5">
                   <span class="flex items-center gap-2">
                     {techAsset('core/value-goal.jpg') && (
-                      <Image src={techAsset('core/value-goal.jpg')!} alt="" width={56} class="h-6 w-6 rounded bg-white/90 object-contain p-0.5" />
+                      <Image src={techAsset('core/value-goal.jpg')!} alt="" width={56} class="h-7 w-7 rounded-md object-contain" />
                     )}
-                    <span class="text-[12px] font-bold text-canvas">{cv.finalGoal.t}</span>
+                    <span class="text-[12.5px] font-bold text-canvas">{cv.finalGoal.t}</span>
                   </span>
-                  <span class="hidden h-4 w-px bg-canvas/25 sm:block" aria-hidden="true"></span>
-                  <p class="text-[11.5px] font-semibold leading-relaxed text-canvas/85">{cv.finalGoal.lines.join(' · ')}</p>
+                  <span class="hidden h-4 w-px bg-canvas/30 sm:block" aria-hidden="true"></span>
+                  <p class="text-[12px] font-semibold leading-relaxed text-canvas">{cv.finalGoal.lines.join(' · ')}</p>
                 </div>
               </div>
             </div>
