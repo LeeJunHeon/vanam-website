@@ -125,58 +125,65 @@ for (const pth of Object.keys(techImages)) {
         const cv = (tech as any).coreViz;
         type Media = { f: string; cap?: string; zoom?: boolean };
         type Item = { h?: string; bullets?: string[]; media?: Media[]; alarms?: boolean };
+        type Stage = { no: string; t: string; items: Item[] };
         return (
           <div class="v-reveal mt-12">
-            {/* 상단 넘버 트랙(유지) + 각 스텝을 PPT 슬라이드 구조 그대로: 소항목(A/B)·불릿·원본 비율 비주얼(잘림 없음)·캡션 */}
-            <div class="relative hidden h-px bg-accent/25 lg:block"></div>
-            <div class="mt-4 grid gap-x-5 gap-y-10 sm:grid-cols-2 lg:grid-cols-6">
-              {cv.stages.map((s: { no: string; t: string; items: Item[] }) => (
-                <div>
-                  <div class="flex items-center gap-2">
-                    <span class="text-3xl font-bold leading-none text-accent/20">{s.no}</span>
-                    <span class="h-2 w-2 rounded-full bg-accent"></span>
+            {/* 세로 스테퍼: 번호가 위→아래로 증가. 각 스텝이 전폭 행이라 항목·비주얼이 가로로 펼쳐진다. */}
+            <div>
+              {cv.stages.map((s: Stage, si: number) => (
+                <div class="relative flex gap-5 md:gap-7">
+                  {/* 좌측 레일: 번호 + 노드 + 세로 연결 라인 */}
+                  <div class="flex w-12 shrink-0 flex-col items-center md:w-14">
+                    <span class="text-3xl font-bold leading-none text-accent/20 md:text-4xl">{s.no}</span>
+                    <span class="mt-2 h-2.5 w-2.5 shrink-0 rounded-full bg-accent"></span>
+                    {si < cv.stages.length - 1 && <span class="mt-1.5 w-px flex-1 bg-accent/25"></span>}
                   </div>
-                  <p class="mt-2 text-sm font-bold leading-snug text-ink">{s.t}</p>
 
-                  {s.items.map((it) => (
-                    <div class="mt-3.5">
-                      {it.h && <p class="text-[11px] font-bold tracking-wide text-accent">{it.h}</p>}
-                      {it.bullets && (
-                        <ul class="mt-1 space-y-0.5 text-[11px] leading-relaxed text-ink/60">
-                          {it.bullets.map((b) => <li>· {b}</li>)}
-                        </ul>
-                      )}
-                      {it.media && (
-                        <div class="mt-2 space-y-2.5">
-                          {it.media.map((mm) => (
-                            <figure>
-                              {mm.zoom ? (
-                                <button type="button"
-                                  class="tech-zoom block w-full cursor-zoom-in overflow-hidden rounded-md border border-ink/10 bg-plate p-1.5 transition hover:border-accent/60"
-                                  data-full={techLarge[`/src/assets/tech/core/${mm.f}`]}
-                                  data-name={`${s.t}${mm.cap ? ` — ${mm.cap}` : ''}`}
-                                  aria-label={`${mm.cap || s.t} 확대`}>
-                                  <Image src={techAsset(`core/${mm.f}`)!} alt={`${s.t}${mm.cap ? ` — ${mm.cap}` : ''}`} width={420} class="w-full object-contain" />
-                                </button>
-                              ) : (
-                                <div class="rounded-md border border-ink/10 bg-plate p-1.5">
-                                  <Image src={techAsset(`core/${mm.f}`)!} alt={`${s.t}${mm.cap ? ` — ${mm.cap}` : ''}`} width={300} class="mx-auto max-h-16 w-auto object-contain" />
-                                </div>
-                              )}
-                              {mm.cap && <figcaption class="mt-1 text-center text-[10px] text-ink/45">{mm.cap}</figcaption>}
-                            </figure>
-                          ))}
+                  {/* 본문: 제목 + 항목들(가로 배치) */}
+                  <div class={`min-w-0 flex-1 ${si < cv.stages.length - 1 ? 'pb-10' : ''}`}>
+                    <p class="pt-1 text-base font-bold text-ink md:text-lg">{s.t}</p>
+                    <div class="mt-3 grid gap-x-8 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+                      {s.items.map((it) => (
+                        <div class={s.items.length === 1 ? 'sm:col-span-2 lg:col-span-3' : ''}>
+                          {it.h && <p class="text-xs font-bold tracking-wide text-accent">{it.h}</p>}
+                          {it.bullets && (
+                            <ul class="mt-1 space-y-0.5 text-xs leading-relaxed text-ink/60">
+                              {it.bullets.map((b) => <li>· {b}</li>)}
+                            </ul>
+                          )}
+                          {it.media && (
+                            <div class={`mt-2.5 grid gap-2.5 ${it.media.length >= 3 ? 'max-w-2xl grid-cols-3' : 'max-w-md grid-cols-2'}`}>
+                              {it.media.map((mm) => (
+                                <figure class="min-w-0">
+                                  {mm.zoom ? (
+                                    <button type="button"
+                                      class="tech-zoom block w-full cursor-zoom-in overflow-hidden rounded-md border border-ink/10 bg-plate p-1.5 transition hover:border-accent/60"
+                                      data-full={techLarge[`/src/assets/tech/core/${mm.f}`]}
+                                      data-name={`${s.t}${mm.cap ? ` — ${mm.cap}` : ''}`}
+                                      aria-label={`${mm.cap || s.t} 확대`}>
+                                      <Image src={techAsset(`core/${mm.f}`)!} alt={`${s.t}${mm.cap ? ` — ${mm.cap}` : ''}`} width={480} class="w-full object-contain" />
+                                    </button>
+                                  ) : (
+                                    <div class="flex h-full items-center justify-center rounded-md border border-ink/10 bg-plate p-1.5">
+                                      <Image src={techAsset(`core/${mm.f}`)!} alt={`${s.t}${mm.cap ? ` — ${mm.cap}` : ''}`} width={300} class="max-h-16 w-auto object-contain" />
+                                    </div>
+                                  )}
+                                  {mm.cap && <figcaption class="mt-1 text-center text-[10px] text-ink/45">{mm.cap}</figcaption>}
+                                </figure>
+                              ))}
+                            </div>
+                          )}
+                          {it.alarms && (
+                            <div class="mt-2.5 flex flex-wrap gap-1.5">
+                              {cv.alarms.map((a2: { t: string }, i2: number) => (
+                                <span class={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${i2 === 0 ? 'border-ok text-ok' : i2 === 1 ? 'border-warn text-warn' : 'border-danger text-danger'}`}>{a2.t}</span>
+                              ))}
+                            </div>
+                          )}
                         </div>
-                      )}
-                      {it.alarms && (
-                        <div class="mt-2.5 flex flex-wrap gap-1.5">
-                          {cv.alarms.map((a2: { t: string }, i2: number) => (
-                            <span class={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${i2 === 0 ? 'border-ok text-ok' : i2 === 1 ? 'border-warn text-warn' : 'border-danger text-danger'}`}>{a2.t}</span>
-                          ))}
-                        </div>
-                      )}
+                      ))}
                     </div>
-                  ))}
+                  </div>
                 </div>
               ))}
             </div>
