@@ -122,6 +122,69 @@
       "equipmentSub": "Deposition tools built in-house with vacuum specialists of 30+ years — every one of them instrumented for process data.",
       "equipGroupTitle": "PVD & ALD",
       "equipGroupDesc": "Sputtering, thermal evaporator, in-line sputter, 6-inch and 12-inch ALDs",
+      "coreViz": {
+        "stages": [
+          { "no": "01", "t": "Data Collection", "s": "ALD · Sputter · Measurement" },
+          { "no": "02", "t": "Integration & Preprocessing", "s": "Repository — raw · sync · metadata / Quality — outlier · missing" },
+          { "no": "03", "t": "Multivariate Analysis", "s": "Trend · OES · Key Index / Hotelling's T² · SPE · PCA" },
+          { "no": "04", "t": "Diagnosis & Cause", "s": "Contribution · VIP · Correlation" },
+          { "no": "05", "t": "Decision & Action", "s": "Condition · Recipe · Maintenance · DOE" },
+          { "no": "06", "t": "Verification & Learning", "s": "Electrical · TMI / dT / TCR · Yield → Standardization" }
+        ],
+        "equipCaption": "In-situ data sources — ALD · Sputter · Measurement",
+        "plotsCap": "Multivariate monitoring — T² / SPE · PCA score plot",
+        "indicators": "Key indicators: Thickness · ΔR · TMI · TCR · dT",
+        "alarmTitle": "Alarm level",
+        "alarms": [
+          { "t": "Normal", "s": "Stable pattern" },
+          { "t": "Warning", "s": "Minor change" },
+          { "t": "Critical", "s": "Cause analysis" }
+        ],
+        "valuesTitle": "CORE VALUE",
+        "values": ["Early detection", "Fast diagnosis", "Accurate control", "Continuous optimization"],
+        "finalGoal": "Final goal — High yield · Reproducibility · Data-driven smart factory"
+      },
+      "p2Viz": {
+        "flow": ["From Bulk Components", "To A Single Thin Film", "Extra Sensory", "Super Safe"],
+        "benefitsTitle": "KEY THIN FILM BENEFITS",
+        "benefits": [
+          { "t": "Energy-sensitive", "s": "Sensitive to heat and electrical energy" },
+          { "t": "Integrated", "s": "Passive & active components into one thin film" },
+          { "t": "Efficient", "s": "Enhanced accuracy · lightweight · low-power" },
+          { "t": "Applications", "s": "Thermal management & control · protection circuits" }
+        ],
+        "marketsTitle": "SCALABLE OPPORTUNITIES",
+        "markets": [
+          { "t": "IR Image Sensing", "v": "$8 Bn" },
+          { "t": "Military (Stealth)", "v": "$42 Bn" },
+          { "t": "Smart Glass", "v": "$15 Bn" },
+          { "t": "AI Semiconductors", "v": "$123 Bn" },
+          { "t": "Power Electronics", "v": "$50 Bn" },
+          { "t": "Energy Storage", "v": "$256 Bn" }
+        ],
+        "source": "Source: MarketsandMarkets · MMR · Precedence Research · Fact.MR"
+      },
+      "quantumViz": {
+        "picTitle": "Photonic Integrated Circuits (PIC)",
+        "picSub": "Key thin films for next-generation PICs and quantum systems — KIST Quantum Fab & UIUC collaboration.",
+        "chips": "SNSPD · Waveguide · Modulator · DBR",
+        "devices": [
+          { "n": "SNSPD", "img": "snspd.jpg", "s": "High-sensitivity superconductors", "chips": ["NbTiN", "T ~ 11 K"] },
+          { "n": "Waveguide", "img": "waveguide.jpg", "s": "Low-loss optical waveguides", "chips": ["Ta₂O₅", "Loss < 0.5 dB"] },
+          { "n": "Modulator", "img": "modulator.jpg", "s": "Cryogenic electro-optic modulation", "chips": ["BTO · STO", "~1000 pm/V @ 5 K"] },
+          { "n": "DBR", "video": true, "s": "High-reflection DBR wafer", "chips": ["Si-SiO₂-TiO₂", "R > 99%"] }
+        ],
+        "marketsTitle": "SCALABLE OPPORTUNITIES",
+        "markets": [
+          { "t": "Quantum Computers", "v": "$13 Bn", "g": "32%" },
+          { "t": "Quantum Communication", "v": "$12 Bn", "g": "30%" },
+          { "t": "Quantum Sensors", "v": "$1.6 Bn", "g": "26%" },
+          { "t": "Laser & LiDAR", "v": "$22 Bn", "g": "30%" },
+          { "t": "Glass Core Substrate", "v": "$223 Bn", "g": "8%" },
+          { "t": "Silicon Photonics", "v": "$1.9 Bn", "g": "17%" }
+        ],
+        "source": "Source: MarketsandMarkets · MMR · Precedence Research · Fact.MR"
+      },
       "bigdataViz": {
         "stages": [
           { "no": "01", "t": "IN-SITU SENSING", "s": "Self-developed sputter · 3 real-time sensors" },
@@ -527,6 +590,69 @@
       "equipmentSub": "30년 경력 진공장비 전문가와 함께 자체 개발한 증착 장비입니다. 모든 장비가 공정 데이터를 수집합니다.",
       "equipGroupTitle": "PVD & ALD",
       "equipGroupDesc": "스퍼터링 · 열 증발 증착기 · 인라인 스퍼터 · 6인치/12인치 ALD",
+      "coreViz": {
+        "stages": [
+          { "no": "01", "t": "데이터 수집", "s": "ALD · 스퍼터 · 측정 장비" },
+          { "no": "02", "t": "통합 · 전처리", "s": "저장소 — 원시·시간동기·메타 / 품질 — 이상치·결측 검증" },
+          { "no": "03", "t": "다변량 분석", "s": "Trend · OES · Key Index / Hotelling's T² · SPE · PCA" },
+          { "no": "04", "t": "진단 · 원인 추정", "s": "기여도 · VIP · 상관 분석" },
+          { "no": "05", "t": "의사결정 · 조치", "s": "조건 조정 · 레시피 · 정비 · DOE" },
+          { "no": "06", "t": "검증 · 학습", "s": "전기 특성 · TMI/dT/TCR · 수율 → 표준화" }
+        ],
+        "equipCaption": "In-situ 데이터 소스 — ALD · 스퍼터 · 측정 장비",
+        "plotsCap": "다변량 모니터링 — T² / SPE · PCA 스코어 플롯",
+        "indicators": "핵심 지표: Thickness · ΔR · TMI · TCR · dT",
+        "alarmTitle": "알람 레벨",
+        "alarms": [
+          { "t": "Normal", "s": "안정 패턴" },
+          { "t": "Warning", "s": "경미한 변화" },
+          { "t": "Critical", "s": "원인 분석" }
+        ],
+        "valuesTitle": "CORE VALUE",
+        "values": ["조기 감지", "빠른 진단", "정밀 제어", "지속 최적화"],
+        "finalGoal": "최종 목표 — 고수율 · 재현성 · 데이터 기반 스마트 팩토리"
+      },
+      "p2Viz": {
+        "flow": ["From Bulk Components", "To A Single Thin Film", "Extra Sensory", "Super Safe"],
+        "benefitsTitle": "핵심 박막 강점",
+        "benefits": [
+          { "t": "에너지 감응", "s": "열·전기 에너지에 민감하게 반응" },
+          { "t": "일체 집적", "s": "수동·능동 소자를 하나의 박막으로 통합" },
+          { "t": "고효율", "s": "정확도 향상 · 경량 · 저전력 구동" },
+          { "t": "응용 분야", "s": "열 관리·제어 시스템 · 보호 회로" }
+        ],
+        "marketsTitle": "확장 가능 시장",
+        "markets": [
+          { "t": "IR 이미지 센싱", "v": "$8 Bn" },
+          { "t": "국방 (스텔스)", "v": "$42 Bn" },
+          { "t": "스마트 글라스", "v": "$15 Bn" },
+          { "t": "AI 반도체", "v": "$123 Bn" },
+          { "t": "전력 반도체", "v": "$50 Bn" },
+          { "t": "에너지 저장", "v": "$256 Bn" }
+        ],
+        "source": "출처: MarketsandMarkets · MMR · Precedence Research · Fact.MR"
+      },
+      "quantumViz": {
+        "picTitle": "Photonic Integrated Circuits (PIC)",
+        "picSub": "차세대 PIC·양자 시스템을 위한 핵심 박막 4종 — KIST Quantum Fab & UIUC 협력.",
+        "chips": "SNSPD · Waveguide · Modulator · DBR",
+        "devices": [
+          { "n": "SNSPD", "img": "snspd.jpg", "s": "고감도 초전도 단일광자 검출기", "chips": ["NbTiN", "T ~ 11 K"] },
+          { "n": "Waveguide", "img": "waveguide.jpg", "s": "저손실 광 도파로", "chips": ["Ta₂O₅", "손실 < 0.5 dB"] },
+          { "n": "Modulator", "img": "modulator.jpg", "s": "극저온 전기광학 변조", "chips": ["BTO · STO", "~1000 pm/V @ 5 K"] },
+          { "n": "DBR", "video": true, "s": "고반사 DBR 웨이퍼", "chips": ["Si-SiO₂-TiO₂", "반사율 > 99%"] }
+        ],
+        "marketsTitle": "확장 가능 시장",
+        "markets": [
+          { "t": "양자 컴퓨터", "v": "$13 Bn", "g": "32%" },
+          { "t": "양자 통신", "v": "$12 Bn", "g": "30%" },
+          { "t": "양자 센서", "v": "$1.6 Bn", "g": "26%" },
+          { "t": "레이저 · LiDAR", "v": "$22 Bn", "g": "30%" },
+          { "t": "글라스 코어 기판", "v": "$223 Bn", "g": "8%" },
+          { "t": "실리콘 포토닉스", "v": "$1.9 Bn", "g": "17%" }
+        ],
+        "source": "출처: MarketsandMarkets · MMR · Precedence Research · Fact.MR"
+      },
       "bigdataViz": {
         "stages": [
           { "no": "01", "t": "IN-SITU SENSING", "s": "자체 스퍼터 · 실시간 센서 3종" },
