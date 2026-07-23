@@ -4,15 +4,32 @@
 // - 키는 Cloudflare 환경변수: PAYPAL_CLIENT_ID / PAYPAL_SECRET / PAYPAL_ENV(sandbox|live)
 import { env as cfEnv } from 'cloudflare:workers';
 
-const E = (k: string): string => {
-  const raw = (cfEnv as Record<string, unknown> | undefined)?.[k] ?? (import.meta.env as Record<string, unknown>)[k] ?? '';
+// env 이중 접근: cloudflare:workers 의 env + (있다면) 어댑터가 주는 locals.runtime.env
+const E = (k: string, extra?: Record<string, unknown>): string => {
+  const raw =
+    (cfEnv as Record<string, unknown> | undefined)?.[k] ??
+    extra?.[k] ??
+    (import.meta.env as Record<string, unknown>)[k] ??
+    '';
   return typeof raw === 'string' ? raw.trim().replace(/^["']|["']$/g, '') : '';
 };
 
-export const paypalCfg = () => {
-  const clientId = E('PAYPAL_CLIENT_ID');
-  const secret = E('PAYPAL_SECRET');
-  const mode = E('PAYPAL_ENV') === 'live' ? 'live' : 'sandbox';
+// 진단(값 미노출 — 키 이름만): 어느 통로에 PAYPAL_* 가 보이는지
+export const paypalDiag = (extra?: Record<string, unknown>) => {
+  const names = (o?: Record<string, unknown>) =>
+    Object.keys(o ?? {}).filter((k) => k.startsWith('PAYPAL')).sort();
+  return {
+    cfPaypalKeys: names(cfEnv as Record<string, unknown> | undefined),
+    localsPaypalKeys: names(extra),
+    cfHasDB: Boolean((cfEnv as Record<string, unknown> | undefined)?.DB),
+    cfHasWebhook: Boolean(E('GOOGLE_CHAT_WEBHOOK')),
+  };
+};
+
+export const paypalCfg = (extra?: Record<string, unknown>) => {
+  const clientId = E('PAYPAL_CLIENT_ID', extra);
+  const secret = E('PAYPAL_SECRET', extra);
+  const mode = E('PAYPAL_ENV', extra) === 'live' ? 'live' : 'sandbox';
   const base = mode === 'live' ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com';
   return { clientId, secret, mode, base, enabled: Boolean(clientId && secret) };
 };

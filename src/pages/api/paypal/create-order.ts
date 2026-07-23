@@ -11,14 +11,18 @@ export const prerender = false;
 const json = (b: unknown, s = 200) =>
   new Response(JSON.stringify(b), { status: s, headers: { 'Content-Type': 'application/json' } });
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
+  let lenv: Record<string, unknown> | undefined;
+  try {
+    lenv = (locals as unknown as { runtime?: { env?: Record<string, unknown> } })?.runtime?.env;
+  } catch { lenv = undefined; }
   const d = await db();
   if (!d) return json({ ok: false, error: 'no_db' }, 503);
 
   const rl = await rateLimit(d, 'paypal-create', request);
   if (!rl.ok) return tooMany(rl.retryAfterSec);
 
-  if (!paypalCfg().enabled) return json({ ok: false, error: 'disabled' }, 503);
+  if (!paypalCfg(lenv).enabled) return json({ ok: false, error: 'disabled' }, 503);
 
   let body: Record<string, unknown>;
   try {
