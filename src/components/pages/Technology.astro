@@ -434,6 +434,15 @@ const techAsset = (pth: string) => techImages[`/src/assets/tech/${pth}`]?.defaul
       ))}
     </div>
 
+    <!-- 슬라이드 원본 인포그래픽: 벌크→단일 박막, 핵심 이점, 시장 기회.
+         외부 자산이므로 plate 흰 판 위에 올리고, 원본에서 잘렸던 출처는 HTML 텍스트로 복원. -->
+    <div class="v-reveal mt-10">
+      <div class="overflow-hidden rounded-2xl border border-ink/10 bg-plate p-3 sm:p-4">
+        <Image src={techAsset('p2/overview.webp')!} alt={tech.p2VizAlt} width={1600} class="h-auto w-full" />
+      </div>
+      <p class="mt-2 text-right text-[11px] text-ink/45">{tech.p2VizSource}</p>
+    </div>
+
     <div class="v-reveal mt-8">
       <p class="text-sm font-medium text-ink/50">{tech.p2TargetLabel}</p>
       <div class="mt-3 flex flex-wrap gap-2">
