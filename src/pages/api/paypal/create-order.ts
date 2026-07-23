@@ -1,0 +1,79 @@
+// PayPal 주문 생성 — 금액은 서버가 D1 에서 재조회/재계산한다 (클라이언트 금액 무시).
+// INQ-: 관리자가 USD 로 확정한 견적만 / ORD-: KRW 합계를 company.usdRate 로 환산.
+import type { APIRoute } from 'astro';
+import { db } from '../../../lib/db';
+import { rateLimit, tooMany } from '../../../lib/rate-limit';
+import { paypalCfg, ppCreateOrder } from '../../../lib/paypal';
+import company from '../../../data/company.json';
+
+export const prerender = false;
+
+const json = (b: unknown, s = 200) =>
+  new Response(JSON.stringify(b), { status: s, headers: { 'Content-Type': 'application/json' } });
+
+export const POST: APIRoute = async ({ request }) => {
+  const d = await db();
+  if (!d) return json({ ok: false, error: 'no_db' }, 503);
+
+  const rl = await rateLimit(d, 'paypal-create', request);
+  if (!rl.ok) return tooMany(rl.retryAfterSec);
+
+  if (!paypalCfg().enabled) return json({ ok: false, error: 'disabled' }, 503);
+
+  let body: Record<string, unknown>;
+  try {
+    body = (await request.json()) as Record<string, unknown>;
+  } catch {
+    return json({ ok: false, error: 'bad_request' }, 400);
+  }
+  const ref = typeof body.ref === 'string' ? body.ref.trim().toUpperCase() : '';
+  const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
+  const isOrd = /^ORD-\d{8}-[A-Z0-9]{4}$/.test(ref);
+  const isInq = /^INQ-\d{8}-[A-Z0-9]{4}$/.test(ref);
+  if ((!isOrd && !isInq) || !email) return json({ ok: false, error: 'bad_request' }, 400);
+
+  try {
+    let valueUsd = '';
+    let description = '';
+
+    if (isInq) {
+      const q = await d.prepare(`SELECT * FROM inquiries WHERE id = ?`).bind(ref).first<Record<string, unknown>>();
+      if (!q || String(q.email ?? '').toLowerCase() !== email) return json({ ok: false, error: 'not_found' }, 404);
+      if (q.paid_at) return json({ ok: false, error: 'already_paid' }, 409);
+      const amt = Number(q.quoted_amount ?? 0);
+      const cur = String(q.quote_currency ?? 'KRW');
+      const st = String(q.status ?? '');
+      if (!(amt > 0) || cur !== 'USD' || !['quoted', 'replied'].includes(st)) {
+        return json({ ok: false, error: 'not_payable' }, 409);
+      }
+      valueUsd = amt.toFixed(2);
+      description = `VANAM quote ${ref}`;
+    } else {
+      const o = await d.prepare(`SELECT * FROM orders WHERE id = ?`).bind(ref).first<Record<string, unknown>>();
+      if (!o || String(o.buyer_email ?? '').toLowerCase() !== email) return json({ ok: false, error: 'not_found' }, 404);
+      if (o.paid_at) return json({ ok: false, error: 'already_paid' }, 409);
+      if (String(o.status ?? '') !== 'pending') return json({ ok: false, error: 'not_payable' }, 409);
+      const amount = Number(o.amount ?? 0);
+      if (!(amount > 0)) return json({ ok: false, error: 'not_payable' }, 409);
+      const usd = String(o.currency ?? 'KRW') === 'USD' ? amount : amount / (company.usdRate || 1500);
+      valueUsd = usd.toFixed(2);
+      description = `VANAM order ${ref}`;
+    }
+
+    const created = await ppCreateOrder(valueUsd, ref, description);
+
+    // 대사(참조)용으로 PayPal 주문번호 저장 — 컬럼 미이관 DB 면 명확한 에러로 안내
+    try {
+      const table = isInq ? 'inquiries' : 'orders';
+      await d.prepare(`UPDATE ${table} SET paypal_order_id = ? WHERE id = ?`).bind(created.id, ref).run();
+    } catch (e) {
+      console.error('[paypal] paypal_order_id 저장 실패 — D1 마이그레이션 필요:', e);
+      return json({ ok: false, error: 'db_migration_required' }, 500);
+    }
+
+    return json({ ok: true, id: created.id, value: valueUsd });
+  } catch (e) {
+    console.error('[paypal] create-order 실패:', e);
+    return json({ ok: false, error: 'paypal_error' }, 502);
+  }
+};

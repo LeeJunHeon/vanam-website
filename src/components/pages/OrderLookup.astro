@@ -162,6 +162,71 @@ const inputClass =
         }
         if (!res.ok || !j.ok) throw new Error(j.error ?? res.status);
 
+        // ── PayPal 결제 블록 (INQ: USD 견적 / ORD: pending 주문) — 해외 고객 전용 USD
+        const payBlock = (ref: string, amountKrw?: number, cur?: string) => `
+          <div class="mt-5 rounded-lg border border-accent/25 bg-accent/[0.05] p-4" data-pp data-ref="${esc(ref)}">
+            <p class="text-sm font-semibold text-ink/80">PayPal 결제 · Pay with PayPal <span class="font-normal text-ink/45">(International · USD)</span></p>
+            ${amountKrw && cur !== 'USD' ? `<p class="mt-1 text-xs text-ink/50" data-pp-usd data-krw="${amountKrw}"></p>` : ''}
+            <div class="mt-3" data-pp-btn></div>
+            <p class="mt-2 text-[11px] leading-relaxed text-ink/40">해외 고객 전용 USD 결제입니다 — 국내 결제(세금계산서·계좌이체)는 별도 문의해 주세요. · USD payment for international customers.</p>
+            <p class="mt-2 hidden text-sm font-semibold text-danger" data-pp-err></p>
+          </div>`;
+
+        const initPP = async (email: string) => {
+          const wrap = resEl.querySelector<HTMLElement>('[data-pp]');
+          if (!wrap) return;
+          const btnEl = wrap.querySelector<HTMLElement>('[data-pp-btn]');
+          const perr = wrap.querySelector<HTMLElement>('[data-pp-err]');
+          const showErr = (m: string) => { if (perr) { perr.textContent = m; perr.classList.remove('hidden'); } };
+          try {
+            const w = window as unknown as Record<string, any>;
+            if (!w.__ppCfg) w.__ppCfg = await (await fetch('/api/paypal/config')).json();
+            const cfg = w.__ppCfg;
+            const usdEl = wrap.querySelector<HTMLElement>('[data-pp-usd]');
+            if (usdEl && cfg.usdRate) {
+              const krw = Number(usdEl.dataset.krw || 0);
+              usdEl.textContent = `≈ $${(krw / cfg.usdRate).toFixed(2)} USD (₩${krw.toLocaleString('ko-KR')} · 환율 ${Number(cfg.usdRate).toLocaleString('ko-KR')})`;
+            }
+            if (!cfg.enabled) {
+              wrap.innerHTML = `<p class="text-sm text-ink/50">결제 준비 중입니다 · Payment is being set up.</p>`;
+              return;
+            }
+            if (!w.paypal) {
+              await new Promise((res2, rej2) => {
+                const s = document.createElement('script');
+                s.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(cfg.clientId)}&currency=USD&intent=capture`;
+                s.onload = () => res2(null); s.onerror = rej2;
+                document.head.appendChild(s);
+              });
+            }
+            w.paypal.Buttons({
+              style: { layout: 'horizontal', height: 40, tagline: false },
+              createOrder: async () => {
+                const r2 = await fetch('/api/paypal/create-order', {
+                  method: 'POST', headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ ref: wrap.dataset.ref, email }),
+                });
+                const j2 = await r2.json();
+                if (!r2.ok || !j2.ok) { showErr('결제 생성에 실패했습니다 · Could not start payment.'); throw new Error(j2.error || 'create_failed'); }
+                return j2.id;
+              },
+              onApprove: async (data2: { orderID: string }) => {
+                const r2 = await fetch('/api/paypal/capture', {
+                  method: 'POST', headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ orderID: data2.orderID }),
+                });
+                const j2 = await r2.json();
+                if (!r2.ok || !j2.ok) { showErr(j2.restart ? '카드가 거절되었습니다 — 다른 수단으로 시도해 주세요 · Card declined.' : '결제 확정에 실패했습니다 · Capture failed.'); throw new Error(j2.error || 'capture_failed'); }
+                wrap.innerHTML = `<p class="rounded-lg border border-ok/25 bg-ok/10 p-3 text-center text-sm font-semibold text-ok">✅ 결제가 완료되었습니다 · Payment completed — $${Number(j2.paidUsd).toFixed(2)}</p>`;
+              },
+              onError: (e2: unknown) => { console.error(e2); showErr('결제 처리 중 오류가 발생했습니다 · Payment error.'); },
+            }).render(btnEl);
+          } catch (e2) {
+            console.error(e2);
+            showErr('결제 모듈을 불러오지 못했습니다 · Failed to load payment module.');
+          }
+        };
+
         // 견적·주문 요청(INQ-) 결과 — 접수 상태 카드
         if (j.inquiry) {
           const q = j.inquiry;
@@ -197,8 +262,12 @@ const inputClass =
               </div>
               ${q.quote_note ? `
                 <p class="mt-5 rounded-lg bg-ink/[0.05] p-4 text-sm leading-relaxed text-ink/65">${esc(q.quote_note)}</p>` : ''}
+              ${q.paid_at ? `
+                <p class="mt-5 rounded-lg border border-ok/25 bg-ok/10 p-3 text-center text-sm font-semibold text-ok">✅ 결제 완료 · Paid — ${when(q.paid_at)}</p>` : ''}
+              ${!q.paid_at && q.quote_currency === 'USD' && Number(q.quoted_amount) > 0 && ['quoted', 'replied'].includes(q.status) ? payBlock(q.id) : ''}
             </div>`;
           resEl.hidden = false;
+          initPP(data.email as string);
           return;
         }
 
@@ -232,6 +301,9 @@ const inputClass =
                 <span class="text-sm text-ink/60">${C.amount}</span>
                 <span class="text-xl font-bold text-ink">${won(o.amount)}</span>
               </div>
+              ${o.paid_at ? `
+                <p class="mt-4 rounded-lg border border-ok/25 bg-ok/10 p-3 text-center text-sm font-semibold text-ok">✅ 결제 완료 · Paid — ${when(o.paid_at)}${o.paid_usd ? ` ($${Number(o.paid_usd).toFixed(2)})` : ''}</p>` : ''}
+              ${!o.paid_at && o.status === 'pending' ? payBlock(o.id, Number(o.amount), String(o.currency ?? 'KRW')) : ''}
             </div>
 
             <div class="mt-7 border-t border-ink/10 pt-6 text-sm">
@@ -247,6 +319,7 @@ const inputClass =
             </div>
           </div>`;
         resEl.hidden = false;
+        initPP(data.email as string);
       } catch (err) {
         console.error(err);
         errEl.textContent = M.msgFail!;

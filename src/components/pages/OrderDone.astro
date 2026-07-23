@@ -8,23 +8,30 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getRelativeLocaleUrl } from 'astro:i18n';
 import company from '../../data/company.json';
 import { db } from '../../lib/db';
+import { paypalCfg } from '../../lib/paypal';
 
 const locale = (Astro.currentLocale ?? 'en') as 'ko' | 'en';
 const isKo = locale === 'ko';
 const lhref = (p: string) => getRelativeLocaleUrl(locale, p);
 
 const orderId = Astro.url.searchParams.get('id') ?? '';
-let order: { id: string; amount: number; status: string; buyer_email: string; tax_invoice: number } | null = null;
+let order: { id: string; amount: number; currency?: string; status: string; buyer_email: string; tax_invoice: number; paid_at?: string | null } | null = null;
 
 if (/^ORD-\d{8}-[A-Z0-9]{4}$/.test(orderId)) {
   const d = await db();
   if (d) {
     order = await d
-      .prepare(`SELECT id, amount, status, buyer_email, tax_invoice FROM orders WHERE id = ?`)
+      .prepare(`SELECT id, amount, currency, status, buyer_email, tax_invoice, paid_at FROM orders WHERE id = ?`)
       .bind(orderId)
       .first();
   }
 }
+
+const pp = paypalCfg();
+const paypalOn = pp.enabled;
+const ppClient = pp.clientId;
+const usdRate = company.usdRate || 1500;
+const usdValue = order ? (order.currency === 'USD' ? order.amount : order.amount / usdRate) : 0;
 
 const t = isKo
   ? {
@@ -36,6 +43,10 @@ const t = isKo
       pendingTitle: '결제 안내를 보내드립니다',
       pendingBody: '현재 결제 시스템을 연동하는 중입니다. 담당자가 확인 후 입력하신 이메일로 결제 링크와 세부 내용을 안내드립니다.',
       taxNote: '세금계산서는 결제 확인 후 입력하신 이메일로 발행됩니다.',
+      payTitle: 'PayPal로 바로 결제 (해외 고객 · USD)',
+      payNote: '해외 고객 전용 USD 결제입니다 — 국내 결제(세금계산서·계좌이체)는 별도 안내드립니다.',
+      paidDone: '✅ 결제가 완료되었습니다. 담당자가 확인 후 진행 상황을 이메일로 안내드립니다.',
+      rate: '환율',
       contact: '문의',
       home: '홈으로',
       shop: '제품으로',
@@ -53,6 +64,10 @@ const t = isKo
       pendingTitle: 'We will send payment details',
       pendingBody: 'Our payment gateway is being set up. A member of our team will review your order and email you a payment link with the details.',
       taxNote: 'The tax invoice will be issued to the email you provided once payment is confirmed.',
+      payTitle: 'Pay now with PayPal (International · USD)',
+      payNote: 'USD payment for international customers. For domestic payment (tax invoice / bank transfer), we will contact you separately.',
+      paidDone: '✅ Payment completed. We will follow up by email with the next steps.',
+      rate: 'rate',
       contact: 'Contact',
       home: 'Home',
       shop: 'Products',
@@ -88,10 +103,22 @@ const t = isKo
             </div>
           </div>
 
-          <div class="mt-8 rounded-lg border border-warn/25 bg-warn/[0.06] p-5">
-            <p class="text-sm font-semibold text-warn">{t.pendingTitle}</p>
-            <p class="mt-2 text-sm leading-relaxed text-warn/70">{t.pendingBody}</p>
-          </div>
+          {order.paid_at ? (
+            <p class="mt-8 rounded-lg border border-ok/25 bg-ok/10 p-4 text-center text-sm font-semibold text-ok">{t.paidDone}</p>
+          ) : paypalOn && order.status === 'pending' ? (
+            <div class="mt-8 rounded-lg border border-accent/25 bg-accent/[0.05] p-5">
+              <p class="text-sm font-semibold text-ink/80">{t.payTitle}</p>
+              <p class="mt-1 text-sm text-ink/55">≈ ${usdValue.toFixed(2)} USD <span class="text-ink/40">(₩{order.amount.toLocaleString('ko-KR')} · {t.rate} {usdRate.toLocaleString('ko-KR')})</span></p>
+              <div id="pp-done-btn" class="mt-4" data-ref={order.id} data-email={order.buyer_email} data-client={ppClient}></div>
+              <p class="mt-3 text-[11px] leading-relaxed text-ink/45">{t.payNote}</p>
+              <p id="pp-done-err" class="mt-2 hidden text-sm font-semibold text-danger"></p>
+            </div>
+          ) : (
+            <div class="mt-8 rounded-lg border border-warn/25 bg-warn/[0.06] p-5">
+              <p class="text-sm font-semibold text-warn">{t.pendingTitle}</p>
+              <p class="mt-2 text-sm leading-relaxed text-warn/70">{t.pendingBody}</p>
+            </div>
+          )}
 
           {order.tax_invoice === 1 && (
             <p class="mt-5 text-sm leading-relaxed text-ink/50">{t.taxNote}</p>
@@ -115,6 +142,45 @@ const t = isKo
             cb.textContent = cb.dataset.copied;
             setTimeout(() => { cb.textContent = cb.dataset.copy; }, 1600);
           });
+        </script>
+
+        <script is:inline>
+          // PayPal 즉시 결제 (주문 접수 직후)
+          (function () {
+            var host = document.getElementById('pp-done-btn');
+            if (!host) return;
+            var perr = document.getElementById('pp-done-err');
+            var showErr = function (m) { if (perr) { perr.textContent = m; perr.classList.remove('hidden'); } };
+            var s = document.createElement('script');
+            s.src = 'https://www.paypal.com/sdk/js?client-id=' + encodeURIComponent(host.dataset.client) + '&currency=USD&intent=capture';
+            s.onload = function () {
+              window.paypal.Buttons({
+                style: { layout: 'horizontal', height: 40, tagline: false },
+                createOrder: function () {
+                  return fetch('/api/paypal/create-order', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ref: host.dataset.ref, email: host.dataset.email }),
+                  }).then(function (r) { return r.json(); }).then(function (j) {
+                    if (!j.ok) { showErr('결제 생성에 실패했습니다 · Could not start payment.'); throw new Error(j.error || 'create_failed'); }
+                    return j.id;
+                  });
+                },
+                onApprove: function (data) {
+                  return fetch('/api/paypal/capture', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ orderID: data.orderID }),
+                  }).then(function (r) { return r.json(); }).then(function (j) {
+                    if (!j.ok) { showErr(j.restart ? '카드가 거절되었습니다 · Card declined.' : '결제 확정에 실패했습니다 · Capture failed.'); throw new Error(j.error || 'capture_failed'); }
+                    var box = host.closest('div.mt-8');
+                    if (box) box.outerHTML = '<p class="mt-8 rounded-lg border border-ok/25 bg-ok/10 p-4 text-center text-sm font-semibold text-ok">✅ 결제가 완료되었습니다 · Payment completed — $' + Number(j.paidUsd).toFixed(2) + '</p>';
+                  });
+                },
+                onError: function (e) { console.error(e); showErr('결제 처리 중 오류가 발생했습니다 · Payment error.'); },
+              }).render(host);
+            };
+            s.onerror = function () { showErr('결제 모듈을 불러오지 못했습니다 · Failed to load payment module.'); };
+            document.head.appendChild(s);
+          })();
         </script>
       </>
     ) : (

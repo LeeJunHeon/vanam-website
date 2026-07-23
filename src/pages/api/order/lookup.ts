@@ -57,6 +57,7 @@ export const POST: APIRoute = async ({ request }) => {
           quoted_amount: q.quoted_amount ?? null,
           quote_currency: (q.quote_currency as string) ?? 'KRW',
           quote_note: q.quote_note ?? null,
+          paid_at: (q as Record<string, unknown>).paid_at ?? null,
           created_at: q.created_at,
         },
       });
@@ -68,13 +69,8 @@ export const POST: APIRoute = async ({ request }) => {
 
   try {
     const o = await d
-      .prepare(
-        `SELECT id, status, amount, currency, buyer_name, buyer_email, buyer_company,
-                needs_shipping, ship_name, ship_phone, ship_country, ship_zip,
-                ship_addr1, ship_addr2, ship_city, ship_state, ship_memo,
-                tax_invoice, inquiry_id, created_at, paid_at
-           FROM orders WHERE id = ?`,
-      )
+      // SELECT * 인 이유: paid_usd·paypal_order_id 컬럼 마이그레이션 전 DB 에서도 동작해야 해서
+      .prepare(`SELECT * FROM orders WHERE id = ?`)
       .bind(id)
       .first<Record<string, unknown>>();
 
