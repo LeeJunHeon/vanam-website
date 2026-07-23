@@ -391,8 +391,8 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
                 <p class="text-sm text-ink/60">{t.total}</p>
                 <p class="text-xs text-ink/35">{t.vat}</p>
               </div>
-              <p id="summary-total" class="text-2xl font-bold text-ink">
-                {quote ? `₩${(quote.quoted_amount ?? 0).toLocaleString('ko-KR')}` : '₩0'}
+              <p id="summary-total" data-usd-rate={company.usdRate || 1500} class="text-2xl font-bold text-ink">
+                {quote ? `₩${(quote.quoted_amount ?? 0).toLocaleString('ko-KR')}` : '$0.00'}
               </p>
             </div>
 
@@ -462,6 +462,9 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
     const feeEl = $('ship-fee');
 
     const won = (n: number) => `₩${n.toLocaleString('ko-KR')}`;
+    const RATE = Number((totalEl as HTMLElement | null)?.dataset.usdRate) || 1500;
+    const usd = (krw: number) =>
+      '$' + (krw / RATE).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
     // ── 장바구니 → 요약 · 배송 필요 여부 판단 ──────────
     let items: Item[] = [];
@@ -485,10 +488,10 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
         li.className = 'flex justify-between gap-3';
         li.innerHTML =
           `<span class="text-ink/70">${p.name} <span class="text-ink/35">× ${i.qty}</span></span>` +
-          `<span class="shrink-0 text-ink/80">${won(sub)}</span>`;
+          `<span class="shrink-0 text-ink/80">${usd(sub)}</span>`;
         linesEl!.appendChild(li);
       }
-      totalEl.textContent = won(total);
+      totalEl.innerHTML = `${usd(total)}<span class="mt-0.5 block text-right text-xs font-normal text-ink/35">≈ ₩${total.toLocaleString('ko-KR')}</span>`;
 
       if (items.length === 0) {
         btn.disabled = true;

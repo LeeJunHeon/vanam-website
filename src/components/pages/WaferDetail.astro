@@ -1,13 +1,13 @@
 ---
-// 웨이퍼 상세 페이지. /wafers/[id]. 공정가 즉시 구매(카트 → 체크아웃 → PayPal) —
-// 대량·국내(세금계산서) 구매는 기존 주문 요청 폼(QuoteForm simple)을 보조 경로로 유지한다.
+// 웨이퍼 상세 페이지. /wafers/[id]. 공정가 즉시 구매(카트 → 체크아웃 → PayPal).
+// 인적·배송 정보 입력은 전부 체크아웃에서 — 상세 페이지에는 입력 폼을 두지 않는다.
+// 대량·국내(세금계산서) 구매와 가격 미정 웨이퍼는 문의 페이지로 안내한다.
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { Image } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
 import siteData from '../../data/site.json';
 import company from '../../data/company.json';
 import { formatUsd } from '../../lib/price';
-import QuoteForm from '../QuoteForm.astro';
 
 const { wafer } = Astro.props;
 const locale = Astro.currentLocale ?? 'en';
@@ -69,7 +69,7 @@ const img = d.image ? waferImages[d.image]?.default : undefined;
                 <div class="flex items-center rounded-lg border border-ink/15">
                   <button type="button" data-qty="-1" class="grid h-12 w-10 place-items-center text-lg text-ink/60 transition hover:text-accent" aria-label="수량 감소">−</button>
                   <input id="buy-qty" type="number" min="1" max="99" value="1"
-                    class="h-12 w-14 border-x border-ink/15 bg-transparent text-center text-sm font-semibold text-ink outline-none" />
+                    class="h-12 w-14 border-x border-ink/15 bg-transparent text-center text-sm font-semibold text-ink outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
                   <button type="button" data-qty="1" class="grid h-12 w-10 place-items-center text-lg text-ink/60 transition hover:text-accent" aria-label="수량 증가">＋</button>
                 </div>
                 <button type="button" id="add-cart" data-sku={`wafer:${wafer.id}`} data-cart-url={`${base}/cart`}
@@ -85,13 +85,13 @@ const img = d.image ? waferImages[d.image]?.default : undefined;
                 {s.addedToCart} <a href={`${base}/cart`} class="underline">{s.goCart}</a>
               </p>
               <p class="mt-5 text-sm text-ink/45">
-                <a href="#quote" data-open-quote class="underline underline-offset-2 transition hover:text-accent">{s.bulkQuoteLink}</a>
+                <a href={`${base}/contact`} class="underline underline-offset-2 transition hover:text-accent">{s.bulkQuoteLink}</a>
               </p>
             </div>
           ) : (
-            <a href="#quote" data-open-quote id="quote-add" data-sku={`wafer:${wafer.id}`}
+            <a href={`${base}/contact`}
               class="inline-flex items-center gap-2 rounded-lg bg-brand px-7 py-3 font-semibold text-onbrand transition hover:brightness-110">
-              {s.requestQuote} ↓
+              {s.requestQuote} →
             </a>
           )}
         </div>
@@ -135,7 +135,6 @@ const img = d.image ? waferImages[d.image]?.default : undefined;
       </div>
     )}
 
-    <QuoteForm product={wafer} productName={name} simple={true} />
   </section>
 <script>
   // 웨이퍼 즉시 구매: localStorage 'vanam_cart' 에 {sku, qty} 저장 (가격은 항상 서버·카탈로그 조회)
@@ -179,19 +178,5 @@ const img = d.image ? waferImages[d.image]?.default : undefined;
     if (addToCart()) location.href = buyBtn.dataset.checkoutUrl ?? '/checkout';
   });
 
-  // 가격 미정 웨이퍼: '견적 요청' 클릭 시 견적 품목으로 카트에 담아둔다(1회).
-  const qbtn = document.getElementById('quote-add');
-  qbtn?.addEventListener('click', () => {
-    const sku = (qbtn as HTMLElement).dataset.sku;
-    if (!sku) return;
-    const items = readCart();
-    if (!items.find((i) => i && i.sku === sku)) {
-      items.push({ sku, qty: 1 });
-      localStorage.setItem(CART_KEY, JSON.stringify(items));
-      document.querySelectorAll('.cart-count').forEach((el) => {
-        el.textContent = String(items.reduce((s2, i) => s2 + (Math.floor(Number(i.qty)) || 0), 0));
-      });
-    }
-  });
 </script>
 </BaseLayout>

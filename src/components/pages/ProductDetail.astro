@@ -67,7 +67,7 @@ const won = (n: number) => new Intl.NumberFormat('ko-KR').format(n);
             <div>
               <label for="qty" class="block text-sm font-medium text-ink/80">{s.quantity}</label>
               <input id="qty" type="number" min="1" max="99" value="1"
-                class="mt-2 w-24 rounded-lg border border-ink/10 bg-ink/[0.03] px-4 py-3 text-ink outline-none transition focus:border-accent focus:ring-1 focus:ring-accent" />
+                class="mt-2 w-24 rounded-lg border border-ink/10 bg-ink/[0.03] px-4 py-3 text-center text-ink outline-none transition focus:border-accent focus:ring-1 focus:ring-accent [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
             </div>
             <button type="button" id="add-btn"
               class="inline-flex items-center gap-2 rounded-lg bg-brand px-7 py-3 font-semibold text-onbrand transition hover:brightness-110">
