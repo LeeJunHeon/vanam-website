@@ -1,6 +1,6 @@
 ---
-// 웨이퍼 상세 페이지. /wafers/[id]. 고정가(달러 표시) 판매 — 주문 요청 폼(QuoteForm simple)으로
-// 연락처·수량·배송 주소(국제 대응)를 받는다. 실결제(PayPal 등)는 추후 연동 예정.
+// 웨이퍼 상세 페이지. /wafers/[id]. 공정가 즉시 구매(카트 → 체크아웃 → PayPal) —
+// 대량·국내(세금계산서) 구매는 기존 주문 요청 폼(QuoteForm simple)을 보조 경로로 유지한다.
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { Image } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
@@ -63,10 +63,37 @@ const img = d.image ? waferImages[d.image]?.default : undefined;
         </div>
 
         <div class="mt-8">
-          <a href="#quote" data-open-quote
-            class="inline-flex items-center gap-2 rounded-lg bg-brand px-7 py-3 font-semibold text-onbrand transition hover:brightness-110">
-            {typeof d.priceKrw === 'number' && d.priceKrw > 0 ? s.orderRequest : s.requestQuote} ↓
-          </a>
+          {typeof d.priceKrw === 'number' && d.priceKrw > 0 ? (
+            <div>
+              <div class="flex flex-wrap items-center gap-3">
+                <div class="flex items-center rounded-lg border border-ink/15">
+                  <button type="button" data-qty="-1" class="grid h-12 w-10 place-items-center text-lg text-ink/60 transition hover:text-accent" aria-label="수량 감소">−</button>
+                  <input id="buy-qty" type="number" min="1" max="99" value="1"
+                    class="h-12 w-14 border-x border-ink/15 bg-transparent text-center text-sm font-semibold text-ink outline-none" />
+                  <button type="button" data-qty="1" class="grid h-12 w-10 place-items-center text-lg text-ink/60 transition hover:text-accent" aria-label="수량 증가">＋</button>
+                </div>
+                <button type="button" id="add-cart" data-sku={`wafer:${wafer.id}`} data-cart-url={`${base}/cart`}
+                  class="inline-flex items-center gap-2 rounded-lg bg-brand px-7 py-3 font-semibold text-onbrand transition hover:brightness-110">
+                  {s.addToCart}
+                </button>
+                <button type="button" id="buy-now" data-checkout-url={`${base}/checkout`}
+                  class="inline-flex items-center gap-2 rounded-lg border-2 border-accent px-6 py-3 font-semibold text-accent transition hover:bg-accent hover:text-white">
+                  {s.buyNow}
+                </button>
+              </div>
+              <p id="added-msg" class="mt-3 hidden text-sm font-medium text-ok">
+                {s.addedToCart} <a href={`${base}/cart`} class="underline">{s.goCart}</a>
+              </p>
+              <p class="mt-5 text-sm text-ink/45">
+                <a href="#quote" data-open-quote class="underline underline-offset-2 transition hover:text-accent">{s.bulkQuoteLink}</a>
+              </p>
+            </div>
+          ) : (
+            <a href="#quote" data-open-quote
+              class="inline-flex items-center gap-2 rounded-lg bg-brand px-7 py-3 font-semibold text-onbrand transition hover:brightness-110">
+              {s.requestQuote} ↓
+            </a>
+          )}
         </div>
 
         <p class="mt-6 text-sm text-ink/40">{s.guestNote}</p>
@@ -109,4 +136,46 @@ const img = d.image ? waferImages[d.image]?.default : undefined;
 
     <QuoteForm product={wafer} productName={name} simple={true} />
   </section>
+<script>
+  // 웨이퍼 즉시 구매: localStorage 'vanam_cart' 에 {sku, qty} 저장 (가격은 항상 서버·카탈로그 조회)
+  const CART_KEY = 'vanam_cart';
+  const addBtn = document.getElementById('add-cart');
+  const buyBtn = document.getElementById('buy-now');
+  const qtyEl = document.getElementById('buy-qty') as HTMLInputElement | null;
+  const msgEl = document.getElementById('added-msg');
+
+  const readCart = (): { sku: string; qty: number }[] => {
+    try { return JSON.parse(localStorage.getItem(CART_KEY) ?? '[]'); } catch { return []; }
+  };
+  const clampQty = () => Math.max(1, Math.min(99, Math.floor(Number(qtyEl?.value)) || 1));
+
+  document.querySelectorAll<HTMLButtonElement>('[data-qty]').forEach((b) => {
+    b.addEventListener('click', () => {
+      if (!qtyEl) return;
+      qtyEl.value = String(Math.max(1, Math.min(99, clampQty() + Number(b.dataset.qty))));
+    });
+  });
+
+  const addToCart = (): boolean => {
+    const sku = addBtn?.dataset.sku;
+    if (!sku) return false;
+    const qty = clampQty();
+    const items = readCart();
+    const hit = items.find((i) => i && i.sku === sku);
+    if (hit) hit.qty = Math.min(99, (Math.floor(Number(hit.qty)) || 0) + qty);
+    else items.push({ sku, qty });
+    localStorage.setItem(CART_KEY, JSON.stringify(items));
+    document.querySelectorAll('.cart-count').forEach((el) => {
+      el.textContent = String(items.reduce((s2, i) => s2 + (Math.floor(Number(i.qty)) || 0), 0));
+    });
+    return true;
+  };
+
+  addBtn?.addEventListener('click', () => {
+    if (addToCart() && msgEl) msgEl.classList.remove('hidden');
+  });
+  buyBtn?.addEventListener('click', () => {
+    if (addToCart()) location.href = buyBtn.dataset.checkoutUrl ?? '/checkout';
+  });
+</script>
 </BaseLayout>

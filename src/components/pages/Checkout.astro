@@ -61,6 +61,16 @@ const products = all
     ship: p.data.requiresShipping !== false,
   }));
 
+// 웨이퍼(공정가) — sku 'wafer:{id}', 물품이므로 배송 필요
+const waferProducts = (await getCollection('wafers'))
+  .filter((w) => w.data.published !== false && typeof w.data.priceKrw === 'number' && w.data.priceKrw > 0)
+  .map((w) => ({
+    sku: `wafer:${w.id}`,
+    name: locale === 'en' ? ((w.data as Record<string, unknown>).name_en as string ?? w.data.name) : w.data.name,
+    price: w.data.priceKrw as number,
+    ship: true,
+  }));
+
 // 견적 주문의 배송 필요 여부는 원본 상품에서 가져온다
 const quoteNeedsShipping = quote
   ? all.find((p) => p.id === quote!.product_sku)?.data.requiresShipping !== false
@@ -400,7 +410,7 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
       </div>
     )}
 
-    <script type="application/json" id="catalog" is:inline set:html={JSON.stringify(products)}></script>
+    <script type="application/json" id="catalog" is:inline set:html={JSON.stringify([...products, ...waferProducts])}></script>
     <script type="application/json" id="ship-fees" is:inline set:html={JSON.stringify({
       domestic: shipFeeDomestic, intl: shipFeeIntl,
       collectDomestic, collectIntl,

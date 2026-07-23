@@ -154,12 +154,32 @@ export const POST: APIRoute = async ({ request }) => {
 
     const catalog = await getCollection('products');
     const byId = new Map(catalog.map((p) => [p.id, p]));
+    // 웨이퍼(공정가): sku 'wafer:{id}' — 가격은 항상 컬렉션 priceKrw 에서 재계산 (브라우저 값 무시)
+    const waferCat = await getCollection('wafers');
+    const waferById = new Map(waferCat.map((w) => [w.id, w]));
 
     for (const it of raw) {
       const sku = str((it as Record<string, unknown>)?.sku);
       const qty = Number((it as Record<string, unknown>)?.qty);
       if (!sku || !Number.isInteger(qty) || qty < 1 || qty > 999) {
         return json({ ok: false, error: 'bad_item' }, 400);
+      }
+      if (sku.startsWith('wafer:')) {
+        const w = waferById.get(sku.slice(6));
+        if (!w || w.data.published === false || typeof w.data.priceKrw !== 'number' || w.data.priceKrw <= 0) {
+          return json({ ok: false, error: 'unknown_sku', sku }, 400);
+        }
+        const unit = Math.round(w.data.priceKrw);
+        const subtotal = unit * qty;
+        lines.push({
+          sku,
+          name: locale === 'en' ? ((w.data as Record<string, unknown>).name_en as string ?? w.data.name) : w.data.name,
+          unit,
+          qty,
+          subtotal,
+        });
+        amount += subtotal;
+        continue;
       }
       const p = byId.get(sku);
       if (!p || !p.data.published) return json({ ok: false, error: 'unknown_sku', sku }, 400);
