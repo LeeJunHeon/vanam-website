@@ -230,66 +230,6 @@ for (const pth of Object.keys(techImages)) {
       </div>
     </div>
 
-      {(() => {
-        const qv = (tech as any).quantumViz;
-        return (
-          <div class="v-reveal mt-12">
-            <div class="grid items-start gap-5 md:grid-cols-[380px,1fr]">
-              <button type="button" class="tech-zoom cursor-zoom-in overflow-hidden rounded-xl border border-ink/10 transition hover:border-accent/60"
-                data-full={techLarge['/src/assets/tech/quantum/pic.jpg']} data-name={qv.picTitle} aria-label={`${qv.picTitle} 확대`}>
-                <Image src={techAsset('quantum/pic.jpg')!} alt={qv.picTitle} width={760} class="aspect-[3/2] w-full object-cover" />
-              </button>
-              <div>
-                <h3 class="text-lg font-bold text-ink">{qv.picTitle}</h3>
-                <p class="mt-2 max-w-2xl text-sm leading-relaxed text-ink/55">{qv.picSub}</p>
-                <p class="mt-3 inline-flex rounded-full border border-accent/30 bg-accent/[0.06] px-3.5 py-1.5 text-xs font-bold text-accent">{qv.chips}</p>
-              </div>
-            </div>
-
-            <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {qv.devices.map((dv: { n: string; img?: string; img2?: string; video?: boolean; s: string; chips: string[] }) => (
-                <div class="rounded-xl border border-ink/10 bg-canvas p-4 shadow-lg shadow-ink/5">
-                  {dv.video ? (
-                    <video class="aspect-[4/3] w-full rounded-lg border border-ink/10 object-cover" autoplay muted loop playsinline preload="metadata" poster="/media/dbr-poster.jpg" src="/media/dbr.mp4"></video>
-                  ) : (
-                    <div class="space-y-1.5">
-                      <button type="button" class="tech-zoom block w-full cursor-zoom-in overflow-hidden rounded-lg border border-ink/10 transition hover:border-accent/60"
-                        data-full={techLarge[`/src/assets/tech/quantum/${dv.img}`]} data-name={dv.n} aria-label={`${dv.n} 확대`}>
-                        <Image src={techAsset(`quantum/${dv.img}`)!} alt={`${dv.n} — ${dv.s}`} width={480} class="aspect-[4/3] w-full object-cover" />
-                      </button>
-                      {dv.img2 && techAsset(`quantum/${dv.img2}`) && (
-                        <button type="button" class="tech-zoom block w-full cursor-zoom-in overflow-hidden rounded-lg border border-ink/10 transition hover:border-accent/60"
-                          data-full={techLarge[`/src/assets/tech/quantum/${dv.img2}`]} data-name={dv.n} aria-label={`${dv.n} 상세 확대`}>
-                          <Image src={techAsset(`quantum/${dv.img2}`)!} alt={`${dv.n} — structure detail`} width={480} class="aspect-[5/2] w-full object-cover" />
-                        </button>
-                      )}
-                    </div>
-                  )}
-                  <p class="mt-3 text-base font-bold text-ink">{dv.n}</p>
-                  <p class="mt-1 text-xs leading-relaxed text-ink/55">{dv.s}</p>
-                  <div class="mt-2.5 flex flex-wrap gap-1.5">
-                    {dv.chips.map((c: string) => (
-                      <span class="rounded-full border border-accent/25 bg-accent/[0.06] px-2.5 py-0.5 text-[11px] font-medium text-accent">{c}</span>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <p class="mt-8 text-[11px] font-bold tracking-wide text-accent">{qv.marketsTitle}</p>
-            <div class="mt-3 grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
-              {qv.markets.map((m2: { t: string; v: string; g: string }) => (
-                <div class="rounded-xl border border-ink/10 bg-ink/[0.02] p-3.5">
-                  <p class="text-lg font-bold text-accent">{m2.v}</p>
-                  <p class="mt-1 text-xs leading-snug text-ink/80">{m2.t}</p>
-                  <p class="mt-0.5 text-[11px] text-ink/45">CAGR {m2.g}</p>
-                </div>
-              ))}
-            </div>
-            <p class="mt-3 text-[11px] text-ink/40">{qv.source}</p>
-          </div>
-        );
-      })()}
     </div>
   </section>
 
@@ -321,51 +261,6 @@ for (const pth of Object.keys(techImages)) {
       </div>
     </div>
 
-      {(() => {
-        const pv = (tech as any).p2Viz;
-        return (
-          <div class="v-reveal mt-12">
-            <div class="flex flex-wrap items-center gap-x-3 gap-y-2.5">
-              {pv.flow.map((f: string, i: number) => (
-                <>
-                  <span class={`rounded-xl px-4 py-2 text-sm font-bold ${i === 1 ? 'bg-accent text-white' : 'border border-ink/15 bg-canvas text-ink'}`}>{f}</span>
-                  {i < pv.flow.length - 1 && <span class="text-ink/30">→</span>}
-                </>
-              ))}
-              <button type="button" class="tech-zoom cursor-zoom-in overflow-hidden rounded-lg border border-ink/10 transition hover:border-accent/60"
-                data-full={techLarge['/src/assets/tech/p2/transform.jpg']} data-name={pv.flow[1]} aria-label="확대">
-                <Image src={techAsset('p2/transform.jpg')!} alt={pv.flow[1]} width={280} class="h-14 w-auto object-cover" />
-              </button>
-            </div>
-
-            <button type="button" class="tech-zoom mt-5 block w-full cursor-zoom-in overflow-hidden rounded-xl border border-ink/10 transition hover:border-accent/60"
-              data-full={techLarge['/src/assets/tech/p2/band.jpg']} data-name={pv.flow[1]} aria-label="확대">
-              <Image src={techAsset('p2/band.jpg')!} alt={locale === 'ko' ? '벌크 부품에서 단일 박막으로 — 에너지 반응형 반도체 개념 비주얼' : 'From bulk components to a single thin film — energy-responsive semiconductor concept'} width={1200} class="aspect-[16/5] w-full object-cover" />
-            </button>
-
-            <p class="mt-8 text-[11px] font-bold tracking-wide text-accent">{pv.benefitsTitle}</p>
-            <div class="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {pv.benefits.map((b: { t: string; s: string }) => (
-                <div class="rounded-xl border border-ink/10 bg-canvas p-4 shadow-lg shadow-ink/5">
-                  <p class="text-sm font-bold text-ink">{b.t}</p>
-                  <p class="mt-1.5 text-xs leading-relaxed text-ink/55">{b.s}</p>
-                </div>
-              ))}
-            </div>
-
-            <p class="mt-8 text-[11px] font-bold tracking-wide text-accent">{pv.marketsTitle}</p>
-            <div class="mt-3 grid gap-3 grid-cols-2 md:grid-cols-3">
-              {pv.markets.map((m2: { t: string; v: string }) => (
-                <div class="rounded-xl border border-ink/10 bg-ink/[0.02] p-4">
-                  <p class="text-2xl font-bold text-accent">{m2.v}</p>
-                  <p class="mt-1 text-sm text-ink/80">{m2.t}</p>
-                </div>
-              ))}
-            </div>
-            <p class="mt-3 text-[11px] text-ink/40">{pv.source}</p>
-          </div>
-        );
-      })()}
     </div>
   </section>
 
