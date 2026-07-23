@@ -123,52 +123,67 @@
       "equipGroupTitle": "PVD & ALD",
       "equipGroupDesc": "Sputtering, thermal evaporator, in-line sputter, 6-inch and 12-inch ALDs",
       "coreViz": {
-        "stages": [
-          { "no": "01", "t": "Data Collection", "items": [
-            { "media": [
-              { "f": "ald.jpg", "cap": "ALD", "zoom": true },
-              { "f": "sputter.jpg", "cap": "Sputter", "zoom": true },
-              { "f": "measurement.jpg", "cap": "Measurement", "zoom": true }
-            ] }
+        "heads": [
+          { "no": "1", "t": "Data collection" },
+          { "no": "2", "t": "Data Integration & Preprocessing" },
+          { "no": "3", "t": "Multivariate Analysis & Change Detection" },
+          { "no": "4", "t": "Diagnosis & Cause Estimation" },
+          { "no": "5", "t": "Decision & Action" },
+          { "no": "6", "t": "Verification & Learning" }
+        ],
+        "col1": [
+          { "label": "ALD", "img": "ald.jpg" },
+          { "label": "Sputter", "img": "sputter.jpg" },
+          { "label": "Measurement", "img": "measurement.jpg" }
+        ],
+        "s2": {
+          "a": { "h": "A. Data Integration Repository", "bullets": ["Raw data storage", "Time synchronization", "Metadata mapping"], "img": "s2-repo.jpg" },
+          "b": { "h": "B. Preprocessing & Quality Validation", "bullets": ["Data Validation", "Outlier Filtering", "Missing Value Check", "Measurement Quality Assessment"], "img": "s2-quality.jpg" },
+          "badge": "Data quality"
+        },
+        "s3": {
+          "dash": { "h": "A. Integrated Monitoring Dashboard", "panels": [
+            { "t": "Trend monitoring", "img": "s3-trend.jpg" },
+            { "t": "OES peak monitoring", "img": "s3-oes.jpg" },
+            { "t": "Key Index extraction", "img": "s3-keyindex.jpg", "cap": "Thickness · TCR · ΔR · dT · TMI" }
           ] },
-          { "no": "02", "t": "Integration & Preprocessing", "items": [
-            { "h": "A. Data Repository", "bullets": ["Raw data storage", "Time synchronization", "Metadata management"],
-              "media": [ { "f": "step2-repo.jpg", "cap": "" } ] },
-            { "h": "B. Data Quality", "bullets": ["Validation", "Outlier detection", "Missing-value handling"],
-              "media": [ { "f": "step2-quality.jpg", "cap": "" } ] }
+          "change": { "h": "B. Change Detection (Early Anomaly Detection)", "panels": [
+            { "t": "Multivariate statistical monitoring (Hotelling's T² / SPE)", "img": "s3-t2.jpg" },
+            { "t": "PCA-based Monitoring (Score Plot)", "img": "s3-pca.jpg" }
           ] },
-          { "no": "03", "t": "Multivariate Analysis", "items": [
-            { "h": "A. Real-time Dashboard", "bullets": ["Trend · OES peak · Key Index", "Thickness · ΔR · TMI · TCR · dT"],
-              "media": [ { "f": "step3-dash-a.jpg", "cap": "Trend", "zoom": true }, { "f": "step3-dash-b.jpg", "cap": "OES peak", "zoom": true } ] },
-            { "h": "B. Change Detection", "bullets": ["Hotelling's T² · SPE", "PCA score plot"],
-              "media": [ { "f": "plot-t2.jpg", "cap": "T² / SPE", "zoom": true }, { "f": "plot-pca.jpg", "cap": "PCA", "zoom": true } ], "alarms": true }
-          ] },
-          { "no": "04", "t": "Diagnosis & Cause Estimation", "icon": "step4-icon.jpg", "items": [
-            { "bullets": ["Contribution analysis", "VIP scores", "Correlation analysis"],
-              "media": [
-                { "f": "step4-contrib.jpg", "cap": "Contribution", "zoom": true },
-                { "f": "step4-vip.jpg", "cap": "VIP", "zoom": true },
-                { "f": "step4-corr.jpg", "cap": "Correlation", "zoom": true }
-              ] }
-          ] },
-          { "no": "05", "t": "Decision & Action", "items": [
-            { "h": "A. Condition Adjustment", "bullets": ["Power · Pressure · Temperature"] },
-            { "h": "B. Recipe", "bullets": ["Purge · Sequence"] },
-            { "h": "C. Maintenance · DOE", "bullets": ["Immediate or next-lot application"],
-              "media": [ { "f": "step5-action.jpg", "cap": "" } ] }
-          ] },
-          { "no": "06", "t": "Verification & Learning", "items": [
-            { "h": "Metrics", "bullets": ["Electrical · TMI / dT / TCR", "Yield"] },
-            { "h": "Standardization", "bullets": ["Continuous learning loop"],
-              "media": [ { "f": "step6-metric.jpg", "cap": "", "zoom": true } ] }
+          "alarm": { "t": "Alarm Level", "levels": [
+            { "t": "Normal", "l1": "Stable pattern", "l2": "Continuous monitoring" },
+            { "t": "Warning", "l1": "Minor change", "l2": "Trend observation" },
+            { "t": "Critical", "l1": "Significant change", "l2": "Cause analysis" }
           ] }
-        ],
-        "alarms": [
-          { "t": "Normal", "s": "Stable pattern" },
-          { "t": "Warning", "s": "Minor change" },
-          { "t": "Critical", "s": "Cause analysis" }
-        ],
-        "cycle": { "t": "01 – 05 · Continuous cycle", "s": "Actions feed back into data collection — the loop repeats with every run." },
+        },
+        "s4": {
+          "charts": [
+            { "t": "Contribution analysis", "img": "s4-contribution.jpg" },
+            { "t": "Variable Importance (VIP)", "img": "s4-vip.jpg" },
+            { "t": "Correlation analysis / Contribution factors", "img": "s4-corr.jpg" }
+          ],
+          "result": { "h": "Diagnosis result", "s": "Identify the key factors and main causes of the process condition change" }
+        },
+        "s5": {
+          "feedback": "Action Execution (Feedback)",
+          "decision": { "h": "Decision making", "rows": [
+            { "img": "s5-wrench.jpg", "t": "Condition Adjustment", "s": "Power / Pressure / Temperature …" },
+            { "img": "s5-recipe.jpg", "t": "Recipe modification", "s": "Purge / Sequence …" },
+            { "img": "s5-tools.jpg", "t": "Maintenance", "s": "Inspection / Cleaning" },
+            { "img": "s5-flask.jpg", "t": "Additional experiment", "s": "DOE" }
+          ] },
+          "conduct": { "h": "Conduct experiment", "lines": ["Execute selected action immediately", "Or apply to the next lot"] }
+        },
+        "s6": {
+          "cards": [
+            { "t": "Effect verification", "img": "s6-before-after.jpg" },
+            { "t": "Verify Metric improvement", "bullets": ["Electrical Properties", "TMI / dT / TCR Stabilization", "Reproducibility / Yield"] },
+            { "t": "Standardization & Documentation", "bullets": ["Optimal Condition Update", "Recipe Standardization"] },
+            { "t": "Continuous improvement loop", "img": "s6-loop.jpg", "loop": true }
+          ]
+        },
+        "cycle": { "t": "Feedback loop", "s": "Verified results flow back into data collection — the cycle repeats with every run." },
         "valuesTitle": "CORE VALUE",
         "values": ["Early detection", "Fast diagnosis", "Accurate control", "Continuous optimization"],
         "finalGoal": "Final goal — High yield · Reproducibility · Data-driven smart factory"
@@ -631,52 +646,67 @@
       "equipGroupTitle": "PVD & ALD",
       "equipGroupDesc": "스퍼터링 · 열 증발 증착기 · 인라인 스퍼터 · 6인치/12인치 ALD",
       "coreViz": {
-        "stages": [
-          { "no": "01", "t": "데이터 수집", "items": [
-            { "media": [
-              { "f": "ald.jpg", "cap": "ALD", "zoom": true },
-              { "f": "sputter.jpg", "cap": "Sputter", "zoom": true },
-              { "f": "measurement.jpg", "cap": "Measurement", "zoom": true }
-            ] }
+        "heads": [
+          { "no": "1", "t": "데이터 수집" },
+          { "no": "2", "t": "데이터 통합 · 전처리" },
+          { "no": "3", "t": "다변량 분석 · 변화 감지" },
+          { "no": "4", "t": "진단 · 원인 추정" },
+          { "no": "5", "t": "의사결정 · 조치" },
+          { "no": "6", "t": "검증 · 학습" }
+        ],
+        "col1": [
+          { "label": "ALD", "img": "ald.jpg" },
+          { "label": "Sputter", "img": "sputter.jpg" },
+          { "label": "Measurement", "img": "measurement.jpg" }
+        ],
+        "s2": {
+          "a": { "h": "A. 데이터 통합 저장소", "bullets": ["원시 데이터 저장", "시간 동기화", "메타데이터 매핑"], "img": "s2-repo.jpg" },
+          "b": { "h": "B. 전처리 · 품질 검증", "bullets": ["데이터 유효성 검증", "이상치 필터링", "결측값 확인", "측정 품질 평가"], "img": "s2-quality.jpg" },
+          "badge": "Data quality"
+        },
+        "s3": {
+          "dash": { "h": "A. 통합 모니터링 대시보드", "panels": [
+            { "t": "Trend monitoring", "img": "s3-trend.jpg" },
+            { "t": "OES peak monitoring", "img": "s3-oes.jpg" },
+            { "t": "Key Index extraction", "img": "s3-keyindex.jpg", "cap": "Thickness · TCR · ΔR · dT · TMI" }
           ] },
-          { "no": "02", "t": "통합 · 전처리", "items": [
-            { "h": "A. 데이터 저장소", "bullets": ["원시 데이터 저장", "시간 동기화", "메타데이터 관리"],
-              "media": [ { "f": "step2-repo.jpg", "cap": "" } ] },
-            { "h": "B. 데이터 품질", "bullets": ["유효성 검증", "이상치 탐지", "결측값 처리"],
-              "media": [ { "f": "step2-quality.jpg", "cap": "" } ] }
+          "change": { "h": "B. 변화 감지 (조기 이상 탐지)", "panels": [
+            { "t": "다변량 통계 모니터링 (Hotelling's T² / SPE)", "img": "s3-t2.jpg" },
+            { "t": "PCA 기반 모니터링 (Score Plot)", "img": "s3-pca.jpg" }
           ] },
-          { "no": "03", "t": "다변량 분석", "items": [
-            { "h": "A. 실시간 대시보드", "bullets": ["Trend · OES peak · Key Index", "Thickness · ΔR · TMI · TCR · dT"],
-              "media": [ { "f": "step3-dash-a.jpg", "cap": "Trend", "zoom": true }, { "f": "step3-dash-b.jpg", "cap": "OES peak", "zoom": true } ] },
-            { "h": "B. 변화 감지", "bullets": ["Hotelling's T² · SPE", "PCA 스코어 플롯"],
-              "media": [ { "f": "plot-t2.jpg", "cap": "T² / SPE", "zoom": true }, { "f": "plot-pca.jpg", "cap": "PCA", "zoom": true } ], "alarms": true }
-          ] },
-          { "no": "04", "t": "진단 · 원인 추정", "icon": "step4-icon.jpg", "items": [
-            { "bullets": ["기여도 분석", "VIP 스코어", "상관 분석"],
-              "media": [
-                { "f": "step4-contrib.jpg", "cap": "기여도", "zoom": true },
-                { "f": "step4-vip.jpg", "cap": "VIP", "zoom": true },
-                { "f": "step4-corr.jpg", "cap": "상관", "zoom": true }
-              ] }
-          ] },
-          { "no": "05", "t": "의사결정 · 조치", "items": [
-            { "h": "A. 조건 조정", "bullets": ["Power · Pressure · Temperature"] },
-            { "h": "B. 레시피", "bullets": ["Purge · Sequence"] },
-            { "h": "C. 정비 · DOE", "bullets": ["즉시 적용 또는 다음 로트 반영"],
-              "media": [ { "f": "step5-action.jpg", "cap": "" } ] }
-          ] },
-          { "no": "06", "t": "검증 · 학습", "items": [
-            { "h": "지표", "bullets": ["Electrical · TMI / dT / TCR", "Yield(수율)"] },
-            { "h": "표준화", "bullets": ["순환 학습 루프"],
-              "media": [ { "f": "step6-metric.jpg", "cap": "", "zoom": true } ] }
+          "alarm": { "t": "Alarm Level", "levels": [
+            { "t": "Normal", "l1": "안정 패턴", "l2": "지속 모니터링" },
+            { "t": "Warning", "l1": "경미한 변화", "l2": "추이 관찰" },
+            { "t": "Critical", "l1": "유의미한 변화", "l2": "원인 분석" }
           ] }
-        ],
-        "alarms": [
-          { "t": "Normal", "s": "안정 패턴" },
-          { "t": "Warning", "s": "경미한 변화" },
-          { "t": "Critical", "s": "원인 분석" }
-        ],
-        "cycle": { "t": "01 – 05 · 지속 순환", "s": "조치 결과가 다시 데이터 수집으로 이어져 사이클이 매 공정마다 반복됩니다." },
+        },
+        "s4": {
+          "charts": [
+            { "t": "Contribution analysis", "img": "s4-contribution.jpg" },
+            { "t": "Variable Importance (VIP)", "img": "s4-vip.jpg" },
+            { "t": "Correlation analysis / Contribution factors", "img": "s4-corr.jpg" }
+          ],
+          "result": { "h": "Diagnosis result", "s": "공정 조건 변화의 핵심 인자와 주요 원인을 규명합니다" }
+        },
+        "s5": {
+          "feedback": "Action Execution (Feedback)",
+          "decision": { "h": "Decision making", "rows": [
+            { "img": "s5-wrench.jpg", "t": "Condition Adjustment", "s": "Power / Pressure / Temperature …" },
+            { "img": "s5-recipe.jpg", "t": "Recipe modification", "s": "Purge / Sequence …" },
+            { "img": "s5-tools.jpg", "t": "Maintenance", "s": "Inspection / Cleaning" },
+            { "img": "s5-flask.jpg", "t": "Additional experiment", "s": "DOE" }
+          ] },
+          "conduct": { "h": "Conduct experiment", "lines": ["선택한 조치를 즉시 실행", "또는 다음 로트에 반영"] }
+        },
+        "s6": {
+          "cards": [
+            { "t": "Effect verification", "img": "s6-before-after.jpg" },
+            { "t": "Verify Metric improvement", "bullets": ["Electrical Properties", "TMI / dT / TCR 안정화", "재현성 / 수율"] },
+            { "t": "Standardization & Documentation", "bullets": ["최적 조건 업데이트", "레시피 표준화"] },
+            { "t": "Continuous improvement loop", "img": "s6-loop.jpg", "loop": true }
+          ]
+        },
+        "cycle": { "t": "피드백 루프", "s": "검증된 결과가 다시 데이터 수집으로 이어져 사이클이 매 공정마다 반복됩니다." },
         "valuesTitle": "CORE VALUE",
         "values": ["조기 감지", "빠른 진단", "정밀 제어", "지속 최적화"],
         "finalGoal": "최종 목표 — 고수율 · 재현성 · 데이터 기반 스마트 팩토리"
