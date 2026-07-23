@@ -123,69 +123,101 @@ for (const pth of Object.keys(techImages)) {
 
       {(() => {
         const cv = (tech as any).coreViz;
-        type Media = { f: string; cap?: string; zoom?: boolean };
-        type Item = { h?: string; bullets?: string[]; media?: Media[]; alarms?: boolean };
-        type Stage = { no: string; t: string; items: Item[] };
+        // 01~05는 하나의 순환 사이클(조치 → 수집 루프백), 02~04는 CORE VALUE 존.
+        // 06(검증·학습)은 사이클 결과를 축적하는 바깥 층으로 표현한다.
+        const rows = [...cv.stages.slice(0, 5), { cycle: true }, ...cv.stages.slice(5)];
+        const CORE_RI = [1, 2, 3];
         return (
           <div class="v-reveal mt-12">
-            {/* 세로 스테퍼: 번호가 위→아래로 증가. 각 스텝이 전폭 행이라 항목·비주얼이 가로로 펼쳐진다. */}
             <div>
-              {cv.stages.map((s: Stage, si: number) => (
-                <div class="relative flex gap-5 md:gap-7">
-                  {/* 좌측 레일: 번호 + 노드 + 세로 연결 라인 */}
-                  <div class="flex w-12 shrink-0 flex-col items-center md:w-14">
-                    <span class="text-3xl font-bold leading-none text-accent/20 md:text-4xl">{s.no}</span>
-                    <span class="mt-2 h-2.5 w-2.5 shrink-0 rounded-full bg-accent"></span>
-                    {si < cv.stages.length - 1 && <span class="mt-1.5 w-px flex-1 bg-accent/25"></span>}
-                  </div>
-
-                  {/* 본문: 제목 + 항목들(가로 배치) */}
-                  <div class={`min-w-0 flex-1 ${si < cv.stages.length - 1 ? 'pb-10' : ''}`}>
-                    <p class="pt-1 text-base font-bold text-ink md:text-lg">{s.t}</p>
-                    <div class="mt-3 grid gap-x-8 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
-                      {s.items.map((it) => (
-                        <div class={s.items.length === 1 ? 'sm:col-span-2 lg:col-span-3' : ''}>
-                          {it.h && <p class="text-xs font-bold tracking-wide text-accent">{it.h}</p>}
-                          {it.bullets && (
-                            <ul class="mt-1 space-y-0.5 text-xs leading-relaxed text-ink/60">
-                              {it.bullets.map((b) => <li>· {b}</li>)}
-                            </ul>
-                          )}
-                          {it.media && (
-                            <div class={`mt-2.5 grid gap-2.5 ${it.media.length >= 3 ? 'max-w-2xl grid-cols-3' : 'max-w-md grid-cols-2'}`}>
-                              {it.media.map((mm) => (
-                                <figure class="min-w-0">
-                                  {mm.zoom ? (
-                                    <button type="button"
-                                      class="tech-zoom block w-full cursor-zoom-in overflow-hidden rounded-md border border-ink/10 bg-plate p-1.5 transition hover:border-accent/60"
-                                      data-full={techLarge[`/src/assets/tech/core/${mm.f}`]}
-                                      data-name={`${s.t}${mm.cap ? ` — ${mm.cap}` : ''}`}
-                                      aria-label={`${mm.cap || s.t} 확대`}>
-                                      <Image src={techAsset(`core/${mm.f}`)!} alt={`${s.t}${mm.cap ? ` — ${mm.cap}` : ''}`} width={480} class="w-full object-contain" />
-                                    </button>
-                                  ) : (
-                                    <div class="flex h-full items-center justify-center rounded-md border border-ink/10 bg-plate p-1.5">
-                                      <Image src={techAsset(`core/${mm.f}`)!} alt={`${s.t}${mm.cap ? ` — ${mm.cap}` : ''}`} width={300} class="max-h-16 w-auto object-contain" />
-                                    </div>
-                                  )}
-                                  {mm.cap && <figcaption class="mt-1 text-center text-[10px] text-ink/45">{mm.cap}</figcaption>}
-                                </figure>
-                              ))}
-                            </div>
-                          )}
-                          {it.alarms && (
-                            <div class="mt-2.5 flex flex-wrap gap-1.5">
-                              {cv.alarms.map((a2: { t: string }, i2: number) => (
-                                <span class={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${i2 === 0 ? 'border-ok text-ok' : i2 === 1 ? 'border-warn text-warn' : 'border-danger text-danger'}`}>{a2.t}</span>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      ))}
+              {rows.map((row: any, ri: number) =>
+                row.cycle ? (
+                  <div class="relative flex gap-5 md:gap-7">
+                    <div class="flex w-12 shrink-0 flex-col items-center md:w-14">
+                      <span class="w-px flex-[0.6] bg-accent/25"></span>
+                      <Image src={techAsset('core/step6-loop.jpg')!} alt={cv.cycle.t} width={96} class="my-1.5 h-10 w-10 rounded-full border border-accent/30 bg-plate object-contain p-1.5" />
+                      <span class="w-px flex-1 bg-accent/25"></span>
+                    </div>
+                    <div class="min-w-0 flex-1 pb-10 pt-2">
+                      <p class="inline-flex items-center gap-1.5 rounded-full border border-accent/30 bg-accent/[0.06] px-3.5 py-1.5 text-xs font-bold text-accent">↻ {cv.cycle.t}</p>
+                      <p class="mt-2 text-xs leading-relaxed text-ink/55">{cv.cycle.s}</p>
                     </div>
                   </div>
-                </div>
-              ))}
+                ) : (
+                  <div class="relative flex gap-5 md:gap-7">
+                    {CORE_RI.includes(ri) && (
+                      <span
+                        aria-hidden="true"
+                        class={`absolute -inset-x-3 -z-10 border-x border-accent/15 bg-accent/[0.045] md:-inset-x-5 ${
+                          ri === 1
+                            ? '-top-3 bottom-0 rounded-t-2xl border-t'
+                            : ri === 3
+                              ? 'top-0 bottom-7 rounded-b-2xl border-b'
+                              : 'inset-y-0'
+                        }`}
+                      ></span>
+                    )}
+                    <div class="flex w-12 shrink-0 flex-col items-center md:w-14">
+                      <span class="text-3xl font-bold leading-none text-accent/20 md:text-4xl">{row.no}</span>
+                      <span class="mt-2 h-2.5 w-2.5 shrink-0 rounded-full bg-accent"></span>
+                      {ri < rows.length - 1 && <span class="mt-1.5 w-px flex-1 bg-accent/25"></span>}
+                    </div>
+
+                    <div class={`min-w-0 flex-1 ${ri < rows.length - 1 ? 'pb-10' : ''}`}>
+                      {ri === 1 && (
+                        <span class="absolute right-0 top-0 rounded-full border border-accent/30 bg-canvas px-3 py-1 text-[10px] font-bold tracking-widest text-accent md:-right-1">{cv.valuesTitle}</span>
+                      )}
+                      <p class="flex items-center gap-2 pt-1 text-base font-bold text-ink md:text-lg">
+                        {row.t}
+                        {row.icon && techAsset(`core/${row.icon}`) && (
+                          <Image src={techAsset(`core/${row.icon}`)!} alt="" width={64} class="h-6 w-6 rounded border border-ink/10 bg-plate object-contain p-0.5" />
+                        )}
+                      </p>
+                      <div class="mt-3 grid gap-x-8 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+                        {row.items.map((it: any) => (
+                          <div class={row.items.length === 1 ? 'sm:col-span-2 lg:col-span-3' : ''}>
+                            {it.h && <p class="text-xs font-bold tracking-wide text-accent">{it.h}</p>}
+                            {it.bullets && (
+                              <ul class="mt-1 space-y-0.5 text-xs leading-relaxed text-ink/60">
+                                {it.bullets.map((b: string) => <li>· {b}</li>)}
+                              </ul>
+                            )}
+                            {it.media && (
+                              <div class={`mt-2.5 grid gap-2.5 ${it.media.length >= 3 ? 'max-w-2xl grid-cols-3' : 'max-w-md grid-cols-2'}`}>
+                                {it.media.map((mm: any) => (
+                                  <figure class="min-w-0">
+                                    {mm.zoom ? (
+                                      <button type="button"
+                                        class="tech-zoom block w-full cursor-zoom-in overflow-hidden rounded-md border border-ink/10 bg-plate p-1.5 transition hover:border-accent/60"
+                                        data-full={techLarge[`/src/assets/tech/core/${mm.f}`]}
+                                        data-name={`${row.t}${mm.cap ? ` — ${mm.cap}` : ''}`}
+                                        aria-label={`${mm.cap || row.t} 확대`}>
+                                        <Image src={techAsset(`core/${mm.f}`)!} alt={`${row.t}${mm.cap ? ` — ${mm.cap}` : ''}`} width={480} class="w-full object-contain" />
+                                      </button>
+                                    ) : (
+                                      <div class="flex h-full items-center justify-center rounded-md border border-ink/10 bg-plate p-2">
+                                        <Image src={techAsset(`core/${mm.f}`)!} alt={`${row.t}${mm.cap ? ` — ${mm.cap}` : ''}`} width={200} class="max-h-20 w-auto object-contain" />
+                                      </div>
+                                    )}
+                                    {mm.cap && <figcaption class="mt-1 text-center text-[10px] text-ink/45">{mm.cap}</figcaption>}
+                                  </figure>
+                                ))}
+                              </div>
+                            )}
+                            {it.alarms && (
+                              <div class="mt-2.5 flex flex-wrap gap-1.5">
+                                {cv.alarms.map((a2: { t: string }, i2: number) => (
+                                  <span class={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${i2 === 0 ? 'border-ok text-ok' : i2 === 1 ? 'border-warn text-warn' : 'border-danger text-danger'}`}>{a2.t}</span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ),
+              )}
             </div>
 
             <div class="mt-10 flex flex-wrap items-center gap-x-3 gap-y-2.5">
