@@ -438,6 +438,7 @@
       "addedToCart": "Added to cart.",
       "goCart": "View cart →",
       "bulkQuoteLink": "Bulk order / domestic purchase (tax invoice)? Request an order instead ↓",
+      "cartLocalNote": "Cart is saved in this browser only (guest checkout) — items may disappear if you switch devices or clear browser data.",
       "cart": "Cart",
       "trackOrder": "Track order",
       "empty": "No products yet.",
@@ -469,6 +470,10 @@
       "subtotal": "Subtotal",
       "total": "Total",
       "checkout": "Proceed to checkout",
+      "quoteBadge": "Quote required",
+      "quoteRowCta": "Request a quote →",
+      "quoteNote": "Quote items are not included in the payment total — they proceed via a separate quote request.",
+      "quoteOnly": "Your cart has quote items only — proceed with a quote request from each item.",
       "comingSoon": "Checkout opens once payment integration is live."
     }
   },
@@ -911,6 +916,7 @@
       "addedToCart": "카트에 담았습니다.",
       "goCart": "카트 보기 →",
       "bulkQuoteLink": "대량 주문·국내 구매(세금계산서)는 주문 요청으로 문의 ↓",
+      "cartLocalNote": "카트는 이 브라우저에만 저장됩니다(비회원) — 기기를 바꾸거나 브라우저 데이터를 지우면 담은 항목이 사라질 수 있습니다.",
       "cart": "장바구니",
       "trackOrder": "주문 조회",
       "empty": "등록된 상품이 없습니다.",
@@ -942,6 +948,10 @@
       "subtotal": "소계",
       "total": "합계",
       "checkout": "주문·결제하기",
+      "quoteBadge": "견적 문의",
+      "quoteRowCta": "견적 요청 →",
+      "quoteNote": "견적 품목은 결제 금액에 포함되지 않습니다 — 해당 품목은 견적 요청으로 별도 진행됩니다.",
+      "quoteOnly": "카트에 견적 품목만 있습니다 — 각 품목의 견적 요청으로 진행해 주세요.",
       "comingSoon": "결제 연동이 완료되면 활성화됩니다."
     }
   }

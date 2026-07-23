@@ -89,7 +89,7 @@ const img = d.image ? waferImages[d.image]?.default : undefined;
               </p>
             </div>
           ) : (
-            <a href="#quote" data-open-quote
+            <a href="#quote" data-open-quote id="quote-add" data-sku={`wafer:${wafer.id}`}
               class="inline-flex items-center gap-2 rounded-lg bg-brand px-7 py-3 font-semibold text-onbrand transition hover:brightness-110">
               {s.requestQuote} ↓
             </a>
@@ -97,6 +97,7 @@ const img = d.image ? waferImages[d.image]?.default : undefined;
         </div>
 
         <p class="mt-6 text-sm text-ink/40">{s.guestNote}</p>
+        <p class="mt-2 text-xs leading-relaxed text-ink/35">{s.cartLocalNote}</p>
 
         {leadTime && (
           <dl class="mt-8 space-y-2 text-sm">
@@ -176,6 +177,21 @@ const img = d.image ? waferImages[d.image]?.default : undefined;
   });
   buyBtn?.addEventListener('click', () => {
     if (addToCart()) location.href = buyBtn.dataset.checkoutUrl ?? '/checkout';
+  });
+
+  // 가격 미정 웨이퍼: '견적 요청' 클릭 시 견적 품목으로 카트에 담아둔다(1회).
+  const qbtn = document.getElementById('quote-add');
+  qbtn?.addEventListener('click', () => {
+    const sku = (qbtn as HTMLElement).dataset.sku;
+    if (!sku) return;
+    const items = readCart();
+    if (!items.find((i) => i && i.sku === sku)) {
+      items.push({ sku, qty: 1 });
+      localStorage.setItem(CART_KEY, JSON.stringify(items));
+      document.querySelectorAll('.cart-count').forEach((el) => {
+        el.textContent = String(items.reduce((s2, i) => s2 + (Math.floor(Number(i.qty)) || 0), 0));
+      });
+    }
   });
 </script>
 </BaseLayout>

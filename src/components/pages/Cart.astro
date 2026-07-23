@@ -29,6 +29,28 @@ const waferCatalog = (await getCollection('wafers'))
     price: w.data.priceKrw as number,
     url: `${base}/wafers/${w.id}`,
   }));
+
+// 견적 품목 — 견적 제품(고정가 아님) + 가격 미정 웨이퍼. 결제 합계에서 제외되고 견적 요청으로 안내한다.
+const quoteCatalog = [
+  ...(await getCollection('products'))
+    .filter((p) => p.data.published && !(p.data.pricingType === 'fixed' && typeof p.data.price === 'number'))
+    .map((p) => ({
+      sku: p.id,
+      name: isKo ? p.data.name : (p.data.name_en ?? p.data.name),
+      price: 0,
+      quote: true,
+      url: `${base}/product/${p.id}#quote`,
+    })),
+  ...(await getCollection('wafers'))
+    .filter((w) => w.data.published !== false && !(typeof w.data.priceKrw === 'number' && w.data.priceKrw > 0))
+    .map((w) => ({
+      sku: `wafer:${w.id}`,
+      name: isKo ? w.data.name : ((w.data as Record<string, unknown>).name_en as string ?? w.data.name),
+      price: 0,
+      quote: true,
+      url: `${base}/wafers/${w.id}#quote`,
+    })),
+];
 ---
 
 <BaseLayout title={c.metaTitle} description={c.metaDescription}>
@@ -44,17 +66,22 @@ const waferCatalog = (await getCollection('wafers'))
       data-checkout={c.checkout}
       data-checkout-url={`${base}/checkout`}
       data-continue={c.continueShopping}
-      data-shop-url={`${base}/product`}>
+      data-shop-url={`${base}/product`}
+      data-quote-badge={c.quoteBadge}
+      data-quote-cta={c.quoteRowCta}
+      data-quote-note={c.quoteNote}
+      data-quote-only={c.quoteOnly}
+      data-local-note={s.cartLocalNote}>
       <p class="text-ink/50">…</p>
     </div>
 
-    <script type="application/json" id="catalog" set:html={JSON.stringify([...catalog, ...waferCatalog])} is:inline></script>
+    <script type="application/json" id="catalog" set:html={JSON.stringify([...catalog, ...waferCatalog, ...quoteCatalog])} is:inline></script>
   </section>
 </BaseLayout>
 
 <script>
   type Item = { sku: string; qty: number };
-  type Product = { sku: string; name: string; price: number; url: string };
+  type Product = { sku: string; name: string; price: number; url: string; quote?: boolean };
 
   const CART_KEY = 'vanam_cart';
   const root = document.getElementById('cart-root')!;
@@ -89,14 +116,18 @@ const waferCatalog = (await getCollection('wafers'))
       return;
     }
 
-    const total = items.reduce((sum, i) => sum + byId.get(i.sku)!.price * i.qty, 0);
+    const buyables = items.filter((i) => !byId.get(i.sku)!.quote);
+    const hasQuote = buyables.length !== items.length;
+    const total = buyables.reduce((sum, i) => sum + byId.get(i.sku)!.price * i.qty, 0);
     const rows = items.map((i) => {
       const p = byId.get(i.sku)!;
       return `
         <div class="flex flex-wrap items-center gap-4 py-5" data-sku="${p.sku}">
           <div class="min-w-0 flex-1">
             <a href="${p.url}" class="font-medium text-ink transition hover:text-accent">${p.name}</a>
-            <p class="mt-1 text-sm text-ink/40">₩${won(p.price)}</p>
+            ${p.quote
+              ? `<p class="mt-1"><span class="inline-flex rounded-full border border-accent/30 bg-accent/[0.06] px-2.5 py-0.5 text-xs font-semibold text-accent">${M.quoteBadge}</span></p>`
+              : `<p class="mt-1 text-sm text-ink/40">₩${won(p.price)}</p>`}
           </div>
           <div class="flex items-center gap-1">
             <button type="button" data-act="dec" class="size-9 rounded-lg border border-ink/15 text-ink/70 transition hover:border-accent hover:text-ink">−</button>
@@ -104,7 +135,9 @@ const waferCatalog = (await getCollection('wafers'))
               class="h-9 w-14 rounded-lg border border-ink/10 bg-ink/[0.03] text-center text-ink outline-none focus:border-accent" />
             <button type="button" data-act="inc" class="size-9 rounded-lg border border-ink/15 text-ink/70 transition hover:border-accent hover:text-ink">+</button>
           </div>
-          <p class="w-28 shrink-0 text-right font-semibold text-ink">₩${won(p.price * i.qty)}</p>
+          ${p.quote
+            ? `<a href="${p.url}" class="w-28 shrink-0 text-right text-sm font-semibold text-accent transition hover:underline">${M.quoteCta}</a>`
+            : `<p class="w-28 shrink-0 text-right font-semibold text-ink">₩${won(p.price * i.qty)}</p>`}
           <button type="button" data-act="del" class="shrink-0 text-sm text-ink/40 transition hover:text-danger">${M.remove}</button>
         </div>`;
     }).join('');
@@ -115,13 +148,17 @@ const waferCatalog = (await getCollection('wafers'))
         <p class="text-sm text-ink/50">${M.total} <span class="ml-1 text-xs text-ink/30">(${M.vat})</span></p>
         <p class="text-3xl font-bold text-ink">₩${won(total)}</p>
       </div>
+      ${hasQuote ? `<p class="mt-3 text-sm leading-relaxed text-ink/50">${M.quoteNote}</p>` : ''}
       <div class="mt-8">
-        <a href="${M.checkoutUrl}"
-          class="inline-flex items-center gap-2 rounded-lg bg-brand px-7 py-3 font-semibold text-onbrand transition hover:brightness-110">${M.checkout}
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        </a>
+        ${buyables.length > 0
+          ? `<a href="${M.checkoutUrl}"
+              class="inline-flex items-center gap-2 rounded-lg bg-brand px-7 py-3 font-semibold text-onbrand transition hover:brightness-110">${M.checkout}
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </a>`
+          : `<p class="text-sm font-medium text-ink/50">${M.quoteOnly}</p>`}
       </div>
-      <a href="${M.shopUrl}" class="mt-6 inline-block text-sm text-ink/50 transition hover:text-accent">← ${M.continue}</a>`;
+      <a href="${M.shopUrl}" class="mt-6 inline-block text-sm text-ink/50 transition hover:text-accent">← ${M.continue}</a>
+      <p class="mt-8 text-xs leading-relaxed text-ink/35">${M.localNote}</p>`;
   }
 
   root.addEventListener('click', (e) => {
