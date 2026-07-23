@@ -78,6 +78,8 @@ export const POST: APIRoute = async ({ request }) => {
   const shipCity = str(body.shipCity).slice(0, MAX);
   const shipState = str(body.shipState).slice(0, MAX);
   const shipMemo = str(body.shipMemo).slice(0, 1000);
+  const desiredDate = str(body.desiredDate).slice(0, 120);
+  const orderNote = str(body.orderNote).slice(0, 2000);
   const shipCourierAcct = str(body.shipCourierAcct).slice(0, 60);
 
   let shipCountry = str(body.shipCountry).toUpperCase().slice(0, 40);
@@ -219,8 +221,9 @@ export const POST: APIRoute = async ({ request }) => {
             needs_shipping, ship_name, ship_phone, ship_country, ship_zip,
             ship_addr1, ship_addr2, ship_city, ship_state, ship_memo, ship_courier_acct,
             tax_invoice, tax_biz_no, tax_biz_name, tax_ceo, tax_email,
+            desired_date, order_note,
             inquiry_id, agreed_terms, locale, created_at)
-         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       )
       .bind(
         orderId, 'pending', amount, 'KRW',
@@ -231,6 +234,7 @@ export const POST: APIRoute = async ({ request }) => {
         shipCourierAcct || null,
         taxInvoice ? 1 : 0, taxInvoice ? taxBizNo : null, taxInvoice ? taxBizName : null,
         taxInvoice ? (taxCeo || null) : null, taxInvoice ? taxEmail : null,
+        desiredDate || null, orderNote || null,
         inquiryId || null, 1, locale, created,
       )
       .run();
@@ -269,6 +273,8 @@ export const POST: APIRoute = async ({ request }) => {
     `금액: ₩${amount.toLocaleString('ko-KR')}`,
     ...lines.map((l) => `· ${l.name} × ${l.qty} = ₩${l.subtotal.toLocaleString('ko-KR')}`),
     `주문자: ${buyerName}${buyerCompany ? ` (${buyerCompany})` : ''} · ${buyerEmail}${buyerPhone ? ` · ${buyerPhone}` : ''}`,
+    desiredDate ? `희망 완료: ${desiredDate}` : '',
+    orderNote ? `요청사항: ${orderNote}` : '',
     needsShipping
       ? `배송[${shipCountry}]: ${shipName} · ${shipPhone}\n  (${shipZip}) ${[shipAddr1, shipAddr2, shipCity, shipState].filter(Boolean).join(', ')}`
       : '배송 없음 (분석 서비스)',

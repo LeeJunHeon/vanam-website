@@ -90,6 +90,8 @@ const t = isKo
       eyebrow: '주문서', heading: '주문 정보',
       empty: '장바구니가 비어 있습니다.', backToShop: '제품으로 돌아가기',
       secBuyer: '주문자', secShip: '배송지', secTax: '세금계산서', secAgree: '확인 및 동의', secSummary: '주문 요약',
+      desiredDate: '희망 완료일 (선택)', desiredDatePh: '예: 2026-09 또는 자유롭게 기재',
+      orderNote: '요청사항 (선택)', orderNotePh: '추가 요청·참고사항이 있으면 적어주세요',
       name: '이름', email: '이메일', phone: '연락처', company: '회사 / 소속',
       phoneHint: '해외 연락처는 국가번호를 포함해 주세요 (예: +1 555 000 0000)',
       noShip: '이 주문은 실물 배송이 없습니다. 결과는 입력하신 이메일로 안내드립니다.',
@@ -122,6 +124,8 @@ const t = isKo
       eyebrow: 'Checkout', heading: 'Order details',
       empty: 'Your cart is empty.', backToShop: 'Back to products',
       secBuyer: 'Purchaser', secShip: 'Shipping', secTax: 'Tax invoice', secAgree: 'Confirm & agree', secSummary: 'Order summary',
+      desiredDate: 'Desired completion (optional)', desiredDatePh: 'e.g. 2026-09, or free text',
+      orderNote: 'Additional requests (optional)', orderNotePh: 'Anything else we should know',
       name: 'Name', email: 'Email', phone: 'Phone', company: 'Company / Affiliation',
       phoneHint: 'Please include your country code (e.g. +1 555 000 0000)',
       noShip: 'This order does not require physical delivery. Results are sent to the email you provide.',
@@ -200,6 +204,14 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
               <div>
                 <label for="buyerCompany" class={labelClass}>{t.company}</label>
                 <input id="buyerCompany" name="buyerCompany" type="text" autocomplete="organization" class={inputClass} />
+              </div>
+              <div class="sm:col-span-2">
+                <label for="desiredDate" class={labelClass}>{t.desiredDate}</label>
+                <input id="desiredDate" name="desiredDate" type="text" class={inputClass} placeholder={t.desiredDatePh} />
+              </div>
+              <div class="sm:col-span-2">
+                <label for="orderNote" class={labelClass}>{t.orderNote}</label>
+                <textarea id="orderNote" name="orderNote" rows="3" class={`${inputClass} resize-y`} placeholder={t.orderNotePh}></textarea>
               </div>
             </div>
           </fieldset>

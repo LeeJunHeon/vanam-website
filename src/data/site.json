@@ -473,7 +473,8 @@
       "quoteBadge": "Quote required",
       "quoteRowCta": "Request a quote →",
       "quoteNote": "Quote items are not included in the payment total — they proceed via a separate quote request.",
-      "quoteOnly": "Your cart has quote items only — proceed with a quote request from each item.",
+      "quoteOnly": "Your cart has quote items only — save the RFQ sheet below and email it to us.",
+      "rfqBtn": "Print / save RFQ sheet (PDF)",
       "comingSoon": "Checkout opens once payment integration is live."
     }
   },
@@ -951,7 +952,8 @@
       "quoteBadge": "견적 문의",
       "quoteRowCta": "견적 요청 →",
       "quoteNote": "견적 품목은 결제 금액에 포함되지 않습니다 — 해당 품목은 견적 요청으로 별도 진행됩니다.",
-      "quoteOnly": "카트에 견적 품목만 있습니다 — 각 품목의 견적 요청으로 진행해 주세요.",
+      "quoteOnly": "카트에 견적 품목만 있습니다 — 아래 견적 요청서를 저장해 이메일로 보내주세요.",
+      "rfqBtn": "견적 요청서 인쇄·PDF 저장",
       "comingSoon": "결제 연동이 완료되면 활성화됩니다."
     }
   }

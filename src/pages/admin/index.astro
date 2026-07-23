@@ -242,6 +242,8 @@ const spec = (r: Row) =>
                           <span class="text-ink/30">배송</span> [{o.ship_country}] {o.ship_name} · {o.ship_phone}<br />
                           ({o.ship_zip}) {[o.ship_addr1, o.ship_addr2, o.ship_city, o.ship_state].filter(Boolean).join(', ')}
                           {o.ship_memo && <><br /><span class="text-ink/30">요청</span> {o.ship_memo}</>}
+                          {o.desired_date && <><br /><span class="text-ink/30">희망 완료</span> {o.desired_date}</>}
+                          {o.order_note && <><br /><span class="text-ink/30">요청사항</span> {o.order_note}</>}
                           {o.ship_courier_acct && <><br /><span class="text-ink/30">착불 계정</span> {o.ship_courier_acct}</>}
                         </p>
                       ) : (
