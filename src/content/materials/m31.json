@@ -4,7 +4,5 @@
   "formula": "In₂O₃",
   "order": 43,
   "name": "Indium Oxide",
-  "name_ko": "산화 인듐",
-  "description": "Indium oxide (In₂O₃) by ALD — conformal transparent conductive oxide for advanced TFT channels.",
-  "description_ko": "ALD로 성장하는 산화 인듐(In₂O₃)입니다. 차세대 TFT 채널용 컨포멀 투명 전도성 산화물입니다."
+  "name_ko": "산화 인듐"
 }

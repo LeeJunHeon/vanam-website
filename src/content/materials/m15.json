@@ -4,7 +4,5 @@
   "formula": "Ag",
   "order": 23,
   "name": "Silver",
-  "name_ko": "은",
-  "description": "Silver (Ag) thin films deposited by sputtering and evaporation — used for the most conductive metal for electrodes and IR mirrors.",
-  "description_ko": "스퍼터링·증발 증착으로 형성하는 은(Ag) 박막입니다. 최고 전도도의 전극·적외선 미러에 활용됩니다."
+  "name_ko": "은"
 }

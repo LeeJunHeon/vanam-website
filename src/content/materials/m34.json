@@ -4,7 +4,5 @@
   "formula": "SnO",
   "order": 46,
   "name": "Tin Monoxide",
-  "name_ko": "일산화 주석",
-  "description": "Tin monoxide (SnO) by ALD — one of the few p-type oxide semiconductors, for complementary oxide electronics.",
-  "description_ko": "ALD로 성장하는 일산화 주석(SnO)입니다. 희소한 p형 산화물 반도체로 상보형 산화물 전자소자에 쓰입니다."
+  "name_ko": "일산화 주석"
 }

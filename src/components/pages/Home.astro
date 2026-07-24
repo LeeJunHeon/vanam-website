@@ -21,7 +21,7 @@ const description = home.metaDescription;
     <link rel="preload" as="image" href="/media/hero/f001.webp" media="(min-width: 769px)" />
     <link rel="preload" as="image" href="/media/hero-m/f001.webp" media="(max-width: 768px)" />
     <div class="sticky top-0 h-screen w-full overflow-hidden">
-      <canvas id="vn-scrub" class="h-full w-full"></canvas>
+      <canvas id="vn-scrub" class="h-full w-full transform-gpu"></canvas>
       <div class="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/65 via-black/25 to-transparent" aria-hidden="true"></div>
       <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_90%_at_50%_42%,transparent_55%,rgba(0,0,0,0.38))]" aria-hidden="true"></div>
       <div class="pointer-events-none absolute inset-x-0 bottom-0 h-44 bg-gradient-to-b from-transparent to-canvas" aria-hidden="true"></div>
@@ -86,7 +86,7 @@ const description = home.metaDescription;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const N = 118;
+    const N = 142;
     const DIR = window.matchMedia('(max-width: 768px)').matches ? '/media/hero-m/' : '/media/hero/';
     const src = (i: number) => `${DIR}f${String(i + 1).padStart(3, '0')}.webp`;
     const imgs: (HTMLImageElement | null)[] = new Array(N).fill(null);
@@ -95,8 +95,10 @@ const description = home.metaDescription;
     let W = 0, H = 0, cur = -1, loadTick = 0, drawnTick = -1;
     let target = 0, play = 0;
     const size = () => {
-      const dpr = Math.min(1.5, window.devicePixelRatio || 1);
+      // 페인트 해상도 상한: 백킹 1600px — 4K에서도 드로우 비용 일정, CSS가 GPU 업스케일
+      const dprRaw = Math.min(1.5, window.devicePixelRatio || 1);
       W = stage.clientWidth; H = window.innerHeight;
+      const dpr = Math.min(dprRaw, 1600 / Math.max(1, W));
       canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.imageSmoothingEnabled = true;
@@ -124,7 +126,9 @@ const description = home.metaDescription;
       const f = play - a;
       const ka = nearest(a);
       if (ka < 0) return;
-      const kb = ka === a && f > 0.02 && a + 1 < N && ready[a + 1] ? a + 1 : -1;
+      // 속도 게이트: 빠른 스크럽 중엔 블렌딩을 꺼 이중상(어지러움)을 방지, 감속 시에만 보간
+      const slow = Math.abs(target - play) < 1.1;
+      const kb = slow && ka === a && f > 0.02 && a + 1 < N && ready[a + 1] ? a + 1 : -1;
       const key = ka * 1000 + (kb >= 0 ? Math.round(f * 200) : 0);
       if (key === cur && drawnTick === loadTick) return;
       ctx.clearRect(0, 0, W, H);

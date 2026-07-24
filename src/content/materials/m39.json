@@ -4,7 +4,5 @@
   "formula": "In₂O₃",
   "order": 11,
   "name": "Indium Oxide",
-  "name_ko": "산화 인듐",
-  "description": "Indium oxide (In₂O₃) transparent conductive oxide films by sputtering — a base TCO for transparent electrodes and gas-sensing layers.",
-  "description_ko": "스퍼터링으로 증착하는 산화 인듐(In₂O₃) 투명 전도성 산화물 박막입니다. 투명 전극과 가스 감지층의 기반 TCO 소재입니다."
+  "name_ko": "산화 인듐"
 }

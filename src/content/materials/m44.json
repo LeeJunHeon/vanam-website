@@ -4,7 +4,5 @@
   "formula": "NbTiN",
   "order": 20,
   "name": "Niobium Titanium Nitride",
-  "name_ko": "나이오븀 티타늄 질화물",
-  "description": "Niobium titanium nitride (NbTiN) superconducting films by sputtering — VanaM's SNSPD material for quantum photonics, with a superconducting transition near 11 K.",
-  "description_ko": "스퍼터링으로 증착하는 초전도 나이오븀 티타늄 질화물(NbTiN) 박막입니다. 반암 양자 포토닉스 SNSPD 소재로, 초전도 전이온도 약 11 K를 보입니다."
+  "name_ko": "나이오븀 티타늄 질화물"
 }

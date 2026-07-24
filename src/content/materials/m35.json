@@ -4,7 +4,5 @@
   "formula": "Pt",
   "order": 48,
   "name": "Platinum",
-  "name_ko": "백금",
-  "description": "Platinum (Pt) by ALD — conformal noble-metal electrodes for high-aspect-ratio device structures.",
-  "description_ko": "ALD로 성장하는 백금(Pt)입니다. 고종횡비 소자 구조용 컨포멀 귀금속 전극입니다."
+  "name_ko": "백금"
 }

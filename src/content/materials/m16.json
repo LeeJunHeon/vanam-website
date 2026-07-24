@@ -4,7 +4,5 @@
   "formula": "Al",
   "order": 24,
   "name": "Aluminium",
-  "name_ko": "알루미늄",
-  "description": "Aluminium (Al) thin films deposited by sputtering and evaporation — used for interconnects, reflectors and bond layers.",
-  "description_ko": "스퍼터링·증발 증착으로 형성하는 알루미늄(Al) 박막입니다. 배선·반사막·접합층에 활용됩니다."
+  "name_ko": "알루미늄"
 }

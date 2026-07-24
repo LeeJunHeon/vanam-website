@@ -4,7 +4,5 @@
   "formula": "ZnO",
   "order": 41,
   "name": "Zinc Oxide",
-  "name_ko": "산화 아연",
-  "description": "Zinc oxide (ZnO) by ALD — conformal transparent conductive and buffer layers at sub-nanometre control.",
-  "description_ko": "ALD로 성장하는 산화 아연(ZnO)입니다. 서브나노 정밀도의 컨포멀 투명 전도·버퍼층을 제공합니다."
+  "name_ko": "산화 아연"
 }

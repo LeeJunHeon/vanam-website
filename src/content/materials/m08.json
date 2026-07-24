@@ -5,7 +5,5 @@
   "order": 8,
   "home": 8,
   "name": "Indium Gallium Zinc Oxide",
-  "name_ko": "인듐 갈륨 아연 산화물",
-  "description": "Indium gallium zinc oxide (IGZO) amorphous-oxide-semiconductor films by RF magnetron sputtering — high-mobility channels for transparent thin-film transistors and display backplanes.",
-  "description_ko": "RF 마그네트론 스퍼터링으로 증착하는 인듐 갈륨 아연 산화물(IGZO) 비정질 산화물 반도체 박막입니다. 투명 박막트랜지스터(TFT)·디스플레이 백플레인용 고이동도 채널 소재입니다."
+  "name_ko": "인듐 갈륨 아연 산화물"
 }

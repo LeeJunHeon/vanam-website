@@ -93,6 +93,7 @@ const mt = {
   system: locale === 'ko' ? '증착 방식' : 'Deposition',
   category: locale === 'ko' ? '분류' : 'Category',
   imgSoon: locale === 'ko' ? '상세 이미지 준비 중입니다.' : 'Detailed image coming soon.',
+  preparing: locale === 'ko' ? '상세 자료를 준비 중입니다. 견적 문의는 아래 버튼으로 가능합니다.' : 'Detailed data is being prepared. You can still request a quote below.',
   cta: locale === 'ko' ? '이 물질로 견적 문의' : 'Request a quote for this material',
   close: locale === 'ko' ? '닫기' : 'Close',
 };
@@ -779,7 +780,7 @@ const techAsset = (pth: string) => techImages[`/src/assets/tech/${pth}`]?.defaul
               </div>
             </>
           ) : (
-            p.desc && <p class="mt-6 whitespace-pre-line text-base leading-relaxed text-ink/75">{p.desc}</p>
+            <p class="mt-6 rounded-lg border border-dashed border-ink/20 bg-ink/[0.03] px-4 py-7 text-center text-sm text-ink/45">{mt.preparing}</p>
           )}
 
           <div class="mt-8">

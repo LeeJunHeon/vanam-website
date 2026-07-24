@@ -4,7 +4,5 @@
   "formula": "SnO₂",
   "order": 45,
   "name": "Tin Dioxide",
-  "name_ko": "이산화 주석",
-  "description": "Tin dioxide (SnO₂) by ALD — conformal n-type oxide for gas sensing and electron-transport layers.",
-  "description_ko": "ALD로 성장하는 이산화 주석(SnO₂)입니다. 가스 감지·전자수송층용 컨포멀 n형 산화물입니다."
+  "name_ko": "이산화 주석"
 }

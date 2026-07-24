@@ -4,7 +4,5 @@
   "formula": "Ru",
   "order": 49,
   "name": "Ruthenium",
-  "name_ko": "루테늄",
-  "description": "Ruthenium (Ru) by ALD — low-resistivity conformal films for next-generation interconnects and electrodes.",
-  "description_ko": "ALD로 성장하는 루테늄(Ru)입니다. 차세대 배선·전극용 저저항 컨포멀 박막입니다."
+  "name_ko": "루테늄"
 }
