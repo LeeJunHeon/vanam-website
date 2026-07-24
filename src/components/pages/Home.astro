@@ -17,6 +17,9 @@ const description = home.metaDescription;
     <div class="vn-grid absolute inset-0"></div>
     <div class="vn-glow-a absolute -left-20 -top-24 h-[420px] w-[480px] rounded-full"></div>
     <div class="vn-glow-b absolute -bottom-32 -right-16 h-[380px] w-[420px] rounded-full"></div>
+    <!-- 스크롤 연동 분자 결합 배경: 흩어진 입자들이 스크롤 진행에 따라 낙하·수렴해
+         기판 위 얇은 박막 층으로 결합한다 (구 사이트 히어로 영상의 컨셉을 인터랙티브로). -->
+    <canvas id="vn-mol" class="pointer-events-none absolute inset-0 h-full w-full opacity-55" aria-hidden="true"></canvas>
     <div class="v-reveal relative mx-auto w-full max-w-6xl">
       <p class="mb-5 font-mono text-xs tracking-[0.25em] text-accent">VANA&nbsp;MATERIALS&nbsp;LAB.</p>
       <h1 class="text-5xl font-bold leading-[1.05] tracking-tight text-ink sm:text-7xl">{home.heroTitle.line1}<br />{home.heroTitle.line2}</h1>
@@ -60,6 +63,125 @@ const description = home.metaDescription;
     </div>
   </section>
 </BaseLayout>
+
+<script>
+  // 히어로 배경: 분자 낙하·결합 파티클. 스크롤 진행도(p)가 상태를 구동한다.
+  // p=0 흩어져 부유 → p=1 하단 기판 위 3열 '박막 격자'로 결합(+본드 라인).
+  (() => {
+    const canvas = document.getElementById('vn-mol') as HTMLCanvasElement | null;
+    const hero = canvas?.closest('section');
+    if (!canvas || !hero) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    let W = 0, H = 0, dpr = 1;
+    let colDot = '#8899aa', colAccent = '#1ebbf0';
+    const readColors = () => {
+      const cs = getComputedStyle(document.documentElement);
+      colDot = cs.getPropertyValue('--v-ink').trim() || colDot;
+      colAccent = cs.getPropertyValue('--v-accent').trim() || colAccent;
+    };
+    readColors();
+    new MutationObserver(readColors).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+    type P = { sx: number; sy: number; tx: number; ty: number; r: number; ph: number; sp: number; d: number; ac: boolean; x: number; y: number };
+    let pts: P[] = [];
+
+    const build = () => {
+      dpr = Math.min(2, window.devicePixelRatio || 1);
+      W = hero.clientWidth; H = hero.clientHeight;
+      canvas.width = W * dpr; canvas.height = H * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const n = W < 640 ? 70 : 140;
+      // 목표 격자: 중앙 70% 폭, 하단 76% 높이에 3열 박막 밴드
+      const rows = 3, x0 = W * 0.15, x1 = W * 0.85, yBase = H * 0.76, gapY = 11;
+      const cols = Math.ceil(n / rows);
+      pts = [];
+      for (let i = 0; i < n; i++) {
+        const row = i % rows, col = Math.floor(i / rows);
+        const tx = x0 + ((x1 - x0) * col) / Math.max(1, cols - 1) + (Math.random() - 0.5) * 6;
+        const ty = yBase + row * gapY + (Math.random() - 0.5) * 3;
+        pts.push({
+          sx: Math.random() * W,
+          sy: -H * 0.08 + Math.random() * H * 0.6,
+          tx, ty,
+          r: 1.5 + Math.random() * 1.1,
+          ph: Math.random() * Math.PI * 2,
+          sp: 0.4 + Math.random() * 0.7,
+          d: Math.random() * 0.45, // 낙하 지연(웨이브)
+          ac: Math.random() < 0.34,
+          x: 0, y: 0,
+        });
+      }
+    };
+
+    const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+    let scrollP = 0;
+    const onScroll = () => { scrollP = Math.min(1, Math.max(0, window.scrollY / (H * 0.75 || 1))); };
+
+    const frame = (t: number) => {
+      ctx.clearRect(0, 0, W, H);
+      const pe = ease(scrollP);
+      // 기판: 결합이 진행될수록 드러나는 얇은 슬래브
+      if (pe > 0.05) {
+        ctx.globalAlpha = 0.16 * pe;
+        ctx.fillStyle = colAccent;
+        const sy = H * 0.76 + 3 * 11 + 6;
+        ctx.beginPath();
+        ctx.moveTo(W * 0.12, sy); ctx.lineTo(W * 0.88, sy);
+        ctx.lineTo(W * 0.86, sy + 7); ctx.lineTo(W * 0.14, sy + 7);
+        ctx.closePath(); ctx.fill();
+      }
+      // 위치 계산
+      for (const p of pts) {
+        const pi = Math.min(1, Math.max(0, (pe - p.d) / (1 - p.d)));
+        const e = ease(pi);
+        const floatAmp = (1 - e) * 9;
+        p.x = p.sx + (p.tx - p.sx) * Math.pow(e, 1.15) + Math.sin(t / 1000 * p.sp + p.ph) * floatAmp;
+        p.y = p.sy + (p.ty - p.sy) * e + Math.cos(t / 1000 * p.sp * 0.8 + p.ph) * floatAmp * 0.6;
+      }
+      // 본드: 가까운 쌍 연결 (결합 진행에 따라 강해짐)
+      ctx.lineWidth = 1;
+      const R = 34;
+      for (let i = 0; i < pts.length; i++) {
+        for (let j = i + 1; j < pts.length; j++) {
+          const a = pts[i], b = pts[j];
+          const dx = a.x - b.x, dy = a.y - b.y;
+          const d2 = dx * dx + dy * dy;
+          if (d2 > R * R) continue;
+          const d = Math.sqrt(d2);
+          ctx.globalAlpha = (1 - d / R) * (0.1 + 0.34 * pe);
+          ctx.strokeStyle = a.ac || b.ac ? colAccent : colDot;
+          ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+        }
+      }
+      // 입자
+      for (const p of pts) {
+        ctx.globalAlpha = 0.55;
+        ctx.fillStyle = p.ac ? colAccent : colDot;
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    };
+
+    let raf = 0, running = false;
+    const loop = (t: number) => { frame(t); raf = requestAnimationFrame(loop); };
+    const start = () => { if (!running) { running = true; raf = requestAnimationFrame(loop); } };
+    const stop = () => { if (running) { running = false; cancelAnimationFrame(raf); } };
+
+    build(); onScroll();
+    if (reduced) {
+      scrollP = 1; frame(0); // 감속 선호: 결합 완료 상태 정지화
+    } else {
+      window.addEventListener('scroll', onScroll, { passive: true });
+      let rT: ReturnType<typeof setTimeout>;
+      window.addEventListener('resize', () => { clearTimeout(rT); rT = setTimeout(() => { build(); onScroll(); }, 150); });
+      new IntersectionObserver((es) => (es[0].isIntersecting ? start() : stop())).observe(hero);
+    }
+  })();
+</script>
 
 <style>
   .vn-grid {
