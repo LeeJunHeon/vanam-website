@@ -348,31 +348,36 @@ const waferFromLabel = waferKrws.length
                   <p class="mt-1 text-[11px] leading-relaxed text-ink/45">{bd.sensorLegend}</p>
                 </div>
 
-                {/* 02 — 센서 실측(기기·스펙트럼) + AI */}
-                <div class="flex flex-col rounded-xl border border-ink/10 bg-canvas p-4 shadow-lg shadow-ink/5">
-                  <div class="grid grid-cols-2 gap-2">
-                    <button type="button" class="equip-zoom cursor-zoom-in overflow-hidden rounded-lg border border-ink/10 transition hover:border-accent/60"
-                      data-full={equipLarge['/src/assets/equipment/bigdata/rga-device.jpg']} data-name="RGA" aria-label="RGA 확대">
-                      <Image src={bdAsset('rga-device.jpg')!} alt={locale === 'ko' ? 'RGA 잔류 가스 분석기' : 'RGA residual gas analyzer device'} width={420} class="aspect-[4/3] w-full object-cover" />
-                    </button>
-                    <button type="button" class="equip-zoom cursor-zoom-in overflow-hidden rounded-lg border border-ink/10 transition hover:border-accent/60"
-                      data-full={equipLarge['/src/assets/equipment/bigdata/rga-spectrum.png']} data-name="RGA spectrum" aria-label="RGA 스펙트럼 확대">
-                      <Image src={bdAsset('rga-spectrum.png')!} alt={locale === 'ko' ? 'RGA 실측 잔류 가스 스펙트럼' : 'Measured residual gas spectrum from RGA'} width={420} class="aspect-[4/3] w-full object-cover" />
-                    </button>
+                {/* 02 — 센서 실측(기기·스펙트럼) + AI: 3그룹을 세로로 고르게 분배해
+                    옆 컬럼들과 높이 밸런스를 맞춘다(하단 몰림 여백 제거). */}
+                <div class="flex flex-col justify-between gap-3 rounded-xl border border-ink/10 bg-canvas p-4 shadow-lg shadow-ink/5">
+                  <div>
+                    <div class="grid grid-cols-2 gap-2">
+                      <button type="button" class="equip-zoom cursor-zoom-in overflow-hidden rounded-lg border border-ink/10 transition hover:border-accent/60"
+                        data-full={equipLarge['/src/assets/equipment/bigdata/rga-device.jpg']} data-name="RGA" aria-label="RGA 확대">
+                        <Image src={bdAsset('rga-device.jpg')!} alt={locale === 'ko' ? 'RGA 잔류 가스 분석기' : 'RGA residual gas analyzer device'} width={420} class="aspect-[4/3] w-full object-cover" />
+                      </button>
+                      <button type="button" class="equip-zoom cursor-zoom-in overflow-hidden rounded-lg border border-ink/10 transition hover:border-accent/60"
+                        data-full={equipLarge['/src/assets/equipment/bigdata/rga-spectrum.png']} data-name="RGA spectrum" aria-label="RGA 스펙트럼 확대">
+                        <Image src={bdAsset('rga-spectrum.png')!} alt={locale === 'ko' ? 'RGA 실측 잔류 가스 스펙트럼' : 'Measured residual gas spectrum from RGA'} width={420} class="aspect-[4/3] w-full object-cover" />
+                      </button>
+                    </div>
+                    <p class="mt-1.5 text-[11px] text-ink/45">{bd.rgaCap}</p>
                   </div>
-                  <p class="mt-1.5 text-[11px] text-ink/45">{bd.rgaCap}</p>
-                  <div class="mt-3 grid grid-cols-2 gap-2">
-                    <button type="button" class="equip-zoom cursor-zoom-in overflow-hidden rounded-lg border border-ink/10 transition hover:border-accent/60"
-                      data-full={equipLarge['/src/assets/equipment/bigdata/oes-device.jpg']} data-name="OES" aria-label="OES 확대">
-                      <Image src={bdAsset('oes-device.jpg')!} alt={locale === 'ko' ? 'OES 광학 발광 분광기' : 'OES optical emission spectrometer device'} width={420} class="aspect-[4/3] w-full object-cover" />
-                    </button>
-                    <button type="button" class="equip-zoom cursor-zoom-in overflow-hidden rounded-lg border border-ink/10 transition hover:border-accent/60"
-                      data-full={equipLarge['/src/assets/equipment/bigdata/oes-spectrum.png']} data-name="OES spectrum" aria-label="OES 스펙트럼 확대">
-                      <Image src={bdAsset('oes-spectrum.png')!} alt={locale === 'ko' ? 'OES 발광 스펙트럼 그래프' : 'Optical emission spectrum graph from OES'} width={420} class="aspect-[4/3] w-full object-cover" />
-                    </button>
+                  <div>
+                    <div class="grid grid-cols-2 gap-2">
+                      <button type="button" class="equip-zoom cursor-zoom-in overflow-hidden rounded-lg border border-ink/10 transition hover:border-accent/60"
+                        data-full={equipLarge['/src/assets/equipment/bigdata/oes-device.jpg']} data-name="OES" aria-label="OES 확대">
+                        <Image src={bdAsset('oes-device.jpg')!} alt={locale === 'ko' ? 'OES 광학 발광 분광기' : 'OES optical emission spectrometer device'} width={420} class="aspect-[4/3] w-full object-cover" />
+                      </button>
+                      <button type="button" class="equip-zoom cursor-zoom-in overflow-hidden rounded-lg border border-ink/10 transition hover:border-accent/60"
+                        data-full={equipLarge['/src/assets/equipment/bigdata/oes-spectrum.png']} data-name="OES spectrum" aria-label="OES 스펙트럼 확대">
+                        <Image src={bdAsset('oes-spectrum.png')!} alt={locale === 'ko' ? 'OES 발광 스펙트럼 그래프' : 'Optical emission spectrum graph from OES'} width={420} class="aspect-[4/3] w-full object-cover" />
+                      </button>
+                    </div>
+                    <p class="mt-1.5 text-[11px] text-ink/45">{bd.oesCap}</p>
                   </div>
-                  <p class="mt-1.5 text-[11px] text-ink/45">{bd.oesCap}</p>
-                  <div class="mt-3 rounded-lg bg-accent px-4 py-3">
+                  <div class="rounded-lg bg-accent px-4 py-3">
                     <p class="text-sm font-bold text-white">{bd.aiTitle}</p>
                     <p class="mt-0.5 text-[11px] text-white/75">{bd.aiSub}</p>
                   </div>

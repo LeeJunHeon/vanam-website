@@ -369,7 +369,7 @@
       },
       "p2VizSource": "Source: MarketsandMarkets, MMR, Precedence Research, Fact.MR",
       "p2TargetLabel": "Target applications",
-      "p2Targets": ["Thermal sensing", "Fire & safety systems", "Battery protection circuits", "Smart electronics", "IR sensing", "Smart glass"]
+      "p2Targets": ["thermal sensing", "fire & safety systems", "battery protection circuits", "smart electronics", "IR sensing", "smart glass"]
     },
     "about": {
       "heroTitle": {
