@@ -175,8 +175,15 @@ const description = home.metaDescription;
 
     let raf = 0, running = false;
     const loop = () => {
-      play += (target - play) * 0.18;
-      if (Math.abs(target - play) < 0.02) play = target;
+      if (Math.abs(target - play) > 0.02) {
+        play += (target - play) * 0.18;            // 스크롤 추적
+      } else {
+        // 정지 정착: 소수 프레임에 머물면 크로스페이드가 이중상(잔상)으로 남으므로
+        // 가장 가까운 정수 프레임으로 미세 수렴 → 단일 선명 프레임
+        const snap = Math.max(0, Math.min(N - 1, Math.round(target)));
+        play += (snap - play) * 0.14;
+        if (Math.abs(snap - play) < 0.01) play = snap;
+      }
       render();
       raf = requestAnimationFrame(loop);
     };
