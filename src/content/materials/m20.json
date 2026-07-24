@@ -2,5 +2,9 @@
   "system": "sputter",
   "category": "Metal",
   "formula": "Bi",
-  "order": 20
+  "order": 28,
+  "name": "Bismuth",
+  "name_ko": "비스무트",
+  "description": "Bismuth (Bi) thin films deposited by sputtering and evaporation — used for thermoelectric and topological-material research.",
+  "description_ko": "스퍼터링·증발 증착으로 형성하는 비스무트(Bi) 박막입니다. 열전·위상물질 연구에 활용됩니다."
 }

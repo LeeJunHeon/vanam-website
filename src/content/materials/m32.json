@@ -2,5 +2,9 @@
   "system": "ald",
   "category": "Oxide",
   "formula": "Ga₂O₃",
-  "order": 32
+  "order": 44,
+  "name": "Gallium Oxide",
+  "name_ko": "산화 갈륨",
+  "description": "Gallium oxide (Ga₂O₃) by ALD — ultra-wide-bandgap conformal films for power-device and UV research.",
+  "description_ko": "ALD로 성장하는 산화 갈륨(Ga₂O₃)입니다. 전력소자·UV 연구용 초광대역 컨포멀 박막입니다."
 }

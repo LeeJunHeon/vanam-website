@@ -1,0 +1,10 @@
+{
+  "system": "sputter",
+  "category": "Oxide",
+  "formula": "SiO₂",
+  "order": 13,
+  "name": "Silicon Dioxide",
+  "name_ko": "이산화 규소",
+  "description": "Silicon dioxide (SiO₂) films by RF magnetron sputtering. A 107.6 nm amorphous film shows RMS roughness of 1.238 nm and n = 1.457 @ 587 nm — the universal low-index dielectric for insulation and optical multilayers. Targets: 99.9 %, 2–3 in.",
+  "description_ko": "RF 마그네트론 스퍼터링으로 증착하는 이산화 규소(SiO₂) 박막입니다. 107.6 nm 비정질 막 기준 RMS 거칠기 1.238 nm, 굴절률 1.457 @ 587 nm로 절연·광학 다층막의 표준 저굴절 유전체입니다. 타깃: 순도 99.9 %, 2–3인치."
+}

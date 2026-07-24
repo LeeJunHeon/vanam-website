@@ -2,6 +2,10 @@
   "system": "ald",
   "category": "Oxide",
   "formula": "ZrO₂",
-  "order": 27,
-  "home": 12
+  "order": 39,
+  "home": 12,
+  "name": "Zirconium Dioxide",
+  "name_ko": "이산화 지르코늄",
+  "description": "Zirconium dioxide (ZrO₂) by ALD — a high-k dielectric for DRAM capacitors and optical coatings.",
+  "description_ko": "ALD로 성장하는 이산화 지르코늄(ZrO₂)입니다. DRAM 커패시터·광학 코팅용 고유전 소재입니다."
 }

@@ -1,0 +1,10 @@
+{
+  "system": "sputter",
+  "category": "Oxide",
+  "formula": "Al₂O₃",
+  "order": 9,
+  "name": "Aluminium Oxide",
+  "name_ko": "산화 알루미늄",
+  "description": "Aluminium oxide (Al₂O₃) thin films by sputtering — a hard, chemically stable dielectric for insulation, passivation and protective optical coatings.",
+  "description_ko": "스퍼터링으로 증착하는 산화 알루미늄(Al₂O₃) 박막입니다. 경도와 화학적 안정성이 높아 절연·패시베이션·보호 광학 코팅에 쓰입니다."
+}

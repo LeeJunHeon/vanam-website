@@ -1,0 +1,10 @@
+{
+  "system": "sputter",
+  "category": "Oxide",
+  "formula": "Ga₂O₃",
+  "order": 10,
+  "name": "Gallium Oxide",
+  "name_ko": "산화 갈륨",
+  "description": "Gallium oxide (Ga₂O₃) ultra-wide-bandgap films by sputtering — a rising material for high-power electronics and solar-blind UV photodetectors.",
+  "description_ko": "스퍼터링으로 증착하는 초광대역 산화 갈륨(Ga₂O₃) 박막입니다. 고전력 전자소자와 solar-blind UV 광검출기 분야에서 주목받는 소재입니다."
+}

@@ -2,5 +2,9 @@
   "system": "sputter",
   "category": "Metal",
   "formula": "Ni",
-  "order": 19
+  "order": 27,
+  "name": "Nickel",
+  "name_ko": "니켈",
+  "description": "Nickel (Ni) thin films deposited by sputtering and evaporation — used for magnetic layers and contact metallization.",
+  "description_ko": "스퍼터링·증발 증착으로 형성하는 니켈(Ni) 박막입니다. 자성층·컨택 금속화에 활용됩니다."
 }

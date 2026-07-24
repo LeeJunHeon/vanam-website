@@ -2,6 +2,10 @@
   "system": "sputter",
   "category": "Nitride",
   "formula": "TiN",
-  "order": 9,
-  "home": 9
+  "order": 15,
+  "home": 9,
+  "name": "Titanium Nitride",
+  "name_ko": "질화 티타늄",
+  "description": "Titanium nitride (TiN) films by RF magnetron sputtering — a conductive, diffusion-barrier nitride for electrodes, hard coatings and plasmonics. Targets: 99.99 %, 2 in.",
+  "description_ko": "RF 마그네트론 스퍼터링으로 증착하는 질화 티타늄(TiN) 박막입니다. 전도성·확산 방지 특성으로 전극, 하드 코팅, 플라즈모닉스에 쓰입니다. 타깃: 순도 99.99 %, 2인치."
 }

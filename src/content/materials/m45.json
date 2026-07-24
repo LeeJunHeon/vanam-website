@@ -1,0 +1,10 @@
+{
+  "system": "sputter",
+  "category": "Metal",
+  "formula": "Pd",
+  "order": 33,
+  "name": "Palladium",
+  "name_ko": "팔라듐",
+  "description": "Palladium (Pd) thin films deposited by sputtering and evaporation — used for hydrogen sensing and catalytic contacts. Targets: 99.99 %, 2 in.",
+  "description_ko": "스퍼터링·증발 증착으로 형성하는 팔라듐(Pd) 박막입니다. 수소 감지·촉매 전극에 활용됩니다. 타깃: 순도 99.99 %, 2 인치."
+}

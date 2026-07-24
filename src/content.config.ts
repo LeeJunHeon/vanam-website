@@ -84,7 +84,7 @@ const materials = defineCollection({
   loader: glob({ pattern: '*.json', base: './src/content/materials' }),
   schema: z.object({
     system: z.enum(['sputter', 'ald']),  // sputter = PVD(Sputter & Evaporator)
-    category: z.enum(['Oxide', 'Nitride', 'Metal']),
+    category: z.enum(['Oxide', 'Nitride', 'Metal', 'Semiconductor']),
     formula: z.string(),
     order: z.number(),                   // technology 그룹 내 표시 순서
     home: opt(z.number()),         // index 큐레이션 노출 순서 (없으면 미노출)

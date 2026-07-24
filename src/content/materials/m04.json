@@ -3,5 +3,9 @@
   "category": "Oxide",
   "formula": "Ta₂O₅",
   "order": 4,
-  "home": 4
+  "home": 4,
+  "name": "Tantalum Pentoxide",
+  "name_ko": "오산화 탄탈럼",
+  "description": "Tantalum pentoxide (Ta₂O₅) low-loss optical films by RF magnetron sputtering. A 132.4 nm amorphous film shows RMS roughness of just 0.291 nm and n = 2.137 @ 587 nm with zero extinction into the IR — the waveguide material of choice for photonic integrated circuits. Targets: 99.95 %, 3 in.",
+  "description_ko": "RF 마그네트론 스퍼터링으로 증착하는 저손실 광학용 오산화 탄탈럼(Ta₂O₅) 박막입니다. 132.4 nm 비정질 막 기준 RMS 거칠기 0.291 nm, 굴절률 2.137 @ 587 nm, 적외선 대역까지 소광계수 0으로 광집적회로(PIC) 도파로 소재로 적합합니다. 타깃: 순도 99.95 %, 3인치."
 }

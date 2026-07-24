@@ -2,5 +2,9 @@
   "system": "ald",
   "category": "Oxide",
   "formula": "HfO₂",
-  "order": 26
+  "order": 38,
+  "name": "Hafnium Oxide",
+  "name_ko": "산화 하프늄",
+  "description": "Hafnium oxide (HfO₂) by thermal ALD (TDMAH + H₂O/O₃, 200–250 °C, up to 12-inch). Breakdown above 5 MV/cm with ε > 20 and 1.0 Å/cycle growth — the high-k gate and capacitor dielectric of modern devices.",
+  "description_ko": "열 ALD(TDMAH + H₂O/O₃, 200–250 °C, 최대 12인치)로 성장하는 산화 하프늄(HfO₂)입니다. 절연파괴전계 5 MV/cm 이상, 유전율 20 이상, 성장률 1.0 Å/cycle — 현대 소자의 고유전 게이트·커패시터 유전막입니다."
 }

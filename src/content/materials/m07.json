@@ -3,5 +3,9 @@
   "category": "Oxide",
   "formula": "ITO",
   "order": 7,
-  "home": 7
+  "home": 7,
+  "name": "Indium Tin Oxide",
+  "name_ko": "인듐 주석 산화물",
+  "description": "Indium tin oxide (ITO) transparent conductive films by RF magnetron sputtering. A 125 nm film delivers 44 Ω/sq sheet resistance (ρ = 5.49 × 10⁻⁶ Ω·m) with > 90 % transmittance — the workhorse transparent electrode for displays, touch panels and smart glass. Targets: 99.5 %, 3 in.",
+  "description_ko": "RF 마그네트론 스퍼터링으로 증착하는 투명 전도성 인듐 주석 산화물(ITO) 박막입니다. 125 nm 막 기준 면저항 44 Ω/sq(비저항 5.49 × 10⁻⁶ Ω·m), 투과율 90 % 이상으로 디스플레이·터치패널·스마트 글라스의 표준 투명 전극입니다. 타깃: 순도 99.5 %, 3인치."
 }

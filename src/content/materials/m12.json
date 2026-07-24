@@ -2,5 +2,9 @@
   "system": "sputter",
   "category": "Nitride",
   "formula": "SiNₓ",
-  "order": 12
+  "order": 18,
+  "name": "Silicon Nitride",
+  "name_ko": "질화 규소",
+  "description": "Silicon nitride (SiNₓ) films by RF magnetron sputtering. A 37 nm film shows n = 2.012 @ 587 nm (2.061 @ 1525 nm) with near-zero extinction — a passivation and photonic-waveguide staple. Targets: 99.99 %, 3 in.",
+  "description_ko": "RF 마그네트론 스퍼터링으로 증착하는 질화 규소(SiNₓ) 박막입니다. 37 nm 막 기준 굴절률 2.012 @ 587 nm(1525 nm에서 2.061), 소광계수 ≈ 0으로 패시베이션·포토닉 도파로에 널리 쓰입니다. 타깃: 순도 99.99 %, 3인치."
 }

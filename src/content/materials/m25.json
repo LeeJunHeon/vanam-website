@@ -2,6 +2,10 @@
   "system": "ald",
   "category": "Oxide",
   "formula": "Al₂O₃",
-  "order": 25,
-  "home": 11
+  "order": 37,
+  "home": 11,
+  "name": "Aluminium Oxide",
+  "name_ko": "산화 알루미늄",
+  "description": "Aluminium oxide (Al₂O₃) by thermal ALD (TMA + H₂O/O₃, 150–250 °C, up to 12-inch). Films show breakdown above 7 MV/cm, ε > 7, n = 1.667 @ 587 nm at 1.1 Å/cycle — the reference conformal dielectric for gate stacks and surface passivation.",
+  "description_ko": "열 ALD(TMA + H₂O/O₃, 150–250 °C, 최대 12인치)로 성장하는 산화 알루미늄(Al₂O₃)입니다. 절연파괴전계 7 MV/cm 이상, 유전율 7 이상, 굴절률 1.667 @ 587 nm, 성장률 1.1 Å/cycle — 게이트 유전막·표면 패시베이션의 기준 소재입니다."
 }

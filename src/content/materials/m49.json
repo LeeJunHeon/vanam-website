@@ -1,0 +1,10 @@
+{
+  "system": "ald",
+  "category": "Oxide",
+  "formula": "SiO₂",
+  "order": 47,
+  "name": "Silicon Dioxide",
+  "name_ko": "이산화 규소",
+  "description": "Silicon dioxide (SiO₂) by ALD — conformal low-index dielectric for spacers, liners and optical stacks.",
+  "description_ko": "ALD로 성장하는 이산화 규소(SiO₂)입니다. 스페이서·라이너·광학 적층용 컨포멀 저굴절 유전체입니다."
+}

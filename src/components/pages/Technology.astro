@@ -32,8 +32,8 @@ const ald = groupBySystem('ald');
 
 // 소재 카테고리 라벨 (표시용) — 로직(enum)은 그대로, 표시만 locale별.
 const catLabel = locale === 'ko'
-  ? { Oxide: '산화물', Nitride: '질화물', Metal: '금속' }
-  : { Oxide: 'Oxide', Nitride: 'Nitride', Metal: 'Metal' };
+  ? { Oxide: '산화물', Nitride: '질화물', Metal: '금속', Semiconductor: '반도체' }
+  : { Oxide: 'Oxide', Nitride: 'Nitride', Metal: 'Metal', Semiconductor: 'Semiconductor' };
 
 // 물질 분류 → 해당 제품 페이지 ID. 견적 CTA 를 그 제품(견적 폼)으로 보낸다.
 const matToProduct: Record<string, string> = { Oxide: 'oxides', Nitride: 'nitrides', Metal: 'metals' };

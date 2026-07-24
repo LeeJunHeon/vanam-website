@@ -109,7 +109,7 @@ if (popup.enabled && popup.image && popupImages[popup.image]) {
 const popupHref = popup.linkUrl
   ? (/^https?:\/\//.test(popup.linkUrl) ? popup.linkUrl : localizedHref(popup.linkUrl))
   : null;
-const popupAlt = popup.alt || (isKo ? 'VANAM 공지' : 'VANAM notice');
+const popupAlt = popup.alt || (isKo ? 'VanaM 공지' : 'VanaM notice');
 const fl = isKo
   ? { ceo: '대표', bizNo: '사업자등록번호', mailOrder: '통신판매업 신고번호',
       privacy: '개인정보처리방침', terms: '이용약관', refund: '환불·교환 정책', lookup: '주문 조회' }
@@ -406,7 +406,7 @@ const childHref = (path) => {
     )}
     <header class="sticky top-0 z-50 border-b border-ink/10 bg-canvas/80 backdrop-blur">
       <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        <a href={localizedHref('/')} class="shrink-0" aria-label="VANAM">
+        <a href={localizedHref('/')} class="shrink-0" aria-label="VanaM">
           <Image src={logo} alt="VANAM — VANA Materials LAB." width={200} height={50} class="logo-dark h-9 w-auto md:h-10" loading="eager" />
           <Image src={logoLight} alt="VANAM — VANA Materials LAB." width={200} height={50} class="logo-light h-9 w-auto md:h-10" loading="eager" />
         </a>

@@ -2,6 +2,10 @@
   "system": "ald",
   "category": "Oxide",
   "formula": "HZO",
-  "order": 28,
-  "home": 13
+  "order": 40,
+  "home": 13,
+  "name": "Hafnium Zirconium Oxide",
+  "name_ko": "하프늄 지르코늄 산화물",
+  "description": "Hafnium zirconium oxide (HZO) by ALD — the leading ferroelectric oxide for FeRAM and ferroelectric FET research.",
+  "description_ko": "ALD로 성장하는 하프늄 지르코늄 산화물(HZO)입니다. FeRAM·강유전 FET 연구를 이끄는 강유전 산화물입니다."
 }

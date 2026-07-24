@@ -51,7 +51,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         return json({ ok: false, error: 'not_payable' }, 409);
       }
       valueUsd = amt.toFixed(2);
-      description = `VANAM quote ${ref}`;
+      description = `VanaM quote ${ref}`;
     } else {
       const o = await d.prepare(`SELECT * FROM orders WHERE id = ?`).bind(ref).first<Record<string, unknown>>();
       if (!o || String(o.buyer_email ?? '').toLowerCase() !== email) return json({ ok: false, error: 'not_found' }, 404);
@@ -61,7 +61,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       if (!(amount > 0)) return json({ ok: false, error: 'not_payable' }, 409);
       const usd = String(o.currency ?? 'KRW') === 'USD' ? amount : amount / (company.usdRate || 1500);
       valueUsd = usd.toFixed(2);
-      description = `VANAM order ${ref}`;
+      description = `VanaM order ${ref}`;
     }
 
     const created = await ppCreateOrder(valueUsd, ref, description);

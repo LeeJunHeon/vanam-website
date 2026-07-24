@@ -3,5 +3,9 @@
   "category": "Oxide",
   "formula": "V₂O₅",
   "order": 2,
-  "home": 2
+  "home": 2,
+  "name": "Vanadium Pentoxide",
+  "name_ko": "오산화 바나듐",
+  "description": "Vanadium pentoxide (V₂O₅) thin films deposited by RF magnetron sputtering — a layered vanadium oxide used for electrochromic devices, gas sensors and battery cathode research.",
+  "description_ko": "RF 마그네트론 스퍼터링으로 증착하는 오산화 바나듐(V₂O₅) 박막입니다. 층상 구조의 바나듐 산화물로 전기변색 소자, 가스 센서, 배터리 양극 연구에 활용됩니다."
 }

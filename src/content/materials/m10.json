@@ -2,6 +2,10 @@
   "system": "sputter",
   "category": "Nitride",
   "formula": "AlN",
-  "order": 10,
-  "home": 10
+  "order": 16,
+  "home": 10,
+  "name": "Aluminium Nitride",
+  "name_ko": "질화 알루미늄",
+  "description": "Aluminium nitride (AlN) piezoelectric films by sputtering — the standard material for BAW/SAW acoustic devices and thermal-management dielectrics.",
+  "description_ko": "스퍼터링으로 증착하는 압전 질화 알루미늄(AlN) 박막입니다. BAW/SAW 음향 소자와 방열 유전체의 표준 소재입니다."
 }

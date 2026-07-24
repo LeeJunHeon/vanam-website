@@ -30,7 +30,7 @@
       "ctaHeading": "Thin-film solutions, built together",
       "ctaBodyHtml": "Get in touch about custom thin-film R&D, analysis and measurement, and foundry services.",
       "ctaButton": "Contact us →",
-      "metaTitle": "VANAM — Next-generation semiconductor thin films",
+      "metaTitle": "VanaM — Next-generation semiconductor thin films",
       "metaDescription": "VanaM (반암) develops next-generation semiconductor thin films via eco-friendly vacuum deposition — custom R&D, analysis, and an urban micro foundry in Seoul."
     },
     "technology": {
@@ -81,12 +81,12 @@
       "alsoAvailable": "Also available: process big-data collection.",
       "servicesHeading": "Services",
       "applicationsHeading": "Applications",
-      "metaTitle": "Technology | VANAM",
-      "metaDescription": "VANAM's thin-film technology: energy-responsive films, PVD/ALD deposition, an oxide-nitride-metal library, plus R&D, analysis and foundry services.",
+      "metaTitle": "Technology | VanaM",
+      "metaDescription": "VanaM's thin-film technology: energy-responsive films, PVD/ALD deposition, an oxide-nitride-metal library, plus R&D, analysis and foundry services.",
       "compareHeading": "Bulk vs thin film",
       "compareSub": "The same function, made a different way — and the numbers are not close.",
       "compareBulk": "Conventional bulk",
-      "compareFilm": "VANAM thin film",
+      "compareFilm": "VanaM thin film",
       "processHeading": "How a deposition order works",
       "processSub": "From your specifications to a film in your hands.",
       "process": [
@@ -389,9 +389,9 @@
       "ctaHeadingHtml": "Let's build what's next.",
       "ctaBodyHtml": "Partnership, supply, or technical collaboration — we're ready to talk.",
       "ctaButton": "Contact us",
-      "metaTitle": "About | VANAM",
+      "metaTitle": "About | VanaM",
       "metaDescription": "VanaM(반암) is a deep-tech startup developing next-generation semiconductor thin films via eco-friendly vacuum deposition — vision, team, and history.",
-      "eyebrowAbout": "About VANAM",
+      "eyebrowAbout": "About VanaM",
       "companyHeading": "Company",
       "visionEyebrow": "Vision",
       "teamHeading": "Team",
@@ -415,7 +415,7 @@
       "metaDescription": "News and press coverage of VanaM (반암) — semiconductor thin-film materials, VM1, investment, and exhibitions."
     },
     "contact": {
-      "metaTitle": "Contact | VANAM",
+      "metaTitle": "Contact | VanaM",
       "metaDescription": "Get in touch with VanaM (반암) — technical collaboration, supply inquiries and partnerships.",
       "eyebrow": "Contact",
       "heroTitle": {
@@ -537,7 +537,7 @@
       }
     },
     "shop": {
-      "metaTitle": "Product | VANAM",
+      "metaTitle": "Product | VanaM",
       "metaDescription": "Buy VanaM thin-film samples, coating and analysis services online.",
       "eyebrow": "Products",
       "heroTitle": {
@@ -579,13 +579,13 @@
       "waferIntro": "Choose a wafer type below. Every item is quote-based — request pricing for the exact specification you need.",
       "waferEmpty": "Wafer lineup is being prepared. Please check back soon.",
       "waferBack": "Back to Products",
-      "waferMetaTitle": "Wafers — VANAM",
-      "waferMetaDescription": "Silicon and specialty wafers from VANAM. Quote-based; request pricing for your exact specification.",
+      "waferMetaTitle": "Wafers — VanaM",
+      "waferMetaDescription": "Silicon and specialty wafers from VanaM. Quote-based; request pricing for your exact specification.",
       "viewList": "View lineup",
       "refundLabel": "Refund Policy"
     },
     "cartPage": {
-      "metaTitle": "Cart | VANAM",
+      "metaTitle": "Cart | VanaM",
       "metaDescription": "Your VanaM cart.",
       "eyebrow": "Cart",
       "heading": "Your cart",
@@ -634,7 +634,7 @@
       "ctaHeading": "함께 만들 박막 솔루션",
       "ctaBodyHtml": "맞춤형 박막 R&D · 분석/측정 · 파운드리 서비스에 대해 문의해 주세요.",
       "ctaButton": "문의하기 →",
-      "metaTitle": "VANAM — 차세대 반도체 박막 소재",
+      "metaTitle": "VanaM — 차세대 반도체 박막 소재",
       "metaDescription": "반암(VanaM)은 친환경 진공 증착으로 차세대 반도체 박막을 개발합니다. 맞춤형 R&D, 분석·측정, 도심형 마이크로 파운드리를 제공합니다."
     },
     "technology": {
@@ -685,7 +685,7 @@
       "alsoAvailable": "공정 빅데이터 수집도 제공합니다.",
       "servicesHeading": "서비스",
       "applicationsHeading": "응용 분야",
-      "metaTitle": "기술·솔루션 | VANAM",
+      "metaTitle": "기술·솔루션 | VanaM",
       "metaDescription": "반암의 박막 기술: 에너지 감응형 박막, PVD/ALD 증착, 산화물·질화물·금속 소재 라이브러리, R&D·분석·파운드리 서비스.",
       "compareHeading": "기존 벌크 vs 박막",
       "compareSub": "같은 기능을 다른 방식으로 만듭니다 — 그리고 숫자가 비교되지 않습니다.",
@@ -976,7 +976,7 @@
       "p2Targets": ["열 감지", "화재·안전 시스템", "배터리 보호 회로", "스마트 전자기기", "IR 센싱", "스마트 글라스"]
     },
     "about": {
-      "metaTitle": "회사 소개 | VANAM",
+      "metaTitle": "회사 소개 | VanaM",
       "metaDescription": "반암(VanaM)은 친환경 진공 증착으로 차세대 반도체 박막을 개발하는 딥테크 스타트업입니다. 비전, 팀, 연혁을 소개합니다.",
       "heroTitle": {
         "line1": "Thin Films,",
@@ -1015,11 +1015,11 @@
       "heroTitle": "언론 속 반암",
       "heroSubtitleHtml": "반암의 박막 소재, 제품, 주요 성과에 대한 보도입니다.",
       "footnote": "외부 링크는 원문 기사로 연결됩니다.",
-      "metaTitle": "뉴스 | VANAM",
+      "metaTitle": "뉴스 | VanaM",
       "metaDescription": "반암(VanaM) 관련 보도 — 반도체 박막 소재, VM1, 투자 유치, 전시회 소식."
     },
     "contact": {
-      "metaTitle": "문의 | VANAM",
+      "metaTitle": "문의 | VanaM",
       "metaDescription": "반암(VanaM)에 기술 협력·소재 공급·파트너십을 문의하세요.",
       "eyebrow": "문의",
       "heroTitle": {
@@ -1141,7 +1141,7 @@
       }
     },
     "shop": {
-      "metaTitle": "제품 | VANAM",
+      "metaTitle": "제품 | VanaM",
       "metaDescription": "반암(VanaM)의 박막 시편·코팅·분석 서비스를 온라인으로 주문하세요.",
       "eyebrow": "제품",
       "heroTitle": {
@@ -1189,7 +1189,7 @@
       "refundLabel": "환불 규정"
     },
     "cartPage": {
-      "metaTitle": "장바구니 | VANAM",
+      "metaTitle": "장바구니 | VanaM",
       "metaDescription": "VanaM 장바구니.",
       "eyebrow": "장바구니",
       "heading": "장바구니",

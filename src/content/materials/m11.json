@@ -2,5 +2,9 @@
   "system": "sputter",
   "category": "Nitride",
   "formula": "AlScN",
-  "order": 11
+  "order": 17,
+  "name": "Aluminium Scandium Nitride",
+  "name_ko": "알루미늄 스칸듐 질화물",
+  "description": "Aluminium scandium nitride (AlScN) ferroelectric films by AlN–Sc co-sputtering (vacuum < 1.0 × 10⁻⁶ Torr, Si/Pt substrates). Films show a remanent polarization of 101.19 µC·cm⁻² with leakage below 1 × 10⁻⁸ A — enabling ferroelectric memory and next-generation piezo-MEMS. Targets: AlN 99.95 % + Sc 99.99 %, 3 in.",
+  "description_ko": "AlN·Sc 코스퍼터링(1.0 × 10⁻⁶ Torr 이하, Si/Pt 기판)으로 증착하는 강유전 알루미늄 스칸듐 질화물(AlScN) 박막입니다. 잔류분극 101.19 µC·cm⁻², 누설전류 1 × 10⁻⁸ A 이하로 강유전 메모리와 차세대 압전 MEMS를 겨냥합니다. 타깃: AlN 99.95 % + Sc 99.99 %, 3인치."
 }

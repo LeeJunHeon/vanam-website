@@ -3,5 +3,9 @@
   "category": "Oxide",
   "formula": "VO₂",
   "order": 1,
-  "home": 1
+  "home": 1,
+  "name": "Vanadium Dioxide",
+  "name_ko": "이산화 바나듐",
+  "description": "Vanadium dioxide (VO₂) thermochromic thin films — VanaM's signature material — deposited by RF magnetron sputtering below 1.0 × 10⁻⁶ Torr. Films on Si (100) show (-402)-oriented polycrystallinity with a resistance ON/OFF ratio above 10⁴ and an insulator–metal transition below 60 °C, enabling smart windows, IR modulation and thermal switching. Sputtering targets: 99.99 % purity, 4 in.",
+  "description_ko": "반암의 시그니처 소재인 이산화 바나듐(VO₂) 열변색 박막입니다. 1.0 × 10⁻⁶ Torr 이하 진공에서 RF 마그네트론 스퍼터링으로 증착하며, Si (100) 기판에서 (-402) 배향 다결정, 저항 ON/OFF 비 10⁴ 이상, 60 °C 이하의 금속–절연체 전이를 보입니다. 스마트 윈도우·적외선 변조·열 스위칭에 활용됩니다. 타깃: 순도 99.99 %, 4인치."
 }

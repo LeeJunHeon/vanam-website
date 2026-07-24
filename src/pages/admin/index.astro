@@ -1,5 +1,5 @@
 ---
-// VANAM 관리자 — 견적·문의 관리
+// VanaM 관리자 — 견적·문의 관리
 // 접근: 비밀번호 (Cloudflare 워커 Secret: ADMIN_PASSWORD)
 // 도메인이 붙으면 Cloudflare Access(구글 로그인)로 전환 권장.
 export const prerender = false;
@@ -108,7 +108,7 @@ const spec = (r: Row) =>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex, nofollow" />
-    <title>VANAM 관리자</title>
+    <title>VanaM 관리자</title>
     <link rel="icon" href="/favicon.ico" />
     <!-- global.css 를 쓰면 :root{color-scheme:dark} 등 전역 규칙을 그대로 상속받는다 -->
     <!--
@@ -136,7 +136,7 @@ const spec = (r: Row) =>
       <!-- ── 로그인 ─────────────────────────────────── -->
       <main class="flex min-h-screen items-center justify-center px-6">
         <div class="w-full max-w-sm">
-          <h1 class="text-2xl font-bold">VANAM 관리자</h1>
+          <h1 class="text-2xl font-bold">VanaM 관리자</h1>
           {configured ? (
             <>
               <p class="mt-2 text-sm text-ink/50">비밀번호를 입력하세요.</p>
@@ -168,7 +168,7 @@ const spec = (r: Row) =>
       <main class="mx-auto max-w-7xl px-6 py-10">
         <header class="flex flex-wrap items-center justify-between gap-4 border-b border-ink/10 pb-6">
           <div>
-            <h1 class="text-2xl font-bold">VANAM 관리자</h1>
+            <h1 class="text-2xl font-bold">VanaM 관리자</h1>
             <p class="mt-1 text-sm text-ink/45">견적 {quotes.length}건 · 문의 {generals.length}건</p>
           </div>
           <div class="flex items-center gap-2">

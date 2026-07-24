@@ -1,0 +1,10 @@
+{
+  "system": "sputter",
+  "category": "Nitride",
+  "formula": "NbN",
+  "order": 19,
+  "name": "Niobium Nitride",
+  "name_ko": "질화 나이오븀",
+  "description": "Niobium nitride (NbN) superconducting films by sputtering — a key material for superconducting nanowire single-photon detectors (SNSPD) and quantum circuits.",
+  "description_ko": "스퍼터링으로 증착하는 초전도 질화 나이오븀(NbN) 박막입니다. 초전도 나노와이어 단일광자검출기(SNSPD)와 양자 회로의 핵심 소재입니다."
+}

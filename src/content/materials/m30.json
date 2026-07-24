@@ -2,5 +2,9 @@
   "system": "ald",
   "category": "Oxide",
   "formula": "TiO₂",
-  "order": 30
+  "order": 42,
+  "name": "Titanium Dioxide",
+  "name_ko": "이산화 티타늄",
+  "description": "Titanium dioxide (TiO₂) by thermal ALD (TTIP 0.3 Å/cycle or TDMAT 0.5 Å/cycle + H₂O/O₃, 100–250 °C, up to 12-inch). n = 2.339 @ 587 nm — for optical coatings, photocatalytic layers and high-k dielectrics.",
+  "description_ko": "열 ALD(TTIP 0.3 Å/cycle 또는 TDMAT 0.5 Å/cycle + H₂O/O₃, 100–250 °C, 최대 12인치)로 성장하는 이산화 티타늄(TiO₂)입니다. 굴절률 2.339 @ 587 nm — 광학 코팅·광촉매층·고유전막에 활용됩니다."
 }
