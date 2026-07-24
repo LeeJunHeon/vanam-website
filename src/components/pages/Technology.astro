@@ -715,10 +715,10 @@ const techAsset = (pth: string) => techImages[`/src/assets/tech/${pth}`]?.defaul
 
               <p class="mt-4 inline-flex items-center gap-2 rounded-md border border-accent/30 bg-accent/[0.08] px-3 py-1 text-[13px] font-bold text-accent">Thin-Film Specifications</p>
               {p.figs.length > 0 && (
-                <div class={'mt-3 grid grid-cols-2 gap-2 ' + (p.figs.length <= 2 ? 'sm:grid-cols-2' : p.figs.length === 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-4')}>
+                <div class={'mt-3 grid grid-cols-2 gap-2 ' + (p.figs.length <= 2 ? 'sm:grid-cols-2' : 'sm:grid-cols-3')}>
                   {p.figs.map((src, i) => (
                     <div class="flex items-center justify-center rounded-lg border border-ink/10 bg-plate p-1.5">
-                      <img src={src} alt={`${p.name} characterization data ${i + 1}`} class="max-h-36 w-auto max-w-full" loading="lazy" />
+                      <img src={src} alt={`${p.name} characterization data ${i + 1}`} class="max-h-40 w-auto max-w-full" loading="lazy" />
                     </div>
                   ))}
                 </div>
@@ -748,12 +748,6 @@ const techAsset = (pth: string) => techImages[`/src/assets/tech/${pth}`]?.defaul
                 <>
                   <p class="mt-6 inline-flex items-center gap-2 rounded-md border border-accent/30 bg-accent/[0.08] px-3 py-1 text-[13px] font-bold text-accent">{p.band2Title}</p>
                   <div class="mt-3.5 flex flex-wrap items-start gap-6">
-                    {p.targetSrc && (
-                      <div class="w-36 shrink-0 text-center sm:w-40">
-                        <img src={p.targetSrc} alt={`${p.name} sputtering target`} class="mx-auto w-full rounded-lg drop-shadow-md" loading="lazy" />
-                        <span class="mt-2 inline-block rounded bg-ink/80 px-3 py-0.5 text-[11px] font-bold tracking-wide text-canvas">Target</span>
-                      </div>
-                    )}
                     {p.band2Specs.length > 0 && (
                       <ul class="min-w-0 flex-1 basis-60 space-y-1.5 border-l-2 border-accent/50 pl-4">
                         {p.band2Specs.map((sp) => {
@@ -773,6 +767,12 @@ const techAsset = (pth: string) => techImages[`/src/assets/tech/${pth}`]?.defaul
                           );
                         })}
                       </ul>
+                    )}
+                    {p.targetSrc && (
+                      <div class="w-36 shrink-0 text-center sm:w-40">
+                        <img src={p.targetSrc} alt={`${p.name} sputtering target`} class="mx-auto w-full rounded-lg drop-shadow-md" loading="lazy" />
+                        <span class="mt-2 inline-block rounded bg-ink/80 px-3 py-0.5 text-[11px] font-bold tracking-wide text-canvas">Target</span>
+                      </div>
                     )}
                   </div>
                 </>
