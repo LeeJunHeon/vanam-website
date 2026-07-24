@@ -4,8 +4,8 @@ export type ShipMode = 'free' | 'collect' | 'quote';
 
 export const SHIP_LABEL: Record<ShipMode, { ko: string; en: string }> = {
   free: {
-    ko: '무료 배송',
-    en: 'Free shipping',
+    ko: '무료 배송 (대한민국 한정)',
+    en: 'Free shipping (South Korea only)',
   },
   collect: {
     // 수령인이 자신의 택배사 계정(FedEx/DHL 등)으로 부담하는 방식.
