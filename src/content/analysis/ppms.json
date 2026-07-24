@@ -1,0 +1,7 @@
+{
+  "name": "PPMS",
+  "group": "device",
+  "description": "Physical property measurement system (2 K ~ 400 K)",
+  "description_ko": "물성 측정 시스템 (2 K ~ 400 K)",
+  "order": 7
+}

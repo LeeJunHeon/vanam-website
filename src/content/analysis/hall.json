@@ -1,0 +1,7 @@
+{
+  "name": "Hall",
+  "group": "device",
+  "description": "Hall effect measurement",
+  "description_ko": "홀 효과 측정",
+  "order": 6
+}

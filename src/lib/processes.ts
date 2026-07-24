@@ -37,8 +37,8 @@ export const MEASUREMENTS: ProcessDef[] = [
   { name: 'SheetResistance', unit: null, materials: [], isMeasurement: true },
   { name: 'Ellipsometer', unit: null, materials: [], isMeasurement: true },
   // Technology '분석·측정' 12종(물질 7 + 소자 5)을 선택지로 그대로 노출 — analysis 컬렉션 표기와 동일
-  { name: 'SEM', unit: null, materials: [], isMeasurement: true },
-  { name: 'TEM', unit: null, materials: [], isMeasurement: true },
+  { name: 'SEM (include EDS)', unit: null, materials: [], isMeasurement: true },
+  { name: 'TEM (include EDS)', unit: null, materials: [], isMeasurement: true },
   { name: 'XRD', unit: null, materials: [], isMeasurement: true },
   { name: 'XPS', unit: null, materials: [], isMeasurement: true },
   { name: 'UPS', unit: null, materials: [], isMeasurement: true },
@@ -49,6 +49,8 @@ export const MEASUREMENTS: ProcessDef[] = [
   { name: 'Pulse', unit: null, materials: [], isMeasurement: true },
   { name: 'Ferroelectric', unit: null, materials: [], isMeasurement: true },
   { name: 'Piezoelectric', unit: null, materials: [], isMeasurement: true },
+  { name: 'Hall', unit: null, materials: [], isMeasurement: true },
+  { name: 'PPMS', unit: null, materials: [], isMeasurement: true },
 ];
 
 // 제품 ID(products/*.json 파일명) → 물질 소재 분류 매핑.
