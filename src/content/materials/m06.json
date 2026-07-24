@@ -7,5 +7,24 @@
   "name": "Zinc Oxide",
   "name_ko": "산화 아연",
   "description": "Zinc oxide (ZnO) thin films by RF magnetron sputtering. An 85 nm film shows n = 1.986 @ 587 nm — a versatile wide-bandgap oxide for transparent electronics, piezoelectric layers and UV optoelectronics. Targets: 99.99 %, 2–3 in.",
-  "description_ko": "RF 마그네트론 스퍼터링으로 증착하는 산화 아연(ZnO) 박막입니다. 85 nm 막 기준 굴절률 1.986 @ 587 nm이며, 투명 전자소자·압전층·UV 광전자에 두루 쓰이는 광대역 산화물입니다. 타깃: 순도 99.99 %, 2–3인치."
+  "description_ko": "RF 마그네트론 스퍼터링으로 증착하는 산화 아연(ZnO) 박막입니다. 85 nm 막 기준 굴절률 1.986 @ 587 nm이며, 투명 전자소자·압전층·UV 광전자에 두루 쓰이는 광대역 산화물입니다. 타깃: 순도 99.99 %, 2–3인치.",
+  "filmSpecs": [
+    "Film-coated by RF magnetron sputtering vacuum < 1.0 × 10⁻⁶ Torr",
+    "Substrate: Si (100)",
+    "Thickness : 85 nm",
+    "Refractive Index (n) : 1.985522 (@ 587 nm)",
+    "Extinction Coefficient (k) : 0.000003 (@ 587 nm)"
+  ],
+  "band2Title": "Target Specifications",
+  "band2Specs": [
+    "Target Material : Zinc Oxide",
+    "Purity : 99.99%",
+    "Diameter : 2”, 3”"
+  ],
+  "figs": [
+    "fig-1.webp",
+    "fig-2.webp",
+    "fig-3.webp"
+  ],
+  "targetImg": "target.webp"
 }

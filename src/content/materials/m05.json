@@ -7,5 +7,24 @@
   "name": "Hafnium Oxide",
   "name_ko": "산화 하프늄",
   "description": "Hafnium oxide (HfO₂) thin films by RF magnetron sputtering (vacuum < 1.0 × 10⁻⁶ Torr, Si (100)). A 345.3 nm film shows n = 2.020 @ 587 nm with zero extinction — a high-k dielectric and optical coating staple. Targets: 99.9 %, 2–3 in.",
-  "description_ko": "RF 마그네트론 스퍼터링(1.0 × 10⁻⁶ Torr 이하, Si (100))으로 증착하는 산화 하프늄(HfO₂) 박막입니다. 345.3 nm 막 기준 굴절률 2.020 @ 587 nm, 소광계수 0으로 고유전(high-k) 절연막·광학 코팅에 폭넓게 쓰입니다. 타깃: 순도 99.9 %, 2–3인치."
+  "description_ko": "RF 마그네트론 스퍼터링(1.0 × 10⁻⁶ Torr 이하, Si (100))으로 증착하는 산화 하프늄(HfO₂) 박막입니다. 345.3 nm 막 기준 굴절률 2.020 @ 587 nm, 소광계수 0으로 고유전(high-k) 절연막·광학 코팅에 폭넓게 쓰입니다. 타깃: 순도 99.9 %, 2–3인치.",
+  "filmSpecs": [
+    "Film-coated by RF magnetron sputtering vacuum < 1.0 × 10⁻⁶ Torr",
+    "Substrate: Si (100)",
+    "Thickness : 345.3 nm",
+    "Refractive Index (n) : 2.020440 (@ 587 nm)",
+    "Extinction Coefficient (k) : 0.000000 (@ 587 nm)"
+  ],
+  "band2Title": "Target Specifications",
+  "band2Specs": [
+    "Target Material : Hafnium Oxide",
+    "Purity : 99.9%",
+    "Diameter : 2”, 3”"
+  ],
+  "figs": [
+    "fig-1.webp",
+    "fig-2.webp",
+    "fig-3.webp"
+  ],
+  "targetImg": "target.webp"
 }

@@ -6,5 +6,22 @@
   "name": "Nickel Oxide",
   "name_ko": "산화 니켈",
   "description": "Nickel oxide (NiO) p-type oxide films by RF magnetron sputtering (Si (100)). A 50 nm film shows n = 2.118 @ 587 nm with zero extinction — used for hole-transport layers, electrochromics and resistive switching. Targets: 99.99 %, 3 in.",
-  "description_ko": "RF 마그네트론 스퍼터링(Si (100))으로 증착하는 p형 산화 니켈(NiO) 박막입니다. 50 nm 막 기준 굴절률 2.118 @ 587 nm, 소광계수 0이며 정공수송층·전기변색·저항 스위칭에 활용됩니다. 타깃: 순도 99.99 %, 3인치."
+  "description_ko": "RF 마그네트론 스퍼터링(Si (100))으로 증착하는 p형 산화 니켈(NiO) 박막입니다. 50 nm 막 기준 굴절률 2.118 @ 587 nm, 소광계수 0이며 정공수송층·전기변색·저항 스위칭에 활용됩니다. 타깃: 순도 99.99 %, 3인치.",
+  "filmSpecs": [
+    "Film-coated by RF magnetron sputtering vacuum < 1.0 × 10⁻⁶ Torr",
+    "Substrate: Si (100)",
+    "Thickness : 50 nm",
+    "Refractive Index (n) : 2.118204 (@ 587 nm)",
+    "Extinction Coefficient (k) : 0.000000 (@ 587 nm)"
+  ],
+  "band2Title": "Target Specifications",
+  "band2Specs": [
+    "Target Material : Nickel Oxide",
+    "Purity : 99.99%",
+    "Diameter : 3”"
+  ],
+  "figs": [
+    "fig-1.webp"
+  ],
+  "targetImg": "target.webp"
 }

@@ -6,5 +6,27 @@
   "name": "Titanium Dioxide",
   "name_ko": "이산화 티타늄",
   "description": "Titanium dioxide (TiO₂) by thermal ALD (TTIP 0.3 Å/cycle or TDMAT 0.5 Å/cycle + H₂O/O₃, 100–250 °C, up to 12-inch). n = 2.339 @ 587 nm — for optical coatings, photocatalytic layers and high-k dielectrics.",
-  "description_ko": "열 ALD(TTIP 0.3 Å/cycle 또는 TDMAT 0.5 Å/cycle + H₂O/O₃, 100–250 °C, 최대 12인치)로 성장하는 이산화 티타늄(TiO₂)입니다. 굴절률 2.339 @ 587 nm — 광학 코팅·광촉매층·고유전막에 활용됩니다."
+  "description_ko": "열 ALD(TTIP 0.3 Å/cycle 또는 TDMAT 0.5 Å/cycle + H₂O/O₃, 100–250 °C, 최대 12인치)로 성장하는 이산화 티타늄(TiO₂)입니다. 굴절률 2.339 @ 587 nm — 광학 코팅·광촉매층·고유전막에 활용됩니다.",
+  "filmSpecs": [
+    "Film-coated by thermal ALD process vacuum < 1.0 × 10⁻2 Torr",
+    "Substrate: Si (100)",
+    "Refractive Index (n) : 2.339362(@ 587 nm)",
+    "Extinction Coefficient (k) : 0.004537(@ 587 nm)",
+    "Growth Per Cycle (GPC) : TTIP 0.3 Å/cycle / TDMAT 0.5 Å/cycle"
+  ],
+  "band2Title": "Process Specifications",
+  "band2Specs": [
+    "Precursor : TTIP(Titanium isopropoxide), TDMAT(Tetrakis(dimethylamido)titanium(IV))",
+    "Reactant : H2O, O3",
+    "Process Capability : 6-inch, 12-inch",
+    "Temperature Window : 100 ~ 250 °C",
+    "Applications : Optical Coating, Photocatalytic Coating, High-k Dielectric"
+  ],
+  "figs": [
+    "fig-1.webp",
+    "fig-2.webp",
+    "fig-3.webp",
+    "fig-4.webp",
+    "fig-5.webp"
+  ]
 }

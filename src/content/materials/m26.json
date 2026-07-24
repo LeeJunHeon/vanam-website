@@ -6,5 +6,30 @@
   "name": "Hafnium Oxide",
   "name_ko": "산화 하프늄",
   "description": "Hafnium oxide (HfO₂) by thermal ALD (TDMAH + H₂O/O₃, 200–250 °C, up to 12-inch). Breakdown above 5 MV/cm with ε > 20 and 1.0 Å/cycle growth — the high-k gate and capacitor dielectric of modern devices.",
-  "description_ko": "열 ALD(TDMAH + H₂O/O₃, 200–250 °C, 최대 12인치)로 성장하는 산화 하프늄(HfO₂)입니다. 절연파괴전계 5 MV/cm 이상, 유전율 20 이상, 성장률 1.0 Å/cycle — 현대 소자의 고유전 게이트·커패시터 유전막입니다."
+  "description_ko": "열 ALD(TDMAH + H₂O/O₃, 200–250 °C, 최대 12인치)로 성장하는 산화 하프늄(HfO₂)입니다. 절연파괴전계 5 MV/cm 이상, 유전율 20 이상, 성장률 1.0 Å/cycle — 현대 소자의 고유전 게이트·커패시터 유전막입니다.",
+  "filmSpecs": [
+    "Film-coated by thermal ALD process vacuum < 1.0 × 10⁻2 Torr",
+    "Substrate: Si (100)",
+    "Breakdown field : > 5 MV/cm",
+    "Dielectric constant (ε) : > 20",
+    "Refractive Index (n) : 2.012921(@ 587 nm)",
+    "Extinction Coefficient (k) : 0.000000(@ 587 nm)",
+    "Growth per cycle (GPC) : 1.0 Å/cycle"
+  ],
+  "band2Title": "Process Specifications",
+  "band2Specs": [
+    "Precursor : TDMAH(Tetrakis(dimethylamino)hafnium(IV))",
+    "Reactant : H2O, O3",
+    "Process Capability : 6-inch, 12-inch",
+    "Temperature Window : 200 ~ 250 °C",
+    "Applications : High-k Gate Dielectric, Capacitor Dielectric, Interfacial Layer"
+  ],
+  "figs": [
+    "fig-1.webp",
+    "fig-2.webp",
+    "fig-3.webp",
+    "fig-4.webp",
+    "fig-5.webp",
+    "fig-6.webp"
+  ]
 }

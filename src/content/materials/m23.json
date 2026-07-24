@@ -6,5 +6,16 @@
   "name": "Scandium",
   "name_ko": "스칸듐",
   "description": "Scandium (Sc) thin films deposited by sputtering and evaporation — used for AlScN co-sputtering and alloy films. Targets: 99.99 %, 3 in.",
-  "description_ko": "스퍼터링·증발 증착으로 형성하는 스칸듐(Sc) 박막입니다. AlScN 코스퍼터링·합금막에 활용됩니다. 타깃: 순도 99.99 %, 3 인치."
+  "description_ko": "스퍼터링·증발 증착으로 형성하는 스칸듐(Sc) 박막입니다. AlScN 코스퍼터링·합금막에 활용됩니다. 타깃: 순도 99.99 %, 3 인치.",
+  "band2Title": "Target Specifications",
+  "band2Specs": [
+    "Target Material : Scandium (Sc)",
+    "Purity : 99.99%",
+    "Diameter : 3”"
+  ],
+  "figs": [
+    "fig-1.webp",
+    "fig-2.webp"
+  ],
+  "targetImg": "target.webp"
 }

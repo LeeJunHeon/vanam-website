@@ -94,6 +94,12 @@ const materials = defineCollection({
     image: opt(z.string()),        // 상세 이미지 경로 (※ 사박사님 제공 예정 — 현재 비움)
     description: opt(z.string()),      // 상세 설명 EN
     description_ko: opt(z.string()),   // 상세 설명 KO
+    // ── A4 사양 레이아웃 (Material_Portfolio PPT 이식) ──
+    filmSpecs: opt(z.array(z.string())),   // Thin-Film Specifications 라인들
+    band2Title: opt(z.string()),           // 'Target Specifications' | 'Process Specifications'
+    band2Specs: opt(z.array(z.string())),
+    figs: opt(z.array(z.string())),        // 차트·SEM 파일명 (materials/<id>/ 하위)
+    targetImg: opt(z.string()),            // 타깃 원판 사진 파일명
   }),
 });
 

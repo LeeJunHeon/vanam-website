@@ -7,5 +7,28 @@
   "name": "Tantalum Pentoxide",
   "name_ko": "오산화 탄탈럼",
   "description": "Tantalum pentoxide (Ta₂O₅) low-loss optical films by RF magnetron sputtering. A 132.4 nm amorphous film shows RMS roughness of just 0.291 nm and n = 2.137 @ 587 nm with zero extinction into the IR — the waveguide material of choice for photonic integrated circuits. Targets: 99.95 %, 3 in.",
-  "description_ko": "RF 마그네트론 스퍼터링으로 증착하는 저손실 광학용 오산화 탄탈럼(Ta₂O₅) 박막입니다. 132.4 nm 비정질 막 기준 RMS 거칠기 0.291 nm, 굴절률 2.137 @ 587 nm, 적외선 대역까지 소광계수 0으로 광집적회로(PIC) 도파로 소재로 적합합니다. 타깃: 순도 99.95 %, 3인치."
+  "description_ko": "RF 마그네트론 스퍼터링으로 증착하는 저손실 광학용 오산화 탄탈럼(Ta₂O₅) 박막입니다. 132.4 nm 비정질 막 기준 RMS 거칠기 0.291 nm, 굴절률 2.137 @ 587 nm, 적외선 대역까지 소광계수 0으로 광집적회로(PIC) 도파로 소재로 적합합니다. 타깃: 순도 99.95 %, 3인치.",
+  "filmSpecs": [
+    "Film-coated by RF magnetron sputtering vacuum < 1.0 × 10⁻⁶ Torr",
+    "Substrate: Si (100)",
+    "Thickness : 132.4 nm",
+    "Film Crystallinity : Broad amorphous peak",
+    "RMS Roughness : 0.291 nm",
+    "Refractive Index (n) : 2.1367 (@ 587 nm) / 2.067869 (@ 1525 nm)",
+    "Extinction Coefficient (k) : 0.000000 (@ 587 nm) / 0.000000 (@ 1525 nm)"
+  ],
+  "band2Title": "Target Specifications",
+  "band2Specs": [
+    "Material : Tantalum Pentoxide (Ta2O5)",
+    "Purity : 99.95%",
+    "Diameter : 3”"
+  ],
+  "figs": [
+    "fig-1.webp",
+    "fig-2.webp",
+    "fig-3.webp",
+    "fig-4.webp",
+    "fig-5.webp"
+  ],
+  "targetImg": "target.webp"
 }

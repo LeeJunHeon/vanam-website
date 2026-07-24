@@ -6,5 +6,24 @@
   "name": "Silicon",
   "name_ko": "실리콘",
   "description": "Silicon (Si) films by RF magnetron sputtering (Si (100)). A 250 nm film shows n = 4.595 @ 587 nm (3.727 @ 1525 nm) — amorphous silicon layers for optics, sensors and device research. Targets: 99.9 %, 2–3 in.",
-  "description_ko": "RF 마그네트론 스퍼터링(Si (100))으로 증착하는 실리콘(Si) 박막입니다. 250 nm 막 기준 굴절률 4.595 @ 587 nm(1525 nm에서 3.727)로, 광학·센서·소자 연구용 비정질 실리콘 층을 제공합니다. 타깃: 순도 99.9 %, 2–3인치."
+  "description_ko": "RF 마그네트론 스퍼터링(Si (100))으로 증착하는 실리콘(Si) 박막입니다. 250 nm 막 기준 굴절률 4.595 @ 587 nm(1525 nm에서 3.727)로, 광학·센서·소자 연구용 비정질 실리콘 층을 제공합니다. 타깃: 순도 99.9 %, 2–3인치.",
+  "filmSpecs": [
+    "Film-coated by RF magnetron sputtering vacuum < 1.0 × 10⁻⁶ Torr",
+    "Substrate: Si (100)",
+    "Thickness : 250 nm",
+    "Refractive Index (n) : 4.594714 (@ 587 nm) / 3.727408 (@ 1525 nm)",
+    "Extinction Coefficient (k) : 0.596195 (@ 587 nm) / 0.000000 (@ 1525 nm)"
+  ],
+  "band2Title": "Target Specifications",
+  "band2Specs": [
+    "Target Material : Silicon (Si)",
+    "Purity : 99.9%",
+    "Diameter : 2”, 3”"
+  ],
+  "figs": [
+    "fig-1.webp",
+    "fig-2.webp",
+    "fig-3.webp"
+  ],
+  "targetImg": "target.webp"
 }

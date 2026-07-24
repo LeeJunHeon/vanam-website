@@ -6,5 +6,16 @@
   "name": "Titanium",
   "name_ko": "티타늄",
   "description": "Titanium (Ti) thin films deposited by sputtering and evaporation — used for adhesion and barrier layers. Targets: 99.99 %, 2–3 in.",
-  "description_ko": "스퍼터링·증발 증착으로 형성하는 티타늄(Ti) 박막입니다. 접착·배리어층에 활용됩니다. 타깃: 순도 99.99 %, 2–3 인치."
+  "description_ko": "스퍼터링·증발 증착으로 형성하는 티타늄(Ti) 박막입니다. 접착·배리어층에 활용됩니다. 타깃: 순도 99.99 %, 2–3 인치.",
+  "band2Title": "Target Specifications",
+  "band2Specs": [
+    "Target Material : Titanium (Ti)",
+    "Purity : 99.99%",
+    "Diameter : 2”, 3”"
+  ],
+  "figs": [
+    "fig-1.webp",
+    "fig-2.webp"
+  ],
+  "targetImg": "target.webp"
 }

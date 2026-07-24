@@ -7,5 +7,24 @@
   "name": "Titanium Dioxide",
   "name_ko": "이산화 티타늄",
   "description": "Titanium dioxide (TiO₂) optical thin films by RF magnetron sputtering (vacuum < 1.0 × 10⁻⁶ Torr, Si (100)). A 150 nm film shows a high refractive index of 2.534 @ 587 nm (2.422 @ 1525 nm) with zero extinction — suited to optical coatings, photocatalysis and high-k stacks. Targets: 99.99 %, 3 in.",
-  "description_ko": "RF 마그네트론 스퍼터링(1.0 × 10⁻⁶ Torr 이하, Si (100))으로 증착하는 이산화 티타늄(TiO₂) 광학 박막입니다. 150 nm 막 기준 굴절률 2.534 @ 587 nm(1525 nm에서 2.422), 소광계수 0으로 광학 코팅·광촉매·고유전 적층에 적합합니다. 타깃: 순도 99.99 %, 3인치."
+  "description_ko": "RF 마그네트론 스퍼터링(1.0 × 10⁻⁶ Torr 이하, Si (100))으로 증착하는 이산화 티타늄(TiO₂) 광학 박막입니다. 150 nm 막 기준 굴절률 2.534 @ 587 nm(1525 nm에서 2.422), 소광계수 0으로 광학 코팅·광촉매·고유전 적층에 적합합니다. 타깃: 순도 99.99 %, 3인치.",
+  "filmSpecs": [
+    "Film-coated by RF magnetron sputtering vacuum < 1.0 × 10⁻⁶ Torr",
+    "Substrate: Si (100)",
+    "Thickness : 150 nm",
+    "Refractive Index (n) : 2.534084 (@ 587 nm) / 2.422304 (@ 1525 nm)",
+    "Extinction Coefficient (k) : 0.000000 (@ 587 nm) / 0.000000 (@ 1525 nm)"
+  ],
+  "band2Title": "Target Specifications",
+  "band2Specs": [
+    "Target Material : Titanium Dioxide",
+    "Purity : 99.99%",
+    "Diameter : 3”"
+  ],
+  "figs": [
+    "fig-1.webp",
+    "fig-2.webp",
+    "fig-3.webp"
+  ],
+  "targetImg": "target.webp"
 }

@@ -6,5 +6,16 @@
   "name": "Tungsten",
   "name_ko": "텅스텐",
   "description": "Tungsten (W) thin films deposited by sputtering and evaporation — used for refractory contacts and X-ray optics. Targets: 99.95 %, 2 in.",
-  "description_ko": "스퍼터링·증발 증착으로 형성하는 텅스텐(W) 박막입니다. 내열 컨택·X선 광학에 활용됩니다. 타깃: 순도 99.95 %, 2 인치."
+  "description_ko": "스퍼터링·증발 증착으로 형성하는 텅스텐(W) 박막입니다. 내열 컨택·X선 광학에 활용됩니다. 타깃: 순도 99.95 %, 2 인치.",
+  "band2Title": "Target Specifications",
+  "band2Specs": [
+    "Target Material : Tungsten (W)",
+    "Purity : 99.95%",
+    "Diameter : 2”"
+  ],
+  "figs": [
+    "fig-1.webp",
+    "fig-2.webp"
+  ],
+  "targetImg": "target.webp"
 }
