@@ -713,43 +713,43 @@ const techAsset = (pth: string) => techImages[`/src/assets/tech/${pth}`]?.defaul
                 <h3 class="text-xl font-bold text-ink">Specifications</h3>
               </div>
 
-              <div class="mt-4 flex flex-wrap items-start gap-x-6 gap-y-5">
-                <div class="min-w-0 flex-1 basis-72">
-                  <p class="inline-flex items-center gap-2 rounded-md border border-accent/30 bg-accent/[0.08] px-3 py-1 text-[13px] font-bold text-accent">Thin-Film Specifications</p>
-                  {p.figs.length > 0 && (
-                    <div class="mt-3 grid gap-2.5 sm:grid-cols-2">
-                      {p.figs.map((src, i) => (
-                        <div class="flex items-center justify-center rounded-lg border border-ink/10 bg-plate p-2">
-                          <img src={src} alt={`${p.name} characterization data ${i + 1}`} class="max-h-44 w-auto max-w-full" loading="lazy" />
-                        </div>
-                      ))}
+              <p class="mt-4 inline-flex items-center gap-2 rounded-md border border-accent/30 bg-accent/[0.08] px-3 py-1 text-[13px] font-bold text-accent">Thin-Film Specifications</p>
+              {p.figs.length > 0 && (
+                <div class="mt-3 grid gap-2.5 sm:grid-cols-2">
+                  {p.figs.map((src, i) => (
+                    <div class="flex items-center justify-center rounded-lg border border-ink/10 bg-plate p-2">
+                      <img src={src} alt={`${p.name} characterization data ${i + 1}`} class="max-h-48 w-auto max-w-full" loading="lazy" />
                     </div>
-                  )}
-                  {p.filmSpecs.length > 0 && (
-                    <ul class="mt-3.5 space-y-1.5 border-l-2 border-accent/50 pl-4">
-                      {p.filmSpecs.map((sp) => {
-                        const ci = sp.indexOf(':');
-                        const split = ci > 0 && ci < 44;
-                        return (
-                          <li class="text-sm leading-relaxed text-ink/70">
-                            {split ? (
-                              <>
-                                <span class="font-semibold text-ink/85">{sp.slice(0, ci).trim()}</span>
-                                <span> : {sp.slice(ci + 1).trim()}</span>
-                              </>
-                            ) : (
-                              sp
-                            )}
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  )}
+                  ))}
+                </div>
+              )}
+              {p.filmSpecs.length > 0 && (
+                <ul class="mt-3.5 space-y-1.5 border-l-2 border-accent/50 pl-4">
+                  {p.filmSpecs.map((sp) => {
+                    const ci = sp.indexOf(':');
+                    const split = ci > 0 && ci < 44;
+                    return (
+                      <li class="text-sm leading-relaxed text-ink/70">
+                        {split ? (
+                          <>
+                            <span class="font-semibold text-ink/85">{sp.slice(0, ci).trim()}</span>
+                            <span> : {sp.slice(ci + 1).trim()}</span>
+                          </>
+                        ) : (
+                          sp
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
 
-                  {p.band2Specs.length > 0 && (
-                    <>
-                      <p class="mt-6 inline-flex items-center gap-2 rounded-md border border-accent/30 bg-accent/[0.08] px-3 py-1 text-[13px] font-bold text-accent">{p.band2Title}</p>
-                      <ul class="mt-3.5 space-y-1.5 border-l-2 border-accent/50 pl-4">
+              {(p.band2Specs.length > 0 || p.targetSrc) && (
+                <>
+                  <p class="mt-6 inline-flex items-center gap-2 rounded-md border border-accent/30 bg-accent/[0.08] px-3 py-1 text-[13px] font-bold text-accent">{p.band2Title}</p>
+                  <div class="mt-3.5 flex flex-wrap items-start gap-5">
+                    {p.band2Specs.length > 0 && (
+                      <ul class="min-w-0 flex-1 basis-60 space-y-1.5 border-l-2 border-accent/50 pl-4">
                         {p.band2Specs.map((sp) => {
                           const ci = sp.indexOf(':');
                           const split = ci > 0 && ci < 44;
@@ -767,17 +767,16 @@ const techAsset = (pth: string) => techImages[`/src/assets/tech/${pth}`]?.defaul
                           );
                         })}
                       </ul>
-                    </>
-                  )}
-                </div>
-
-                {p.targetSrc && (
-                  <div class="w-40 shrink-0 pt-9 text-center sm:w-44">
-                    <img src={p.targetSrc} alt={`${p.name} sputtering target`} class="mx-auto w-full rounded-lg drop-shadow-md" loading="lazy" />
-                    <span class="mt-2 inline-block rounded bg-ink/80 px-3 py-0.5 text-[11px] font-bold tracking-wide text-canvas">Target</span>
+                    )}
+                    {p.targetSrc && (
+                      <div class="w-40 shrink-0 text-center sm:w-44">
+                        <img src={p.targetSrc} alt={`${p.name} sputtering target`} class="mx-auto w-full rounded-lg drop-shadow-md" loading="lazy" />
+                        <span class="mt-2 inline-block rounded bg-ink/80 px-3 py-0.5 text-[11px] font-bold tracking-wide text-canvas">Target</span>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
+                </>
+              )}
             </>
           ) : (
             <p class="mt-6 rounded-lg border border-dashed border-ink/20 bg-ink/[0.03] px-4 py-7 text-center text-sm text-ink/45">{mt.preparing}</p>
