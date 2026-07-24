@@ -13,10 +13,18 @@ const description = home.metaDescription;
 ---
 
 <BaseLayout title={title} description={description}>
+  <!-- 스크롤 스테이지: 히어로~Core Tech 세 섹션을 관통하는 영상 스크럽 배경.
+       sticky 캔버스가 화면에 고정된 채 스테이지 여정(약 2.5화면)에 걸쳐 재생되고,
+       canvas 토큰 스크림이 라이트/다크 각각의 워시로 가독성을 지킨다. 종점에서 페이드아웃. -->
+  <div id="vn-stage" class="relative">
+    <div class="pointer-events-none absolute inset-0" aria-hidden="true">
+      <div id="vn-stage-bg" class="sticky top-0 h-screen w-full overflow-hidden">
+        <canvas id="vn-scrub" class="h-full w-full opacity-50"></canvas>
+        <div class="absolute inset-0 bg-gradient-to-b from-canvas/30 via-canvas/45 to-canvas/80"></div>
+      </div>
+    </div>
+
   <section class="relative flex min-h-[88vh] items-center overflow-hidden px-6">
-    <!-- 스크롤 스크럽 배경: 소개 영상의 분자 결합 클립(20.4–32.2s)을 118프레임으로 쪼개
-         스크롤 진행도로 재생한다(내리면 재생·올리면 되감기). 흐릿하게 깔리는 최하층. -->
-    <canvas id="vn-scrub" class="pointer-events-none absolute inset-0 h-full w-full scale-[1.04] opacity-45 blur-[2px]" aria-hidden="true"></canvas>
     <div class="vn-grid absolute inset-0"></div>
     <div class="vn-glow-a absolute -left-20 -top-24 h-[420px] w-[480px] rounded-full"></div>
     <div class="vn-glow-b absolute -bottom-32 -right-16 h-[380px] w-[420px] rounded-full"></div>
@@ -35,13 +43,13 @@ const description = home.metaDescription;
     </div>
   </section>
 
-  <section class="v-reveal mx-auto max-w-6xl px-6 py-20">
+  <section class="v-reveal relative mx-auto max-w-6xl px-6 py-20">
     <p class="mb-3 font-mono text-xs tracking-[0.16em] text-accent">01 / VISION</p>
     <h2 class="mb-5 text-3xl font-semibold text-ink">{home.visionHeading}</h2>
     <p class="max-w-2xl whitespace-pre-line text-base leading-relaxed text-ink/65">{home.visionBody}</p>
   </section>
 
-  <section class="v-reveal mx-auto max-w-6xl px-6 py-12">
+  <section class="v-reveal relative mx-auto max-w-6xl px-6 py-12">
     <p class="mb-6 font-mono text-xs tracking-[0.16em] text-accent">02 / CORE TECHNOLOGIES</p>
     <h2 class="sr-only">{locale === 'ko' ? '핵심 기술' : 'Core technologies'}</h2>
     <div class="grid gap-5 sm:grid-cols-3">
@@ -55,6 +63,8 @@ const description = home.metaDescription;
     </div>
   </section>
 
+  </div>
+
   <section class="v-reveal mx-auto max-w-6xl px-6 py-16">
     <div class="relative overflow-hidden rounded-3xl border border-accent/20 bg-panel px-8 py-14 text-center">
       <h2 class="text-2xl font-semibold text-ink sm:text-3xl">{home.ctaHeading}</h2>
@@ -65,24 +75,26 @@ const description = home.metaDescription;
 </BaseLayout>
 
 <script>
-  // 히어로 배경 스크럽: /media/hero/f001..f118.webp 를 스크롤 진행도로 그린다.
-  // 첫 프레임 즉시 표시 → 나머지 동시 6개씩 점진 로드(미로드 구간은 가장 가까운 프레임으로 대체).
+  // 스크롤 스테이지 스크럽: /media/hero/f001..f118.webp 를 스테이지(히어로~Core Tech)
+  // 전체 여정에 매핑해 재생한다. 도입부 8프레임 스킵(검은 페이드 제거), 종점 페이드아웃.
   (() => {
     const canvas = document.getElementById('vn-scrub') as HTMLCanvasElement | null;
-    const hero = canvas?.closest('section');
-    if (!canvas || !hero) return;
+    const stage = document.getElementById('vn-stage');
+    const bg = document.getElementById('vn-stage-bg');
+    if (!canvas || !stage || !bg) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
     const N = 118;
+    const START = 8;                       // 검은 도입부 스킵
     const src = (i: number) => `/media/hero/f${String(i + 1).padStart(3, '0')}.webp`;
     const imgs: (HTMLImageElement | null)[] = new Array(N).fill(null);
     const ready: boolean[] = new Array(N).fill(false);
 
-    let W = 0, H = 0, dpr = 1, cur = -1, idx = 0;
+    let W = 0, H = 0, dpr = 1, cur = -1, idx = START, p = 0;
     const size = () => {
       dpr = Math.min(2, window.devicePixelRatio || 1);
-      W = hero.clientWidth; H = hero.clientHeight;
+      W = stage.clientWidth; H = window.innerHeight;
       canvas.width = W * dpr; canvas.height = H * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       cur = -1;
@@ -91,7 +103,7 @@ const description = home.metaDescription;
     const draw = () => {
       let k = -1;
       for (let d = 0; d < N; d++) {
-        if (idx - d >= 0 && ready[idx - d]) { k = idx - d; break; }
+        if (idx - d >= START && ready[idx - d]) { k = idx - d; break; }
         if (idx + d < N && ready[idx + d]) { k = idx + d; break; }
       }
       if (k < 0 || k === cur) return;
@@ -105,8 +117,13 @@ const description = home.metaDescription;
     };
 
     const onScroll = () => {
-      const p = Math.min(1, Math.max(0, window.scrollY / (hero.clientHeight * 0.85 || 1)));
-      idx = Math.round(p * (N - 1));
+      const r = stage.getBoundingClientRect();
+      const span = stage.clientHeight - window.innerHeight;
+      p = span > 0 ? Math.min(1, Math.max(0, -r.top / span)) : 0;
+      idx = START + Math.round(p * (N - 1 - START));
+      // 종점 페이드아웃 (여정 88% 이후)
+      const fade = p < 0.88 ? 1 : 1 - (p - 0.88) / 0.12;
+      bg.style.opacity = String(Math.max(0, fade));
     };
 
     const load = (i: number, cb?: () => void) => {
@@ -120,18 +137,18 @@ const description = home.metaDescription;
     size(); onScroll();
 
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      idx = Math.round((N - 1) * 0.62);   // 결합이 무르익은 장면 정지화
+      idx = START + Math.round((N - 1 - START) * 0.6);
       load(idx, draw);
       return;
     }
 
     let raf = 0, running = false;
     const loop = () => { draw(); raf = requestAnimationFrame(loop); };
-    const start = () => { if (!running) { running = true; raf = requestAnimationFrame(loop); } };
-    const stop = () => { if (running) { running = false; cancelAnimationFrame(raf); } };
+    const startLoop = () => { if (!running) { running = true; raf = requestAnimationFrame(loop); } };
+    const stopLoop = () => { if (running) { running = false; cancelAnimationFrame(raf); } };
 
-    load(0, draw);
-    let next = 1, active = 0;
+    load(START, draw);
+    let next = START + 1, active = 0;
     const pump = () => {
       while (active < 6 && next < N) {
         const i = next++;
@@ -143,9 +160,9 @@ const description = home.metaDescription;
 
     window.addEventListener('scroll', onScroll, { passive: true });
     let rT: ReturnType<typeof setTimeout>;
-    window.addEventListener('resize', () => { clearTimeout(rT); rT = setTimeout(size, 150); });
-    new IntersectionObserver((es) => (es[0].isIntersecting ? start() : stop())).observe(hero);
-    start();
+    window.addEventListener('resize', () => { clearTimeout(rT); rT = setTimeout(() => { size(); onScroll(); }, 150); });
+    new IntersectionObserver((es) => (es[0].isIntersecting ? startLoop() : stopLoop())).observe(stage);
+    startLoop();
   })();
 </script>
 
