@@ -14,7 +14,7 @@ const prefill = Astro.url.searchParams.get('id') ?? '';
 
 const t = isKo
   ? {
-      meta: '주문 조회 | VANAM', metaDesc: '주문번호와 이메일로 주문 상태를 확인하세요.',
+      meta: '주문 조회 | VanaM', metaDesc: '주문번호와 이메일로 주문 상태를 확인하세요.',
       eyebrow: '주문 조회', heading: '주문 확인',
       lead: '주문번호(ORD-…) 또는 견적·주문 요청 접수번호(INQ-…)와 입력하신 이메일을 넣으시면 진행 상태를 확인하실 수 있습니다.',
       orderNo: '주문/접수번호', email: '이메일',
@@ -37,7 +37,7 @@ const t = isKo
       } as Record<string, string>,
     }
   : {
-      meta: 'Track your order | VANAM', metaDesc: 'Check your order status with your order number and email.',
+      meta: 'Track your order | VanaM', metaDesc: 'Check your order status with your order number and email.',
       eyebrow: 'Order lookup', heading: 'Track your order',
       lead: 'Enter your order number (ORD-…) or request number (INQ-…) with the email you used, to check the status.',
       orderNo: 'Order / request number', email: 'Email',

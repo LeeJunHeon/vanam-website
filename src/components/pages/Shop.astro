@@ -64,16 +64,6 @@ const equipImages = import.meta.glob<{ default: ImageMetadata }>(
 );
 
 // 라이트박스(클릭 확대)용 대형 이미지 — 빌드 시 webp 생성 (장비 카드 + 빅데이터 다이어그램 자산)
-const equipLarge: Record<string, string> = {};
-{
-  const targets = new Set<string>();
-  for (const e of equipment) if (e.data.image) targets.add(e.data.image);
-  for (const pth of Object.keys(equipImages)) if (pth.includes('/equipment/bigdata/')) targets.add(pth);
-  for (const pth of targets) {
-    const meta = equipImages[pth]?.default;
-    if (meta) equipLarge[pth] = (await getImage({ src: meta, width: 1200, format: 'webp' })).src;
-  }
-}
 
 // 빅데이터 다이어그램: 장비 사진 위 보라 하이라이트(센서 장착 위치) 좌표(%) — 명칭 매핑은 연구팀 확인값
 const BD_POINTS = [
@@ -165,7 +155,7 @@ const waferFromLabel = waferKrws.length
                       <Image src={img} alt={name(p)} width={600} height={450} class="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
                     ) : (
                       <div class="flex h-full w-full items-center justify-center">
-                        <span class="text-3xl font-bold text-ink/15">VANAM</span>
+                        <span class="text-3xl font-bold text-ink/15">VanaM</span>
                       </div>
                     )}
                   </div>
@@ -283,11 +273,9 @@ const waferFromLabel = waferKrws.length
               <div class="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
                 {cards.map((e) => (
                   <div>
-                    <button type="button"
-                      class="equip-zoom block w-full cursor-zoom-in rounded-xl border border-ink/10 bg-plate p-3 transition hover:border-accent/60"
-                      data-full={equipLarge[e.data.image!]} data-name={label(e)} aria-label={`${label(e)} 확대`}>
+                    <div class="block w-full rounded-xl border border-ink/10 bg-plate p-3">
                       <Image src={img(e)!} alt={label(e)} width={480} class="aspect-square w-full object-contain" />
-                    </button>
+                    </div>
                     <p class="mt-2.5 text-sm font-semibold leading-snug text-ink/80">{label(e)}</p>
                   </div>
                 ))}
@@ -331,11 +319,9 @@ const waferFromLabel = waferKrws.length
                 <div class="flex flex-col rounded-xl border border-ink/10 bg-canvas p-4 shadow-lg shadow-ink/5">
                   {chamber && (
                     <div class="relative">
-                      <button type="button"
-                        class="equip-zoom block w-full cursor-zoom-in rounded-lg border border-ink/10 bg-plate p-1 transition hover:border-accent/60"
-                        data-full={equipLarge[e.data.image!]} data-name={bd.sputter} aria-label={`${bd.sputter} 확대`}>
+                      <div class="block w-full rounded-lg border border-ink/10 bg-plate p-1">
                         <Image src={chamber} alt={locale === 'ko' ? '자체 개발 스퍼터 장비 — RGA·OES·TSP 센서 장착 위치' : 'Self-developed sputter system with RGA, OES and TSP sensors highlighted'} width={560} class="aspect-[7/6] w-full object-contain" />
-                      </button>
+                      </div>
                       {BD_POINTS.map((pt) => (
                         <span class="pointer-events-none absolute" style={`left:${pt.x}%; top:${pt.y}%;`}>
                           <span class="absolute block h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-fuchsia-500/90 bg-fuchsia-400/20"></span>
@@ -353,27 +339,23 @@ const waferFromLabel = waferKrws.length
                 <div class="flex flex-col justify-between gap-3 rounded-xl border border-ink/10 bg-canvas p-4 shadow-lg shadow-ink/5">
                   <div>
                     <div class="grid grid-cols-2 gap-2">
-                      <button type="button" class="equip-zoom cursor-zoom-in overflow-hidden rounded-lg border border-ink/10 transition hover:border-accent/60"
-                        data-full={equipLarge['/src/assets/equipment/bigdata/rga-device.jpg']} data-name="RGA" aria-label="RGA 확대">
+                      <div class="overflow-hidden rounded-lg border border-ink/10">
                         <Image src={bdAsset('rga-device.jpg')!} alt={locale === 'ko' ? 'RGA 잔류 가스 분석기' : 'RGA residual gas analyzer device'} width={420} class="aspect-[4/3] w-full object-cover" />
-                      </button>
-                      <button type="button" class="equip-zoom cursor-zoom-in overflow-hidden rounded-lg border border-ink/10 transition hover:border-accent/60"
-                        data-full={equipLarge['/src/assets/equipment/bigdata/rga-spectrum.png']} data-name="RGA spectrum" aria-label="RGA 스펙트럼 확대">
+                      </div>
+                      <div class="overflow-hidden rounded-lg border border-ink/10">
                         <Image src={bdAsset('rga-spectrum.png')!} alt={locale === 'ko' ? 'RGA 실측 잔류 가스 스펙트럼' : 'Measured residual gas spectrum from RGA'} width={420} class="aspect-[4/3] w-full object-cover" />
-                      </button>
+                      </div>
                     </div>
                     <p class="mt-1.5 text-[11px] text-ink/45">{bd.rgaCap}</p>
                   </div>
                   <div>
                     <div class="grid grid-cols-2 gap-2">
-                      <button type="button" class="equip-zoom cursor-zoom-in overflow-hidden rounded-lg border border-ink/10 transition hover:border-accent/60"
-                        data-full={equipLarge['/src/assets/equipment/bigdata/oes-device.jpg']} data-name="OES" aria-label="OES 확대">
+                      <div class="overflow-hidden rounded-lg border border-ink/10">
                         <Image src={bdAsset('oes-device.jpg')!} alt={locale === 'ko' ? 'OES 광학 발광 분광기' : 'OES optical emission spectrometer device'} width={420} class="aspect-[4/3] w-full object-cover" />
-                      </button>
-                      <button type="button" class="equip-zoom cursor-zoom-in overflow-hidden rounded-lg border border-ink/10 transition hover:border-accent/60"
-                        data-full={equipLarge['/src/assets/equipment/bigdata/oes-spectrum.png']} data-name="OES spectrum" aria-label="OES 스펙트럼 확대">
+                      </div>
+                      <div class="overflow-hidden rounded-lg border border-ink/10">
                         <Image src={bdAsset('oes-spectrum.png')!} alt={locale === 'ko' ? 'OES 발광 스펙트럼 그래프' : 'Optical emission spectrum graph from OES'} width={420} class="aspect-[4/3] w-full object-cover" />
-                      </button>
+                      </div>
                     </div>
                     <p class="mt-1.5 text-[11px] text-ink/45">{bd.oesCap}</p>
                   </div>
@@ -387,10 +369,9 @@ const waferFromLabel = waferKrws.length
                 <div class="flex flex-col gap-4">
                   {bd.outputs.map((o: { t: string; s: string; img: string; alt: string }) => (
                     <div class="flex flex-1 flex-col rounded-xl border border-accent/30 bg-canvas p-3.5 shadow-lg shadow-ink/5">
-                      <button type="button" class="equip-zoom block w-full flex-1 cursor-zoom-in overflow-hidden rounded-lg border border-ink/10 transition hover:border-accent/60"
-                        data-full={equipLarge[`/src/assets/equipment/bigdata/${o.img}`]} data-name={o.t} aria-label={`${o.t} 확대`}>
+                      <div class="block w-full flex-1 overflow-hidden rounded-lg border border-ink/10">
                         <Image src={bdAsset(o.img)!} alt={o.alt} width={640} class="aspect-[5/2] h-full w-full object-cover" />
-                      </button>
+                      </div>
                       <p class="mt-2.5 text-sm font-bold text-accent">{o.t}</p>
                       <p class="mt-0.5 text-xs text-ink/50">{o.s}</p>
                     </div>
@@ -402,36 +383,6 @@ const waferFromLabel = waferKrws.length
         );
       })}
 
-      <!-- 장비 사진 라이트박스 (클릭 확대 팝업) -->
-      <dialog id="equip-lightbox" class="m-auto w-[min(92vw,860px)] rounded-2xl border border-ink/10 bg-canvas p-0 backdrop:bg-black/70">
-        <div class="relative p-5">
-          <button type="button" id="equip-lb-close" aria-label="닫기"
-            class="absolute right-3 top-3 z-10 grid h-9 w-9 place-items-center rounded-full border border-ink/15 bg-canvas text-ink/60 transition hover:border-accent hover:text-accent">✕</button>
-          <div class="rounded-xl border border-ink/10 bg-plate p-4">
-            <img id="equip-lb-img" src="" alt="" class="mx-auto max-h-[70vh] w-auto object-contain" />
-          </div>
-          <p id="equip-lb-name" class="mt-3 text-center text-sm font-semibold text-ink/80"></p>
-        </div>
-      </dialog>
-
-      <script>
-        // 장비 라이트박스 — 카드 클릭 → 확대, ESC/바깥 클릭/✕ 닫기
-        const lb = document.getElementById('equip-lightbox') as HTMLDialogElement | null;
-        const lbImg = document.getElementById('equip-lb-img') as HTMLImageElement | null;
-        const lbName = document.getElementById('equip-lb-name');
-        if (lb && lbImg && lbName) {
-          document.querySelectorAll<HTMLButtonElement>('.equip-zoom').forEach((btn) => {
-            btn.addEventListener('click', () => {
-              lbImg.src = btn.dataset.full ?? '';
-              lbImg.alt = btn.dataset.name ?? '';
-              lbName.textContent = btn.dataset.name ?? '';
-              lb.showModal();
-            });
-          });
-          document.getElementById('equip-lb-close')?.addEventListener('click', () => lb.close());
-          lb.addEventListener('click', (ev) => { if (ev.target === lb) lb.close(); });
-        }
-      </script>
     </div>
   </section>
 </BaseLayout>

@@ -418,16 +418,16 @@ const techAsset = (pth: string) => techImages[`/src/assets/tech/${pth}`]?.defaul
               <div class={compCard}>
                 <p class="text-[13px] font-bold text-ink">{c.t}</p>
                 {c.gif ? (
-                  <div data-p1zoom="video" class="mt-2 aspect-square w-full cursor-zoom-in overflow-hidden rounded-xl border border-ink/10 bg-plate">
+                  <div class="mt-2 aspect-square w-full overflow-hidden rounded-xl border border-ink/10 bg-plate">
                     <video class="h-full w-full object-cover" autoplay muted loop playsinline preload="metadata" poster="/media/dbr-poster.jpg" aria-label={c.alt}>
                       <source src="/media/dbr.mp4" type="video/mp4" />
                     </video>
                   </div>
                 ) : (
                   <div class="relative mt-2">
-                    <Image src={qAsset(c.img)} alt={c.alt} width={800} data-p1zoom="img" class="aspect-square w-full cursor-zoom-in rounded-xl object-cover" />
+                    <Image src={qAsset(c.img)} alt={c.alt} width={800} class="aspect-square w-full rounded-xl object-cover" />
                     {c.inset && (
-                      <Image src={qAsset(c.inset)} alt="" width={400} data-p1zoom="img" class="absolute -bottom-1.5 -left-1.5 h-14 w-14 cursor-zoom-in rounded-lg border-2 border-canvas object-cover shadow-md" />
+                      <Image src={qAsset(c.inset)} alt="" width={400} class="absolute -bottom-1.5 -left-1.5 h-14 w-14 rounded-lg border-2 border-canvas object-cover shadow-md" />
                     )}
                     {c.inset2 && (
                       <Image src={qAsset(c.inset2)} alt="" width={640} class="absolute -top-1.5 left-1/2 h-12 w-[72%] -translate-x-1/2 rounded-lg border-2 border-canvas object-cover shadow-md" />
@@ -443,7 +443,7 @@ const techAsset = (pth: string) => techImages[`/src/assets/tech/${pth}`]?.defaul
             <div class={compCard}>
               <p class="text-[13px] font-bold text-ink">{qv.pic.t}</p>
               <div class="mt-2 flex flex-1 items-center">
-                <Image src={qAsset(qv.pic.img)} alt={qv.pic.alt} width={800} data-p1zoom="img" class="aspect-[4/3] w-full cursor-zoom-in rounded-xl object-cover" />
+                <Image src={qAsset(qv.pic.img)} alt={qv.pic.alt} width={800} class="aspect-[4/3] w-full rounded-xl object-cover" />
               </div>
             </div>
           </div>
@@ -487,45 +487,6 @@ const techAsset = (pth: string) => techImages[`/src/assets/tech/${pth}`]?.defaul
         </div>
       );
     })()}
-
-    <!-- P1 사진 라이트박스: data-p1zoom 이 붙은 이미지/영상만 확대.
-         모듈레이터 상단 차트(inset2)는 의도적으로 제외. -->
-    <dialog id="p1-lightbox" class="m-auto max-w-[92vw] rounded-2xl border border-ink/15 bg-canvas p-2 shadow-2xl backdrop:bg-black/75">
-      <div id="p1-lightbox-body" class="grid place-items-center"></div>
-    </dialog>
-
-    <script>
-      const p1Dlg = document.getElementById('p1-lightbox') as HTMLDialogElement | null;
-      const p1Body = document.getElementById('p1-lightbox-body');
-      if (p1Dlg && p1Body) {
-        document.querySelectorAll<HTMLElement>('[data-p1zoom]').forEach((el) => {
-          el.addEventListener('click', () => {
-            p1Body.innerHTML = '';
-            if (el.dataset.p1zoom === 'video') {
-              const v = document.createElement('video');
-              v.src = '/media/dbr.mp4';
-              v.poster = '/media/dbr-poster.jpg';
-              v.autoplay = true;
-              v.muted = true;
-              v.loop = true;
-              v.playsInline = true;
-              v.className = 'max-h-[80vh] w-auto max-w-full rounded-xl';
-              p1Body.appendChild(v);
-            } else {
-              const src = (el as HTMLImageElement).currentSrc || (el as HTMLImageElement).src;
-              const img = document.createElement('img');
-              img.src = src;
-              img.alt = (el as HTMLImageElement).alt || '';
-              img.className = 'max-h-[80vh] w-auto max-w-full rounded-xl';
-              p1Body.appendChild(img);
-            }
-            p1Dlg.showModal();
-          });
-        });
-        p1Dlg.addEventListener('click', () => p1Dlg.close());
-        p1Dlg.addEventListener('close', () => { p1Body.innerHTML = ''; });
-      }
-    </script>
 
     <div class="v-reveal mt-8">
       <p class="text-sm font-medium text-ink/50">{tech.quantumTargetLabel}</p>

@@ -325,7 +325,7 @@
         "silicon photonics"
       ],
       "p2Eyebrow": "THE MULTIFUNCTIONAL ENERGY-RESPONSIVE SEMICONDUCTOR PROJECT",
-      "p2Heading": "Multifunctional thin films that sense, respond, and protect.",
+      "p2Heading": "Multifunctional VO₂ thin films that sense, respond, and protect.",
       "p2Body": "VanaM developed the world's first multifunctional semiconductor thin-film that responds to changes in thermal and electrical energy, enabling sensing, switching, protection, and energy-management functions to be integrated into compact devices and surfaces.",
       "p2Items": [
         { "name": "Thermal & Electrical Sensing & Smart Switching", "desc": "Energy-responsive thin films that detect changes in temperature and electrical conditions for real-time sensing and monitoring." },
@@ -571,6 +571,7 @@
       "specs": "Specifications",
       "leadTimeLabel": "Lead time",
       "shippingLabel": "Shipping",
+      "shippingNote": "Free shipping within South Korea. International shipping is quoted separately (e.g. DHL).",
       "backToShop": "Back to products",
       "catWafer": "Wafers",
       "waferPageTitle1": "Wafers",
@@ -928,7 +929,7 @@
         "실리콘 포토닉스"
       ],
       "p2Eyebrow": "다기능 에너지 반응형 반도체 프로젝트",
-      "p2Heading": "감지하고, 반응하고, 보호하는 다기능 박막",
+      "p2Heading": "감지하고, 반응하고, 보호하는 다기능 VO₂ 박막",
       "p2Body": "반암은 열·전기 에너지 변화에 반응하는 세계 최초의 다기능 반도체 박막을 개발했습니다. 감지·스위칭·보호·에너지 관리 기능을 소형 소자와 표면에 통합할 수 있습니다.",
       "p2Items": [
         { "name": "열·전기 감지 & 스마트 스위칭", "desc": "온도와 전기적 조건의 변화를 감지해 실시간 센싱과 모니터링을 구현하는 에너지 반응형 박막." },
@@ -1174,6 +1175,7 @@
       "specs": "사양",
       "leadTimeLabel": "납기",
       "shippingLabel": "배송",
+      "shippingNote": "대한민국 내 무료 배송 · 해외 배송은 별도 견적(DHL 등)으로 안내됩니다.",
       "backToShop": "제품으로 돌아가기",
       "catWafer": "웨이퍼",
       "waferPageTitle1": "웨이퍼",

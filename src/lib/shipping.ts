@@ -14,8 +14,8 @@ export const SHIP_LABEL: Record<ShipMode, { ko: string; en: string }> = {
     en: 'Freight collect (billed to the recipient’s courier account)',
   },
   quote: {
-    ko: '주문 확인 후 배송비를 별도 안내드립니다',
-    en: 'Shipping is quoted separately after we review your order',
+    ko: '주문 확인 후 배송비를 별도 안내드립니다 (DHL 등 국제 특송)',
+    en: 'Shipping is quoted separately after we review your order (e.g. DHL)',
   },
 };
 

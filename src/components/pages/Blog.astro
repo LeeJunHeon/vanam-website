@@ -53,7 +53,7 @@ const cats = [
 const blogLd = {
   '@context': 'https://schema.org',
   '@type': 'Blog',
-  name: 'VANAM Blog',
+  name: 'VanaM Blog',
   url: new URL(isKo ? '/ko/blog' : '/blog', Astro.site).href,
   inLanguage: isKo ? 'ko-KR' : 'en-US',
   publisher: { '@type': 'Organization', name: 'VanaM Inc.', url: 'https://vanam.co.kr' },
@@ -68,12 +68,12 @@ const blogLd = {
 };
 
 const t = {
-  metaTitle: isKo ? '블로그 | VANAM' : 'Blog | VANAM',
-  metaDesc: isKo ? 'VANAM의 기술 이야기와 소식' : 'Stories and updates from VANAM',
+  metaTitle: isKo ? '블로그 | VanaM' : 'Blog | VanaM',
+  metaDesc: isKo ? 'VanaM의 기술 이야기와 소식' : 'Stories and updates from VanaM',
   eyebrow: 'Blog',
   heroTitle: isKo ? '블로그' : 'Blog',
   heroSub: isKo
-    ? 'VANAM의 기술과 산업 이야기를 전합니다.'
+    ? 'VanaM의 기술과 산업 이야기를 전합니다.'
     : 'Insights and stories on our technology and industry.',
   emptyTitle: isKo ? '준비 중입니다' : 'Coming soon',
   emptyBody: isKo

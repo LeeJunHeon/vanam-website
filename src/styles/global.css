@@ -213,3 +213,6 @@ body.v-zebra main > section:nth-of-type(even) {
   border-top: 1px solid color-mix(in srgb, var(--v-ink) 10%, transparent);
   border-bottom: 1px solid color-mix(in srgb, var(--v-ink) 10%, transparent);
 }
+
+/* 이미지 무단 사용 억제: 드래그 저장 차단 (우클릭은 BaseLayout 스크립트) */
+img, video { -webkit-user-drag: none; user-drag: none; }

@@ -253,6 +253,7 @@ const childHref = (path) => {
     {/* 스크롤 등장(reveal) 효과 — 전 페이지 공통, 단일 소스.
         JS 없으면 reveal-on 미적용 → .v-reveal 기본 노출(콘텐츠 안 숨음). */}
     <script is:inline>document.documentElement.classList.add('reveal-on', 'nav-js')</script>
+    <script is:inline>document.addEventListener('contextmenu',function(e){if(e.target&&e.target.closest&&e.target.closest('img,video,picture'))e.preventDefault()})</script>
     <style is:global>
       .v-reveal { opacity: 1; transform: none; }
       .reveal-on .v-reveal { opacity: 0; transform: translateY(28px); transition: opacity .7s ease, transform .7s ease; }

@@ -28,7 +28,7 @@ const isFixed = d.pricingType === 'fixed' && typeof d.price === 'number';
 const won = (n: number) => new Intl.NumberFormat('ko-KR').format(n);
 ---
 
-<BaseLayout title={`${name} | VANAM`} description={summary}>
+<BaseLayout title={`${name} | VanaM`} description={summary}>
   <section class="relative mx-auto max-w-6xl px-6 py-28 md:py-32">
     <a href={`${base}/product`} class="text-sm text-ink/50 transition hover:text-accent">← {s.backToShop}</a>
 
@@ -40,7 +40,7 @@ const won = (n: number) => new Intl.NumberFormat('ko-KR').format(n);
             <Image src={img} alt={name} width={900} height={675} class="h-full w-full object-cover" />
           ) : (
             <div class="flex h-full w-full items-center justify-center">
-              <span class="text-4xl font-bold text-ink/15">VANAM</span>
+              <span class="text-4xl font-bold text-ink/15">VanaM</span>
             </div>
           )}
         </div>
@@ -105,6 +105,9 @@ const won = (n: number) => new Intl.NumberFormat('ko-KR').format(n);
               </div>
             )}
           </dl>
+        )}
+        {d.requiresShipping !== false && (
+          <p class="mt-4 text-xs leading-relaxed text-ink/45">{s.shippingNote}</p>
         )}
       </div>
     </div>
