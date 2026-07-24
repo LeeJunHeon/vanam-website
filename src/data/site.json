@@ -210,25 +210,67 @@
         "source": "Source: MarketsandMarkets · MMR · Precedence Research · Fact.MR"
       },
       "quantumViz": {
-        "picTitle": "Photonic Integrated Circuits (PIC)",
-        "picSub": "Key thin films for next-generation PICs and quantum systems — KIST Quantum Fab & UIUC collaboration.",
-        "chips": "SNSPD · Waveguide · Modulator · DBR",
-        "devices": [
-          { "n": "SNSPD", "img": "snspd.jpg", "img2": "snspd-2.jpg", "s": "High-sensitivity superconductors", "chips": ["NbTiN", "T ~ 11 K"] },
-          { "n": "Waveguide", "img": "waveguide.jpg", "img2": "waveguide-2.jpg", "s": "Low-loss optical waveguides", "chips": ["Ta₂O₅", "Loss < 0.5 dB"] },
-          { "n": "Modulator", "img": "modulator.jpg", "img2": "modulator-2.jpg", "s": "Cryogenic electro-optic modulation", "chips": ["BTO · STO", "~1000 pm/V @ 5 K"] },
-          { "n": "DBR", "video": true, "s": "High-reflection DBR wafer", "chips": ["Si-SiO₂-TiO₂", "R > 99%"] }
+        "comps": [
+          {
+            "t": "SNSPD",
+            "img": "snspd.webp",
+            "inset": "snspd-2.webp",
+            "alt": "SNSPD single-photon detector device",
+            "s": "High-sensitivity superconductors"
+          },
+          {
+            "t": "Waveguide",
+            "img": "waveguide.webp",
+            "inset": "waveguide-2.webp",
+            "alt": "Low-loss optical waveguide wafer",
+            "s": "Low loss optical waveguides"
+          },
+          {
+            "t": "Modulator",
+            "img": "modulator.webp",
+            "inset": "modulator-2.webp",
+            "alt": "Cryogenic electro-optic modulator device",
+            "s": "High cryogenic electro-optic modulation"
+          },
+          {
+            "t": "DBR",
+            "gif": true,
+            "alt": "High-reflection DBR wafer",
+            "s": "High-reflection DBR wafer"
+          }
         ],
-        "marketsTitle": "SCALABLE OPPORTUNITIES",
-        "markets": [
-          { "t": "Quantum Computers", "v": "$13 Bn", "g": "32%" },
-          { "t": "Quantum Communication", "v": "$12 Bn", "g": "30%" },
-          { "t": "Quantum Sensors", "v": "$1.6 Bn", "g": "26%" },
-          { "t": "Laser & LiDAR", "v": "$22 Bn", "g": "30%" },
-          { "t": "Glass Core Substrate", "v": "$223 Bn", "g": "8%" },
-          { "t": "Silicon Photonics", "v": "$1.9 Bn", "g": "17%" }
-        ],
-        "source": "Source: MarketsandMarkets · MMR · Precedence Research · Fact.MR"
+        "pic": {
+          "t": "Photonics Integrated Circuits (PIC)",
+          "img": "pic.webp",
+          "alt": "Photonic integrated circuit chip built from VanaM thin films"
+        },
+        "band": {
+          "title": "Key Thin Films for Next-Gen PICs & Quantum Systems",
+          "mats": [
+            { "k": "SNSPD", "v": "NbTiN" },
+            { "k": "Waveguide", "v": "Ta₂O₅" },
+            { "k": "Modulator", "v": "BTO, STO" },
+            { "k": "DBR", "v": "Si-SiO₂-TiO₂" }
+          ],
+          "metrics": [
+            "Superconducting transition T ~ 11K",
+            "Propagation loss < 0.5 dB",
+            "Pockels coefficient ~1000 pm/V at 5K",
+            "Reflectance > 99%"
+          ],
+          "collab": "KIST Quantum Fab & UIUC Collaboration"
+        },
+        "markets": {
+          "t": "Scalable Opportunities / Areas",
+          "cards": [
+            { "img": "mkt-qc.webp", "t": "Quantum Computers", "v": "$13 Bn", "cagr": "CAGR 32%", "tone": "accent" },
+            { "img": "mkt-qcomm.webp", "t": "Quantum Communication", "v": "$12 Bn", "cagr": "CAGR 30%", "tone": "accent" },
+            { "img": "mkt-qsensor.webp", "t": "Quantum Sensors", "v": "$1.6 Bn", "cagr": "CAGR 26%", "tone": "info" },
+            { "img": "mkt-lidar.webp", "t": "Laser & LiDAR", "v": "$22 Bn", "cagr": "CAGR 30%", "tone": "accent" },
+            { "img": "mkt-glass.webp", "t": "Glass Core Substrate", "v": "$223 Bn", "cagr": "CAGR 8%", "tone": "ok" },
+            { "img": "mkt-siph.webp", "t": "Silicon Photonics", "v": "$1.9 Bn", "cagr": "CAGR 17%", "tone": "info" }
+          ]
+        }
       },
       "bigdataViz": {
         "stages": [
@@ -299,8 +341,8 @@
           "toAlt": "A single multifunctional semiconductor thin film on a substrate"
         },
         "photos": [
-          { "t": "Extra Sensory", "img": "sensory.webp", "alt": "Circuit board close-up — sensitive to heat and electrical energy" },
-          { "t": "Super Safe", "img": "safe.webp", "alt": "Flame over a protected circuit — passive and active components into a single thin film" }
+          { "t": "Extra Sensory", "img": "sensory.webp", "s": "Sensitive to heat and electrical energy", "alt": "Circuit board close-up — sensitive to heat and electrical energy" },
+          { "t": "Super Safe", "img": "safe.webp", "s": "Passive & active components into a single thin film", "alt": "Flame over a protected circuit — passive and active components into a single thin film" }
         ],
         "benefits": {
           "t": "Key Thin Film Benefits",
@@ -769,25 +811,67 @@
         "source": "출처: MarketsandMarkets · MMR · Precedence Research · Fact.MR"
       },
       "quantumViz": {
-        "picTitle": "Photonic Integrated Circuits (PIC)",
-        "picSub": "차세대 PIC·양자 시스템을 위한 핵심 박막 4종 — KIST Quantum Fab & UIUC 협력.",
-        "chips": "SNSPD · Waveguide · Modulator · DBR",
-        "devices": [
-          { "n": "SNSPD", "img": "snspd.jpg", "img2": "snspd-2.jpg", "s": "고감도 초전도 단일광자 검출기", "chips": ["NbTiN", "T ~ 11 K"] },
-          { "n": "Waveguide", "img": "waveguide.jpg", "img2": "waveguide-2.jpg", "s": "저손실 광 도파로", "chips": ["Ta₂O₅", "손실 < 0.5 dB"] },
-          { "n": "Modulator", "img": "modulator.jpg", "img2": "modulator-2.jpg", "s": "극저온 전기광학 변조", "chips": ["BTO · STO", "~1000 pm/V @ 5 K"] },
-          { "n": "DBR", "video": true, "s": "고반사 DBR 웨이퍼", "chips": ["Si-SiO₂-TiO₂", "반사율 > 99%"] }
+        "comps": [
+          {
+            "t": "SNSPD",
+            "img": "snspd.webp",
+            "inset": "snspd-2.webp",
+            "alt": "SNSPD single-photon detector device",
+            "s": "High-sensitivity superconductors"
+          },
+          {
+            "t": "Waveguide",
+            "img": "waveguide.webp",
+            "inset": "waveguide-2.webp",
+            "alt": "Low-loss optical waveguide wafer",
+            "s": "Low loss optical waveguides"
+          },
+          {
+            "t": "Modulator",
+            "img": "modulator.webp",
+            "inset": "modulator-2.webp",
+            "alt": "Cryogenic electro-optic modulator device",
+            "s": "High cryogenic electro-optic modulation"
+          },
+          {
+            "t": "DBR",
+            "gif": true,
+            "alt": "High-reflection DBR wafer",
+            "s": "High-reflection DBR wafer"
+          }
         ],
-        "marketsTitle": "확장 가능 시장",
-        "markets": [
-          { "t": "양자 컴퓨터", "v": "$13 Bn", "g": "32%" },
-          { "t": "양자 통신", "v": "$12 Bn", "g": "30%" },
-          { "t": "양자 센서", "v": "$1.6 Bn", "g": "26%" },
-          { "t": "레이저 · LiDAR", "v": "$22 Bn", "g": "30%" },
-          { "t": "글라스 코어 기판", "v": "$223 Bn", "g": "8%" },
-          { "t": "실리콘 포토닉스", "v": "$1.9 Bn", "g": "17%" }
-        ],
-        "source": "출처: MarketsandMarkets · MMR · Precedence Research · Fact.MR"
+        "pic": {
+          "t": "Photonics Integrated Circuits (PIC)",
+          "img": "pic.webp",
+          "alt": "Photonic integrated circuit chip built from VanaM thin films"
+        },
+        "band": {
+          "title": "Key Thin Films for Next-Gen PICs & Quantum Systems",
+          "mats": [
+            { "k": "SNSPD", "v": "NbTiN" },
+            { "k": "Waveguide", "v": "Ta₂O₅" },
+            { "k": "Modulator", "v": "BTO, STO" },
+            { "k": "DBR", "v": "Si-SiO₂-TiO₂" }
+          ],
+          "metrics": [
+            "Superconducting transition T ~ 11K",
+            "Propagation loss < 0.5 dB",
+            "Pockels coefficient ~1000 pm/V at 5K",
+            "Reflectance > 99%"
+          ],
+          "collab": "KIST Quantum Fab & UIUC Collaboration"
+        },
+        "markets": {
+          "t": "Scalable Opportunities / Areas",
+          "cards": [
+            { "img": "mkt-qc.webp", "t": "Quantum Computers", "v": "$13 Bn", "cagr": "CAGR 32%", "tone": "accent" },
+            { "img": "mkt-qcomm.webp", "t": "Quantum Communication", "v": "$12 Bn", "cagr": "CAGR 30%", "tone": "accent" },
+            { "img": "mkt-qsensor.webp", "t": "Quantum Sensors", "v": "$1.6 Bn", "cagr": "CAGR 26%", "tone": "info" },
+            { "img": "mkt-lidar.webp", "t": "Laser & LiDAR", "v": "$22 Bn", "cagr": "CAGR 30%", "tone": "accent" },
+            { "img": "mkt-glass.webp", "t": "Glass Core Substrate", "v": "$223 Bn", "cagr": "CAGR 8%", "tone": "ok" },
+            { "img": "mkt-siph.webp", "t": "Silicon Photonics", "v": "$1.9 Bn", "cagr": "CAGR 17%", "tone": "info" }
+          ]
+        }
       },
       "bigdataViz": {
         "stages": [
@@ -858,8 +942,8 @@
           "toAlt": "A single multifunctional semiconductor thin film on a substrate"
         },
         "photos": [
-          { "t": "Extra Sensory", "img": "sensory.webp", "alt": "Circuit board close-up — sensitive to heat and electrical energy" },
-          { "t": "Super Safe", "img": "safe.webp", "alt": "Flame over a protected circuit — passive and active components into a single thin film" }
+          { "t": "Extra Sensory", "img": "sensory.webp", "s": "Sensitive to heat and electrical energy", "alt": "Circuit board close-up — sensitive to heat and electrical energy" },
+          { "t": "Super Safe", "img": "safe.webp", "s": "Passive & active components into a single thin film", "alt": "Flame over a protected circuit — passive and active components into a single thin film" }
         ],
         "benefits": {
           "t": "Key Thin Film Benefits",

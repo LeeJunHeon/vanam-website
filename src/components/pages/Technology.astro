@@ -404,6 +404,78 @@ const techAsset = (pth: string) => techImages[`/src/assets/tech/${pth}`]?.defaul
       ))}
     </div>
 
+    <!-- 슬라이드 3 인포그래픽 — SEO 네이티브 재현: 부품 4열(DBR 은 GIF 예정 자리) → PIC,
+         소재·지표 밴드(KIST/UIUC 협업 배지), 시장 6카드(+CAGR), 출처. -->
+    {(() => {
+      const qv = (tech as any).quantumViz;
+      const qAsset = (f: string) => techAsset(`quantum/${f}`)!;
+      const tone = { accent: 'text-accent', ink: 'text-ink/85', info: 'text-info', ok: 'text-ok' };
+      const compCard = 'flex flex-col rounded-2xl border border-ink/10 bg-canvas p-3 text-center';
+      return (
+        <div class="v-reveal mt-10">
+          <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_1fr_auto_1.35fr] lg:items-stretch">
+            {qv.comps.map((c: any) => (
+              <div class={compCard}>
+                <p class="text-[13px] font-bold text-ink">{c.t}</p>
+                {c.gif ? (
+                  <div class="mt-2 grid aspect-square w-full place-items-center rounded-xl border border-dashed border-ink/25 bg-ink/[0.02]">
+                    <span class="px-2 text-[11px] font-semibold leading-snug text-ink/40">Animation coming soon</span>
+                  </div>
+                ) : (
+                  <div class="relative mt-2">
+                    <Image src={qAsset(c.img)} alt={c.alt} width={800} class="aspect-square w-full rounded-xl object-cover" />
+                    {c.inset && (
+                      <Image src={qAsset(c.inset)} alt="" width={400} class="absolute -bottom-1.5 -left-1.5 h-14 w-14 rounded-lg border-2 border-canvas object-cover shadow-md" />
+                    )}
+                  </div>
+                )}
+                <p class="mt-2 flex-1 text-[11.5px] font-semibold leading-snug text-ink/75">{c.s}</p>
+              </div>
+            ))}
+            <div class="hidden items-center lg:flex" aria-hidden="true">
+              <span class="text-2xl font-bold text-accent/70">→</span>
+            </div>
+            <div class={compCard}>
+              <p class="text-[13px] font-bold text-ink">{qv.pic.t}</p>
+              <Image src={qAsset(qv.pic.img)} alt={qv.pic.alt} width={800} class="mt-2 aspect-square w-full rounded-xl object-cover" />
+            </div>
+          </div>
+
+          <div class="mt-3 rounded-2xl border border-ink/15 bg-ink/[0.03] p-4">
+            <div class="grid gap-x-5 gap-y-3 lg:grid-cols-[auto_1fr_1.15fr_auto] lg:items-center">
+              <p class="text-[13px] font-bold leading-snug text-accent lg:max-w-[13rem]">{qv.band.title}</p>
+              <ul class="space-y-1 text-[12px] text-ink/75 lg:border-l lg:border-ink/10 lg:pl-5">
+                {qv.band.mats.map((m: any) => (
+                  <li><span class="font-bold text-ink/85">{m.k}:</span> {m.v}</li>
+                ))}
+              </ul>
+              <ul class="space-y-1 text-[12px] text-ink/75 lg:border-l lg:border-ink/10 lg:pl-5">
+                {qv.band.metrics.map((x: string) => (
+                  <li class="flex gap-1.5"><span class="font-bold text-ok">✓</span><span>{x}</span></li>
+                ))}
+              </ul>
+              <p class="justify-self-start rounded-full border border-accent/40 bg-accent/[0.06] px-3.5 py-1.5 text-[11.5px] font-bold text-accent">{qv.band.collab}</p>
+            </div>
+          </div>
+
+          <div class="mt-6">
+            <p class="text-center text-[15px] font-bold text-accent md:text-base">{qv.markets.t}</p>
+            <div class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+              {qv.markets.cards.map((c: any) => (
+                <div class="flex flex-col rounded-2xl border border-ink/10 bg-canvas p-3 text-center">
+                  <p class={`flex-1 text-[12px] font-bold leading-snug ${tone[c.tone]}`}>{c.t}</p>
+                  <Image src={qAsset(c.img)} alt="" width={160} class="mx-auto mt-2 h-14 w-14 rounded-full object-cover" />
+                  <p class={`mt-2 text-lg font-extrabold ${tone[c.tone]}`}>{c.v}</p>
+                  <p class="mt-0.5 text-[10.5px] font-bold tracking-wide text-ink/55">{c.cagr}</p>
+                </div>
+              ))}
+            </div>
+            <p class="mt-2 text-right text-[11px] text-ink/45">{tech.p2VizSource}</p>
+          </div>
+        </div>
+      );
+    })()}
+
     <div class="v-reveal mt-8">
       <p class="text-sm font-medium text-ink/50">{tech.quantumTargetLabel}</p>
       <div class="mt-3 flex flex-wrap gap-2">
@@ -460,7 +532,10 @@ const techAsset = (pth: string) => techImages[`/src/assets/tech/${pth}`]?.defaul
             {pv.photos.map((ph: any) => (
               <div class={photoCard}>
                 <p class="text-[13px] font-bold text-ink">{ph.t}</p>
-                <Image src={pAsset(ph.img)} alt={ph.alt} width={800} class="mt-2 aspect-square w-full rounded-xl object-cover" />
+                <div class="relative mt-2 overflow-hidden rounded-xl">
+                  <Image src={pAsset(ph.img)} alt={ph.alt} width={800} class="aspect-square w-full object-cover" />
+                  <p class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 via-black/35 to-transparent px-2 pb-2 pt-7 text-center text-[11.5px] font-semibold leading-snug text-white">{ph.s}</p>
+                </div>
               </div>
             ))}
           </div>
