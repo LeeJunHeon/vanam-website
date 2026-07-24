@@ -45,26 +45,49 @@ const matToProduct: Record<string, string> = { Oxide: 'oxides', Nitride: 'nitrid
 const matImages = import.meta.glob<{ default: ImageMetadata }>(
   '/src/assets/materials/**/*.{png,jpg,jpeg,webp,avif}',
 );
-const materialInfo: Record<string, {
-  formula: string; name: string; category: string; system: string; desc: string; img: string;
-}> = {};
+// 팝업 패널 데이터: A4 구성(도판·사양·타깃)을 서버에서 미리 최적화·조립한다.
+// 패널은 실제 HTML 로 렌더되어 hidden 토글만 하므로 /technology 자체가 SEO 대상이 된다.
+type MatPanel = {
+  id: string; formula: string; name: string; system: string; category: string;
+  quoteHref: string; desc: string; figs: string[]; targetSrc: string;
+  filmSpecs: string[]; band2Title: string; band2Specs: string[]; hasA4: boolean;
+};
+const matPanels: MatPanel[] = [];
 for (const m of allMaterials) {
   const d = m.data;
-  let img = '';
-  if (d.image && matImages[d.image]) {
-    const mod = await matImages[d.image]();
-    img = (await getImage({ src: mod.default, width: 1200, format: 'webp', quality: 90 })).src;
+  const figs: string[] = [];
+  for (const f of d.figs ?? []) {
+    const key = `/src/assets/materials/${m.id}/${f}`;
+    if (matImages[key]) {
+      const mod = await matImages[key]();
+      figs.push((await getImage({ src: mod.default, width: 900, format: 'webp', quality: 88 })).src);
+    }
   }
-  materialInfo[m.id] = {
+  let targetSrc = '';
+  if (d.targetImg) {
+    const key = `/src/assets/materials/${m.id}/${d.targetImg}`;
+    if (matImages[key]) {
+      const mod = await matImages[key]();
+      targetSrc = (await getImage({ src: mod.default, width: 520, format: 'webp', quality: 88 })).src;
+    }
+  }
+  const filmSpecs = d.filmSpecs ?? [];
+  const band2Specs = d.band2Specs ?? [];
+  matPanels.push({
+    id: m.id,
     formula: d.formula,
     name: locale === 'ko' ? (d.name_ko ?? d.name ?? d.formula) : (d.name ?? d.formula),
-    category: catLabel[d.category],
     system: d.system === 'ald' ? 'ALD' : 'PVD — Sputter & Evaporator',
-    desc: (locale === 'ko' ? (d.description_ko ?? d.description) : d.description) ?? '',
-    img,
-    // 견적 CTA 목적지: 물질 분류에 맞는 제품(견적 폼). 분류 없으면 contact.
+    category: catLabel[d.category],
     quoteHref: lhref(matToProduct[d.category] ? `/product/${matToProduct[d.category]}` : '/contact'),
-  };
+    desc: (locale === 'ko' ? (d.description_ko ?? d.description) : d.description) ?? '',
+    figs,
+    targetSrc,
+    filmSpecs,
+    band2Title: d.band2Title ?? 'Target Specifications',
+    band2Specs,
+    hasA4: filmSpecs.length + band2Specs.length + figs.length > 0,
+  });
 }
 const mt = {
   system: locale === 'ko' ? '증착 방식' : 'Deposition',
@@ -657,10 +680,10 @@ const techAsset = (pth: string) => techImages[`/src/assets/tech/${pth}`]?.defaul
     class="fixed inset-0 z-[100] hidden items-center justify-center p-4"
     role="dialog"
     aria-modal="true"
-    aria-labelledby="mat-modal-name"
+    aria-label={locale === "ko" ? "물질 상세" : "Material details"}
   >
     <div class="mat-backdrop absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
-    <div class="mat-panel relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-ink/10 bg-canvas p-6 shadow-2xl md:p-8">
+    <div class="mat-panel relative max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-ink/10 bg-canvas p-6 shadow-2xl md:p-8">
       <button
         type="button"
         class="mat-close absolute right-4 top-4 rounded-md p-1.5 text-ink/50 transition hover:bg-ink/10 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
@@ -669,82 +692,119 @@ const techAsset = (pth: string) => techImages[`/src/assets/tech/${pth}`]?.defaul
         <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
       </button>
 
-      <div class="flex flex-wrap items-end gap-x-4 gap-y-2 pr-8">
-        <h2 id="mat-modal-name" class="text-3xl font-bold text-ink" data-slot="name"></h2>
-        <span class="rounded-md border border-accent/30 bg-accent/[0.06] px-2.5 py-1 text-lg font-semibold text-accent" data-slot="formula"></span>
-      </div>
+      {matPanels.map((p) => (
+        <div data-mat-panel={p.id} class="hidden">
+          <div class="flex flex-wrap items-end gap-x-4 gap-y-2 pr-8">
+            <h2 class="mat-title text-3xl font-bold text-ink">{p.name}</h2>
+            <span class="rounded-md border border-accent/30 bg-accent/[0.06] px-2.5 py-1 text-lg font-semibold text-accent">{p.formula}</span>
+          </div>
 
-      <div class="mt-5 flex flex-wrap gap-x-8 gap-y-2 text-sm">
-        <div><span class="text-ink/45">{mt.system}: </span><span class="text-ink/80" data-slot="system"></span></div>
-        <div><span class="text-ink/45">{mt.category}: </span><span class="text-ink/80" data-slot="category"></span></div>
-      </div>
+          <div class="mt-4 flex flex-wrap gap-x-8 gap-y-2 text-sm">
+            <div><span class="text-ink/45">{mt.system}: </span><span class="text-ink/80">{p.system}</span></div>
+            <div><span class="text-ink/45">{mt.category}: </span><span class="text-ink/80">{p.category}</span></div>
+          </div>
 
-      <!-- 자료 이미지: A4 세로형 기준 — 원본 비율 그대로 세로 최대 75vh 까지 키우고
-           폭은 비율에 따라 자동(가운데 정렬). 설명 대기 문구를 없앤 만큼 이미지가 커진다. -->
-      <div class="mt-6">
-        <img data-slot="img" alt="" class="hidden mx-auto max-h-[75vh] w-auto max-w-full rounded-xl border border-ink/10 object-contain" loading="lazy" />
-        <div data-slot="img-ph" class="flex aspect-[16/9] flex-col items-center justify-center gap-3 rounded-xl border border-ink/10 bg-ink/[0.03] text-center">
-          <svg class="h-12 w-12 text-ink/20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-          <p class="text-sm text-ink/40">{mt.imgSoon}</p>
+          {p.hasA4 ? (
+            <>
+              <p class="mt-6 inline-block rounded-md bg-brand px-3.5 py-1 text-[13px] font-bold text-onbrand">Thin-Film Specifications</p>
+              {p.figs.length > 0 && (
+                <div class="mt-3 grid gap-2.5 sm:grid-cols-2">
+                  {p.figs.map((src, i) => (
+                    <div class="flex items-center justify-center rounded-xl border border-ink/10 bg-plate p-2">
+                      <img src={src} alt={`${p.name} characterization data ${i + 1}`} class="max-h-52 w-auto max-w-full" loading="lazy" />
+                    </div>
+                  ))}
+                </div>
+              )}
+              {p.filmSpecs.length > 0 && (
+                <ul class="mt-3 space-y-1 border-l-2 border-accent/50 pl-4">
+                  {p.filmSpecs.map((sp) => {
+                    const ci = sp.indexOf(':');
+                    const split = ci > 0 && ci < 44;
+                    return (
+                      <li class="text-[13px] leading-relaxed text-ink/70">
+                        {split ? (
+                          <>
+                            <span class="font-semibold text-ink/85">{sp.slice(0, ci).trim()}</span>
+                            <span> : {sp.slice(ci + 1).trim()}</span>
+                          </>
+                        ) : (
+                          sp
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+              {(p.band2Specs.length > 0 || p.targetSrc) && (
+                <>
+                  <p class="mt-6 inline-block rounded-md bg-brand px-3.5 py-1 text-[13px] font-bold text-onbrand">{p.band2Title}</p>
+                  <div class="mt-3 flex flex-wrap items-start gap-5">
+                    <ul class="min-w-0 flex-1 space-y-1 border-l-2 border-accent/50 pl-4">
+                      {p.band2Specs.map((sp) => {
+                        const ci = sp.indexOf(':');
+                        const split = ci > 0 && ci < 44;
+                        return (
+                          <li class="text-[13px] leading-relaxed text-ink/70">
+                            {split ? (
+                              <>
+                                <span class="font-semibold text-ink/85">{sp.slice(0, ci).trim()}</span>
+                                <span> : {sp.slice(ci + 1).trim()}</span>
+                              </>
+                            ) : (
+                              sp
+                            )}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                    {p.targetSrc && (
+                      <div class="w-36 shrink-0 rounded-xl border border-ink/10 bg-plate p-2.5 text-center">
+                        <img src={p.targetSrc} alt={`${p.name} sputtering target`} class="mx-auto w-full" loading="lazy" />
+                        <span class="mt-1.5 inline-block rounded bg-ink/80 px-2 py-0.5 text-[10.5px] font-bold tracking-wide text-canvas">Target</span>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </>
+          ) : (
+            p.desc && <p class="mt-6 whitespace-pre-line text-base leading-relaxed text-ink/75">{p.desc}</p>
+          )}
+
+          <div class="mt-8">
+            <a href={p.quoteHref} class="inline-flex items-center gap-2 rounded-lg bg-brand px-5 py-3 text-sm font-semibold text-onbrand transition hover:brightness-110">
+              {mt.cta} →
+            </a>
+          </div>
         </div>
-      </div>
-
-      <p class="mt-6 hidden whitespace-pre-line text-base leading-relaxed text-ink/75" data-slot="desc"></p>
-
-      <div class="mt-8">
-        <a data-slot="quote" href={contactHref} class="inline-flex items-center gap-2 rounded-lg bg-brand px-5 py-3 text-sm font-semibold text-onbrand transition hover:brightness-110">
-          {mt.cta} →
-        </a>
-      </div>
+      ))}
     </div>
   </div>
 
-  <script type="application/json" id="mat-data" is:inline set:html={JSON.stringify(materialInfo)}></script>
 
   <script>
     const modal = document.getElementById('mat-modal');
-    const dataEl = document.getElementById('mat-data');
-    if (modal && dataEl) {
-      const data = JSON.parse(dataEl.textContent || '{}');
-      const slot = (name: string) => modal.querySelector<HTMLElement>(`[data-slot="${name}"]`);
-      const imgEl = slot('img') as HTMLImageElement | null;
-      const imgPh = slot('img-ph');
-      const descEl = slot('desc');
+    if (modal) {
+      const panels = modal.querySelectorAll<HTMLElement>('[data-mat-panel]');
+      const scroller = modal.querySelector<HTMLElement>('.mat-panel');
       const closeBtn = modal.querySelector<HTMLElement>('.mat-close');
       const backdrop = modal.querySelector<HTMLElement>('.mat-backdrop');
       let lastFocused: HTMLElement | null = null;
 
-      const show = (el: HTMLElement | null) => el?.classList.remove('hidden');
-      const hide = (el: HTMLElement | null) => el?.classList.add('hidden');
-
       function open(id: string) {
-        const m = data[id];
-        if (!m) return;
-        const name = slot('name'); if (name) name.textContent = m.name;
-        const formula = slot('formula'); if (formula) formula.textContent = m.formula;
-        const system = slot('system'); if (system) system.textContent = m.system;
-        const category = slot('category'); if (category) category.textContent = m.category;
-
-        // 견적 CTA 링크를 이 물질의 제품 페이지로 교체
-        const quote = slot('quote') as HTMLAnchorElement | null;
-        if (quote && m.quoteHref) quote.href = m.quoteHref;
-
-        if (m.img && imgEl) {
-          imgEl.src = m.img; imgEl.alt = m.name; show(imgEl); hide(imgPh);
-        } else {
-          if (imgEl) imgEl.removeAttribute('src'); hide(imgEl); show(imgPh);
-        }
-
-        if (m.desc && descEl) {
-          descEl.textContent = m.desc; show(descEl);
-        } else {
-          hide(descEl);
-        }
-
+        let found = false;
+        panels.forEach((p) => {
+          const on = p.getAttribute('data-mat-panel') === id;
+          p.classList.toggle('hidden', !on);
+          if (on) found = true;
+        });
+        if (!found) return;
         lastFocused = document.activeElement as HTMLElement;
         modal.classList.remove('hidden');
         modal.classList.add('flex');
         document.body.style.overflow = 'hidden';
+        if (scroller) scroller.scrollTop = 0;
         closeBtn?.focus();
       }
 
