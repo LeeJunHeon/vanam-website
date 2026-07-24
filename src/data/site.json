@@ -229,6 +229,7 @@
             "t": "Modulator",
             "img": "modulator.webp",
             "inset": "modulator-2.webp",
+            "inset2": "modulator-chart.webp",
             "alt": "Cryogenic electro-optic modulator device",
             "s": "High cryogenic electro-optic modulation"
           },
@@ -258,6 +259,7 @@
             "Pockels coefficient ~1000 pm/V at 5K",
             "Reflectance > 99%"
           ],
+          "collabImg": "collab.webp",
           "collab": "KIST Quantum Fab & UIUC Collaboration"
         },
         "markets": {
@@ -830,6 +832,7 @@
             "t": "Modulator",
             "img": "modulator.webp",
             "inset": "modulator-2.webp",
+            "inset2": "modulator-chart.webp",
             "alt": "Cryogenic electro-optic modulator device",
             "s": "High cryogenic electro-optic modulation"
           },
@@ -859,6 +862,7 @@
             "Pockels coefficient ~1000 pm/V at 5K",
             "Reflectance > 99%"
           ],
+          "collabImg": "collab.webp",
           "collab": "KIST Quantum Fab & UIUC Collaboration"
         },
         "markets": {
