@@ -418,8 +418,8 @@ const techAsset = (pth: string) => techImages[`/src/assets/tech/${pth}`]?.defaul
               <div class={compCard}>
                 <p class="text-[13px] font-bold text-ink">{c.t}</p>
                 {c.gif ? (
-                  <div class="mt-2 grid aspect-square w-full place-items-center overflow-hidden rounded-xl border border-ink/10 bg-plate">
-                    <video class="w-full" autoplay muted loop playsinline preload="metadata" poster="/media/dbr-poster.jpg" aria-label={c.alt}>
+                  <div class="mt-2 aspect-square w-full overflow-hidden rounded-xl border border-ink/10 bg-plate">
+                    <video class="h-full w-full object-cover" autoplay muted loop playsinline preload="metadata" poster="/media/dbr-poster.jpg" aria-label={c.alt}>
                       <source src="/media/dbr.mp4" type="video/mp4" />
                     </video>
                   </div>
@@ -427,7 +427,7 @@ const techAsset = (pth: string) => techImages[`/src/assets/tech/${pth}`]?.defaul
                   <div class="relative mt-2">
                     <Image src={qAsset(c.img)} alt={c.alt} width={800} class="aspect-square w-full rounded-xl object-cover" />
                     {c.inset && (
-                      <Image src={qAsset(c.inset)} alt="" width={400} class="absolute -bottom-1.5 -left-1.5 h-14 w-14 rounded-lg border-2 border-canvas object-cover shadow-md" />
+                      <Image src={qAsset(c.inset)} alt="" width={400} class="absolute -bottom-1.5 -left-1.5 h-14 w-14 rounded-full border-2 border-canvas object-cover shadow-md" />
                     )}
                     {c.inset2 && (
                       <Image src={qAsset(c.inset2)} alt="" width={640} class="absolute -top-1.5 left-1/2 h-12 w-[72%] -translate-x-1/2 rounded-lg border-2 border-canvas object-cover shadow-md" />
