@@ -77,9 +77,9 @@ const equipLarge: Record<string, string> = {};
 
 // 빅데이터 다이어그램: 장비 사진 위 보라 하이라이트(센서 장착 위치) 좌표(%) — 명칭 매핑은 연구팀 확인값
 const BD_POINTS = [
-  { n: 'RGA', x: 30, y: 28, side: 'r' },
-  { n: 'OES', x: 17, y: 58, side: 'r' },
-  { n: 'TSP', x: 83, y: 54, side: 'l' },
+  { n: 'RGA', x: 28.4, y: 22.3, side: 'r' },
+  { n: 'OES', x: 14.3, y: 60.2, side: 'r' },
+  { n: 'TSP', x: 85.7, y: 55.2, side: 'l' },
 ];
 const bdAsset = (pth: string) => equipImages[`/src/assets/equipment/bigdata/${pth}`]?.default;
 
@@ -334,7 +334,7 @@ const waferFromLabel = waferKrws.length
                       <button type="button"
                         class="equip-zoom block w-full cursor-zoom-in rounded-lg border border-ink/10 bg-plate p-1 transition hover:border-accent/60"
                         data-full={equipLarge[e.data.image!]} data-name={bd.sputter} aria-label={`${bd.sputter} 확대`}>
-                        <Image src={chamber} alt={locale === 'ko' ? '자체 개발 스퍼터 장비 — RGA·OES·TSP 센서 장착 위치' : 'Self-developed sputter system with RGA, OES and TSP sensors highlighted'} width={560} class="aspect-square w-full object-contain" />
+                        <Image src={chamber} alt={locale === 'ko' ? '자체 개발 스퍼터 장비 — RGA·OES·TSP 센서 장착 위치' : 'Self-developed sputter system with RGA, OES and TSP sensors highlighted'} width={560} class="aspect-[7/6] w-full object-contain" />
                       </button>
                       {BD_POINTS.map((pt) => (
                         <span class="pointer-events-none absolute" style={`left:${pt.x}%; top:${pt.y}%;`}>
@@ -386,10 +386,10 @@ const waferFromLabel = waferKrws.length
                 {/* 03 — 산출 */}
                 <div class="flex flex-col gap-4">
                   {bd.outputs.map((o: { t: string; s: string; img: string; alt: string }) => (
-                    <div class="flex-1 rounded-xl border border-accent/30 bg-canvas p-3.5 shadow-lg shadow-ink/5">
-                      <button type="button" class="equip-zoom block w-full cursor-zoom-in overflow-hidden rounded-lg border border-ink/10 transition hover:border-accent/60"
+                    <div class="flex flex-1 flex-col rounded-xl border border-accent/30 bg-canvas p-3.5 shadow-lg shadow-ink/5">
+                      <button type="button" class="equip-zoom block w-full flex-1 cursor-zoom-in overflow-hidden rounded-lg border border-ink/10 transition hover:border-accent/60"
                         data-full={equipLarge[`/src/assets/equipment/bigdata/${o.img}`]} data-name={o.t} aria-label={`${o.t} 확대`}>
-                        <Image src={bdAsset(o.img)!} alt={o.alt} width={640} class="aspect-[5/2] w-full object-cover" />
+                        <Image src={bdAsset(o.img)!} alt={o.alt} width={640} class="aspect-[5/2] h-full w-full object-cover" />
                       </button>
                       <p class="mt-2.5 text-sm font-bold text-accent">{o.t}</p>
                       <p class="mt-0.5 text-xs text-ink/50">{o.s}</p>
