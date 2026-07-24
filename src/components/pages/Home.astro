@@ -18,8 +18,8 @@ const description = home.metaDescription;
        러프(lerp) 재생헤드가 스크롤을 부드럽게 뒤쫓고, 텍스트 카피는 여정 초반에 페이드아웃,
        종점은 canvas 톤 그라디언트로 다음 섹션에 핸드오프. (애플 제품 페이지 기법) -->
   <div id="vn-stage" class="relative h-[280vh] bg-[#0b0d10]">
-    <link rel="preload" as="image" href="/media/hero/f001.webp" media="(min-width: 769px)" />
-    <link rel="preload" as="image" href="/media/hero-m/f001.webp" media="(max-width: 768px)" />
+    <link rel="preload" as="image" href="/media/hero/f001.avif" media="(min-width: 769px)" />
+    <link rel="preload" as="image" href="/media/hero-m/f001.avif" media="(max-width: 768px)" />
     <div class="sticky top-0 h-screen w-full overflow-hidden">
       <canvas id="vn-scrub" class="h-full w-full transform-gpu"></canvas>
       <div class="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/65 via-black/25 to-transparent" aria-hidden="true"></div>
@@ -86,9 +86,9 @@ const description = home.metaDescription;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const N = 142;
+    const N = 177;
     const DIR = window.matchMedia('(max-width: 768px)').matches ? '/media/hero-m/' : '/media/hero/';
-    const src = (i: number) => `${DIR}f${String(i + 1).padStart(3, '0')}.webp`;
+    const src = (i: number) => `${DIR}f${String(i + 1).padStart(3, '0')}.avif`;
     const imgs: (HTMLImageElement | null)[] = new Array(N).fill(null);
     const ready: boolean[] = new Array(N).fill(false);
 
@@ -122,20 +122,15 @@ const description = home.metaDescription;
     };
 
     const render = () => {
-      const a = Math.max(0, Math.min(N - 1, Math.floor(play)));
-      const f = play - a;
-      const ka = nearest(a);
-      if (ka < 0) return;
-      // 속도 게이트: 빠른 스크럽 중엔 블렌딩을 꺼 이중상(어지러움)을 방지, 감속 시에만 보간
-      const slow = Math.abs(target - play) < 1.1;
-      const kb = slow && ka === a && f > 0.02 && a + 1 < N && ready[a + 1] ? a + 1 : -1;
-      const key = ka * 1000 + (kb >= 0 ? Math.round(f * 200) : 0);
-      if (key === cur && drawnTick === loadTick) return;
+      // 15fps 실프레임 + 러프 재생헤드만으로 부드러움 확보 — 블렌딩 없음(잔상 원천 제거)
+      const idx = Math.max(0, Math.min(N - 1, Math.round(play)));
+      const k = nearest(idx);
+      if (k < 0) return;
+      if (k === cur && drawnTick === loadTick) return;
       ctx.clearRect(0, 0, W, H);
-      paint(imgs[ka]!, 1);
-      if (kb >= 0) paint(imgs[kb]!, f);
+      paint(imgs[k]!, 1);
       ctx.globalAlpha = 1;
-      cur = key; drawnTick = loadTick;
+      cur = k; drawnTick = loadTick;
     };
 
     const onScroll = () => {
@@ -175,15 +170,8 @@ const description = home.metaDescription;
 
     let raf = 0, running = false;
     const loop = () => {
-      if (Math.abs(target - play) > 0.02) {
-        play += (target - play) * 0.18;            // 스크롤 추적
-      } else {
-        // 정지 정착: 소수 프레임에 머물면 크로스페이드가 이중상(잔상)으로 남으므로
-        // 가장 가까운 정수 프레임으로 미세 수렴 → 단일 선명 프레임
-        const snap = Math.max(0, Math.min(N - 1, Math.round(target)));
-        play += (snap - play) * 0.14;
-        if (Math.abs(snap - play) < 0.01) play = snap;
-      }
+      play += (target - play) * 0.18;
+      if (Math.abs(target - play) < 0.02) play = target;
       render();
       raf = requestAnimationFrame(loop);
     };
