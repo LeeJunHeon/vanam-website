@@ -311,7 +311,7 @@ const childHref = (path) => {
           </p>
           {banner.dismissible && (
             <button type="button" id="banner-close" aria-label={isKo ? '닫기' : 'Dismiss'}
-              class="absolute right-3 top-1/2 -translate-y-1/2 grid h-6 w-6 place-items-center rounded-full opacity-70 transition hover:opacity-100 hover:bg-black/10">
+              class="absolute right-3 top-1/2 -translate-y-1/2 grid h-8 w-8 place-items-center rounded-full opacity-70 transition hover:opacity-100 hover:bg-black/10">
               <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
             </button>
           )}
@@ -349,12 +349,12 @@ const childHref = (path) => {
           <a href={popupHref} target="_blank" rel="noopener noreferrer" aria-label={popupAlt}
             class="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent">
             <img src={popupImg.src} width={popupImg.attributes.width} height={popupImg.attributes.height}
-              alt={popupAlt} loading="eager" decoding="async"
+              alt={popupAlt} loading="lazy" decoding="async"
               class="block h-auto max-h-[55vh] w-full bg-ink/[0.03] object-contain" />
           </a>
         ) : (
           <img src={popupImg.src} width={popupImg.attributes.width} height={popupImg.attributes.height}
-            alt={popupAlt} loading="eager" decoding="async"
+            alt={popupAlt} loading="lazy" decoding="async"
             class="block h-auto max-h-[55vh] w-full bg-ink/[0.03] object-contain" />
         )}
         <div class="flex divide-x divide-ink/10 border-t border-ink/10 text-[13px]">

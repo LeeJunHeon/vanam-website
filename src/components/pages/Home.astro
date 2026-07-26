@@ -18,8 +18,8 @@ const description = home.metaDescription;
        러프(lerp) 재생헤드가 스크롤을 부드럽게 뒤쫓고, 텍스트 카피는 여정 초반에 페이드아웃,
        종점은 canvas 톤 그라디언트로 다음 섹션에 핸드오프. (애플 제품 페이지 기법) -->
   <div id="vn-stage" class="relative h-[280vh] bg-[#0b0d10]">
-    <link rel="preload" as="image" href="/media/hero/f001.avif" media="(min-width: 769px)" />
-    <link rel="preload" as="image" href="/media/hero-m/f001.avif" media="(max-width: 768px)" />
+    <link rel="preload" as="image" href="/media/hero/f001.avif" media="(min-width: 769px)" fetchpriority="high" />
+    <link rel="preload" as="image" href="/media/hero-m/f001.avif" media="(max-width: 768px)" fetchpriority="high" />
     <div class="sticky top-0 h-screen w-full overflow-hidden">
       <canvas id="vn-scrub" class="h-full w-full transform-gpu"></canvas>
       <div class="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/65 via-black/25 to-transparent" aria-hidden="true"></div>
@@ -150,6 +150,8 @@ const description = home.metaDescription;
     const load = (i: number, cb?: () => void) => {
       const im = new Image();
       im.decoding = 'async';
+      // 첫 프레임만 최우선, 나머지는 저우선순위로 — 초기 로드 자원(FCP/LCP) 경쟁 방지
+      try { (im as any).fetchPriority = i === 0 ? 'high' : 'low'; } catch (e) {}
       const done = () => { ready[i] = true; loadTick++; if (cb) cb(); };
       im.onload = () => {
         if (im.decode) im.decode().then(done).catch(done);
@@ -179,15 +181,23 @@ const description = home.metaDescription;
     const stopLoop = () => { if (running) { running = false; cancelAnimationFrame(raf); } };
 
     load(0, render);
+    // 나머지 176장은 페이지 로드가 끝난 "유휴 시점"부터 —
+    // 모바일 4G에서 첫 화면(FCP/LCP)과 대역폭을 다투지 않도록 한다.
+    const MOBILE = DIR.includes('hero-m');
     let next = 1, active = 0;
     const pump = () => {
-      while (active < 8 && next < N) {
+      while (active < (MOBILE ? 3 : 6) && next < N) {
         const i = next++;
         active++;
         load(i, () => { active--; pump(); });
       }
     };
-    pump();
+    const startPump = () => {
+      if ('requestIdleCallback' in window) (window as any).requestIdleCallback(pump, { timeout: 1500 });
+      else setTimeout(pump, 600);
+    };
+    if (document.readyState === 'complete') startPump();
+    else window.addEventListener('load', startPump, { once: true });
 
     window.addEventListener('scroll', onScroll, { passive: true });
     let rT: ReturnType<typeof setTimeout>;
