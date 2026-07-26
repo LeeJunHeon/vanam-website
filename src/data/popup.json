@@ -1,5 +1,5 @@
 {
-  "enabled": true,
+  "enabled": false,
   "image": "/src/assets/popup/image.png",
   "linkUrl": "https://www.sedex.org/public_html/index.asp?",
   "alt": "VanaM 공지"
