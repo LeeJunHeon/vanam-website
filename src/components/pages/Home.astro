@@ -112,10 +112,10 @@ const description = home.metaDescription;
 
     const blobs: (Blob | null)[] = new Array(N).fill(null);   // 압축 데이터(가벼움)
     const bmp = new Map<number, ImageBitmap>();               // 디코드된 비트맵(무거움 → 상한)
-    const BMP_CAP = MOBILE ? 18 : 34;
+    const BMP_CAP = MOBILE ? 18 : 28;
 
     let W = 0, H = 0, cur = -1, loadTick = 0, drawnTick = -1;
-    let target = 0, play = 0, lastScroll = 0;
+    let target = 0, play = 0, lastScroll = 0, lastBigJump = 0;
     let headH = 0, startY = 0, travel = 1;
 
     const clampIdx = (v: number) => Math.max(0, Math.min(N - 1, v));
@@ -146,12 +146,22 @@ const description = home.metaDescription;
         if (h + d < N && bmp.has(h + d)) { k = h + d; break; }
       }
       if (k < 0 || (k === cur && drawnTick === loadTick)) return;
-      // 모노토닉 표시: 디코드가 스크롤을 못 따라올 때 nearest 가 재생헤드 앞뒤를 오가며
-      // 그리면 화면이 앞뒤로 진동한다. 진행 방향과 반대되는 프레임은 그리지 않고
-      // 현재 프레임을 유지한다 — 다음 디코드가 도착하면 방향대로만 전진.
       const dir = target > play + 0.4 ? 1 : target < play - 0.4 ? -1 : 0;
-      if (cur >= 0 && dir > 0 && k < cur) return;
-      if (cur >= 0 && dir < 0 && k > cur) return;
+      if (cur >= 0) {
+        // 모노토닉: 진행 방향 역행 금지. 정지 상태에선 정확히 head 프레임만 —
+        // 정지 직후 뒤 프레임으로 물러나며 번쩍이거나 "끝까지 안 간" 채 멈추는 것을 막는다.
+        if (dir > 0 && k < cur) return;
+        if (dir < 0 && k > cur) return;
+        if (dir === 0 && k !== h) return;
+        // 도약 빈도 제한: 가용 프레임이 성길 때 큰 점프가 연발되면 번쩍임이 된다.
+        // 140ms 당 1회만 허용 — 연속 플래시가 단일 컷으로 바뀐다.
+        const gap = Math.abs(k - cur);
+        if (gap > 8) {
+          const nowT = performance.now();
+          if (nowT - lastBigJump < 140) return;
+          lastBigJump = nowT;
+        }
+      }
       const im = bmp.get(k)!;
       const sc = Math.max(W / im.width, H / im.height);
       const dw = im.width * sc, dh = im.height * sc;
@@ -186,7 +196,7 @@ const description = home.metaDescription;
       }
     };
     const decodeOne = (i: number) => {
-      if (bmp.has(i) || !blobs[i] || decoding >= 2) return false;
+      if (bmp.has(i) || !blobs[i] || decoding >= 4) return false;
       decoding++;
       createImageBitmap(blobs[i] as Blob).then((b) => {
         decoding--;
@@ -196,9 +206,11 @@ const description = home.metaDescription;
       return true;
     };
     const ensureWindow = () => {
+      // 결말 보증: 스크럽 후반부에 들어서면 마지막 프레임을 최우선 디코드
+      if (target > (N - 1) * 0.85 && !bmp.has(N - 1) && blobs[N - 1]) { if (decodeOne(N - 1)) return; }
       const h = headIdx();
       const dir = target >= play ? 1 : -1;                     // 진행 방향을 먼저 채운다
-      const span = MOBILE ? 8 : 16;
+      const span = MOBILE ? 10 : 24;
       for (let d = 0; d <= span; d++) {
         if (decodeOne(clampIdx(h + d * dir))) return;
         if (d && decodeOne(clampIdx(h - d * dir))) return;
@@ -230,12 +242,13 @@ const description = home.metaDescription;
         .catch(() => cb());
     };
     const pump = () => {
-      // 데스크톱·모바일 모두: 스크롤 직후에는 네트워크·디코드를 쉬어 스크럽을 지킨다
-      if (performance.now() - lastScroll < 200) {
+      // 모바일만: 스크롤 직후 네트워크를 쉰다. 데스크톱은 대역·코어 여유가 커서
+      // 오히려 계속 받아 가용 프레임을 조밀하게 만드는 쪽이 끊김을 줄인다.
+      if (MOBILE && performance.now() - lastScroll < 200) {
         if (!pumpWait) { pumpWait = true; setTimeout(() => { pumpWait = false; pump(); }, 220); }
         return;
       }
-      while (active < (MOBILE ? 3 : 8)) {
+      while (active < (MOBILE ? 3 : 10)) {
         const i = pickNext();
         if (i < 0) return;
         requested[i] = 1;
@@ -247,6 +260,8 @@ const description = home.metaDescription;
     measure(); onScroll();
     requested[0] = 1;
     fetchOne(0, () => { decodeOne(0); });
+    requested[N - 1] = 1;
+    fetchOne(N - 1, () => {});   // 마지막 프레임 선확보 — 결말이 항상 표시되도록
 
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       const still = Math.round((N - 1) * 0.62);
@@ -262,6 +277,8 @@ const description = home.metaDescription;
       if (Math.abs(target - play) < 0.02) play = target;
       ensureWindow();
       render();
+      // 유휴 정지: 목표 도달 + head 표시 완료 + 디코드 없음 → rAF 중단(스크롤 시 재개)
+      if (play === target && cur === headIdx() && decoding === 0) { running = false; return; }
       raf = requestAnimationFrame(loop);
     };
     const startLoop = () => { if (!running) { running = true; raf = requestAnimationFrame(loop); } };
@@ -281,6 +298,7 @@ const description = home.metaDescription;
     window.addEventListener('scroll', startPump, { once: true, passive: true });
 
     window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('scroll', () => startLoop(), { passive: true });
     let rT: ReturnType<typeof setTimeout>;
     window.addEventListener('resize', () => { clearTimeout(rT); rT = setTimeout(() => { measure(); onScroll(); }, 150); });
     new IntersectionObserver((es) => (es[0].isIntersecting ? startLoop() : stopLoop())).observe(stage);
