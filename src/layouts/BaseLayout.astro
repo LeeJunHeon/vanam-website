@@ -407,8 +407,8 @@ const childHref = (path) => {
     <header class="sticky top-0 z-50 border-b border-ink/10 bg-canvas/80 backdrop-blur">
       <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <a href={localizedHref('/')} class="shrink-0" aria-label="VanaM">
-          <Image src={logo} alt="VANAM — VANA Materials LAB." width={200} height={50} class="logo-dark h-9 w-auto md:h-10" loading="eager" />
-          <Image src={logoLight} alt="VANAM — VANA Materials LAB." width={200} height={50} class="logo-light h-9 w-auto md:h-10" loading="eager" />
+          <Image src={logo} alt="VANAM — VANA Materials LAB." width={200} height={50} quality={72} class="logo-dark h-9 w-auto md:h-10" loading="eager" />
+          <Image src={logoLight} alt="VANAM — VANA Materials LAB." width={200} height={50} quality={72} class="logo-light h-9 w-auto md:h-10" loading="eager" />
         </a>
         <div class="flex items-center gap-5">
           <nav class="hidden items-center gap-5 text-sm text-ink/60 md:flex" aria-label={ui.mainMenu}>
@@ -493,14 +493,14 @@ const childHref = (path) => {
       <slot />
     </main>
     <footer class="mt-24 border-t border-ink/10">
-      <div class="mx-auto max-w-6xl px-6 py-12 text-sm text-ink/45">
+      <div class="mx-auto max-w-6xl px-6 py-12 text-sm text-ink/60">
         <div class="flex flex-col gap-10 md:flex-row md:items-start md:justify-between">
         <div class="min-w-0">
         <p class="font-semibold text-ink/70">{biz.name}</p>
         <p class="mt-1">{ui.tagline}</p>
 
         <!-- 전자상거래법상 표시 의무 항목 (PG 심사 필수) -->
-        <div class="mt-5 space-y-1 text-[13px] leading-relaxed text-ink/40">
+        <div class="mt-5 space-y-1 text-[13px] leading-relaxed text-ink/60">
           <p>{fl.ceo}: {biz.ceo} &nbsp;·&nbsp; {fl.bizNo}: {company.bizNo}</p>
           <p>{fl.mailOrder}: {company.mailOrderNo}</p>
           <p>({company.zip}) {biz.address}</p>
@@ -510,8 +510,8 @@ const childHref = (path) => {
         <nav class="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-[13px]" aria-label={fl.privacy}>
           <a href={localizedHref('/order/lookup')} class="font-medium text-ink/60 transition hover:text-accent">{fl.lookup}</a>
           <a href={localizedHref('/privacy')} class="font-medium text-ink/60 transition hover:text-accent">{fl.privacy}</a>
-          <a href={localizedHref('/terms')} class="text-ink/45 transition hover:text-accent">{fl.terms}</a>
-          <a href={localizedHref('/refund')} class="text-ink/45 transition hover:text-accent">{fl.refund}</a>
+          <a href={localizedHref('/terms')} class="text-ink/60 transition hover:text-accent">{fl.terms}</a>
+          <a href={localizedHref('/refund')} class="text-ink/60 transition hover:text-accent">{fl.refund}</a>
         </nav>
 
         </div>
