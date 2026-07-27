@@ -203,7 +203,7 @@ const description = home.metaDescription;
       vc.chain = vc.chain.then(() => doGop(g)).catch(() => {}).finally(() => vc.queued.delete(g));
     };
     const ensureVideo = () => {
-      if (!vc.on || vc.dead) return;
+      if (!vc.on || vc.dead || !vc.dec) return;
       const h = headVid();
       for (let d = 0; d <= 12; d++) {
         const cand = d === 0 ? [h] : [h + d, ...(d <= 6 ? [h - d] : [])];
@@ -215,6 +215,12 @@ const description = home.metaDescription;
           return;
         }
       }
+    };
+    const goVideo = () => {
+      if (mode === 'video' || vc.dead) return;
+      mode = 'video'; stopPump = true;
+      if (vc.failT) { clearTimeout(vc.failT); vc.failT = 0; }
+      console.info('[vn-hero] mode: video (WebCodecs · HW decode)');
     };
     const vFail = (r: string) => {
       if (vc.dead) return;
@@ -228,7 +234,11 @@ const description = home.metaDescription;
     const initVideo = () => {
       const Wn = window as any;
       if (MOBILE || !Wn.VideoDecoder || !Wn.EncodedVideoChunk) { if (!MOBILE) console.info('[vn-hero] mode: frames (no WebCodecs)'); return; }
-      vc.failT = setTimeout(() => { if (mode !== 'video') vFail('timeout'); }, 9000);
+      if (document.hidden) {                               // 백그라운드 탭: rAF·타이머가 정지되므로 보일 때 시작
+        document.addEventListener('visibilitychange', () => { if (!document.hidden) initVideo(); }, { once: true });
+        return;
+      }
+      vc.failT = setTimeout(() => { if (mode !== 'video') vFail('timeout'); }, 12000);
       fetch('/media/hero.mp4', { cache: 'force-cache' })
         .then((r) => { if (!r.ok) throw 0; return r.arrayBuffer(); })
         .then(async (ab) => {
@@ -258,6 +268,11 @@ const description = home.metaDescription;
                 description: new Uint8Array(ds.buffer, 8), optimizeForLatency: true };
             } catch (e) { return vFail('avcC'); }
             vc.total = t.nb_samples;
+            // ⚠️ 추출은 "파싱이 mdat 를 지나기 전"에 동기로 켜야 한다.
+            // faststart(moov 선두)라 onReady 는 mdat 이전에 오므로, 여기서 즉시 start().
+            // (isConfigSupported 응답을 기다렸다 켜면 이미 소비된 mdat 에서 샘플이 나오지 않는다 — 실측 timeout 원인)
+            mp4.setExtractionOptions(t.id, null, { nbSamples: t.nb_samples });
+            mp4.start();
             Wn.VideoDecoder.isConfigSupported(vc.cfg).then((sup: any) => {
               if (!sup || !sup.supported) return vFail('unsupported');
               vc.dec = new Wn.VideoDecoder({
@@ -265,11 +280,10 @@ const description = home.metaDescription;
                   const i = vc.expect++;
                   if (i < 0 || vc.frames.has(i)) { f.close(); return; }
                   vc.frames.set(i, f); evictV(); loadTick++;
+                  if (i === headVid()) goVideo();          // rAF 없이도 즉시 전환 가능
                 },
                 error: () => vFail('decerr'),
               });
-              mp4.setExtractionOptions(t.id, null, { nbSamples: t.nb_samples });
-              mp4.start();
             }).catch(() => vFail('cfg'));
           };
           (ab as any).fileStart = 0;
@@ -379,11 +393,7 @@ const description = home.metaDescription;
       if (Math.abs(target - play) < 0.02) play = target;
       if (vc.on && !vc.dead) {
         ensureVideo();
-        if (mode !== 'video' && vc.frames.has(headVid())) {
-          mode = 'video'; stopPump = true;
-          if (vc.failT) clearTimeout(vc.failT);
-          console.info('[vn-hero] mode: video (WebCodecs · HW decode)');
-        }
+        if (mode !== 'video' && vc.frames.has(headVid())) goVideo();
       }
       render();
       raf = requestAnimationFrame(loop);
