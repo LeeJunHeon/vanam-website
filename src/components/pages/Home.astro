@@ -75,8 +75,9 @@ const description = home.metaDescription;
 </BaseLayout>
 
 <script>
-  // 시네마틱 스크럽 v2: 러프 재생헤드 + "인접 프레임 크로스페이드"로 서브프레임 보간.
-  // 10fps 소스라도 스크롤 스텝이 스냅 없이 흐른다. DPR 1.5 상한으로 페인트 비용을 억제.
+  // 시네마틱 스크럽 v3: 15fps 실프레임 + 러프 재생헤드(블렌딩 없음 → 정지 잔상 없음).
+  // 로딩은 "성긴 패스 → 촘촘한 패스" 순 + 재생헤드 근처 우선이라 초반부터 끊김이 적다.
+  // DPR 1.5 · 백킹 1600px 상한으로 페인트 비용을 억제.
   (() => {
     const canvas = document.getElementById('vn-scrub') as HTMLCanvasElement | null;
     const stage = document.getElementById('vn-stage');
@@ -152,8 +153,9 @@ const description = home.metaDescription;
     const load = (i: number, cb?: () => void) => {
       const im = new Image();
       im.decoding = 'async';
-      // 첫 프레임만 최우선, 나머지는 저우선순위로 — 초기 로드 자원(FCP/LCP) 경쟁 방지
-      try { (im as any).fetchPriority = i === 0 ? 'high' : 'low'; } catch (e) {}
+      // 첫 프레임만 최우선. 나머지는 기본 우선순위 — 펌프가 load 이벤트 이후에만 돌기 때문에
+      // FCP/LCP 는 이미 확정된 시점이고, 'low' 로 묶으면 채워지는 속도만 느려진다.
+      try { (im as any).fetchPriority = i === 0 ? 'high' : 'auto'; } catch (e) {}
       const done = () => { ready[i] = true; loadTick++; if (cb) cb(); };
       im.onload = () => {
         if (im.decode) im.decode().then(done).catch(done);
@@ -186,27 +188,56 @@ const description = home.metaDescription;
     // 나머지 176장은 페이지 로드가 끝난 "유휴 시점"부터 —
     // 모바일 4G에서 첫 화면(FCP/LCP)과 대역폭을 다투지 않도록 한다.
     const MOBILE = DIR.includes('hero-m');
-    let next = 1, active = 0, pumpWait = false;
+    // 로딩 순서가 체감 부드러움을 좌우한다.
+    //   ① 성긴 패스 → 촘촘한 패스(8칸 → 4 → 2 → 1): 전 구간을 빠르게 훑어 깔아두면
+    //      어디로 스크롤해도 nearest() 오차가 몇 프레임 이내 → 처음부터 매끄럽다.
+    //   ② 각 패스 안에서는 현재 재생헤드에 가까운 프레임부터: 보고 있는 구간이 먼저 채워진다.
+    // (순차 로딩이면 조금만 내려도 그 구간이 비어 멀리서 끌어오느라 뚝뚝 끊긴다)
+    const PASSES = MOBILE ? [8, 4, 2] : [8, 4, 2, 1];   // 모바일은 짝수 프레임까지만(용량·디코드 절반)
+    const requested = new Uint8Array(N);
+    requested[0] = 1;
+    let passIdx = 0, active = 0, pumpWait = false;
+
+    const pickNext = () => {
+      const head = Math.max(0, Math.min(N - 1, Math.round(play)));
+      for (; passIdx < PASSES.length; passIdx++) {
+        const step = PASSES[passIdx];
+        let best = -1, bestD = Infinity;
+        for (let i = 0; i < N; i += step) {
+          if (requested[i]) continue;
+          const d = Math.abs(i - head);
+          if (d < bestD) { bestD = d; best = i; }
+        }
+        if (best >= 0) return best;
+      }
+      return -1;
+    };
+
     const pump = () => {
-      // 모바일: 스크롤 직후 240ms 동안 다운로드·디코드를 쉬어 스크럽 프레임률을 지킨다
+      // 모바일: 스크롤 직후 220ms 는 다운로드·디코드를 쉬어 스크럽 프레임률을 지킨다
       if (MOBILE && performance.now() - lastScroll < 220) {
         if (!pumpWait) { pumpWait = true; setTimeout(() => { pumpWait = false; pump(); }, 240); }
         return;
       }
-      while (active < (MOBILE ? 3 : 6) && next < N) {
-        const i = next++;
-        // 모바일: 홀수 프레임 생략(디코드·용량 절반) — nearest 탐색이 짝수 프레임으로 대체
-        if (MOBILE && i % 2 === 1 && i !== N - 1) continue;
+      while (active < (MOBILE ? 3 : 10)) {
+        const i = pickNext();
+        if (i < 0) return;
+        requested[i] = 1;
         active++;
         load(i, () => { active--; pump(); });
       }
     };
-    const startPump = () => {
-      if ('requestIdleCallback' in window) (window as any).requestIdleCallback(pump, { timeout: 1500 });
-      else setTimeout(pump, 600);
+
+    let pumpStarted = false;
+    const startPump = () => { if (!pumpStarted) { pumpStarted = true; pump(); } };
+    const schedulePump = () => {
+      if ('requestIdleCallback' in window) (window as any).requestIdleCallback(startPump, { timeout: 400 });
+      else setTimeout(startPump, 300);
     };
-    if (document.readyState === 'complete') startPump();
-    else window.addEventListener('load', startPump, { once: true });
+    if (document.readyState === 'complete') schedulePump();
+    else window.addEventListener('load', schedulePump, { once: true });
+    // 사용자가 먼저 스크롤하면 유휴를 기다리지 않고 즉시 채우기 시작
+    window.addEventListener('scroll', startPump, { once: true, passive: true });
 
     window.addEventListener('scroll', onScroll, { passive: true });
     let rT: ReturnType<typeof setTimeout>;
