@@ -86,7 +86,7 @@ const description = home.metaDescription;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const N = 177;
+    const N = 138;
     const DIR = window.matchMedia('(max-width: 768px)').matches ? '/media/hero-m/' : '/media/hero/';
     const src = (i: number) => `${DIR}f${String(i + 1).padStart(3, '0')}.avif`;
     const imgs: (HTMLImageElement | null)[] = new Array(N).fill(null);
