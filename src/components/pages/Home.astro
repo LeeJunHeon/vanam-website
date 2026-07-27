@@ -115,11 +115,12 @@ const description = home.metaDescription;
     // 지원 데스크톱에선 hero.mp4(H.264·키프레임 8프레임 간격)를 하드웨어 디코드해
     // 원본 화질·노이즈 일관성·균일 페이싱을 얻는다. 실패·미지원이면 아래 프레임 경로 그대로.
     let mode = 'frames';
+    (window as any).__vnMode = 'frames';
     let stopPump = false;
     let vCur = -1, vDrawn = -1;
     const vc: any = { on: false, dead: false, total: 0, samples: null, syncs: [],
       frames: new Map(), cfg: null, dec: null, expect: -1,
-      chain: Promise.resolve(), queued: new Set(), failT: 0 };
+      feed: -1, flushed: false, failT: 0 };
 
     let W = 0, H = 0, cur = -1, loadTick = 0, drawnTick = -1;
     let target = 0, play = 0, lastScroll = 0;
@@ -171,7 +172,7 @@ const description = home.metaDescription;
       return r;
     };
     const evictV = () => {
-      const CAP = 26;                                   // 1920×916 GPU 프레임 ≈5MB → 상한 ~130MB
+      const CAP = 30;                                   // 1920×916 GPU 프레임 ≈5MB → 상한 ~130MB
       while (vc.frames.size > CAP) {
         const h = headVid(); let far = -1, fd = -1;
         vc.frames.forEach((_f: any, k: number) => { const d = Math.abs(k - h); if (d > fd) { fd = d; far = k; } });
@@ -179,47 +180,43 @@ const description = home.metaDescription;
         try { fr && fr.close(); } catch (e) {}
       }
     };
-    const doGop = async (g: number) => {
-      if (!vc.on || vc.dead) return;
-      const end = Math.min(g + 8, vc.total);
-      let need = false;
-      for (let i = g; i < end; i++) if (!vc.frames.has(i)) { need = true; break; }
-      if (!need) return;
+    // ── 스트리밍 디코드 엔진 ──
+    // configure 는 시킹 때만. 순방향 스크롤 중에는 연속 급유(decode)만 하고
+    // reset/flush 를 절대 하지 않는다 — GOP 마다 재구성하면 HW 디코더의
+    // configure 지연·flush 드레인이 8프레임 주기 멈칫거림(렉)으로 나타난다.
+    const startFeed = (from: number) => {
+      try { vc.dec.reset(); vc.dec.configure(vc.cfg); }
+      catch (e) { vFail('reconf'); return; }
+      vc.feed = from; vc.expect = from; vc.flushed = false;
+    };
+    const pumpDecode = () => {
+      const dec = vc.dec; if (!dec || vc.feed < 0) return;
+      const h = headVid();
+      const lim = Math.min(vc.total - 1, h + 22);          // 재생헤드 앞 22프레임까지 선행
+      const EC = (window as any).EncodedVideoChunk;
       try {
-        const dec = vc.dec;
-        dec.reset(); dec.configure(vc.cfg);
-        vc.expect = g;
-        const EC = (window as any).EncodedVideoChunk;
-        for (let i = g; i < end; i++) {
+        while (vc.feed <= lim && dec.decodeQueueSize < 14) {
+          const i = vc.feed++;
           const sm = vc.samples[i];
           dec.decode(new EC({ type: sm.sync ? 'key' : 'delta', timestamp: (i * 1e6 / 30) | 0, data: sm.data }));
         }
-        await dec.flush();
+        if (vc.feed >= vc.total && !vc.flushed) { vc.flushed = true; dec.flush().catch(() => {}); }
       } catch (e) { vFail('decode'); }
-    };
-    const queueGop = (g: number) => {
-      if (vc.queued.has(g)) return;
-      vc.queued.add(g);
-      vc.chain = vc.chain.then(() => doGop(g)).catch(() => {}).finally(() => vc.queued.delete(g));
     };
     const ensureVideo = () => {
       if (!vc.on || vc.dead || !vc.dec) return;
       const h = headVid();
-      for (let d = 0; d <= 12; d++) {
-        const cand = d === 0 ? [h] : [h + d, ...(d <= 6 ? [h - d] : [])];
-        for (const m of cand) {
-          if (m < 0 || m >= vc.total || vc.frames.has(m)) continue;
-          const g = queueGop(gopOf(m));
-          const nx = gopOf(Math.min(vc.total - 1, m + 8));
-          if (nx !== gopOf(m)) queueGop(nx);              // 진행 방향 한 GOP 선행
-          return;
-        }
-      }
+      // 급유 흐름이 재생헤드와 이어져 있으면 그대로 계속(리셋 없음).
+      // 헤드가 흐름 밖으로 벗어났고(빠른 플링·역방향 이탈) 캐시에도 없을 때만 시킹.
+      const contiguous = vc.feed >= 0 && vc.feed > h - 40 && vc.feed <= h + 30;
+      if (!vc.frames.has(h) && !contiguous) startFeed(gopOf(Math.max(0, h - 4)));
+      pumpDecode();
     };
     const goVideo = () => {
       if (mode === 'video' || vc.dead) return;
       mode = 'video'; stopPump = true;
       if (vc.failT) { clearTimeout(vc.failT); vc.failT = 0; }
+      (window as any).__vnMode = 'video';
       console.info('[vn-hero] mode: video (WebCodecs · HW decode)');
     };
     const vFail = (r: string) => {
@@ -229,6 +226,7 @@ const description = home.metaDescription;
       try { vc.dec && vc.dec.close(); } catch (e) {}
       vc.frames.forEach((f: any) => { try { f.close(); } catch (e) {} });
       vc.frames.clear();
+      (window as any).__vnMode = 'frames:' + r;
       if (mode !== 'video') console.info('[vn-hero] mode: frames (fallback: ' + r + ')');
     };
     const initVideo = () => {
