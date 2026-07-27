@@ -89,13 +89,12 @@ const description = home.metaDescription;
 </BaseLayout>
 
 <script>
-  // 시네마틱 스크럽 v4 — "스크롤 중에는 디코드하지 않는다"가 설계 원칙.
-  //
-  // 실측(사용자 브라우저): AVIF 디코드 13ms/프레임 vs drawImage 0.03ms.
-  // 60fps 예산이 16.7ms 이므로 스크롤 도중 디코드가 한 번이라도 끼면 바로 끊긴다.
-  // → 압축 데이터(blob)만 받아두고, 디코드는 createImageBitmap 으로 워커 스레드에서
-  //   재생헤드 주변만 미리 해둔다. 스크럽 중 메인 스레드가 하는 일은 blit(0.03ms)뿐.
-  // → 디코드된 비트맵은 메모리를 크게 먹으므로 재생헤드 기준 LRU 로 상한을 둔다.
+  // 시네마틱 스크럽 v5 — 검증된 v1(<img>) 파이프라인 복원.
+  // v4(blob+ImageBitmap+LRU)는 "그릴 수 있는 프레임"을 디코드 창으로 제한해 가용 세트가
+  // 성겨졌고, 그 위의 보정 게이트가 홀드→도약(깜빡임)으로 나타났다.
+  // v1은 브라우저 이미지 캐시가 디코드를 관리 — 로드된 모든 프레임이 즉시 드로우 가능(조밀).
+  // 유지한 개선: 모션 적응 161프레임, 헤더 비가림(--vn-head), 백킹 1920, 성긴→촘촘 패스,
+  // 재생헤드 근접 우선, 첫·마지막 프레임 선확보, 모바일 스크롤 게이트.
   (() => {
     const canvas = document.getElementById('vn-scrub') as HTMLCanvasElement | null;
     const stage = document.getElementById('vn-stage');
@@ -109,25 +108,21 @@ const description = home.metaDescription;
     const MOBILE = window.matchMedia('(max-width: 768px)').matches;
     const DIR = MOBILE ? '/media/hero-m/' : '/media/hero/';
     const src = (i: number) => `${DIR}f${String(i + 1).padStart(3, '0')}.avif`;
-
-    const blobs: (Blob | null)[] = new Array(N).fill(null);   // 압축 데이터(가벼움)
-    const bmp = new Map<number, ImageBitmap>();               // 디코드된 비트맵(무거움 → 상한)
-    const BMP_CAP = MOBILE ? 18 : 28;
+    const imgs: (HTMLImageElement | null)[] = new Array(N).fill(null);
+    const ready: boolean[] = new Array(N).fill(false);
 
     let W = 0, H = 0, cur = -1, loadTick = 0, drawnTick = -1;
-    let target = 0, play = 0, lastScroll = 0, lastBigJump = 0;
+    let target = 0, play = 0, lastScroll = 0;
     let headH = 0, startY = 0, travel = 1;
 
-    const clampIdx = (v: number) => Math.max(0, Math.min(N - 1, v));
-    const headIdx = () => clampIdx(Math.round(play));
+    const headIdx = () => Math.max(0, Math.min(N - 1, Math.round(play)));
 
     const measure = () => {
       const header = document.querySelector('header') as HTMLElement | null;
       headH = header ? header.offsetHeight : 0;
       const top = stage.getBoundingClientRect().top + window.scrollY;
-      startY = Math.max(0, top - headH);                       // 배너가 있으면 그만큼만 뒤로
+      startY = Math.max(0, top - headH);
       travel = Math.max(1, stage.clientHeight - (window.innerHeight - headH));
-      // 페인트 백킹 상한 1920 — 실제 화면 물리 해상도에 맞춰 선명도를 확보
       const dprRaw = Math.min(1.5, window.devicePixelRatio || 1);
       W = stage.clientWidth; H = Math.max(1, window.innerHeight - headH);
       const dpr = Math.min(dprRaw, 1920 / Math.max(1, W));
@@ -138,33 +133,22 @@ const description = home.metaDescription;
       cur = -1;
     };
 
-    const render = () => {
-      const h = headIdx();
-      let k = -1;
+    const nearest = (idx: number) => {
       for (let d = 0; d < N; d++) {
-        if (h - d >= 0 && bmp.has(h - d)) { k = h - d; break; }
-        if (h + d < N && bmp.has(h + d)) { k = h + d; break; }
+        if (idx - d >= 0 && ready[idx - d]) return idx - d;
+        if (idx + d < N && ready[idx + d]) return idx + d;
       }
+      return -1;
+    };
+
+    const render = () => {
+      const k = nearest(headIdx());
       if (k < 0 || (k === cur && drawnTick === loadTick)) return;
-      const dir = target > play + 0.4 ? 1 : target < play - 0.4 ? -1 : 0;
-      if (cur >= 0) {
-        // 모노토닉: 진행 방향 역행 금지. 정지 상태에선 정확히 head 프레임만 —
-        // 정지 직후 뒤 프레임으로 물러나며 번쩍이거나 "끝까지 안 간" 채 멈추는 것을 막는다.
-        if (dir > 0 && k < cur) return;
-        if (dir < 0 && k > cur) return;
-        if (dir === 0 && k !== h) return;
-        // 도약 빈도 제한: 가용 프레임이 성길 때 큰 점프가 연발되면 번쩍임이 된다.
-        // 140ms 당 1회만 허용 — 연속 플래시가 단일 컷으로 바뀐다.
-        const gap = Math.abs(k - cur);
-        if (gap > 8) {
-          const nowT = performance.now();
-          if (nowT - lastBigJump < 140) return;
-          lastBigJump = nowT;
-        }
-      }
-      const im = bmp.get(k)!;
-      const sc = Math.max(W / im.width, H / im.height);
-      const dw = im.width * sc, dh = im.height * sc;
+      const im = imgs[k]!;
+      const iw = im.naturalWidth, ih = im.naturalHeight;
+      if (!iw || !ih) return;
+      const sc = Math.max(W / iw, H / ih);
+      const dw = iw * sc, dh = ih * sc;
       ctx.drawImage(im, (W - dw) / 2, (H - dh) / 2, dw, dh);
       cur = k; drawnTick = loadTick;
     };
@@ -182,70 +166,52 @@ const description = home.metaDescription;
       if (hint) hint.style.opacity = String(1 - Math.min(1, p / 0.12));
     };
 
-    // ── 디코드: 워커 스레드(createImageBitmap), 재생헤드 주변만, 동시 2개 ──
-    let decoding = 0;
-    const evict = () => {
-      while (bmp.size > BMP_CAP) {
-        const h = headIdx();
-        let far = -1, fd = -1;
-        bmp.forEach((_v, k) => { const d = Math.abs(k - h); if (d > fd) { fd = d; far = k; } });
-        if (far < 0) break;
-        const b = bmp.get(far);
-        bmp.delete(far);
-        try { b && b.close(); } catch (e) {}
-      }
-    };
-    const decodeOne = (i: number) => {
-      if (bmp.has(i) || !blobs[i] || decoding >= 4) return false;
-      decoding++;
-      createImageBitmap(blobs[i] as Blob).then((b) => {
-        decoding--;
-        if (bmp.has(i)) { b.close(); return; }
-        bmp.set(i, b); loadTick++; evict();
-      }).catch(() => { decoding--; });
-      return true;
-    };
-    const ensureWindow = () => {
-      // 결말 보증: 스크럽 후반부에 들어서면 마지막 프레임을 최우선 디코드
-      if (target > (N - 1) * 0.85 && !bmp.has(N - 1) && blobs[N - 1]) { if (decodeOne(N - 1)) return; }
-      const h = headIdx();
-      const dir = target >= play ? 1 : -1;                     // 진행 방향을 먼저 채운다
-      const span = MOBILE ? 10 : 24;
-      for (let d = 0; d <= span; d++) {
-        if (decodeOne(clampIdx(h + d * dir))) return;
-        if (d && decodeOne(clampIdx(h - d * dir))) return;
-      }
+    const load = (i: number, cb?: () => void) => {
+      const im = new Image();
+      im.decoding = 'async';
+      try { (im as any).fetchPriority = i === 0 ? 'high' : 'auto'; } catch (e) {}
+      const done = () => { ready[i] = true; loadTick++; if (cb) cb(); };
+      im.onload = () => {
+        if (im.decode) im.decode().then(done).catch(done);
+        else done();
+      };
+      im.src = src(i);
+      imgs[i] = im;
     };
 
-    // ── 다운로드: 성긴 패스 → 촘촘한 패스, 재생헤드 근접 우선, 스크롤 중 정지 ──
+    measure(); onScroll();
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      const still = Math.round((N - 1) * 0.62);
+      play = target = still;
+      load(still, render);
+      return;
+    }
+
+    // 성긴 패스 → 촘촘한 패스, 각 패스 안에서는 재생헤드 근접 우선.
     const PASSES = MOBILE ? [8, 4, 2] : [16, 8, 4, 2, 1];
     const requested = new Uint8Array(N);
+    requested[0] = 1;
+    requested[N - 1] = 1;                                   // 결말 선확보
     let passIdx = 0, active = 0, pumpWait = false;
     const pickNext = () => {
-      const h = headIdx();
+      const head = headIdx();
       for (; passIdx < PASSES.length; passIdx++) {
         const step = PASSES[passIdx];
         let best = -1, bestD = Infinity;
         for (let i = 0; i < N; i += step) {
           if (requested[i]) continue;
-          const d = Math.abs(i - h);
+          const d = Math.abs(i - head);
           if (d < bestD) { bestD = d; best = i; }
         }
         if (best >= 0) return best;
       }
       return -1;
     };
-    const fetchOne = (i: number, cb: () => void) => {
-      fetch(src(i), { cache: 'force-cache' })
-        .then((r) => r.blob())
-        .then((b) => { blobs[i] = b; cb(); })
-        .catch(() => cb());
-    };
     const pump = () => {
-      // 모바일만: 스크롤 직후 네트워크를 쉰다. 데스크톱은 대역·코어 여유가 커서
-      // 오히려 계속 받아 가용 프레임을 조밀하게 만드는 쪽이 끊김을 줄인다.
-      if (MOBILE && performance.now() - lastScroll < 200) {
-        if (!pumpWait) { pumpWait = true; setTimeout(() => { pumpWait = false; pump(); }, 220); }
+      // 모바일만: 스크롤 직후 220ms 다운로드·디코드 휴지(스크럽 프레임률 보호)
+      if (MOBILE && performance.now() - lastScroll < 220) {
+        if (!pumpWait) { pumpWait = true; setTimeout(() => { pumpWait = false; pump(); }, 240); }
         return;
       }
       while (active < (MOBILE ? 3 : 10)) {
@@ -253,32 +219,18 @@ const description = home.metaDescription;
         if (i < 0) return;
         requested[i] = 1;
         active++;
-        fetchOne(i, () => { active--; pump(); });
+        load(i, () => { active--; pump(); });
       }
     };
 
-    measure(); onScroll();
-    requested[0] = 1;
-    fetchOne(0, () => { decodeOne(0); });
-    requested[N - 1] = 1;
-    fetchOne(N - 1, () => {});   // 마지막 프레임 선확보 — 결말이 항상 표시되도록
-
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      const still = Math.round((N - 1) * 0.62);
-      play = target = still;
-      requested[still] = 1;
-      fetchOne(still, () => { decodeOne(still); setTimeout(render, 300); });
-      return;
-    }
+    load(0, render);
+    load(N - 1);
 
     let raf = 0, running = false;
     const loop = () => {
       play += (target - play) * 0.18;
       if (Math.abs(target - play) < 0.02) play = target;
-      ensureWindow();
       render();
-      // 유휴 정지: 목표 도달 + head 표시 완료 + 디코드 없음 → rAF 중단(스크롤 시 재개)
-      if (play === target && cur === headIdx() && decoding === 0) { running = false; return; }
       raf = requestAnimationFrame(loop);
     };
     const startLoop = () => { if (!running) { running = true; raf = requestAnimationFrame(loop); } };
@@ -298,7 +250,6 @@ const description = home.metaDescription;
     window.addEventListener('scroll', startPump, { once: true, passive: true });
 
     window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('scroll', () => startLoop(), { passive: true });
     let rT: ReturnType<typeof setTimeout>;
     window.addEventListener('resize', () => { clearTimeout(rT); rT = setTimeout(() => { measure(); onScroll(); }, 150); });
     new IntersectionObserver((es) => (es[0].isIntersecting ? startLoop() : stopLoop())).observe(stage);
