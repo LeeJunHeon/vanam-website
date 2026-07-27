@@ -111,6 +111,16 @@ const description = home.metaDescription;
     const imgs: (HTMLImageElement | null)[] = new Array(N).fill(null);
     const ready: boolean[] = new Array(N).fill(false);
 
+    // ── WebCodecs 하이브리드 ──
+    // 지원 데스크톱에선 hero.mp4(H.264·키프레임 8프레임 간격)를 하드웨어 디코드해
+    // 원본 화질·노이즈 일관성·균일 페이싱을 얻는다. 실패·미지원이면 아래 프레임 경로 그대로.
+    let mode = 'frames';
+    let stopPump = false;
+    let vCur = -1, vDrawn = -1;
+    const vc: any = { on: false, dead: false, total: 0, samples: null, syncs: [],
+      frames: new Map(), cfg: null, dec: null, expect: -1,
+      chain: Promise.resolve(), queued: new Set(), failT: 0 };
+
     let W = 0, H = 0, cur = -1, loadTick = 0, drawnTick = -1;
     let target = 0, play = 0, lastScroll = 0;
     let headH = 0, startY = 0, travel = 1;
@@ -141,7 +151,7 @@ const description = home.metaDescription;
       return -1;
     };
 
-    const render = () => {
+    const frameRender = () => {
       const k = nearest(headIdx());
       if (k < 0 || (k === cur && drawnTick === loadTick)) return;
       const im = imgs[k]!;
@@ -152,6 +162,141 @@ const description = home.metaDescription;
       ctx.drawImage(im, (W - dw) / 2, (H - dh) / 2, dw, dh);
       cur = k; drawnTick = loadTick;
     };
+
+    // ── 비디오 경로: 프레임 인덱스는 스크럽 진행도에서 파생(356프레임 도메인) ──
+    const headVid = () => Math.max(0, Math.min(vc.total - 1, Math.round(play / (N - 1) * (vc.total - 1))));
+    const gopOf = (i: number) => {
+      const ss = vc.syncs; let lo = 0, hi = ss.length - 1, r = 0;
+      while (lo <= hi) { const m = (lo + hi) >> 1; if (ss[m] <= i) { r = ss[m]; lo = m + 1; } else hi = m - 1; }
+      return r;
+    };
+    const evictV = () => {
+      const CAP = 26;                                   // 1920×916 GPU 프레임 ≈5MB → 상한 ~130MB
+      while (vc.frames.size > CAP) {
+        const h = headVid(); let far = -1, fd = -1;
+        vc.frames.forEach((_f: any, k: number) => { const d = Math.abs(k - h); if (d > fd) { fd = d; far = k; } });
+        const fr = vc.frames.get(far); vc.frames.delete(far);
+        try { fr && fr.close(); } catch (e) {}
+      }
+    };
+    const doGop = async (g: number) => {
+      if (!vc.on || vc.dead) return;
+      const end = Math.min(g + 8, vc.total);
+      let need = false;
+      for (let i = g; i < end; i++) if (!vc.frames.has(i)) { need = true; break; }
+      if (!need) return;
+      try {
+        const dec = vc.dec;
+        dec.reset(); dec.configure(vc.cfg);
+        vc.expect = g;
+        const EC = (window as any).EncodedVideoChunk;
+        for (let i = g; i < end; i++) {
+          const sm = vc.samples[i];
+          dec.decode(new EC({ type: sm.sync ? 'key' : 'delta', timestamp: (i * 1e6 / 30) | 0, data: sm.data }));
+        }
+        await dec.flush();
+      } catch (e) { vFail('decode'); }
+    };
+    const queueGop = (g: number) => {
+      if (vc.queued.has(g)) return;
+      vc.queued.add(g);
+      vc.chain = vc.chain.then(() => doGop(g)).catch(() => {}).finally(() => vc.queued.delete(g));
+    };
+    const ensureVideo = () => {
+      if (!vc.on || vc.dead) return;
+      const h = headVid();
+      for (let d = 0; d <= 12; d++) {
+        const cand = d === 0 ? [h] : [h + d, ...(d <= 6 ? [h - d] : [])];
+        for (const m of cand) {
+          if (m < 0 || m >= vc.total || vc.frames.has(m)) continue;
+          const g = queueGop(gopOf(m));
+          const nx = gopOf(Math.min(vc.total - 1, m + 8));
+          if (nx !== gopOf(m)) queueGop(nx);              // 진행 방향 한 GOP 선행
+          return;
+        }
+      }
+    };
+    const vFail = (r: string) => {
+      if (vc.dead) return;
+      vc.dead = true; vc.on = false;
+      if (vc.failT) clearTimeout(vc.failT);
+      try { vc.dec && vc.dec.close(); } catch (e) {}
+      vc.frames.forEach((f: any) => { try { f.close(); } catch (e) {} });
+      vc.frames.clear();
+      if (mode !== 'video') console.info('[vn-hero] mode: frames (fallback: ' + r + ')');
+    };
+    const initVideo = () => {
+      const Wn = window as any;
+      if (MOBILE || !Wn.VideoDecoder || !Wn.EncodedVideoChunk) { if (!MOBILE) console.info('[vn-hero] mode: frames (no WebCodecs)'); return; }
+      vc.failT = setTimeout(() => { if (mode !== 'video') vFail('timeout'); }, 9000);
+      fetch('/media/hero.mp4', { cache: 'force-cache' })
+        .then((r) => { if (!r.ok) throw 0; return r.arrayBuffer(); })
+        .then(async (ab) => {
+          const M: any = await import('mp4box');
+          const MP4: any = M && M.createFile ? M : M.default;
+          const mp4 = MP4.createFile();
+          mp4.onError = () => vFail('demux');
+          mp4.onSamples = (_id: any, _u: any, ss: any[]) => {
+            vc.samples = vc.samples || [];
+            for (const sm of ss) vc.samples.push({ data: sm.data, sync: sm.is_sync });
+            if (vc.total && vc.samples.length >= vc.total) {
+              vc.syncs = [];
+              vc.samples.forEach((sm: any, i: number) => { if (sm.sync) vc.syncs.push(i); });
+              vc.on = true;
+            }
+          };
+          mp4.onReady = (info: any) => {
+            const t = info.videoTracks && info.videoTracks[0];
+            if (!t) return vFail('notrack');
+            try {
+              const trak = mp4.getTrackById(t.id);
+              const entry = trak.mdia.minf.stbl.stsd.entries.find((x: any) => x.avcC);
+              const DS: any = MP4.DataStream;
+              const ds = new DS(undefined, 0, DS.BIG_ENDIAN);
+              entry.avcC.write(ds);
+              vc.cfg = { codec: t.codec, codedWidth: 1920, codedHeight: 916,
+                description: new Uint8Array(ds.buffer, 8), optimizeForLatency: true };
+            } catch (e) { return vFail('avcC'); }
+            vc.total = t.nb_samples;
+            Wn.VideoDecoder.isConfigSupported(vc.cfg).then((sup: any) => {
+              if (!sup || !sup.supported) return vFail('unsupported');
+              vc.dec = new Wn.VideoDecoder({
+                output: (f: any) => {
+                  const i = vc.expect++;
+                  if (i < 0 || vc.frames.has(i)) { f.close(); return; }
+                  vc.frames.set(i, f); evictV(); loadTick++;
+                },
+                error: () => vFail('decerr'),
+              });
+              mp4.setExtractionOptions(t.id, null, { nbSamples: t.nb_samples });
+              mp4.start();
+            }).catch(() => vFail('cfg'));
+          };
+          (ab as any).fileStart = 0;
+          mp4.appendBuffer(ab);
+          mp4.flush();
+        })
+        .catch(() => vFail('fetch'));
+    };
+
+    const videoRender = () => {
+      const h = headVid();
+      let k = -1, f: any = null;
+      if (vc.frames.has(h)) { k = h; f = vc.frames.get(h); }
+      else for (let d = 1; d <= 8 && !f; d++) {
+        if (vc.frames.has(h + d)) { k = h + d; f = vc.frames.get(h + d); break; }
+        if (vc.frames.has(h - d)) { k = h - d; f = vc.frames.get(h - d); break; }
+      }
+      if (!f || (k === vCur && vDrawn === loadTick)) return;
+      const iw = f.displayWidth || f.codedWidth, ih = f.displayHeight || f.codedHeight;
+      if (!iw || !ih) return;
+      const sc = Math.max(W / iw, H / ih);
+      const dw = iw * sc, dh = ih * sc;
+      ctx.drawImage(f, (W - dw) / 2, (H - dh) / 2, dw, dh);
+      vCur = k; vDrawn = loadTick;
+    };
+
+    const render = () => { if (mode === 'video') videoRender(); else frameRender(); };
 
     const onScroll = () => {
       lastScroll = performance.now();
@@ -214,6 +359,7 @@ const description = home.metaDescription;
         if (!pumpWait) { pumpWait = true; setTimeout(() => { pumpWait = false; pump(); }, 240); }
         return;
       }
+      if (stopPump) return;
       while (active < (MOBILE ? 3 : 10)) {
         const i = pickNext();
         if (i < 0) return;
@@ -225,11 +371,20 @@ const description = home.metaDescription;
 
     load(0, render);
     load(N - 1);
+    initVideo();
 
     let raf = 0, running = false;
     const loop = () => {
       play += (target - play) * 0.14;
       if (Math.abs(target - play) < 0.02) play = target;
+      if (vc.on && !vc.dead) {
+        ensureVideo();
+        if (mode !== 'video' && vc.frames.has(headVid())) {
+          mode = 'video'; stopPump = true;
+          if (vc.failT) clearTimeout(vc.failT);
+          console.info('[vn-hero] mode: video (WebCodecs · HW decode)');
+        }
+      }
       render();
       raf = requestAnimationFrame(loop);
     };
