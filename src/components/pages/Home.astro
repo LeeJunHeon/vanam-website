@@ -104,7 +104,7 @@ const description = home.metaDescription;
     const ctx = canvas.getContext('2d', { alpha: false });
     if (!ctx) return;
 
-    const N = 161;
+    const N = 276;
     const MOBILE = window.matchMedia('(max-width: 768px)').matches;
     const DIR = MOBILE ? '/media/hero-m/' : '/media/hero/';
     const src = (i: number) => `${DIR}f${String(i + 1).padStart(3, '0')}.avif`;
