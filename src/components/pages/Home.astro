@@ -117,10 +117,11 @@ const description = home.metaDescription;
     let mode = 'frames';
     (window as any).__vnMode = 'frames';
     let stopPump = false;
-    let vCur = -1, vDrawn = -1;
+    let vCur = -1, vEpoch = 0, vDrawnEpoch = -1;
+    let vMissWin = 0, vMiss = 0, vStrikes = 0;
     const vc: any = { on: false, dead: false, total: 0, samples: null, syncs: [],
       frames: new Map(), cfg: null, dec: null,
-      feed: -1, revLim: -1, flushed: false, seekAt: 0, seekHead: -1e9, seeks: 0, failT: 0 };
+      runKey: -1, runStart: -1, feed: -1, revCap: -1, eofFlushed: false, seeks: 0, failT: 0 };
 
     let W = 0, H = 0, cur = -1, loadTick = 0, drawnTick = -1;
     let target = 0, play = 0, lastScroll = 0;
@@ -141,7 +142,7 @@ const description = home.metaDescription;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
-      cur = -1;
+      cur = -1; vCur = -1; vEpoch++;
     };
 
     const nearest = (idx: number) => {
@@ -185,21 +186,16 @@ const description = home.metaDescription;
         try { fr && fr.close(); } catch (e) {}
       }
     };
-    // ── 스트리밍 디코드 엔진 ──
-    // configure 는 시킹 때만. 순방향 스크롤 중에는 연속 급유(decode)만 하고
-    // reset/flush 를 절대 하지 않는다 — GOP 마다 재구성하면 HW 디코더의
-    // configure 지연·flush 드레인이 8프레임 주기 멈칫거림(렉)으로 나타난다.
-    const startFeed = (from: number, revLim: number) => {
-      try { vc.dec.reset(); vc.dec.configure(vc.cfg); }
-      catch (e) { vFail('reconf'); return; }
-      vc.feed = from; vc.revLim = revLim; vc.flushed = false;
-      vc.seekAt = performance.now(); vc.seekHead = headVid(); vc.seeks++;
-      (window as any).__vnStats = { seeks: vc.seeks, cached: vc.frames.size };
-    };
-    const pumpDecode = () => {
+    // ── 디코드 엔진 v3: 런(run) 모델 ──
+    // "런" = reset→configure 후 한 키프레임에서 시작해 앞으로만 흐르는 급유 구간.
+    // 규칙: ① 캐시에 head 가 있으면 그대로 진행(선행 급유만) ② 런이 head 를 덮으면 연장
+    // ③ 그 외에만 런 교체 — 교체 기준이 GOP 경계라 어떤 제스처든 8프레임 이동당 최대 1회 reset.
+    // 시간 기반 쿨다운·동결 없음. flush 는 파일 끝 1회뿐(저지연 모드가 1입력→1출력을 보장).
+    const pumpDecode = (h: number) => {
       const dec = vc.dec; if (!dec || vc.feed < 0) return;
-      const h = headVid();
-      const lim = vc.revLim >= 0 ? vc.revLim : Math.min(vc.total - 1, h + 22);
+      const lim = vc.revCap >= 0
+        ? Math.min(vc.revCap + 2, vc.total - 1)          // 역방향 배치: 필요분 +2 과급유로 꼬리 출력 보장
+        : Math.min(vc.total - 1, h + 20);                // 순방향: 재생헤드 앞 20 선행
       const EC = (window as any).EncodedVideoChunk;
       try {
         while (vc.feed <= lim && dec.decodeQueueSize < 14) {
@@ -207,28 +203,29 @@ const description = home.metaDescription;
           const sm = vc.samples[i];
           dec.decode(new EC({ type: sm.sync ? 'key' : 'delta', timestamp: (i * 1e6 / 30) | 0, data: sm.data }));
         }
-        // 배치(역방향)·파일 끝: flush 로 꼬리 배출 후 스트림 종료 표시(다음 필요 시 정상 시킹으로 재개)
-        if (!vc.flushed && ((vc.revLim >= 0 && vc.feed > vc.revLim) || vc.feed >= vc.total)) {
-          vc.flushed = true;
-          dec.flush().then(() => { vc.feed = -1; vc.revLim = -1; }).catch(() => {});
+        if (vc.feed >= vc.total && !vc.eofFlushed) {
+          vc.eofFlushed = true;
+          dec.flush().then(() => { vc.runKey = -1; vc.feed = -1; }).catch(() => {});
         }
       } catch (e) { vFail('decode'); }
     };
     const ensureVideo = () => {
       if (!vc.on || vc.dead || !vc.dec) return;
       const h = headVid();
-      if (!vc.frames.has(h)) {
-        // 시킹 쿨다운: 직전 시킹 후 140ms·16프레임 이내엔 재시킹하지 않고 배치 완료를 기다린다
-        // — 역방향 드래그에서 reset 이 출력 전에 배치를 중단시키는 "시킹 폭풍"(렉) 방지.
-        const cooling = performance.now() - vc.seekAt < 140 && Math.abs(h - vc.seekHead) < 16;
-        const contiguous = vc.feed >= 0 && vc.feed > h - 40 && vc.feed <= h + 30;
-        if (!contiguous && !cooling) {
-          const back = target < play - 0.4;
-          if (back) startFeed(gopOf(Math.max(0, h - 12)), Math.min(vc.total - 1, h + 6));
-          else startFeed(gopOf(Math.max(0, h - 4)), -1);
-        }
+      if (vc.frames.has(h)) { pumpDecode(h); return; }    // ① 이미 있음 — 선행 급유만
+      const covered = vc.runKey >= 0 && h >= vc.runStart && h < vc.feed + 8;
+      if (covered) { vc.revCap = -1; pumpDecode(h); return; }   // ② 런 연장으로 충족
+      const back = target < play - 0.4;                   // ③ 런 교체(= GOP 경계에서만 갱신)
+      const key = gopOf(Math.max(0, h - (back ? 4 : 2)));
+      if (key !== vc.runKey || h < vc.runStart) {
+        try { vc.dec.reset(); vc.dec.configure(vc.cfg); }
+        catch (e) { vFail('reconf'); return; }
+        vc.runKey = key; vc.runStart = key; vc.feed = key; vc.eofFlushed = false;
+        vc.revCap = back ? Math.min(vc.total - 1, h + 4) : -1;
+        vc.seeks++;
+        (window as any).__vnStats = { seeks: vc.seeks, cached: vc.frames.size };
       }
-      pumpDecode();
+      pumpDecode(h);
     };
     const goVideo = () => {
       if (mode === 'video' || vc.dead) return;
@@ -240,12 +237,16 @@ const description = home.metaDescription;
     const vFail = (r: string) => {
       if (vc.dead) return;
       vc.dead = true; vc.on = false;
-      if (vc.failT) clearTimeout(vc.failT);
+      if (vc.failT) { clearTimeout(vc.failT); vc.failT = 0; }
       try { vc.dec && vc.dec.close(); } catch (e) {}
       vc.frames.forEach((f: any) => { try { f.close(); } catch (e) {} });
       vc.frames.clear();
       (window as any).__vnMode = 'frames:' + r;
-      if (mode !== 'video') console.info('[vn-hero] mode: frames (fallback: ' + r + ')');
+      if (mode === 'video') {                              // 전환 후 실패 → 프레임 경로로 실복귀
+        mode = 'frames'; stopPump = false; cur = -1;
+        try { startPump(); } catch (e) {}
+        console.info('[vn-hero] demoted to frames (' + r + ')');
+      } else console.info('[vn-hero] mode: frames (fallback: ' + r + ')');
     };
     const initVideo = () => {
       const Wn = window as any;
@@ -313,17 +314,29 @@ const description = home.metaDescription;
       const h = headVid();
       let k = -1, f: any = null;
       if (vc.frames.has(h)) { k = h; f = vc.frames.get(h); }
-      else for (let d = 1; d <= 8 && !f; d++) {
-        if (vc.frames.has(h + d)) { k = h + d; f = vc.frames.get(h + d); break; }
+      else for (let d = 1; d <= 10 && !f; d++) {
         if (vc.frames.has(h - d)) { k = h - d; f = vc.frames.get(h - d); break; }
+        if (vc.frames.has(h + d)) { k = h + d; f = vc.frames.get(h + d); break; }
       }
-      if (!f || (k === vCur && vDrawn === loadTick)) return;
+      // 성능 안전망: 스크럽 활동 중 60프레임 창에서 미스가 42회↑ ×3 연속이면
+      // 비디오 경로가 프레임 방식보다 못하다는 뜻 — 스스로 frames 로 강등한다.
+      if (Math.abs(target - play) > 1.5) {
+        vMissWin++;
+        if (!f || k !== h) vMiss++;
+        if (vMissWin >= 60) {
+          if (vMiss >= 42) { if (++vStrikes >= 3) { vFail('perf'); return; } }
+          else if (vStrikes > 0) vStrikes--;
+          vMissWin = 0; vMiss = 0;
+        }
+      }
+      if (!f) return;
+      if (k === vCur && vDrawnEpoch === vEpoch) return;   // 같은 프레임 재드로우 금지(NV12 변환 낭비 제거)
       const iw = f.displayWidth || f.codedWidth, ih = f.displayHeight || f.codedHeight;
       if (!iw || !ih) return;
       const sc = Math.max(W / iw, H / ih);
       const dw = iw * sc, dh = ih * sc;
       ctx.drawImage(f, (W - dw) / 2, (H - dh) / 2, dw, dh);
-      vCur = k; vDrawn = loadTick;
+      vCur = k; vDrawnEpoch = vEpoch;
     };
 
     const render = () => { if (mode === 'video') videoRender(); else frameRender(); };
