@@ -17,9 +17,31 @@ const description = home.metaDescription;
        풀블리드 캔버스에 핀 고정(sticky 100vh, 스테이지 280vh)하고 스크롤로 스크럽한다.
        러프(lerp) 재생헤드가 스크롤을 부드럽게 뒤쫓고, 텍스트 카피는 여정 초반에 페이드아웃,
        종점은 canvas 톤 그라디언트로 다음 섹션에 핸드오프. (애플 제품 페이지 기법) -->
-  <div id="vn-stage" class="relative h-[280vh] bg-[#0b0d10]">
+  <div id="vn-stage" class="relative h-[320vh] bg-[#0b0d10]">
     <link rel="preload" as="image" href="/media/hero/f001.avif" media="(min-width: 769px)" fetchpriority="high" />
     <link rel="preload" as="image" href="/media/hero-m/f001.avif" media="(max-width: 768px)" fetchpriority="high" />
+    {/* 헤더·배너만큼 아래에서 시작하면 ①그 높이만큼 스크롤해야 재생이 시작되고(죽은 구간)
+        ②영상 윗부분이 헤더에 잘린다. 스테이지를 문서 최상단까지 끌어올려 풀블리드로 두고,
+        헤더·배너(z-50)가 영상 위에 얹히게 한다. 파싱 중 동기 실행이라 레이아웃 시프트 없음. */}
+    <script is:inline>
+      (() => {
+        const stage = document.getElementById('vn-stage');
+        const header = document.querySelector('header');
+        if (!stage || !header) return;
+        const banner = document.getElementById('top-banner');
+        const apply = () => {
+          const b = banner && banner.offsetParent !== null ? banner.offsetHeight : 0;
+          stage.style.marginTop = '-' + Math.round(b + header.offsetHeight) + 'px';
+        };
+        apply();
+        if ('ResizeObserver' in window) {
+          const ro = new ResizeObserver(apply);
+          ro.observe(header);
+          if (banner) ro.observe(banner);
+        }
+        window.addEventListener('resize', apply);
+      })();
+    </script>
     <div class="sticky top-0 h-screen w-full overflow-hidden">
       <canvas id="vn-scrub" class="h-full w-full transform-gpu"></canvas>
       <div class="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/65 via-black/25 to-transparent" aria-hidden="true"></div>
@@ -87,7 +109,7 @@ const description = home.metaDescription;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const N = 177;
+    const N = 271;
     const DIR = window.matchMedia('(max-width: 768px)').matches ? '/media/hero-m/' : '/media/hero/';
     const src = (i: number) => `${DIR}f${String(i + 1).padStart(3, '0')}.avif`;
     const imgs: (HTMLImageElement | null)[] = new Array(N).fill(null);
@@ -193,7 +215,7 @@ const description = home.metaDescription;
     //      어디로 스크롤해도 nearest() 오차가 몇 프레임 이내 → 처음부터 매끄럽다.
     //   ② 각 패스 안에서는 현재 재생헤드에 가까운 프레임부터: 보고 있는 구간이 먼저 채워진다.
     // (순차 로딩이면 조금만 내려도 그 구간이 비어 멀리서 끌어오느라 뚝뚝 끊긴다)
-    const PASSES = MOBILE ? [8, 4, 2] : [8, 4, 2, 1];   // 모바일은 짝수 프레임까지만(용량·디코드 절반)
+    const PASSES = MOBILE ? [8, 4, 2] : [16, 8, 4, 2, 1];   // 모바일은 짝수 프레임까지만(용량·디코드 절반)
     const requested = new Uint8Array(N);
     requested[0] = 1;
     let passIdx = 0, active = 0, pumpWait = false;

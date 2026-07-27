@@ -295,7 +295,7 @@ const childHref = (path) => {
   <body class:list={['min-h-screen bg-canvas text-ink/90 antialiased', zebra && 'v-zebra']}>
     {showBanner && (
       <>
-      <div id="top-banner" data-dismissible={banner.dismissible ? '1' : '0'} class={`banner-slide relative ${bannerTone}`} style={bannerStyle}>
+      <div id="top-banner" data-dismissible={banner.dismissible ? '1' : '0'} class={`banner-slide relative z-50 ${bannerTone}`} style={bannerStyle}>
         <div class="mx-auto flex max-w-6xl items-center justify-center gap-3 px-10 py-2.5 text-center text-sm">
           <p class="font-medium">
             {bannerText}
