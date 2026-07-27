@@ -119,8 +119,8 @@ const description = home.metaDescription;
     let stopPump = false;
     let vCur = -1, vDrawn = -1;
     const vc: any = { on: false, dead: false, total: 0, samples: null, syncs: [],
-      frames: new Map(), cfg: null, dec: null, expect: -1,
-      feed: -1, flushed: false, failT: 0 };
+      frames: new Map(), cfg: null, dec: null,
+      feed: -1, revLim: -1, flushed: false, seekAt: 0, seekHead: -1e9, seeks: 0, failT: 0 };
 
     let W = 0, H = 0, cur = -1, loadTick = 0, drawnTick = -1;
     let target = 0, play = 0, lastScroll = 0;
@@ -172,10 +172,15 @@ const description = home.metaDescription;
       return r;
     };
     const evictV = () => {
-      const CAP = 30;                                   // 1920×916 GPU 프레임 ≈5MB → 상한 ~130MB
+      const CAP = 30;                                   // 1920×916 GPU 프레임 ≈5MB → 상한 ~150MB
       while (vc.frames.size > CAP) {
-        const h = headVid(); let far = -1, fd = -1;
-        vc.frames.forEach((_f: any, k: number) => { const d = Math.abs(k - h); if (d > fd) { fd = d; far = k; } });
+        const h = headVid(); const back = target < play;
+        let far = -1, fd = -1;
+        vc.frames.forEach((_f: any, k: number) => {
+          let d = Math.abs(k - h);
+          if (back ? k > h + 6 : k < h - 6) d *= 2;      // 방금 지나온 쪽을 남겨 되감기 재디코드 최소화
+          if (d > fd) { fd = d; far = k; }
+        });
         const fr = vc.frames.get(far); vc.frames.delete(far);
         try { fr && fr.close(); } catch (e) {}
       }
@@ -184,15 +189,17 @@ const description = home.metaDescription;
     // configure 는 시킹 때만. 순방향 스크롤 중에는 연속 급유(decode)만 하고
     // reset/flush 를 절대 하지 않는다 — GOP 마다 재구성하면 HW 디코더의
     // configure 지연·flush 드레인이 8프레임 주기 멈칫거림(렉)으로 나타난다.
-    const startFeed = (from: number) => {
+    const startFeed = (from: number, revLim: number) => {
       try { vc.dec.reset(); vc.dec.configure(vc.cfg); }
       catch (e) { vFail('reconf'); return; }
-      vc.feed = from; vc.expect = from; vc.flushed = false;
+      vc.feed = from; vc.revLim = revLim; vc.flushed = false;
+      vc.seekAt = performance.now(); vc.seekHead = headVid(); vc.seeks++;
+      (window as any).__vnStats = { seeks: vc.seeks, cached: vc.frames.size };
     };
     const pumpDecode = () => {
       const dec = vc.dec; if (!dec || vc.feed < 0) return;
       const h = headVid();
-      const lim = Math.min(vc.total - 1, h + 22);          // 재생헤드 앞 22프레임까지 선행
+      const lim = vc.revLim >= 0 ? vc.revLim : Math.min(vc.total - 1, h + 22);
       const EC = (window as any).EncodedVideoChunk;
       try {
         while (vc.feed <= lim && dec.decodeQueueSize < 14) {
@@ -200,16 +207,27 @@ const description = home.metaDescription;
           const sm = vc.samples[i];
           dec.decode(new EC({ type: sm.sync ? 'key' : 'delta', timestamp: (i * 1e6 / 30) | 0, data: sm.data }));
         }
-        if (vc.feed >= vc.total && !vc.flushed) { vc.flushed = true; dec.flush().catch(() => {}); }
+        // 배치(역방향)·파일 끝: flush 로 꼬리 배출 후 스트림 종료 표시(다음 필요 시 정상 시킹으로 재개)
+        if (!vc.flushed && ((vc.revLim >= 0 && vc.feed > vc.revLim) || vc.feed >= vc.total)) {
+          vc.flushed = true;
+          dec.flush().then(() => { vc.feed = -1; vc.revLim = -1; }).catch(() => {});
+        }
       } catch (e) { vFail('decode'); }
     };
     const ensureVideo = () => {
       if (!vc.on || vc.dead || !vc.dec) return;
       const h = headVid();
-      // 급유 흐름이 재생헤드와 이어져 있으면 그대로 계속(리셋 없음).
-      // 헤드가 흐름 밖으로 벗어났고(빠른 플링·역방향 이탈) 캐시에도 없을 때만 시킹.
-      const contiguous = vc.feed >= 0 && vc.feed > h - 40 && vc.feed <= h + 30;
-      if (!vc.frames.has(h) && !contiguous) startFeed(gopOf(Math.max(0, h - 4)));
+      if (!vc.frames.has(h)) {
+        // 시킹 쿨다운: 직전 시킹 후 140ms·16프레임 이내엔 재시킹하지 않고 배치 완료를 기다린다
+        // — 역방향 드래그에서 reset 이 출력 전에 배치를 중단시키는 "시킹 폭풍"(렉) 방지.
+        const cooling = performance.now() - vc.seekAt < 140 && Math.abs(h - vc.seekHead) < 16;
+        const contiguous = vc.feed >= 0 && vc.feed > h - 40 && vc.feed <= h + 30;
+        if (!contiguous && !cooling) {
+          const back = target < play - 0.4;
+          if (back) startFeed(gopOf(Math.max(0, h - 12)), Math.min(vc.total - 1, h + 6));
+          else startFeed(gopOf(Math.max(0, h - 4)), -1);
+        }
+      }
       pumpDecode();
     };
     const goVideo = () => {
@@ -275,10 +293,10 @@ const description = home.metaDescription;
               if (!sup || !sup.supported) return vFail('unsupported');
               vc.dec = new Wn.VideoDecoder({
                 output: (f: any) => {
-                  const i = vc.expect++;
-                  if (i < 0 || vc.frames.has(i)) { f.close(); return; }
+                  const i = Math.round(f.timestamp * 30 / 1e6);   // 타임스탬프 → 인덱스 역산: 순서·리셋 잔류에 무관
+                  if (i < 0 || i >= vc.total || vc.frames.has(i)) { f.close(); return; }
                   vc.frames.set(i, f); evictV(); loadTick++;
-                  if (i === headVid()) goVideo();          // rAF 없이도 즉시 전환 가능
+                  if (i === headVid()) goVideo();
                 },
                 error: () => vFail('decerr'),
               });
