@@ -17,7 +17,7 @@ const description = home.metaDescription;
        풀블리드 캔버스에 핀 고정(sticky 100vh, 스테이지 280vh)하고 스크롤로 스크럽한다.
        러프(lerp) 재생헤드가 스크롤을 부드럽게 뒤쫓고, 텍스트 카피는 여정 초반에 페이드아웃,
        종점은 canvas 톤 그라디언트로 다음 섹션에 핸드오프. (애플 제품 페이지 기법) -->
-  <div id="vn-stage" class="relative h-[320vh] bg-[#0b0d10]">
+  <div id="vn-stage" class="relative h-[380vh] bg-[#0b0d10]">
     <link rel="preload" as="image" href="/media/hero/f001.avif" media="(min-width: 769px)" fetchpriority="high" />
     <link rel="preload" as="image" href="/media/hero-m/f001.avif" media="(max-width: 768px)" fetchpriority="high" />
     {/* 히어로는 헤더 "아래"에서 시작해 절대 가려지지 않는다.
@@ -228,7 +228,7 @@ const description = home.metaDescription;
 
     let raf = 0, running = false;
     const loop = () => {
-      play += (target - play) * 0.18;
+      play += (target - play) * 0.14;
       if (Math.abs(target - play) < 0.02) play = target;
       render();
       raf = requestAnimationFrame(loop);
