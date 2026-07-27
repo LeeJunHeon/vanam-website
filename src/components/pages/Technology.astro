@@ -187,7 +187,7 @@ const techAsset = (pth: string) => techImages[`/src/assets/tech/${pth}`]?.defaul
               {/* ── 1. 데이터 수집 ── */}
               <div>
                 {head(0)}
-                <div class="mt-3 grid gap-3 sm:grid-cols-3">
+                <div class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
                   {cv.col1.map((eq: any) => (
                     <div class="rounded-xl border border-dashed border-ink/25 bg-canvas p-3 text-center">
                       <p class="text-[12px] font-bold text-accent">{eq.label}</p>
@@ -238,7 +238,7 @@ const techAsset = (pth: string) => techImages[`/src/assets/tech/${pth}`]?.defaul
                 <div class="mt-3 space-y-3">
                   <div class={card}>
                     <p class={cardH}>{cv.s3.dash.h}</p>
-                    <div class="mt-2 grid gap-3 sm:grid-cols-3">
+                    <div class="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-3">
                       {cv.s3.dash.panels.map((pn: any) => (
                         <figure class="flex min-w-0 flex-col">
                           <figcaption class={capCls}>
@@ -285,7 +285,7 @@ const techAsset = (pth: string) => techImages[`/src/assets/tech/${pth}`]?.defaul
 
                 {/* 4 — 진단 · 원인 추정: 차트 3장 가로 + Diagnosis result 밴드 */}
                 {head(3)}
-                <div class="mt-3 grid gap-3 sm:grid-cols-3">
+                <div class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
                   {cv.s4.charts.map((ch: any) => (
                     <figure class={`${card} flex flex-col`}>
                       <figcaption class={capCls}>{ch.t}</figcaption>
@@ -314,7 +314,7 @@ const techAsset = (pth: string) => techImages[`/src/assets/tech/${pth}`]?.defaul
               <div class="mt-3 grid gap-3 lg:grid-cols-[2.2fr_1fr]">
                 <div class={card}>
                   <p class="text-[12px] font-bold text-ink/85">{cv.s5.decision.h}</p>
-                  <div class="mt-2 grid gap-2.5 sm:grid-cols-2">
+                  <div class="mt-2 grid grid-cols-2 gap-2.5">
                     {cv.s5.decision.rows.map((r: any) => (
                       <div class="flex items-center gap-2.5 rounded-lg border border-ink/10 p-2.5">
                         <Image src={asset(r.img)} alt="" width={96} class="h-9 w-9 shrink-0 rounded-md border border-ink/10 bg-plate object-contain p-1" />
@@ -443,7 +443,7 @@ const techAsset = (pth: string) => techImages[`/src/assets/tech/${pth}`]?.defaul
                 <p class="text-[13px] font-bold text-ink">{c.t}</p>
                 {c.gif ? (
                   <div class="mt-2 aspect-square w-full overflow-hidden rounded-xl border border-ink/10 bg-plate">
-                    <video class="h-full w-full object-cover" autoplay muted loop playsinline preload="metadata" poster="/media/dbr-poster.jpg" aria-label={c.alt}>
+                    <video data-autoplay-kick class="h-full w-full object-cover" autoplay muted loop playsinline preload="metadata" poster="/media/dbr-poster.jpg" aria-label={c.alt}>
                       <source src="/media/dbr.mp4" type="video/mp4" />
                     </video>
                   </div>
@@ -833,6 +833,18 @@ const techAsset = (pth: string) => techImages[`/src/assets/tech/${pth}`]?.defaul
       document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && modal.classList.contains('flex')) close();
       });
+    }
+  </script>
+
+  <script>
+    // 모바일(저전력·데이터 절약 모드)에서 autoplay가 무시되는 경우 대비:
+    // 화면 진입 시 + 첫 터치 시 play()를 다시 시도한다.
+    const kick = document.querySelector<HTMLVideoElement>('video[data-autoplay-kick]');
+    if (kick) {
+      const tryPlay = () => { kick.play().catch(() => {}); };
+      new IntersectionObserver((es) => { if (es[0].isIntersecting) tryPlay(); }, { threshold: 0.2 }).observe(kick);
+      window.addEventListener('touchstart', tryPlay, { once: true, passive: true });
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) tryPlay(); });
     }
   </script>
 </BaseLayout>

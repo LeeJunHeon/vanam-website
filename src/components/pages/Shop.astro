@@ -126,20 +126,20 @@ const waferFromLabel = waferKrws.length
                 <a href={href} class="block">
                   <div class="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-panel2 to-canvas">
                     {p.data.category === 'wafer' && waferSlides.length > 0 ? (
-                      <div class="wafer-slider absolute inset-0" data-wafer-slider>
+                      <div class="wafer-slider absolute inset-0 flex snap-x snap-mandatory overflow-x-auto [scrollbar-width:none] md:block md:overflow-hidden [&::-webkit-scrollbar]:hidden" data-wafer-slider>
                         {waferSlides.map((sl, i) => (
                           <Image src={sl.src} alt={sl.alt} width={600} height={450}
                             data-slide={i}
-                            class:list={["wafer-slide absolute inset-0 h-full w-full object-cover transition-opacity duration-500", i === 0 ? "opacity-100" : "opacity-0"]} />
+                            class:list={["wafer-slide h-full w-full shrink-0 snap-center object-cover md:absolute md:inset-0 md:transition-opacity md:duration-500", i === 0 ? "md:opacity-100" : "md:opacity-0"]} />
                         ))}
                         {waferSlides.length > 1 && (
                           <>
                             <button type="button" data-wafer-prev aria-label="Previous"
-                              class="absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/35 p-1.5 text-white opacity-0 backdrop-blur transition hover:bg-black/55 group-hover:opacity-100">
+                              class="absolute left-2 top-1/2 z-10 hidden md:block -translate-y-1/2 rounded-full bg-black/35 p-1.5 text-white opacity-0 backdrop-blur transition hover:bg-black/55 group-hover:opacity-100">
                               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
                             </button>
                             <button type="button" data-wafer-next aria-label="Next"
-                              class="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/35 p-1.5 text-white opacity-0 backdrop-blur transition hover:bg-black/55 group-hover:opacity-100">
+                              class="absolute right-2 top-1/2 z-10 hidden md:block -translate-y-1/2 rounded-full bg-black/35 p-1.5 text-white opacity-0 backdrop-blur transition hover:bg-black/55 group-hover:opacity-100">
                               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
                             </button>
                             <div class="absolute bottom-2.5 left-1/2 z-10 flex -translate-x-1/2 gap-1.5">
@@ -415,6 +415,7 @@ const waferFromLabel = waferKrws.length
 
   // 웨이퍼 카드 슬라이드쇼 (세부 제품 대표사진 순환)
   document.querySelectorAll<HTMLElement>('[data-wafer-slider]').forEach((slider) => {
+    if (window.matchMedia('(max-width: 767px)').matches) return; // 모바일: 스와이프 스크롤 전용
     const slides = slider.querySelectorAll<HTMLElement>('.wafer-slide');
     const dots = slider.querySelectorAll<HTMLElement>('[data-wafer-dot]');
     if (slides.length < 2) return;
@@ -422,8 +423,8 @@ const waferFromLabel = waferKrws.length
     const go = (n: number) => {
       cur = (n + slides.length) % slides.length;
       slides.forEach((sl, i) => {
-        sl.classList.toggle('opacity-100', i === cur);
-        sl.classList.toggle('opacity-0', i !== cur);
+        sl.classList.toggle('md:opacity-100', i === cur);
+        sl.classList.toggle('md:opacity-0', i !== cur);
       });
       dots.forEach((d, i) => {
         d.classList.toggle('bg-white', i === cur);

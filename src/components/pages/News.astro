@@ -30,6 +30,9 @@ const fmtDate = (d) =>
       {news.map((n) => (
         <a href={n.data.url} target="_blank" rel="noopener noreferrer"
            class="v-reveal group flex items-start gap-5 rounded-2xl border border-ink/10 bg-ink/[0.03] p-6 transition hover:border-accent/40 hover:bg-ink/[0.05]">
+          <span class="mt-0.5 grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-accent/25 bg-accent/[0.08] text-accent transition group-hover:border-accent/50 group-hover:bg-accent/[0.14]" aria-hidden="true">
+            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-4 0V6" /><path d="M18 14h-8M15 18h-5M10 6h8v4h-8z" /></svg>
+          </span>
           <span class="flex-1">
             <span class="block text-base font-medium leading-relaxed text-ink/85 group-hover:text-ink">{newsTitle(n)}</span>
             {(n.data.outlet || n.data.date) && (

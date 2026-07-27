@@ -268,7 +268,7 @@ const childHref = (path) => {
       .nav-js #mobile-nav { display: none; }
       @media (max-width: 767px) {
         .nav-js #nav-toggle { display: inline-flex; }
-        .nav-js #mobile-nav.is-open { display: block; }
+        .nav-js #mobile-nav.is-open { display: block; max-height: calc(100dvh - 72px); overflow-y: auto; overscroll-behavior: contain; }
       }
       #nav-toggle .nav-icon-close { display: none; }
       #nav-toggle[aria-expanded="true"] .nav-icon-open { display: none; }
@@ -433,7 +433,7 @@ const childHref = (path) => {
               )
             ))}
           </nav>
-          <div class="hidden items-center gap-1.5 text-xs font-medium md:flex" aria-label={ui.lang}>
+          <div class="flex items-center gap-1.5 text-xs font-medium" aria-label={ui.lang}>
             <a href={enPathFull} hreflang="en" class={currentLocale === 'en' ? 'text-accent' : 'text-ink/50 transition hover:text-ink'}>EN</a>
             <span class="text-ink/20">/</span>
             <a href={koPathFull} hreflang="ko" class={currentLocale === 'ko' ? 'text-accent' : 'text-ink/50 transition hover:text-ink'}>KO</a>
@@ -469,21 +469,24 @@ const childHref = (path) => {
       </div>
       <nav id="mobile-nav" aria-label={ui.mobileMenu} class="border-t border-ink/10 px-6 pb-3 md:hidden">
         {nav.map((item) => (
-          <>
-            <a href={localizedHref(item.href)} class="block py-3 text-base text-ink/70 transition hover:text-ink">{navLabel(item)}</a>
-            {item.children && (
-              <div class="mb-1 ml-3 border-l border-ink/10 pl-3">
+          item.children ? (
+            <div class="mnav-grp">
+              <div class="flex items-center justify-between">
+                <a href={localizedHref(item.href)} class="block flex-1 py-3 text-base text-ink/70 transition hover:text-ink">{navLabel(item)}</a>
+                <button type="button" class="mnav-tgl -mr-2 grid h-11 w-11 place-items-center rounded-lg text-ink/45 transition hover:text-ink" aria-expanded="false" aria-label={navLabel(item)}>
+                  <svg class="h-4 w-4 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                </button>
+              </div>
+              <div class="mnav-sub mb-1 ml-3 hidden border-l border-ink/10 pl-3">
                 {item.children.map((c) => (
-                  <a href={childHref(c.href)} class="block py-2 text-sm text-ink/55 transition hover:text-ink">{childLabel(c)}</a>
+                  <a href={childHref(c.href)} class="block py-2.5 text-sm text-ink/55 transition hover:text-ink">{childLabel(c)}</a>
                 ))}
               </div>
-            )}
-          </>
+            </div>
+          ) : (
+            <a href={localizedHref(item.href)} class="block py-3 text-base text-ink/70 transition hover:text-ink">{navLabel(item)}</a>
+          )
         ))}
-        <div class="mt-2 flex items-center gap-4 border-t border-ink/10 pt-3 text-base" aria-label={ui.lang}>
-          <a href={enPathFull} hreflang="en" class={currentLocale === 'en' ? 'text-accent' : 'text-ink/70 transition hover:text-ink'}>EN</a>
-          <a href={koPathFull} hreflang="ko" class={currentLocale === 'ko' ? 'text-accent' : 'text-ink/70 transition hover:text-ink'}>KO</a>
-        </div>
       </nav>
     </header>
     <main>
@@ -584,6 +587,15 @@ const childHref = (path) => {
         };
         navToggle.addEventListener('click', () => setNavOpen(!mobileNav.classList.contains('is-open')));
         mobileNav.querySelectorAll('a').forEach((link) => link.addEventListener('click', () => setNavOpen(false)));
+        mobileNav.querySelectorAll('.mnav-tgl').forEach((btn) => btn.addEventListener('click', () => {
+          const grp = btn.closest('.mnav-grp');
+          const sub = grp && grp.querySelector('.mnav-sub');
+          if (!sub) return;
+          const open = sub.classList.toggle('hidden') === false;
+          btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+          const ic = btn.querySelector('svg');
+          if (ic) ic.classList.toggle('rotate-180', open);
+        }));
         document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setNavOpen(false); });
       }
     </script>
