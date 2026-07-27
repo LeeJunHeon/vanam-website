@@ -182,7 +182,7 @@ const techAsset = (pth: string) => techImages[`/src/assets/tech/${pth}`]?.defaul
             <div class="relative lg:pl-12">
               <div class="pointer-events-none absolute bottom-[14.5px] left-0 top-[14.5px] hidden w-6 rounded-l-2xl border-y-[3px] border-l-[3px] border-accent/45 lg:block" aria-hidden="true"></div>
               <div class="pointer-events-none absolute left-[22px] top-[9px] hidden h-0 w-0 border-y-[7px] border-l-[10px] border-y-transparent border-l-accent/60 lg:block" aria-hidden="true"></div>
-              <span class="pointer-events-none absolute left-[1.5px] top-1/2 hidden -translate-x-1/2 -translate-y-1/2 rotate-180 rounded-full border border-accent/30 bg-canvas px-1.5 py-2.5 text-[11px] font-bold tracking-wide text-accent [writing-mode:vertical-rl] lg:inline-block" aria-hidden="true">↻ {cv.cycle.t}</span>
+              <span class="pointer-events-none absolute left-[1.5px] top-1/2 hidden -translate-x-1/2 -translate-y-1/2 rounded-full border border-accent/30 bg-canvas px-1.5 py-2.5 text-[11px] font-bold tracking-wide text-accent [writing-mode:vertical-rl] lg:inline-block" aria-hidden="true">↻ {cv.cycle.t}</span>
 
               {/* ── 1. 데이터 수집 ── */}
               <div>
@@ -365,9 +365,10 @@ const techAsset = (pth: string) => techImages[`/src/assets/tech/${pth}`]?.defaul
                 </div>
               </div>
 
-              {/* 모바일에선 좌측 브래킷 대신 순환 배지만 표시 */}
-              <p class="mt-5 text-center lg:hidden">
+              {/* 모바일: 브래킷 대신 순환 배지 + 방향(5 → 1) 캡션 — 어느 단계로 되돌아가는 루프인지 명시 */}
+              <p class="mt-5 flex flex-col items-center gap-1 lg:hidden">
                 <span class="inline-flex items-center gap-1.5 rounded-full border border-accent/30 bg-accent/[0.06] px-3 py-1 text-[11.5px] font-bold text-accent">↻ {cv.cycle.t}</span>
+                <span class="text-[10.5px] font-semibold tracking-wide text-ink/55">{cv.heads[4].no} → {cv.heads[0].no}</span>
               </p>
 
               {/* ── Core Value — 파이프라인의 결론 밴드 (가치 4종 → Final goal 3줄) ── */}
