@@ -240,12 +240,12 @@ const childHref = (path) => {
         JS 비활성 시 noscript로 동기 로드해 폰트 보장. family·결과는 기존과 동일(static, 'Pretendard'). */}
     <link
       rel="stylesheet"
-      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css"
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.min.css"
       media="print"
       onload="this.media='all'"
     />
     <noscript>
-      <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.min.css" />
     </noscript>
     <OrganizationSchema />
     <script type="application/ld+json" set:html={JSON.stringify(websiteSchema)} />
