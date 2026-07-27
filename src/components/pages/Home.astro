@@ -105,7 +105,7 @@ const description = home.metaDescription;
     const ctx = canvas.getContext('2d', { alpha: false });
     if (!ctx) return;
 
-    const N = 219;
+    const N = 161;
     const MOBILE = window.matchMedia('(max-width: 768px)').matches;
     const DIR = MOBILE ? '/media/hero-m/' : '/media/hero/';
     const src = (i: number) => `${DIR}f${String(i + 1).padStart(3, '0')}.avif`;
@@ -146,6 +146,12 @@ const description = home.metaDescription;
         if (h + d < N && bmp.has(h + d)) { k = h + d; break; }
       }
       if (k < 0 || (k === cur && drawnTick === loadTick)) return;
+      // 모노토닉 표시: 디코드가 스크롤을 못 따라올 때 nearest 가 재생헤드 앞뒤를 오가며
+      // 그리면 화면이 앞뒤로 진동한다. 진행 방향과 반대되는 프레임은 그리지 않고
+      // 현재 프레임을 유지한다 — 다음 디코드가 도착하면 방향대로만 전진.
+      const dir = target > play + 0.4 ? 1 : target < play - 0.4 ? -1 : 0;
+      if (cur >= 0 && dir > 0 && k < cur) return;
+      if (cur >= 0 && dir < 0 && k > cur) return;
       const im = bmp.get(k)!;
       const sc = Math.max(W / im.width, H / im.height);
       const dw = im.width * sc, dh = im.height * sc;
