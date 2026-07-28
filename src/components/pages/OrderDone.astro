@@ -54,6 +54,12 @@ const t = isKo
       lookup: '주문 조회',
       copy: '복사',
       copied: '복사됨',
+      amountLabel: '결제 금액',
+      mCreate: '결제 생성에 실패했습니다.',
+      mHeld: '결제는 접수되었으나 자동 확인에 실패했습니다. 중복 결제를 피해 다시 시도하지 마시고 hello@vanam.co.kr 로 문의해 주세요.',
+      mError: '결제 처리 중 오류가 발생했습니다.',
+      mSdk: '결제 모듈을 불러오지 못했습니다.',
+      mPaid: '이미 결제가 완료된 주문입니다. 화면을 새로고침합니다.',
     }
   : {
       meta: 'Order received | VanaM',
@@ -75,6 +81,12 @@ const t = isKo
       lookup: 'Track order',
       copy: 'Copy',
       copied: 'Copied',
+      amountLabel: 'Amount',
+      mCreate: 'Could not start payment.',
+      mHeld: 'Payment received but needs manual verification — please do not retry; contact hello@vanam.co.kr.',
+      mError: 'Payment error.',
+      mSdk: 'Failed to load payment module.',
+      mPaid: 'This order has already been paid. Refreshing…',
     };
 ---
 
@@ -108,8 +120,9 @@ const t = isKo
           ) : paypalOn && order.status === 'pending' ? (
             <div class="mt-8 rounded-lg border border-accent/25 bg-accent/[0.05] p-5">
               <p class="text-sm font-semibold text-ink/80">{t.payTitle}</p>
-              <p class="mt-1 text-sm text-ink/55">결제 금액 · Amount: ${usdValue.toFixed(2)} USD</p>
-              <div id="pp-done-btn" class="mt-4" data-ref={order.id} data-email={order.buyer_email} data-client={ppClient}></div>
+              <p class="mt-1 text-sm text-ink/55">{t.amountLabel}: ${usdValue.toFixed(2)} USD</p>
+              <div id="pp-done-btn" class="mt-4" data-ref={order.id} data-email={order.buyer_email} data-client={ppClient}
+                data-m-create={t.mCreate} data-m-held={t.mHeld} data-m-error={t.mError} data-m-sdk={t.mSdk} data-m-paid={t.mPaid}></div>
               <p class="mt-3 text-[11px] leading-relaxed text-ink/45">{t.payNote}</p>
               <p id="pp-done-err" class="mt-2 hidden text-sm font-semibold text-danger"></p>
             </div>
@@ -161,7 +174,16 @@ const t = isKo
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ ref: host.dataset.ref, email: host.dataset.email }),
                   }).then(function (r) { return r.json(); }).then(function (j) {
-                    if (!j.ok) { showErr('결제 생성에 실패했습니다 · Could not start payment.'); throw new Error(j.error || 'create_failed'); }
+                    if (!j.ok) {
+                      // 창을 닫았다 복원한 뒤 다시 누르는 경우 — 이미 결제된 주문이면 재결제가 아니라 새로고침이 맞다
+                      if (j.error === 'already_paid') {
+                        showErr(host.dataset.mPaid);
+                        setTimeout(function () { location.reload(); }, 1600);
+                        throw new Error('already_paid');
+                      }
+                      showErr(host.dataset.mCreate);
+                      throw new Error(j.error || 'create_failed');
+                    }
                     return j.id;
                   });
                 },
@@ -174,17 +196,17 @@ const t = isKo
                       // verify_failed/not_found = PayPal 결제는 성사됐으나 서버 대조에 실패한 상태.
                       // 여기서 '실패'로만 안내하면 고객이 재결제해 이중 청구가 난다.
                       var held = j.error === 'verify_failed' || j.error === 'not_found';
-                      showErr(held ? '결제는 접수되었으나 자동 확인에 실패했습니다. 중복 결제를 피해 다시 시도하지 마시고 hello@vanam.co.kr 로 문의해 주세요 · Payment received but needs manual verification — please do not retry; contact hello@vanam.co.kr.' : (j.restart ? '카드가 거절되었습니다 · Card declined.' : '결제 확정에 실패했습니다 · Capture failed.'));
+                      showErr(held ? host.dataset.mHeld : (j.restart ? host.dataset.mDeclined || host.dataset.mError : host.dataset.mError));
                       throw new Error(j.error || 'capture_failed');
                     }
                     var box = host.closest('div.mt-8');
                     if (box) box.outerHTML = '<p class="mt-8 rounded-lg border border-ok/25 bg-ok/10 p-4 text-center text-sm font-semibold text-ok">✅ 결제가 완료되었습니다 · Payment completed — $' + Number(j.paidUsd).toFixed(2) + '</p>';
                   });
                 },
-                onError: function (e) { console.error(e); showErr('결제 처리 중 오류가 발생했습니다 · Payment error.'); },
+                onError: function (e) { console.error(e); showErr(host.dataset.mError); },
               }).render(host);
             };
-            s.onerror = function () { showErr('결제 모듈을 불러오지 못했습니다 · Failed to load payment module.'); };
+            s.onerror = function () { showErr(host.dataset.mSdk); };
             document.head.appendChild(s);
           })();
         </script>

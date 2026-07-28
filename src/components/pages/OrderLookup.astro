@@ -35,6 +35,17 @@ const t = isKo
         pending: '결제 대기', paid: '결제 완료', preparing: '제작 중',
         shipped: '발송 완료', done: '완료', cancelled: '취소됨', refunded: '환불됨',
       } as Record<string, string>,
+      mCreate: '결제 생성에 실패했습니다.',
+      mHeld: '결제는 접수되었으나 자동 확인에 실패했습니다. 중복 결제를 피해 다시 시도하지 마시고 hello@vanam.co.kr 로 문의해 주세요.',
+      mDeclined: '카드가 거절되었습니다 — 다른 수단으로 시도해 주세요.',
+      mCapture: '결제 확정에 실패했습니다.',
+      mError: '결제 처리 중 오류가 발생했습니다.',
+      mPaid: '이미 결제가 완료된 주문입니다. 화면을 새로고침합니다.',
+      mSetup: '결제 준비 중입니다.',
+      payTitle: 'PayPal 결제',
+      payNote: '해외 고객 전용 USD 결제입니다 — 국내 결제(세금계산서·계좌이체)는 별도 문의해 주세요.',
+      paidDone: '결제가 완료되었습니다',
+      paidAt: '결제 완료',
     }
   : {
       meta: 'Track your order | VanaM', metaDesc: 'Check your order status with your order number and email.',
@@ -58,6 +69,17 @@ const t = isKo
         pending: 'Awaiting payment', paid: 'Paid', preparing: 'In production',
         shipped: 'Shipped', done: 'Completed', cancelled: 'Cancelled', refunded: 'Refunded',
       } as Record<string, string>,
+      mCreate: 'Could not start payment.',
+      mHeld: 'Payment received but needs manual verification — please do not retry; contact hello@vanam.co.kr.',
+      mDeclined: 'Card declined — please try another method.',
+      mCapture: 'Capture failed.',
+      mError: 'Payment error.',
+      mPaid: 'This order has already been paid. Refreshing…',
+      mSetup: 'Payment is being set up.',
+      payTitle: 'Pay with PayPal',
+      payNote: 'USD payment for international customers. For domestic payment (tax invoice / bank transfer), please contact us.',
+      paidDone: 'Payment completed',
+      paidAt: 'Paid',
     };
 
 const inputClass =
@@ -77,6 +99,7 @@ const inputClass =
       data-label-loading={t.loading}
       data-labels={JSON.stringify(t.st)}
       data-inq={JSON.stringify(t.inq)}
+      data-pay={JSON.stringify({ paidDone: t.paidDone, paidAt: t.paidAt, mCreate: t.mCreate, mHeld: t.mHeld, mDeclined: t.mDeclined, mCapture: t.mCapture, mError: t.mError, mPaid: t.mPaid, mSetup: t.mSetup, payTitle: t.payTitle, payNote: t.payNote })}
       data-copy={JSON.stringify({
         status: t.status, amount: t.amount, ordered: t.ordered,
         items: t.items, shipTo: t.shipTo, taxYes: t.taxYes, noShip: t.noShip,
@@ -110,6 +133,8 @@ const inputClass =
   const form = document.getElementById('lookup-form') as HTMLFormElement | null;
   if (form) {
     const M = form.dataset;
+    const P = JSON.parse(M.pay || '{}') as Record<string, string>;
+    const P2 = P;   // 결과 렌더 템플릿에서도 동일 문자열 사용
     const ST: Record<string, string> = JSON.parse(M.labels ?? '{}');
     const C = JSON.parse(M.copy ?? '{}');
     const INQ = JSON.parse(M.inq ?? '{}');
@@ -180,10 +205,10 @@ const inputClass =
         // ── PayPal 결제 블록 (INQ: USD 견적 / ORD: pending 주문) — 해외 고객 전용 USD
         const payBlock = (ref: string, amountKrw?: number, cur?: string) => `
           <div class="mt-5 rounded-lg border border-accent/25 bg-accent/[0.05] p-4" data-pp data-ref="${esc(ref)}">
-            <p class="text-sm font-semibold text-ink/80">PayPal 결제 · Pay with PayPal <span class="font-normal text-ink/45">(International · USD)</span></p>
+            <p class="text-sm font-semibold text-ink/80">${P.payTitle} <span class="font-normal text-ink/45">(International · USD)</span></p>
             ${amountKrw && cur !== 'USD' ? `<p class="mt-1 text-xs text-ink/50" data-pp-usd data-krw="${amountKrw}"></p>` : ''}
             <div class="mt-3" data-pp-btn></div>
-            <p class="mt-2 text-[11px] leading-relaxed text-ink/40">해외 고객 전용 USD 결제입니다 — 국내 결제(세금계산서·계좌이체)는 별도 문의해 주세요. · USD payment for international customers.</p>
+            <p class="mt-2 text-[11px] leading-relaxed text-ink/40">${P.payNote}</p>
             <p class="mt-2 hidden text-sm font-semibold text-danger" data-pp-err></p>
           </div>`;
 
@@ -203,7 +228,7 @@ const inputClass =
               usdEl.textContent = `$${(krw / cfg.usdRate).toFixed(2)} USD`;
             }
             if (!cfg.enabled) {
-              wrap.innerHTML = `<p class="text-sm text-ink/50">결제 준비 중입니다 · Payment is being set up.</p>`;
+              wrap.innerHTML = `<p class="text-sm text-ink/50">${P.mSetup}</p>`;
               return;
             }
             if (!w.paypal) {
@@ -222,7 +247,16 @@ const inputClass =
                   body: JSON.stringify({ ref: wrap.dataset.ref, email }),
                 });
                 const j2 = await r2.json();
-                if (!r2.ok || !j2.ok) { showErr('결제 생성에 실패했습니다 · Could not start payment.'); throw new Error(j2.error || 'create_failed'); }
+                if (!r2.ok || !j2.ok) {
+                    // 창을 닫았다 복원한 뒤 재시도한 경우 — 이미 결제됐다면 재결제가 아니라 새로고침이 맞다
+                    if (j2.error === 'already_paid') {
+                      showErr(P.mPaid);
+                      setTimeout(() => location.reload(), 1600);
+                      throw new Error('already_paid');
+                    }
+                    showErr(P.mCreate);
+                    throw new Error(j2.error || 'create_failed');
+                  }
                 return j2.id;
               },
               onApprove: async (data2: { orderID: string }) => {
@@ -234,12 +268,12 @@ const inputClass =
                 if (!r2.ok || !j2.ok) {
                   // verify_failed/not_found = 결제는 성사·자동 확정 불가 → 재결제 금지 안내(이중 청구 방지)
                   const held = j2.error === 'verify_failed' || j2.error === 'not_found';
-                  showErr(held ? '결제는 접수되었으나 자동 확인에 실패했습니다. 중복 결제를 피해 다시 시도하지 마시고 hello@vanam.co.kr 로 문의해 주세요 · Payment received but needs manual verification — please do not retry; contact hello@vanam.co.kr.' : (j2.restart ? '카드가 거절되었습니다 — 다른 수단으로 시도해 주세요 · Card declined.' : '결제 확정에 실패했습니다 · Capture failed.'));
+                  showErr(held ? P.mHeld : (j2.restart ? P.mDeclined : P.mCapture));
                   throw new Error(j2.error || 'capture_failed');
                 }
-                wrap.innerHTML = `<p class="rounded-lg border border-ok/25 bg-ok/10 p-3 text-center text-sm font-semibold text-ok">✅ 결제가 완료되었습니다 · Payment completed — $${Number(j2.paidUsd).toFixed(2)}</p>`;
+                wrap.innerHTML = `<p class="rounded-lg border border-ok/25 bg-ok/10 p-3 text-center text-sm font-semibold text-ok">✅ ${P.paidDone} — $${Number(j2.paidUsd).toFixed(2)} USD</p>`;
               },
-              onError: (e2: unknown) => { console.error(e2); showErr('결제 처리 중 오류가 발생했습니다 · Payment error.'); },
+              onError: (e2: unknown) => { console.error(e2); showErr(P.mError); },
             }).render(btnEl);
           } catch (e2) {
             console.error(e2);
@@ -281,7 +315,7 @@ const inputClass =
               ${q.quote_note ? `
                 <p class="mt-5 rounded-lg bg-ink/[0.05] p-4 text-sm leading-relaxed text-ink/65">${esc(q.quote_note)}</p>` : ''}
               ${q.paid_at ? `
-                <p class="mt-5 rounded-lg border border-ok/25 bg-ok/10 p-3 text-center text-sm font-semibold text-ok">✅ 결제 완료 · Paid — ${when(q.paid_at)}</p>` : ''}
+                <p class="mt-5 rounded-lg border border-ok/25 bg-ok/10 p-3 text-center text-sm font-semibold text-ok">✅ ${P2.paidAt} — ${when(q.paid_at)}</p>` : ''}
               ${!q.paid_at && q.quote_currency === 'USD' && Number(q.quoted_amount) > 0 && ['quoted', 'replied'].includes(q.status) ? payBlock(q.id) : ''}
             </div>`;
           resEl.hidden = false;
@@ -320,7 +354,7 @@ const inputClass =
                 <span class="text-xl font-bold text-ink">${Number(o.amount_usd) > 0 ? `$${Number(o.amount_usd).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : usdOf(o.amount, o.currency)}</span>
               </div>
               ${o.paid_at ? `
-                <p class="mt-4 rounded-lg border border-ok/25 bg-ok/10 p-3 text-center text-sm font-semibold text-ok">✅ 결제 완료 · Paid — ${when(o.paid_at)}${o.paid_usd ? ` ($${Number(o.paid_usd).toFixed(2)})` : ''}</p>` : ''}
+                <p class="mt-4 rounded-lg border border-ok/25 bg-ok/10 p-3 text-center text-sm font-semibold text-ok">✅ ${P2.paidAt} — ${when(o.paid_at)}${o.paid_usd ? ` ($${Number(o.paid_usd).toFixed(2)})` : ''}</p>` : ''}
               ${!o.paid_at && o.status === 'pending' ? payBlock(o.id, Number(o.amount), String(o.currency ?? 'KRW')) : ''}
             </div>
 

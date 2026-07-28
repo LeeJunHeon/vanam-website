@@ -40,7 +40,10 @@ export const POST: APIRoute = async ({ request }) => {
   }
 
   // 봇 차단
-  if (str(body.vanam_hp_email) !== '') return json({ ok: true, orderId: 'SPAM', spam: true });
+  // 미끼칸(신·구 이름 모두 검사 — 배포 시차 동안 양쪽이 공존할 수 있다)
+  if (str(body.vanam_hp_note) !== '' || str(body.vanam_hp_email) !== '') {
+    return json({ ok: true, orderId: 'SPAM', spam: true });
+  }
 
   // 레이트리밋: IP당 1시간에 10건. (허니팟 통과 후 — 봇은 위에서 걸러진다)
   const rl = await rateLimit(await db(), 'order', request);
