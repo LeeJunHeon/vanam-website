@@ -216,7 +216,12 @@ const inputClass =
                   body: JSON.stringify({ orderID: data2.orderID }),
                 });
                 const j2 = await r2.json();
-                if (!r2.ok || !j2.ok) { showErr(j2.restart ? '카드가 거절되었습니다 — 다른 수단으로 시도해 주세요 · Card declined.' : '결제 확정에 실패했습니다 · Capture failed.'); throw new Error(j2.error || 'capture_failed'); }
+                if (!r2.ok || !j2.ok) {
+                  // verify_failed/not_found = 결제는 성사·자동 확정 불가 → 재결제 금지 안내(이중 청구 방지)
+                  const held = j2.error === 'verify_failed' || j2.error === 'not_found';
+                  showErr(held ? '결제는 접수되었으나 자동 확인에 실패했습니다. 중복 결제를 피해 다시 시도하지 마시고 hello@vanam.co.kr 로 문의해 주세요 · Payment received but needs manual verification — please do not retry; contact hello@vanam.co.kr.' : (j2.restart ? '카드가 거절되었습니다 — 다른 수단으로 시도해 주세요 · Card declined.' : '결제 확정에 실패했습니다 · Capture failed.'));
+                  throw new Error(j2.error || 'capture_failed');
+                }
                 wrap.innerHTML = `<p class="rounded-lg border border-ok/25 bg-ok/10 p-3 text-center text-sm font-semibold text-ok">✅ 결제가 완료되었습니다 · Payment completed — $${Number(j2.paidUsd).toFixed(2)}</p>`;
               },
               onError: (e2: unknown) => { console.error(e2); showErr('결제 처리 중 오류가 발생했습니다 · Payment error.'); },

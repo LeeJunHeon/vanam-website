@@ -170,7 +170,13 @@ const t = isKo
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ orderID: data.orderID }),
                   }).then(function (r) { return r.json(); }).then(function (j) {
-                    if (!j.ok) { showErr(j.restart ? '카드가 거절되었습니다 · Card declined.' : '결제 확정에 실패했습니다 · Capture failed.'); throw new Error(j.error || 'capture_failed'); }
+                    if (!j.ok) {
+                      // verify_failed/not_found = PayPal 결제는 성사됐으나 서버 대조에 실패한 상태.
+                      // 여기서 '실패'로만 안내하면 고객이 재결제해 이중 청구가 난다.
+                      var held = j.error === 'verify_failed' || j.error === 'not_found';
+                      showErr(held ? '결제는 접수되었으나 자동 확인에 실패했습니다. 중복 결제를 피해 다시 시도하지 마시고 hello@vanam.co.kr 로 문의해 주세요 · Payment received but needs manual verification — please do not retry; contact hello@vanam.co.kr.' : (j.restart ? '카드가 거절되었습니다 · Card declined.' : '결제 확정에 실패했습니다 · Capture failed.'));
+                      throw new Error(j.error || 'capture_failed');
+                    }
                     var box = host.closest('div.mt-8');
                     if (box) box.outerHTML = '<p class="mt-8 rounded-lg border border-ok/25 bg-ok/10 p-4 text-center text-sm font-semibold text-ok">✅ 결제가 완료되었습니다 · Payment completed — $' + Number(j.paidUsd).toFixed(2) + '</p>';
                   });
