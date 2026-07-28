@@ -39,18 +39,6 @@ export function expectedUsdStr(kind: 'ord' | 'inq', row: Record<string, unknown>
   return usd.toFixed(2);
 }
 
-// 진단(값 미노출 — 키 이름만): 어느 통로에 PAYPAL_* 가 보이는지
-export const paypalDiag = (extra?: Record<string, unknown>) => {
-  const names = (o?: Record<string, unknown>) =>
-    Object.keys(o ?? {}).filter((k) => k.startsWith('PAYPAL')).sort();
-  return {
-    cfPaypalKeys: names(cfEnv as Record<string, unknown> | undefined),
-    localsPaypalKeys: names(extra),
-    cfHasDB: Boolean((cfEnv as Record<string, unknown> | undefined)?.DB),
-    cfHasWebhook: Boolean(E('GOOGLE_CHAT_WEBHOOK')),
-  };
-};
-
 export const paypalCfg = (extra?: Record<string, unknown>) => {
   const clientId = E('PAYPAL_CLIENT_ID', extra);
   const secret = E('PAYPAL_SECRET', extra);

@@ -40,7 +40,8 @@ const t = isKo
       mDeclined: '카드가 거절되었습니다 — 다른 수단으로 시도해 주세요.',
       mCapture: '결제 확정에 실패했습니다.',
       mError: '결제 처리 중 오류가 발생했습니다.',
-      mPaid: '이미 결제가 완료된 주문입니다. 화면을 새로고침합니다.',
+      mPaid: '이미 결제가 완료된 주문입니다. 위 주문 상태를 확인해 주세요.',
+      mApproved: '결제 승인이 완료되었습니다. 확정 처리 중이니 다시 결제하지 마시고, 이 주문번호로 잠시 후 다시 조회해 주세요.',
       mSetup: '결제 준비 중입니다.',
       payTitle: 'PayPal 결제',
       payNote: '해외 고객 전용 USD 결제입니다 — 국내 결제(세금계산서·계좌이체)는 별도 문의해 주세요.',
@@ -74,7 +75,8 @@ const t = isKo
       mDeclined: 'Card declined — please try another method.',
       mCapture: 'Capture failed.',
       mError: 'Payment error.',
-      mPaid: 'This order has already been paid. Refreshing…',
+      mPaid: 'This order has already been paid. Please check the order status above.',
+      mApproved: 'Your payment was approved and is being finalized. Please do not pay again — check the status again shortly using this order number.',
       mSetup: 'Payment is being set up.',
       payTitle: 'Pay with PayPal',
       payNote: 'USD payment for international customers. For domestic payment (tax invoice / bank transfer), please contact us.',
@@ -99,7 +101,7 @@ const inputClass =
       data-label-loading={t.loading}
       data-labels={JSON.stringify(t.st)}
       data-inq={JSON.stringify(t.inq)}
-      data-pay={JSON.stringify({ paidDone: t.paidDone, paidAt: t.paidAt, mCreate: t.mCreate, mHeld: t.mHeld, mDeclined: t.mDeclined, mCapture: t.mCapture, mError: t.mError, mPaid: t.mPaid, mSetup: t.mSetup, payTitle: t.payTitle, payNote: t.payNote })}
+      data-pay={JSON.stringify({ paidDone: t.paidDone, paidAt: t.paidAt, mApproved: t.mApproved, mCreate: t.mCreate, mHeld: t.mHeld, mDeclined: t.mDeclined, mCapture: t.mCapture, mError: t.mError, mPaid: t.mPaid, mSetup: t.mSetup, payTitle: t.payTitle, payNote: t.payNote })}
       data-copy={JSON.stringify({
         status: t.status, amount: t.amount, ordered: t.ordered,
         items: t.items, shipTo: t.shipTo, taxYes: t.taxYes, noShip: t.noShip,
@@ -218,6 +220,8 @@ const inputClass =
           const btnEl = wrap.querySelector<HTMLElement>('[data-pp-btn]');
           const perr = wrap.querySelector<HTMLElement>('[data-pp-err]');
           const showErr = (m: string) => { if (perr) { perr.textContent = m; perr.classList.remove('hidden'); } };
+          // 재결제 시 이중 청구가 날 수 있는 상태에서는 결제 수단을 닫는다.
+          const killPay = () => { if (btnEl) { btnEl.style.pointerEvents = 'none'; btnEl.style.opacity = '0.45'; } };
           try {
             const w = window as unknown as Record<string, any>;
             if (!w.__ppCfg) w.__ppCfg = await (await fetch('/api/paypal/config')).json();
@@ -250,8 +254,9 @@ const inputClass =
                 if (!r2.ok || !j2.ok) {
                     // 창을 닫았다 복원한 뒤 재시도한 경우 — 이미 결제됐다면 재결제가 아니라 새로고침이 맞다
                     if (j2.error === 'already_paid') {
+                      // 자동 새로고침 금지 — 조회 결과와 주문번호가 화면에서 사라지면 안 된다.
                       showErr(P.mPaid);
-                      setTimeout(() => location.reload(), 1600);
+                      killPay();
                       throw new Error('already_paid');
                     }
                     showErr(P.mCreate);
@@ -269,6 +274,7 @@ const inputClass =
                   // verify_failed/not_found = 결제는 성사·자동 확정 불가 → 재결제 금지 안내(이중 청구 방지)
                   const held = j2.error === 'verify_failed' || j2.error === 'not_found';
                   showErr(held ? P.mHeld : (j2.restart ? P.mDeclined : P.mCapture));
+                  if (held) killPay();
                   throw new Error(j2.error || 'capture_failed');
                 }
                 wrap.innerHTML = `<p class="rounded-lg border border-ok/25 bg-ok/10 p-3 text-center text-sm font-semibold text-ok">✅ ${P.paidDone} — $${Number(j2.paidUsd).toFixed(2)} USD</p>`;
