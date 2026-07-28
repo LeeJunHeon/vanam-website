@@ -124,7 +124,14 @@ export async function refreshRate(d: D1 | null): Promise<boolean> {
  * waitUntil 이 있으면 응답을 막지 않는다(없으면 갱신을 건너뛴다 — 절대 응답을 지연시키지 않는다).
  */
 export async function getRate(d: D1 | null, waitUntil?: (p: Promise<unknown>) => void): Promise<FxRate> {
-  const cur = await readRate(d);
+  // 환율 때문에 호출부가 500 이 나면 안 된다 — 어떤 실패든 여기서 흡수하고 폴백을 돌려준다.
+  let cur: FxRate;
+  try {
+    cur = await readRate(d);
+  } catch (e) {
+    console.error('[fx] readRate 예외:', e);
+    return { rate: cfgRate(), updatedAt: null, source: 'config' };
+  }
   if (!d || !waitUntil) return cur;
   const age = cur.updatedAt ? Date.now() - Date.parse(cur.updatedAt) : Infinity;
   if (!Number.isFinite(age) || age > STALE_MS) {
