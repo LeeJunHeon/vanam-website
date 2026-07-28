@@ -169,9 +169,32 @@ export async function getRate(d: D1 | null, waitUntil?: (p: Promise<unknown>) =>
   return cur;
 }
 
-/** locals 에서 waitUntil 을 안전하게 꺼낸다(어댑터/환경마다 위치가 다를 수 있다). */
+/**
+ * locals 에서 waitUntil 을 꺼낸다.
+ *
+ * ⚠️ Astro v6 + @astrojs/cloudflare v13 부터 위치가 `locals.cfContext` 로 바뀌었다.
+ * 구 경로 `locals.runtime.ctx` 는 **접근만 해도 예외를 던지는 getter** 로 정의되어 있어
+ * 옵셔널 체이닝으로도 막을 수 없다(어댑터 cf-helpers.createLocals 참고).
+ * 그래서 신규 경로를 먼저 보고, 구 경로 접근은 try 로 감싼다.
+ */
 export function pickWaitUntil(locals: unknown): ((p: Promise<unknown>) => void) | undefined {
-  const ctx = (locals as { runtime?: { ctx?: { waitUntil?: (p: Promise<unknown>) => void } } })?.runtime?.ctx;
-  const fn = ctx?.waitUntil;
-  return typeof fn === 'function' ? fn.bind(ctx) : undefined;
+  const L = locals as {
+    cfContext?: { waitUntil?: (p: Promise<unknown>) => void };
+    runtime?: { ctx?: { waitUntil?: (p: Promise<unknown>) => void } };
+  } | null;
+  // 1) Astro v6 이후 표준 위치
+  try {
+    const ctx = L?.cfContext;
+    if (ctx && typeof ctx.waitUntil === 'function') return ctx.waitUntil.bind(ctx);
+  } catch (e) {
+    /* 접근 불가 환경 */
+  }
+  // 2) 구버전 호환 — 접근 자체가 throw 할 수 있으므로 반드시 try 안에서
+  try {
+    const ctx = L?.runtime?.ctx;
+    if (ctx && typeof ctx.waitUntil === 'function') return ctx.waitUntil.bind(ctx);
+  } catch (e) {
+    /* v6 에서는 여기서 예외가 난다 — 정상 경로이므로 조용히 무시 */
+  }
+  return undefined;
 }

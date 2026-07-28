@@ -10,12 +10,9 @@ const FALLBACK_RATE = Number(company.usdRate) || 1500;
 export const prerender = false;
 
 export const GET: APIRoute = async ({ locals, url }) => {
-  let lenv: Record<string, unknown> | undefined;
-  try {
-    lenv = (locals as unknown as { runtime?: { env?: Record<string, unknown> } })?.runtime?.env;
-  } catch {
-    lenv = undefined;
-  }
+  // Astro v6 부터 locals.runtime.env 는 접근만 해도 예외를 던진다(어댑터가 그렇게 정의).
+  // 실제 env 는 lib/paypal 의 cloudflare:workers import 로 이미 읽으므로 여기서는 시도하지 않는다.
+  const lenv: Record<string, unknown> | undefined = undefined;
   const { clientId, mode, enabled } = paypalCfg(lenv);
 
   // 환율은 이 응답의 부가 정보일 뿐이다. 여기서 실패해도 clientId 는 반드시 내려가야 한다.

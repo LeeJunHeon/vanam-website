@@ -13,10 +13,9 @@ const json = (b: unknown, s = 200) =>
   new Response(JSON.stringify(b), { status: s, headers: { 'Content-Type': 'application/json' } });
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  let lenv: Record<string, unknown> | undefined;
-  try {
-    lenv = (locals as unknown as { runtime?: { env?: Record<string, unknown> } })?.runtime?.env;
-  } catch { lenv = undefined; }
+  // Astro v6 부터 locals.runtime.env 는 접근만 해도 예외를 던진다(어댑터가 그렇게 정의).
+  // 실제 env 는 lib/paypal 이 cloudflare:workers 에서 직접 읽으므로 여기서는 시도하지 않는다.
+  const lenv: Record<string, unknown> | undefined = undefined;
   const d = await db();
   if (!d) return json({ ok: false, error: 'no_db' }, 503);
 
