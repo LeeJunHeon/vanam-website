@@ -21,7 +21,8 @@ const description = home.metaDescription;
     <link rel="preload" as="image" href="/media/hero-poster.webp" fetchpriority="high" />
     {/* 네이티브 비디오 파이프라인(컴포지터 직결) — 부드러움은 브라우저가 보증.
         확대(scale)를 걸지 않는다: 5% 확대는 좌우를 2.5%씩 잘라 우상단 로고 워터마크를 먹는다.
-        소스는 레터박스를 전 구간 전수 스캔해 안전 크롭(y=88·높이 904)한 것이라 상단 검은 띠가 없고,
+        소스는 텍스트 제거본을 전 구간 전수 스캔해 안전 크롭(y=88·높이 904)한 것이라 상단 검은 띠가 없고,
+        색보정(eq)은 걸지 않는다 — 원본 그레이딩이 이미 정상 노출이라 손대면 하이라이트만 날아간다.
         object-cover + 상단 기준 정렬이라 검은 여백 없이 상단 로고가 항상 온전히 보인다. */}
     <video id="vn-vid" class="absolute inset-0 h-full w-full object-cover [object-position:center_top]" autoplay muted loop playsinline preload="auto" poster="/media/hero-poster.webp" aria-hidden="true"></video>
     <div class="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/65 via-black/25 to-transparent" aria-hidden="true"></div>
