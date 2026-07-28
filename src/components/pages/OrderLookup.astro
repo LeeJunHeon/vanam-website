@@ -119,7 +119,22 @@ const inputClass =
     const errEl = document.getElementById('lk-error')!;
     const resEl = document.getElementById('lk-result')!;
 
-    const won = (n: number) => `₩${Number(n).toLocaleString('ko-KR')}`;
+    // 표시는 전부 USD (PayPal 이 KRW 결제를 지원하지 않으므로 원화 병기는 혼선만 준다)
+    const usdOf = (v: unknown, cur?: unknown) => {
+      const n = Number(v) || 0;
+      const u = String(cur ?? 'KRW') === 'USD' ? n : n / (usdRateClient || 1500);
+      return `$${u.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    };
+    // 견적 금액 환산용 환율 — PayPal config 에서 받아 캐시(없으면 기본값)
+    let usdRateClient = 0;
+    (async () => {
+      try {
+        const w = window as unknown as { __ppCfg?: { usdRate?: number } };
+        if (!w.__ppCfg) w.__ppCfg = await (await fetch('/api/paypal/config')).json();
+        usdRateClient = Number(w.__ppCfg?.usdRate) || 0;
+      } catch { /* 실패 시 기본값 사용 */ }
+    })();
+
     const esc = (s: unknown) =>
       String(s ?? '').replace(/[&<>"']/g, (c) =>
         ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!,
@@ -185,7 +200,7 @@ const inputClass =
             const usdEl = wrap.querySelector<HTMLElement>('[data-pp-usd]');
             if (usdEl && cfg.usdRate) {
               const krw = Number(usdEl.dataset.krw || 0);
-              usdEl.textContent = `≈ $${(krw / cfg.usdRate).toFixed(2)} USD (₩${krw.toLocaleString('ko-KR')} · 환율 ${Number(cfg.usdRate).toLocaleString('ko-KR')})`;
+              usdEl.textContent = `$${(krw / cfg.usdRate).toFixed(2)} USD`;
             }
             if (!cfg.enabled) {
               wrap.innerHTML = `<p class="text-sm text-ink/50">결제 준비 중입니다 · Payment is being set up.</p>`;
@@ -242,9 +257,7 @@ const inputClass =
             closed: 'border-ink/10 bg-ink/5 text-ink/40',
           };
           const amt = q.quoted_amount == null ? null
-            : q.quote_currency === 'USD'
-              ? `$${Number(q.quoted_amount).toLocaleString('en-US', { maximumFractionDigits: 2 })}`
-              : won(q.quoted_amount);
+            : `$${Number(q.quote_currency === 'USD' ? q.quoted_amount : Number(q.quoted_amount) / (usdRateClient || 1500)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
           resEl.innerHTML = `
             <div class="rounded-xl border border-ink/10 bg-ink/[0.02] p-7">
               <div class="flex flex-wrap items-start justify-between gap-4">
@@ -299,12 +312,12 @@ const inputClass =
                 ${items.map((i: any) => `
                   <li class="flex justify-between gap-4">
                     <span class="text-ink/70">${esc(i.name)} <span class="text-ink/35">× ${esc(i.qty)}</span></span>
-                    <span class="shrink-0 text-ink/80">${won(i.subtotal)}</span>
+                    <span class="shrink-0 text-ink/80">${usdOf(i.subtotal, o.currency)}</span>
                   </li>`).join('')}
               </ul>
               <div class="mt-5 flex items-center justify-between border-t border-ink/10 pt-5">
                 <span class="text-sm text-ink/60">${C.amount}</span>
-                <span class="text-xl font-bold text-ink">${won(o.amount)}</span>
+                <span class="text-xl font-bold text-ink">${Number(o.amount_usd) > 0 ? `$${Number(o.amount_usd).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : usdOf(o.amount, o.currency)}</span>
               </div>
               ${o.paid_at ? `
                 <p class="mt-4 rounded-lg border border-ok/25 bg-ok/10 p-3 text-center text-sm font-semibold text-ok">✅ 결제 완료 · Paid — ${when(o.paid_at)}${o.paid_usd ? ` ($${Number(o.paid_usd).toFixed(2)})` : ''}</p>` : ''}

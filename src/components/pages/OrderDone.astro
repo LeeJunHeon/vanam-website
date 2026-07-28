@@ -31,7 +31,7 @@ const pp = paypalCfg();
 const paypalOn = pp.enabled;
 const ppClient = pp.clientId;
 const usdRate = company.usdRate || 1500;
-const usdValue = order ? (order.currency === 'USD' ? order.amount : order.amount / usdRate) : 0;
+const usdValue = order ? (Number(order.amount_usd) > 0 ? Number(order.amount_usd) : order.currency === 'USD' ? order.amount : order.amount / usdRate) : 0;
 
 const t = isKo
   ? {
@@ -99,7 +99,7 @@ const t = isKo
             </div>
             <div class="text-right">
               <p class="text-sm text-ink/45">{t.amount}</p>
-              <p class="mt-1 text-2xl font-bold text-ink">₩{order.amount.toLocaleString('ko-KR')}</p>
+              <p class="mt-1 text-2xl font-bold text-ink">${usdValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span class="text-sm font-normal text-ink/40">USD</span></p>
             </div>
           </div>
 
@@ -108,7 +108,7 @@ const t = isKo
           ) : paypalOn && order.status === 'pending' ? (
             <div class="mt-8 rounded-lg border border-accent/25 bg-accent/[0.05] p-5">
               <p class="text-sm font-semibold text-ink/80">{t.payTitle}</p>
-              <p class="mt-1 text-sm text-ink/55">≈ ${usdValue.toFixed(2)} USD <span class="text-ink/40">(₩{order.amount.toLocaleString('ko-KR')} · {t.rate} {usdRate.toLocaleString('ko-KR')})</span></p>
+              <p class="mt-1 text-sm text-ink/55">결제 금액 · Amount: ${usdValue.toFixed(2)} USD</p>
               <div id="pp-done-btn" class="mt-4" data-ref={order.id} data-email={order.buyer_email} data-client={ppClient}></div>
               <p class="mt-3 text-[11px] leading-relaxed text-ink/45">{t.payNote}</p>
               <p id="pp-done-err" class="mt-2 hidden text-sm font-semibold text-danger"></p>

@@ -404,7 +404,7 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
                 <p class="text-xs text-ink/35">{t.vat}</p>
               </div>
               <p id="summary-total" data-usd-rate={company.usdRate || 1500} class="text-2xl font-bold text-ink">
-                {quote ? `₩${(quote.quoted_amount ?? 0).toLocaleString('ko-KR')}` : '$0.00'}
+                {quote ? `$${Number(quote.quoted_amount ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '$0.00'}
               </p>
             </div>
 
@@ -473,7 +473,6 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
     const statusEl = $('pay-status');
     const feeEl = $('ship-fee');
 
-    const won = (n: number) => `₩${n.toLocaleString('ko-KR')}`;
     const RATE = Number((totalEl as HTMLElement | null)?.dataset.usdRate) || 1500;
     const usd = (krw: number) =>
       '$' + (krw / RATE).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -503,7 +502,7 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
           `<span class="shrink-0 text-ink/80">${usd(sub)}</span>`;
         linesEl!.appendChild(li);
       }
-      totalEl.innerHTML = `${usd(total)}<span class="mt-0.5 block text-right text-xs font-normal text-ink/35">≈ ₩${total.toLocaleString('ko-KR')}</span>`;
+      totalEl.textContent = usd(total);
 
       if (items.length === 0) {
         btn.disabled = true;
@@ -592,6 +591,26 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
       statusEl.style.color = ok ? 'var(--color-accent)' : 'var(--color-danger)';
     };
 
+    // ── 버튼 게이팅 ────────────────────────────────────
+    // 필수 입력·필수 동의가 모두 충족될 때만 결제 버튼을 연다.
+    // (기존엔 항상 활성 → 미입력 상태로 눌러 실패 원인을 알기 어려웠다)
+    let gateBusy = false;
+    const gateOk = () => {
+      if (!quoteId && items.length === 0) return false;
+      const els = Array.from(form.elements) as HTMLElement[];
+      for (const el of els) {
+        const f = el as HTMLInputElement;
+        if (!f.name || f.disabled || f.type === 'hidden') continue;
+        if (f.name === 'vanam_hp_email') continue;
+        if (f.required && !f.checkValidity()) return false;
+      }
+      return true;
+    };
+    const syncGate = () => { if (!gateBusy) btn.disabled = !gateOk(); };
+    form.addEventListener('input', syncGate);
+    form.addEventListener('change', syncGate);
+    syncGate();
+
     // ── 제출 ───────────────────────────────────────────
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -640,6 +659,7 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
       if (quoteId) payload.inquiryId = quoteId;
       else payload.items = items;
 
+      gateBusy = true;
       btn.disabled = true;
       label.textContent = M.labelSending!;
       setStatus('', true);
@@ -658,9 +678,22 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
         location.href = `${base}/order/done?id=${encodeURIComponent(j.orderId)}`;
       } catch (err) {
         console.error(err);
+        // 원인을 감추면 어느 칸이 문제인지 알 수 없다 — 서버 코드별 안내로 바꾼다
+        const code = String((err as Error)?.message ?? '');
+        const MAP: Record<string, string> = {
+          missing_buyer: '주문자 이름과 이메일을 확인해 주세요 · Check buyer name and email.',
+          invalid_email: '이메일 형식이 올바르지 않습니다 · Invalid email format.',
+          need_privacy: '개인정보 수집·이용 동의가 필요합니다 · Privacy consent required.',
+          need_terms: '주문 제작품 청약철회 제한 고지 동의가 필요합니다 · Terms consent required.',
+          missing_ship: '배송지 정보를 모두 입력해 주세요 · Complete the shipping address.',
+          bad_items: '장바구니 상품을 다시 확인해 주세요 · Check the cart items.',
+          captcha_failed: '자동입력 방지 확인에 실패했습니다. 잠시 후 다시 시도해 주세요 · Captcha failed, please retry.',
+        };
+        if (MAP[code]) { setStatus(MAP[code], false); btn.disabled = false; label.textContent = M.labelSend!; window.turnstile?.reset(); return; }
         // 토큰은 1회용 — 실패 시 리셋해 재시도를 준비한다. (성공 시엔 페이지가 이동하므로 불필요)
         window.turnstile?.reset();
         setStatus(M.msgFail!, false);
+        gateBusy = false;
         btn.disabled = false;
         label.textContent = M.labelSend!;
       }

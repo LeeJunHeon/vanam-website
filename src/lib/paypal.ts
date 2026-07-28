@@ -29,6 +29,9 @@ export function expectedUsdStr(kind: 'ord' | 'inq', row: Record<string, unknown>
     if (String(row.quote_currency ?? 'KRW') !== 'USD') return null;
     return amt.toFixed(2);
   }
+  // 주문 시점에 확정된 USD 가 있으면 그것이 기준(환율 변동과 무관하게 표시액=청구액)
+  const locked = Number(row.amount_usd ?? 0);
+  if (locked > 0) return locked.toFixed(2);
   const amount = Number(row.amount ?? 0);
   if (!(amount > 0)) return null;
   const usd = String(row.currency ?? 'KRW') === 'USD' ? amount : amount / (company.usdRate || 1500);

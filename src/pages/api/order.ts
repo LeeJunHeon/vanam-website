@@ -10,6 +10,7 @@ import { db, newId, nowIso } from '../../lib/db';
 import { isKnownCountry } from '../../lib/countries';
 import { rateLimit, tooMany } from '../../lib/rate-limit';
 import { verifyTurnstile } from '../../lib/turnstile';
+import company from '../../data/company.json';
 
 export const prerender = false;
 
@@ -221,9 +222,9 @@ export const POST: APIRoute = async ({ request }) => {
             needs_shipping, ship_name, ship_phone, ship_country, ship_zip,
             ship_addr1, ship_addr2, ship_city, ship_state, ship_memo, ship_courier_acct,
             tax_invoice, tax_biz_no, tax_biz_name, tax_ceo, tax_email,
-            desired_date, order_note,
+            desired_date, order_note, amount_usd,
             inquiry_id, agreed_terms, locale, created_at)
-         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       )
       .bind(
         orderId, 'pending', amount, 'KRW',
@@ -235,6 +236,9 @@ export const POST: APIRoute = async ({ request }) => {
         taxInvoice ? 1 : 0, taxInvoice ? taxBizNo : null, taxInvoice ? taxBizName : null,
         taxInvoice ? (taxCeo || null) : null, taxInvoice ? taxEmail : null,
         desiredDate || null, orderNote || null,
+        // 주문 시점 환율로 USD 를 확정 저장한다. 이후 환율이 바뀌어도
+        // 고객에게 보인 금액과 실제 청구액이 어긋나지 않는다(결제 대조의 기준값).
+        Math.round((amount / (company.usdRate || 1500)) * 100) / 100,
         inquiryId || null, 1, locale, created,
       )
       .run();

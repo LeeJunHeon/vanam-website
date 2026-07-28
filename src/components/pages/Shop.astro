@@ -47,7 +47,6 @@ const CATS = [
 
 const name = (p) => (isKo ? p.data.name : (p.data.name_en ?? p.data.name));
 const summary = (p) => (isKo ? p.data.summary : (p.data.summary_en ?? p.data.summary));
-const won = (n: number) => new Intl.NumberFormat('ko-KR').format(n);
 
 // ── Technology 에서 옮겨온 섹션들(주문 절차·분석·장비) — 문구는 site.json tech.* 그대로 사용
 const tech = site.technology;
@@ -169,7 +168,7 @@ const waferFromLabel = waferKrws.length
                     {p.data.category === 'wafer' && waferFromLabel ? (
                       <p class="text-lg font-bold text-ink">{waferFromLabel}</p>
                     ) : p.data.pricingType === 'fixed' && p.data.price ? (
-                      <p class="text-xl font-bold text-ink">₩{won(p.data.price)}<span class="ml-1.5 text-xs font-normal text-ink/40">{s.vatIncluded}</span></p>
+                      <p class="text-xl font-bold text-ink">{formatUsd(p.data.price, usdRate)}<span class="ml-1.5 text-xs font-normal text-ink/40">USD</span></p>
                     ) : (
                       <p class="text-base font-semibold text-accent">{s.priceOnRequest}</p>
                     )}
