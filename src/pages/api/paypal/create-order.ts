@@ -34,7 +34,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
   const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
   const isOrd = /^ORD-\d{8}-[A-Z0-9]{4}$/.test(ref);
   const isInq = /^INQ-\d{8}-[A-Z0-9]{4}$/.test(ref);
-  if ((!isOrd && !isInq) || !email) return json({ ok: false, error: 'bad_request' }, 400);
+  // email 은 선택 항목이다. 주문완료 화면은 주문번호만으로 열리므로 이메일까지 DOM 에 실으면
+  // 주문번호를 아는 사람에게 구매자 이메일이 그대로 노출된다. 보내온 경우에만 대조한다.
+  if (!isOrd && !isInq) return json({ ok: false, error: 'bad_request' }, 400);
 
   try {
     let valueUsd = '';
@@ -42,7 +44,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     if (isInq) {
       const q = await d.prepare(`SELECT * FROM inquiries WHERE id = ?`).bind(ref).first<Record<string, unknown>>();
-      if (!q || String(q.email ?? '').toLowerCase() !== email) return json({ ok: false, error: 'not_found' }, 404);
+      if (!q || (email && String(q.email ?? '').toLowerCase() !== email)) return json({ ok: false, error: 'not_found' }, 404);
       if (q.paid_at) return json({ ok: false, error: 'already_paid' }, 409);
       const st = String(q.status ?? '');
       const exp = expectedUsdStr('inq', q);
@@ -53,7 +55,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       description = `VanaM quote ${ref}`;
     } else {
       const o = await d.prepare(`SELECT * FROM orders WHERE id = ?`).bind(ref).first<Record<string, unknown>>();
-      if (!o || String(o.buyer_email ?? '').toLowerCase() !== email) return json({ ok: false, error: 'not_found' }, 404);
+      if (!o || (email && String(o.buyer_email ?? '').toLowerCase() !== email)) return json({ ok: false, error: 'not_found' }, 404);
       if (o.paid_at) return json({ ok: false, error: 'already_paid' }, 409);
       if (String(o.status ?? '') !== 'pending') return json({ ok: false, error: 'not_payable' }, 409);
       const exp = expectedUsdStr('ord', o);

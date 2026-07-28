@@ -125,7 +125,7 @@ const t = isKo
             <div class="mt-8 rounded-lg border border-accent/25 bg-accent/[0.05] p-5">
               <p class="text-sm font-semibold text-ink/80">{t.payTitle}</p>
               <p class="mt-1 text-sm text-ink/55">{t.amountLabel}: ${usdValue.toFixed(2)} USD</p>
-              <div id="pp-done-btn" class="mt-4" data-ref={order.id} data-email={order.buyer_email} data-client={ppClient}
+              <div id="pp-done-btn" class="mt-4" data-ref={order.id} data-client={ppClient}
                 data-m-create={t.mCreate} data-m-held={t.mHeld} data-m-error={t.mError} data-m-sdk={t.mSdk} data-m-paid={t.mPaid} data-m-ok={t.paidShort} data-m-approved={t.mApproved}></div>
               <p class="mt-3 text-[11px] leading-relaxed text-ink/45">{t.payNote}</p>
               <p id="pp-done-err" class="mt-2 hidden text-sm font-semibold text-danger"></p>
@@ -170,28 +170,33 @@ const t = isKo
             var showErr = function (m) { if (perr) { perr.textContent = m; perr.classList.remove('hidden'); } };
             // 재결제 시 이중 청구가 날 수 있는 상태에서는 결제 수단 자체를 닫는다.
             var disablePay = function () { host.style.pointerEvents = 'none'; host.style.opacity = '0.45'; };
+            // 구체적인 안내를 이미 표시했는데 SDK 의 onError 가 'Payment error.' 로 덮어쓰면
+            // 사용자는 다시 결제를 시도하게 된다. 그 덮어쓰기를 막는 플래그.
+            var handled = false;
+            var showSpecific = function (m) { handled = true; showErr(m); };
             var s = document.createElement('script');
             s.src = 'https://www.paypal.com/sdk/js?client-id=' + encodeURIComponent(host.dataset.client) + '&currency=USD&intent=capture';
             s.onload = function () {
               window.paypal.Buttons({
                 style: { layout: 'horizontal', height: 40, tagline: false },
                 createOrder: function () {
+                  handled = false;
                   return fetch('/api/paypal/create-order', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ ref: host.dataset.ref, email: host.dataset.email }),
+                    body: JSON.stringify({ ref: host.dataset.ref }),
                   }).then(function (r) { return r.json(); }).catch(function () {
-                    showErr(host.dataset.mCreate);          // 조용한 실패 금지
+                    showSpecific(host.dataset.mCreate);     // 조용한 실패 금지
                     throw new Error('create_failed');
                   }).then(function (j) {
                     if (!j.ok) {
                       // 창을 닫았다 복원한 뒤 다시 누르는 경우 — 이미 결제된 주문이면 재결제가 아니라 새로고침이 맞다
                       if (j.error === 'already_paid') {
                         // 자동 새로고침 금지 — 화면의 주문번호를 아직 적어두지 못한 사용자가 있을 수 있다.
-                        showErr(host.dataset.mPaid);
+                        showSpecific(host.dataset.mPaid);
                         disablePay();
                         throw new Error('already_paid');
                       }
-                      showErr(host.dataset.mCreate);
+                      showSpecific(host.dataset.mCreate);
                       throw new Error(j.error || 'create_failed');
                     }
                     return j.id;
@@ -206,7 +211,7 @@ const t = isKo
                       // verify_failed/not_found = PayPal 결제는 성사됐으나 서버 대조에 실패한 상태.
                       // 여기서 '실패'로만 안내하면 고객이 재결제해 이중 청구가 난다.
                       var held = j.error === 'verify_failed' || j.error === 'not_found';
-                      showErr(held ? host.dataset.mHeld : (j.restart ? host.dataset.mDeclined || host.dataset.mError : host.dataset.mError));
+                      showSpecific(held ? host.dataset.mHeld : (j.restart ? host.dataset.mDeclined || host.dataset.mError : host.dataset.mError));
                       if (held) disablePay();
                       throw new Error(j.error || 'capture_failed');
                     }
@@ -218,13 +223,13 @@ const t = isKo
                     // 웹훅이 곧 확정하므로 결제 수단을 닫고 상태 확인을 안내한다.
                     var m = String((err && err.message) || '');
                     if (m !== 'capture_failed' && m !== 'already_paid') {
-                      showErr(host.dataset.mApproved);
+                      showSpecific(host.dataset.mApproved);
                       disablePay();
                     }
                     throw err;
                   });
                 },
-                onError: function (e) { console.error(e); showErr(host.dataset.mError); },
+                onError: function (e) { console.error(e); if (!handled) showErr(host.dataset.mError); },
               }).render(host);
             };
             s.onerror = function () { showErr(host.dataset.mSdk); };

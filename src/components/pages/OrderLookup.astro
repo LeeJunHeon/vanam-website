@@ -222,6 +222,8 @@ const inputClass =
           const showErr = (m: string) => { if (perr) { perr.textContent = m; perr.classList.remove('hidden'); } };
           // 재결제 시 이중 청구가 날 수 있는 상태에서는 결제 수단을 닫는다.
           const killPay = () => { if (btnEl) { btnEl.style.pointerEvents = 'none'; btnEl.style.opacity = '0.45'; } };
+          let handled = false;                       // 구체 안내를 SDK onError 가 덮어쓰지 못하게
+          const showSpecific = (m: string) => { handled = true; showErr(m); };
           try {
             const w = window as unknown as Record<string, any>;
             if (!w.__ppCfg) w.__ppCfg = await (await fetch('/api/paypal/config')).json();
@@ -255,11 +257,11 @@ const inputClass =
                     // 창을 닫았다 복원한 뒤 재시도한 경우 — 이미 결제됐다면 재결제가 아니라 새로고침이 맞다
                     if (j2.error === 'already_paid') {
                       // 자동 새로고침 금지 — 조회 결과와 주문번호가 화면에서 사라지면 안 된다.
-                      showErr(P.mPaid);
+                      showSpecific(P.mPaid);
                       killPay();
                       throw new Error('already_paid');
                     }
-                    showErr(P.mCreate);
+                    showSpecific(P.mCreate);
                     throw new Error(j2.error || 'create_failed');
                   }
                 return j2.id;
@@ -273,13 +275,13 @@ const inputClass =
                 if (!r2.ok || !j2.ok) {
                   // verify_failed/not_found = 결제는 성사·자동 확정 불가 → 재결제 금지 안내(이중 청구 방지)
                   const held = j2.error === 'verify_failed' || j2.error === 'not_found';
-                  showErr(held ? P.mHeld : (j2.restart ? P.mDeclined : P.mCapture));
+                  showSpecific(held ? P.mHeld : (j2.restart ? P.mDeclined : P.mCapture));
                   if (held) killPay();
                   throw new Error(j2.error || 'capture_failed');
                 }
                 wrap.innerHTML = `<p class="rounded-lg border border-ok/25 bg-ok/10 p-3 text-center text-sm font-semibold text-ok">✅ ${P.paidDone} — $${Number(j2.paidUsd).toFixed(2)} USD</p>`;
               },
-              onError: (e2: unknown) => { console.error(e2); showErr(P.mError); },
+              onError: (e2: unknown) => { console.error(e2); if (!handled) showErr(P.mError); },
             }).render(btnEl);
           } catch (e2) {
             console.error(e2);
