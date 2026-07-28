@@ -21,6 +21,7 @@ const description = home.metaDescription;
     <link rel="preload" as="image" href="/media/hero-poster.webp" fetchpriority="high" />
     {/* 네이티브 비디오 파이프라인(컴포지터 직결) — 부드러움은 브라우저가 보증.
         확대(scale)를 걸지 않는다: 5% 확대는 좌우를 2.5%씩 잘라 우상단 로고 워터마크를 먹는다.
+        소스는 레터박스를 전 구간 전수 스캔해 안전 크롭(y=88·높이 904)한 것이라 상단 검은 띠가 없고,
         object-cover + 상단 기준 정렬이라 검은 여백 없이 상단 로고가 항상 온전히 보인다. */}
     <video id="vn-vid" class="absolute inset-0 h-full w-full object-cover [object-position:center_top]" autoplay muted loop playsinline preload="auto" poster="/media/hero-poster.webp" aria-hidden="true"></video>
     <div class="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/65 via-black/25 to-transparent" aria-hidden="true"></div>
@@ -124,10 +125,10 @@ const description = home.metaDescription;
   @media (prefers-reduced-motion: reduce) {
     .vn-glow-a, .vn-glow-b, .vn-bounce { animation: none; }
   }
-  /* 히어로 높이를 영상 비율(1920×916 = 2.096:1) 이내로 제한한다.
+  /* 히어로 높이를 영상 비율(1920×904 = 2.1239:1) 이내로 제한한다.
      컨테이너가 영상보다 세로로 길어지면 object-cover 가 좌우를 잘라 우상단 로고를 먹으므로,
-     높이 상한을 100vw/2.096 (=47.71vw) 으로 둔다. cover 유지라 검은 여백은 생기지 않는다. */
-  .vn-vhero { height: min(100svh, max(560px, 47.71vw)); min-height: 560px; }
+     높이 상한을 100vw/2.1239 (=47.08vw) 으로 둔다. cover 유지라 검은 여백은 생기지 않는다. */
+  .vn-vhero { height: min(100svh, max(560px, 47.08vw)); min-height: 560px; }
   .vn-copy-in { animation: vnCopyIn .9s cubic-bezier(.2,.7,.2,1) .12s backwards; }
   @keyframes vnCopyIn { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
   @media (prefers-reduced-motion: reduce) { .vn-copy-in { animation: none; } }
