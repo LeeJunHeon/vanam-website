@@ -5,6 +5,7 @@ import type { APIRoute } from 'astro';
 import { db } from '../../../lib/db';
 import { rateLimit, tooMany } from '../../../lib/rate-limit';
 import { paypalCfg, ppCreateOrder, expectedUsdStr } from '../../../lib/paypal';
+import { getRate, pickWaitUntil } from '../../../lib/fx';
 
 export const prerender = false;
 
@@ -39,7 +40,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
   if (!isOrd && !isInq) return json({ ok: false, error: 'bad_request' }, 400);
 
   try {
-    let valueUsd = '';
+    const fxRate = (await getRate(d, pickWaitUntil(locals))).rate;
+  let valueUsd = '';
     let description = '';
 
     if (isInq) {
@@ -47,7 +49,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       if (!q || (email && String(q.email ?? '').toLowerCase() !== email)) return json({ ok: false, error: 'not_found' }, 404);
       if (q.paid_at) return json({ ok: false, error: 'already_paid' }, 409);
       const st = String(q.status ?? '');
-      const exp = expectedUsdStr('inq', q);
+      const exp = expectedUsdStr('inq', q, fxRate);
       if (!exp || !['quoted', 'replied'].includes(st)) {
         return json({ ok: false, error: 'not_payable' }, 409);
       }
@@ -58,7 +60,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       if (!o || (email && String(o.buyer_email ?? '').toLowerCase() !== email)) return json({ ok: false, error: 'not_found' }, 404);
       if (o.paid_at) return json({ ok: false, error: 'already_paid' }, 409);
       if (String(o.status ?? '') !== 'pending') return json({ ok: false, error: 'not_payable' }, 409);
-      const exp = expectedUsdStr('ord', o);
+      const exp = expectedUsdStr('ord', o, fxRate);
       if (!exp) return json({ ok: false, error: 'not_payable' }, 409);
       valueUsd = exp;
       description = `VanaM order ${ref}`;

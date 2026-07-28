@@ -6,6 +6,7 @@
 // 두 경로가 각자 검증을 구현하면 한쪽이 느슨해지는 순간 방어가 뚫린다.
 // 그래서 "검증 + DB 반영 + 알림"을 이 파일 하나로 모으고 양쪽이 호출만 한다.
 import { notifyChat, expectedUsdStr, toCents } from './paypal';
+import { readRate } from './fx';
 
 type Row = Record<string, unknown>;
 type DBLike = {
@@ -57,7 +58,9 @@ export async function settlePayment(
     bad.push(`order_id(db=${savedPp || 'none'} req=${args.ppOrderId})`);
   }
   if (args.paidCur !== 'USD') bad.push(`currency=${args.paidCur || 'none'}`);
-  const exp = expectedUsdStr(inq ? 'inq' : 'ord', row);
+  // 대조 기준 환율은 저장된 값을 그대로 읽는다(여기서 갱신하지 않는다 — 결제 도중 기준이 바뀌면 안 된다).
+  const fx = await readRate(d as unknown as import('./db').D1);
+  const exp = expectedUsdStr(inq ? 'inq' : 'ord', row, fx.rate);
   if (!exp) bad.push('amount_unavailable');
   else if (Math.abs(toCents(exp) - toCents(args.paidUsd)) > 1) {
     bad.push(`amount(exp=${exp} paid=${args.paidUsd})`);

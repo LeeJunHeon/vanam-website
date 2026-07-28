@@ -21,7 +21,11 @@ const E = (k: string, extra?: Record<string, unknown>): string => {
 export const toCents = (v: string | number) => Math.round(Number(v) * 100);
 
 /** DB 행에서 청구할 USD 금액을 서버가 단독 계산. 결제 불가면 null. */
-export function expectedUsdStr(kind: 'ord' | 'inq', row: Record<string, unknown>): string | null {
+export function expectedUsdStr(
+  kind: 'ord' | 'inq',
+  row: Record<string, unknown>,
+  rate?: number,
+): string | null {
   if (kind === 'inq') {
     // 견적: 관리자가 USD 로 확정한 금액만 결제 대상
     const amt = Number(row.quoted_amount ?? 0);
@@ -34,7 +38,9 @@ export function expectedUsdStr(kind: 'ord' | 'inq', row: Record<string, unknown>
   if (locked > 0) return locked.toFixed(2);
   const amount = Number(row.amount ?? 0);
   if (!(amount > 0)) return null;
-  const usd = String(row.currency ?? 'KRW') === 'USD' ? amount : amount / (company.usdRate || 1500);
+  // 환율은 호출부가 라이브 값을 넘긴다. 없으면 설정값으로 폴백(주문 시점 확정값이 있으면 위에서 이미 반환됨).
+  const r = Number(rate) > 0 ? Number(rate) : company.usdRate || 1500;
+  const usd = String(row.currency ?? 'KRW') === 'USD' ? amount : amount / r;
   if (!isFinite(usd) || usd <= 0) return null;
   return usd.toFixed(2);
 }

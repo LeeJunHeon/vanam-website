@@ -10,7 +10,7 @@ import { db, newId, nowIso } from '../../lib/db';
 import { isKnownCountry } from '../../lib/countries';
 import { rateLimit, tooMany } from '../../lib/rate-limit';
 import { verifyTurnstile } from '../../lib/turnstile';
-import company from '../../data/company.json';
+import { getRate, pickWaitUntil } from '../../lib/fx';
 
 export const prerender = false;
 
@@ -31,7 +31,7 @@ function validBizNo(raw: string): boolean {
   return (10 - (sum % 10)) % 10 === Number(n[9]);
 }
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
   let body: Record<string, unknown>;
   try {
     body = (await request.json()) as Record<string, unknown>;
@@ -217,6 +217,10 @@ export const POST: APIRoute = async ({ request }) => {
   }
 
   try {
+    // 주문 시점의 라이브 환율로 USD 를 확정한다. 이후 환율이 변해도 청구액은 이 값으로 고정된다.
+    const fx = await getRate(d, pickWaitUntil(locals));
+    const amountUsd = Math.round((amount / fx.rate) * 100) / 100;
+
     await d
       .prepare(
         `INSERT INTO orders
@@ -241,7 +245,7 @@ export const POST: APIRoute = async ({ request }) => {
         desiredDate || null, orderNote || null,
         // 주문 시점 환율로 USD 를 확정 저장한다. 이후 환율이 바뀌어도
         // 고객에게 보인 금액과 실제 청구액이 어긋나지 않는다(결제 대조의 기준값).
-        Math.round((amount / (company.usdRate || 1500)) * 100) / 100,
+        amountUsd,
         inquiryId || null, 1, locale, created,
       )
       .run();

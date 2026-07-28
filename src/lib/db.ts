@@ -33,6 +33,13 @@ export function getDb(): D1 | null {
 let schemaReady: Promise<void> | null = null;
 
 const SCHEMA = [
+  // 사이트 운영값 저장소(현재는 USD/KRW 환율 하나). key 단일 PK 라 UPSERT 로 안전하게 갱신된다.
+  `CREATE TABLE IF NOT EXISTS settings (
+    key TEXT PRIMARY KEY,
+    value REAL NOT NULL,
+    updated_at TEXT NOT NULL,
+    source TEXT
+  )`,
   `CREATE TABLE IF NOT EXISTS inquiries (
     id TEXT PRIMARY KEY, type TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'new',
     name TEXT NOT NULL, email TEXT NOT NULL, phone TEXT, company TEXT, message TEXT,
