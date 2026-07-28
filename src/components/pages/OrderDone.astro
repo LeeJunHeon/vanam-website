@@ -15,13 +15,13 @@ const isKo = locale === 'ko';
 const lhref = (p: string) => getRelativeLocaleUrl(locale, p);
 
 const orderId = Astro.url.searchParams.get('id') ?? '';
-let order: { id: string; amount: number; currency?: string; status: string; buyer_email: string; tax_invoice: number; paid_at?: string | null } | null = null;
+let order: { id: string; amount: number; currency?: string; status: string; buyer_email: string; tax_invoice: number; paid_at?: string | null; amount_usd?: number | null; paid_usd?: number | null } | null = null;
 
 if (/^ORD-\d{8}-[A-Z0-9]{4}$/.test(orderId)) {
   const d = await db();
   if (d) {
     order = await d
-      .prepare(`SELECT id, amount, currency, status, buyer_email, tax_invoice, paid_at FROM orders WHERE id = ?`)
+      .prepare(`SELECT id, amount, currency, status, buyer_email, tax_invoice, paid_at, amount_usd, paid_usd FROM orders WHERE id = ?`)
       .bind(orderId)
       .first();
   }
@@ -31,7 +31,17 @@ const pp = paypalCfg();
 const paypalOn = pp.enabled;
 const ppClient = pp.clientId;
 const usdRate = company.usdRate || 1500;
-const usdValue = order ? (Number(order.amount_usd) > 0 ? Number(order.amount_usd) : order.currency === 'USD' ? order.amount : order.amount / usdRate) : 0;
+// 표시 금액 우선순위: 실제 청구액(paid_usd) → 주문 시점 확정액(amount_usd) → 환산 폴백.
+// 이 순서를 지켜야 "화면에 보인 금액 ≠ 실제 청구액" 이 생기지 않는다.
+const usdValue = order
+  ? Number(order.paid_usd) > 0
+    ? Number(order.paid_usd)
+    : Number(order.amount_usd) > 0
+      ? Number(order.amount_usd)
+      : order.currency === 'USD'
+        ? order.amount
+        : order.amount / usdRate
+  : 0;
 
 const t = isKo
   ? {

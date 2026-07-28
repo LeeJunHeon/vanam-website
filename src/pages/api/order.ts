@@ -281,8 +281,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
   const text = [
     '🛒 *새 주문 (결제 대기)*',
     `주문번호: ${orderId}`,
-    `금액: ₩${amount.toLocaleString('ko-KR')}`,
-    ...lines.map((l) => `· ${l.name} × ${l.qty} = ₩${l.subtotal.toLocaleString('ko-KR')}`),
+    `금액: ₩${amount.toLocaleString('ko-KR')} (≈ $${amountUsd.toFixed(2)} USD · 환율 ${Math.round(fx.rate).toLocaleString('ko-KR')})`,
+    ...lines.map((l) => `· ${l.name} × ${l.qty} = ₩${l.subtotal.toLocaleString('ko-KR')} (≈ $${(l.subtotal / fx.rate).toFixed(2)})`),
     `주문자: ${buyerName}${buyerCompany ? ` (${buyerCompany})` : ''} · ${buyerEmail}${buyerPhone ? ` · ${buyerPhone}` : ''}`,
     desiredDate ? `희망 완료: ${desiredDate}` : '',
     orderNote ? `요청사항: ${orderNote}` : '',
