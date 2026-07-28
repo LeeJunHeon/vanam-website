@@ -56,7 +56,8 @@ export const paypalCfg = (extra?: Record<string, unknown>) => {
   const secret = E('PAYPAL_SECRET', extra);
   const mode = E('PAYPAL_ENV', extra) === 'live' ? 'live' : 'sandbox';
   const base = mode === 'live' ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com';
-  return { clientId, secret, mode, base, enabled: Boolean(clientId && secret) };
+  const webhookId = E('PAYPAL_WEBHOOK_ID', extra);
+  return { clientId, secret, mode, base, webhookId, enabled: Boolean(clientId && secret) };
 };
 
 async function ppToken(): Promise<string> {
@@ -106,6 +107,49 @@ export async function ppCapture(orderId: string) {
   });
   const j = (await r.json()) as Record<string, unknown>;
   return { httpOk: r.ok, body: j };
+}
+
+/**
+ * 웹훅 서명 검증.
+ * 웹훅 주소는 인터넷에 열려 있어 누구나 "결제 완료" 요청을 위조할 수 있다.
+ * PayPal 이 헤더에 담아 보낸 서명을 PayPal 검증 API 에 되물어 진위를 확인한다.
+ * SUCCESS 가 아니면 이벤트를 통째로 버린다 — 이 검증이 없으면 무료로 주문을 확정시킬 수 있다.
+ */
+export async function ppVerifyWebhook(
+  headers: Headers,
+  event: unknown,
+): Promise<{ verified: boolean; reason: string }> {
+  const { base, webhookId } = paypalCfg();
+  if (!webhookId) return { verified: false, reason: 'no_webhook_id' };
+
+  const h = (k: string) => headers.get(k) ?? '';
+  const payload = {
+    auth_algo: h('paypal-auth-algo'),
+    cert_url: h('paypal-cert-url'),
+    transmission_id: h('paypal-transmission-id'),
+    transmission_sig: h('paypal-transmission-sig'),
+    transmission_time: h('paypal-transmission-time'),
+    webhook_id: webhookId,
+    webhook_event: event,
+  };
+  if (!payload.transmission_id || !payload.transmission_sig) {
+    return { verified: false, reason: 'missing_headers' };
+  }
+
+  try {
+    const token = await ppToken();
+    const r = await fetch(`${base}/v1/notifications/verify-webhook-signature`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const j = (await r.json()) as { verification_status?: string };
+    if (!r.ok) return { verified: false, reason: `http_${r.status}` };
+    return { verified: j.verification_status === 'SUCCESS', reason: j.verification_status ?? 'unknown' };
+  } catch (e) {
+    console.error('[paypal] 웹훅 검증 오류:', e);
+    return { verified: false, reason: 'exception' };
+  }
 }
 
 export async function notifyChat(text: string) {
