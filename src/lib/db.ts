@@ -77,6 +77,15 @@ const MIGRATIONS = [
   `ALTER TABLE orders ADD COLUMN tracking_no TEXT`,
   `ALTER TABLE orders ADD COLUMN tracking_courier TEXT`,
   `ALTER TABLE orders ADD COLUMN admin_memo TEXT`,
+  // 결제·주문 컬럼: 코드가 쓰고 있으나 CREATE TABLE 에 없어 기존 DB 에서 누락되던 것들
+  `ALTER TABLE orders ADD COLUMN desired_date TEXT`,
+  `ALTER TABLE orders ADD COLUMN order_note TEXT`,
+  `ALTER TABLE orders ADD COLUMN paid_usd REAL`,
+  `ALTER TABLE orders ADD COLUMN paypal_order_id TEXT`,
+  `ALTER TABLE inquiries ADD COLUMN quote_currency TEXT`,
+  `ALTER TABLE inquiries ADD COLUMN paid_at TEXT`,
+  `ALTER TABLE inquiries ADD COLUMN paid_usd REAL`,
+  `ALTER TABLE inquiries ADD COLUMN paypal_order_id TEXT`,
 ];
 
 export async function ensureSchema(db: D1): Promise<void> {

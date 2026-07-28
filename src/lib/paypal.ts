@@ -3,6 +3,7 @@
 // - KRW 미지원 → 전부 USD. 한국 판매자↔한국 구매자 거래는 PayPal 정책상 차단(해외 고객 전용).
 // - 키는 Cloudflare 환경변수: PAYPAL_CLIENT_ID / PAYPAL_SECRET / PAYPAL_ENV(sandbox|live)
 import { env as cfEnv } from 'cloudflare:workers';
+import company from '../data/company.json';
 
 // env 이중 접근: cloudflare:workers 의 env + (있다면) 어댑터가 주는 locals.runtime.env
 const E = (k: string, extra?: Record<string, unknown>): string => {
@@ -13,6 +14,27 @@ const E = (k: string, extra?: Record<string, unknown>): string => {
     '';
   return typeof raw === 'string' ? raw.trim().replace(/^["']|["']$/g, '') : '';
 };
+
+// ── 결제 금액 단일 진실원 ──
+// 주문 생성(create-order)과 캡처 검증(capture)이 "같은 함수"로 금액을 계산해야
+// 두 시점의 기준이 어긋나지 않는다. 문자열(소수 2자리)로 돌려주고 비교는 센트 정수로 한다.
+export const toCents = (v: string | number) => Math.round(Number(v) * 100);
+
+/** DB 행에서 청구할 USD 금액을 서버가 단독 계산. 결제 불가면 null. */
+export function expectedUsdStr(kind: 'ord' | 'inq', row: Record<string, unknown>): string | null {
+  if (kind === 'inq') {
+    // 견적: 관리자가 USD 로 확정한 금액만 결제 대상
+    const amt = Number(row.quoted_amount ?? 0);
+    if (!(amt > 0)) return null;
+    if (String(row.quote_currency ?? 'KRW') !== 'USD') return null;
+    return amt.toFixed(2);
+  }
+  const amount = Number(row.amount ?? 0);
+  if (!(amount > 0)) return null;
+  const usd = String(row.currency ?? 'KRW') === 'USD' ? amount : amount / (company.usdRate || 1500);
+  if (!isFinite(usd) || usd <= 0) return null;
+  return usd.toFixed(2);
+}
 
 // 진단(값 미노출 — 키 이름만): 어느 통로에 PAYPAL_* 가 보이는지
 export const paypalDiag = (extra?: Record<string, unknown>) => {

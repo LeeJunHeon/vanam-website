@@ -1,10 +1,10 @@
 // PayPal 주문 생성 — 금액은 서버가 D1 에서 재조회/재계산한다 (클라이언트 금액 무시).
-// INQ-: 관리자가 USD 로 확정한 견적만 / ORD-: KRW 합계를 company.usdRate 로 환산.
+// INQ-: 관리자가 USD 로 확정한 견적만 / ORD-: KRW 합계를 환산.
+// 금액 계산은 lib/paypal 의 expectedUsdStr 하나만 사용한다(캡처 검증과 동일 함수 = 기준 불일치 원천 차단).
 import type { APIRoute } from 'astro';
 import { db } from '../../../lib/db';
 import { rateLimit, tooMany } from '../../../lib/rate-limit';
-import { paypalCfg, ppCreateOrder } from '../../../lib/paypal';
-import company from '../../../data/company.json';
+import { paypalCfg, ppCreateOrder, expectedUsdStr } from '../../../lib/paypal';
 
 export const prerender = false;
 
@@ -44,23 +44,21 @@ export const POST: APIRoute = async ({ request, locals }) => {
       const q = await d.prepare(`SELECT * FROM inquiries WHERE id = ?`).bind(ref).first<Record<string, unknown>>();
       if (!q || String(q.email ?? '').toLowerCase() !== email) return json({ ok: false, error: 'not_found' }, 404);
       if (q.paid_at) return json({ ok: false, error: 'already_paid' }, 409);
-      const amt = Number(q.quoted_amount ?? 0);
-      const cur = String(q.quote_currency ?? 'KRW');
       const st = String(q.status ?? '');
-      if (!(amt > 0) || cur !== 'USD' || !['quoted', 'replied'].includes(st)) {
+      const exp = expectedUsdStr('inq', q);
+      if (!exp || !['quoted', 'replied'].includes(st)) {
         return json({ ok: false, error: 'not_payable' }, 409);
       }
-      valueUsd = amt.toFixed(2);
+      valueUsd = exp;
       description = `VanaM quote ${ref}`;
     } else {
       const o = await d.prepare(`SELECT * FROM orders WHERE id = ?`).bind(ref).first<Record<string, unknown>>();
       if (!o || String(o.buyer_email ?? '').toLowerCase() !== email) return json({ ok: false, error: 'not_found' }, 404);
       if (o.paid_at) return json({ ok: false, error: 'already_paid' }, 409);
       if (String(o.status ?? '') !== 'pending') return json({ ok: false, error: 'not_payable' }, 409);
-      const amount = Number(o.amount ?? 0);
-      if (!(amount > 0)) return json({ ok: false, error: 'not_payable' }, 409);
-      const usd = String(o.currency ?? 'KRW') === 'USD' ? amount : amount / (company.usdRate || 1500);
-      valueUsd = usd.toFixed(2);
+      const exp = expectedUsdStr('ord', o);
+      if (!exp) return json({ ok: false, error: 'not_payable' }, 409);
+      valueUsd = exp;
       description = `VanaM order ${ref}`;
     }
 
