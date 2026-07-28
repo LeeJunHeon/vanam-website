@@ -46,6 +46,7 @@ const t = isKo
       payTitle: 'PayPal로 바로 결제 (해외 고객 · USD)',
       payNote: '해외 고객 전용 USD 결제입니다 — 국내 결제(세금계산서·계좌이체)는 별도 안내드립니다.',
       paidDone: '✅ 결제가 완료되었습니다. 담당자가 확인 후 진행 상황을 이메일로 안내드립니다.',
+      paidShort: '결제가 완료되었습니다',
       rate: '환율',
       contact: '문의',
       home: '홈으로',
@@ -73,6 +74,7 @@ const t = isKo
       payTitle: 'Pay now with PayPal (International · USD)',
       payNote: 'USD payment for international customers. For domestic payment (tax invoice / bank transfer), we will contact you separately.',
       paidDone: '✅ Payment completed. We will follow up by email with the next steps.',
+      paidShort: 'Payment completed',
       rate: 'rate',
       contact: 'Contact',
       home: 'Home',
@@ -122,7 +124,7 @@ const t = isKo
               <p class="text-sm font-semibold text-ink/80">{t.payTitle}</p>
               <p class="mt-1 text-sm text-ink/55">{t.amountLabel}: ${usdValue.toFixed(2)} USD</p>
               <div id="pp-done-btn" class="mt-4" data-ref={order.id} data-email={order.buyer_email} data-client={ppClient}
-                data-m-create={t.mCreate} data-m-held={t.mHeld} data-m-error={t.mError} data-m-sdk={t.mSdk} data-m-paid={t.mPaid}></div>
+                data-m-create={t.mCreate} data-m-held={t.mHeld} data-m-error={t.mError} data-m-sdk={t.mSdk} data-m-paid={t.mPaid} data-m-ok={t.paidShort}></div>
               <p class="mt-3 text-[11px] leading-relaxed text-ink/45">{t.payNote}</p>
               <p id="pp-done-err" class="mt-2 hidden text-sm font-semibold text-danger"></p>
             </div>
@@ -200,7 +202,7 @@ const t = isKo
                       throw new Error(j.error || 'capture_failed');
                     }
                     var box = host.closest('div.mt-8');
-                    if (box) box.outerHTML = '<p class="mt-8 rounded-lg border border-ok/25 bg-ok/10 p-4 text-center text-sm font-semibold text-ok">✅ 결제가 완료되었습니다 · Payment completed — $' + Number(j.paidUsd).toFixed(2) + '</p>';
+                    if (box) box.outerHTML = '<p class="mt-8 rounded-lg border border-ok/25 bg-ok/10 p-4 text-center text-sm font-semibold text-ok">✅ ' + host.dataset.mOk + ' — $' + Number(j.paidUsd).toFixed(2) + '</p>';
                   });
                 },
                 onError: function (e) { console.error(e); showErr(host.dataset.mError); },
