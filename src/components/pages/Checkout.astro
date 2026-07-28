@@ -374,6 +374,9 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
                 data-sitekey="0x4AAAAAAD5eNOFVFYfnvXUA"
                 data-theme="auto"
                 data-language="auto"
+                data-refresh-expired="auto"
+                data-retry="auto"
+                data-retry-interval="3000"
               ></div>
             </div>
           </fieldset>
@@ -590,13 +593,18 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
     const setStatus = (msg: string, ok: boolean) => {
       statusEl.textContent = msg;
       statusEl.style.color = ok ? 'var(--color-accent)' : 'var(--color-danger)';
+      // 이 문구는 버튼 아래에 있어 화면 밖으로 밀리기 쉽다.
+      // 안 보이면 사용자에겐 "눌러도 아무 반응 없음"으로 보이므로 반드시 시야로 끌어온다.
+      if (msg && !ok) {
+        try { statusEl.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) {}
+      }
     };
 
     // ── 버튼 게이팅 ────────────────────────────────────
     // 필수 입력·필수 동의가 모두 충족될 때만 결제 버튼을 연다.
     // (기존엔 항상 활성 → 미입력 상태로 눌러 실패 원인을 알기 어려웠다)
     let gateBusy = false;
-    const gateOk = () => {
+    const fieldsOk = () => {
       if (!quoteId && items.length === 0) return false;
       const els = Array.from(form.elements) as HTMLElement[];
       for (const el of els) {
@@ -607,9 +615,27 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
       }
       return true;
     };
-    const syncGate = () => { if (!gateBusy) btn.disabled = !gateOk(); };
+    // Turnstile 토큰은 5분이면 만료되고, 갱신 요청이 실패하면 조용히 비워진다.
+    // 토큰이 없는 상태로 버튼을 열어두면 "눌러도 반응 없음" 으로 보이므로 게이트에 포함한다.
+    const tokenEl = () => form.querySelector('[name="cf-turnstile-response"]') as HTMLInputElement | null;
+    const hasToken = () => Boolean(tokenEl()?.value);
+    const gateOk = () => fieldsOk() && hasToken();
+
+    const syncGate = () => {
+      if (gateBusy) return;
+      const okAll = gateOk();
+      btn.disabled = !okAll;
+      // 입력은 다 됐는데 보안 확인만 안 끝난 경우 — 왜 못 누르는지 알려준다
+      if (!okAll && fieldsOk() && !hasToken()) {
+        if (statusEl.textContent !== M.msgCaptcha) setStatus(M.msgCaptcha!, false);
+      } else if (statusEl.textContent === M.msgCaptcha) {
+        statusEl.textContent = '';
+      }
+    };
     form.addEventListener('input', syncGate);
     form.addEventListener('change', syncGate);
+    // Turnstile 이 토큰을 비동기로 넣고 만료 시 지우므로 주기적으로 다시 확인한다
+    setInterval(syncGate, 1000);
     syncGate();
 
     // ── 제출 ───────────────────────────────────────────
