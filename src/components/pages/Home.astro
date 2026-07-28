@@ -8,6 +8,7 @@ const lhref = (p) => getRelativeLocaleUrl(locale, p);
 const site = siteData[locale] ?? siteData.en;
 const home = site.home;
 const pillars = home.pillars;
+const HERO_MODE = 'video';   // 'scrub' 으로 바꾸면 기존 스크럽 히어로 복귀 (자산·코드 전부 보존)
 const title = home.metaTitle;
 const description = home.metaDescription;
 ---
@@ -17,6 +18,7 @@ const description = home.metaDescription;
        풀블리드 캔버스에 핀 고정(sticky 100vh, 스테이지 280vh)하고 스크롤로 스크럽한다.
        러프(lerp) 재생헤드가 스크롤을 부드럽게 뒤쫓고, 텍스트 카피는 여정 초반에 페이드아웃,
        종점은 canvas 톤 그라디언트로 다음 섹션에 핸드오프. (애플 제품 페이지 기법) -->
+  {HERO_MODE === 'scrub' && (
   <div id="vn-stage" class="relative h-[380vh] bg-[#0b0d10]">
     <link rel="preload" as="image" href="/media/hero/f001.avif" media="(min-width: 769px)" fetchpriority="high" />
     <link rel="preload" as="image" href="/media/hero-m/f001.avif" media="(max-width: 768px)" fetchpriority="high" />
@@ -58,6 +60,36 @@ const description = home.metaDescription;
       </div>
     </div>
   </div>
+  )}
+
+  {HERO_MODE === 'video' && (
+  <section id="vn-vhero" class="relative h-[100svh] min-h-[560px] overflow-hidden bg-[#0b0d10]">
+    <link rel="preload" as="image" href="/media/hero-poster.webp" fetchpriority="high" />
+    {/* 네이티브 비디오 파이프라인(컴포지터 직결) — 부드러움은 브라우저가 보증.
+        d/m 소스는 스크립트에서 선택, 루프 이음새는 검은 페이드로 봉합, 스크롤은 카피 페이드+미세 패럴랙스만. */}
+    <video id="vn-vid" class="absolute inset-0 h-full w-full scale-105 object-cover will-change-transform" autoplay muted loop playsinline preload="auto" poster="/media/hero-poster.webp" aria-hidden="true"></video>
+    <div class="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/65 via-black/25 to-transparent" aria-hidden="true"></div>
+    <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_90%_at_50%_42%,transparent_55%,rgba(0,0,0,0.38))]" aria-hidden="true"></div>
+    <div class="pointer-events-none absolute inset-x-0 bottom-0 h-44 bg-gradient-to-b from-transparent to-canvas" aria-hidden="true"></div>
+
+    <div id="vh-copy" class="absolute inset-0 flex items-center px-6">
+      <div class="vn-copy-in mx-auto w-full max-w-6xl">
+        <p class="mb-5 font-mono text-xs tracking-[0.25em] text-accent">VANA&nbsp;MATERIALS&nbsp;LAB.</p>
+        <h1 class="text-5xl font-bold leading-[1.05] tracking-tight text-white sm:text-7xl">{home.heroTitle.line1}<br />{home.heroTitle.line2}</h1>
+        <p class="mt-6 max-w-xl text-lg leading-relaxed text-white/75">{home.heroSubtitle.line1}<br />{home.heroSubtitle.line2}</p>
+        <div class="mt-9 flex flex-wrap gap-4">
+          <a href={lhref('/technology')} class="rounded-full bg-brand px-6 py-3 text-sm font-semibold text-onbrand transition hover:brightness-110">{home.heroCtaPrimary}</a>
+          <a href={lhref('/contact')} class="rounded-full border border-white/40 px-6 py-3 text-sm font-medium text-white/90 transition hover:border-white hover:text-white">{home.heroCtaSecondary}</a>
+        </div>
+      </div>
+    </div>
+
+    <div id="vh-hint" class="vn-bounce absolute bottom-7 left-1/2 flex -translate-x-1/2 flex-col items-center gap-1">
+      <span class="font-mono text-[10px] tracking-widest text-white/60">SCROLL</span>
+      <span class="text-white/70">↓</span>
+    </div>
+  </section>
+  )}
 
   <section class="v-reveal mx-auto max-w-6xl px-6 py-20">
     <p class="mb-3 font-mono text-xs tracking-[0.16em] text-accent">01 / VISION</p>
@@ -448,6 +480,39 @@ const description = home.metaDescription;
     window.addEventListener('resize', () => { clearTimeout(rT); rT = setTimeout(() => { measure(); onScroll(); }, 150); });
     new IntersectionObserver((es) => (es[0].isIntersecting ? startLoop() : stopLoop())).observe(stage);
     startLoop();
+  })();
+</script>
+
+<script>
+  // 비디오 히어로: 소스 선택·자동재생·카피 페이드·미세 패럴랙스·탭 숨김 일시정지
+  (() => {
+    const sec = document.getElementById('vn-vhero');
+    const vid = document.getElementById('vn-vid') as HTMLVideoElement | null;
+    if (!sec || !vid) return;
+    const MOBILE = window.matchMedia('(max-width: 768px)').matches;
+    vid.src = MOBILE ? '/media/hero-loop-m.mp4' : '/media/hero-loop.mp4';
+    const rm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (rm) { vid.autoplay = false; vid.loop = false; vid.pause(); }
+    else { const pr = vid.play(); if (pr && pr.catch) pr.catch(() => {}); }
+    const copy = document.getElementById('vh-copy');
+    const hint = document.getElementById('vh-hint');
+    const onScroll = () => {
+      const y = window.scrollY;
+      const t = Math.min(1, y / (window.innerHeight * 0.55));
+      if (copy) {
+        copy.style.opacity = String(1 - t);
+        copy.style.transform = `translateY(${-30 * t}px)`;
+        copy.style.pointerEvents = t > 0.6 ? 'none' : '';
+      }
+      if (hint) hint.style.opacity = String(1 - Math.min(1, y / 120));
+      if (!rm) vid.style.transform = `scale(${1.05 + 0.05 * t}) translateY(${10 * t}px)`;
+    };
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) vid.pause();
+      else if (!rm) vid.play().catch(() => {});
+    });
   })();
 </script>
 
