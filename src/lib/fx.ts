@@ -21,6 +21,11 @@ const MAX_RATE = 5000;
 
 export type FxRate = { rate: number; updatedAt: string | null; source: string };
 
+/** 부트스트랩 갱신이 응답을 오래 붙잡지 않도록 상한을 둔다. */
+function withTimeout<T>(p: Promise<T>, ms: number): Promise<T | null> {
+  return Promise.race([p, new Promise<null>((res) => setTimeout(() => res(null), ms))]);
+}
+
 const cfgRate = () => {
   const n = Number((company as Record<string, unknown>).usdRate);
   return Number.isFinite(n) && n >= MIN_RATE && n <= MAX_RATE ? n : HARD_FALLBACK;
@@ -83,13 +88,13 @@ async function fetchRate(): Promise<{ rate: number; source: string } | null> {
  * 환율을 갱신한다. 실패하거나 값이 수상하면 **기존 값을 그대로 둔다.**
  * 반환값은 실제로 저장했는지 여부.
  */
-export async function refreshRate(d: D1 | null): Promise<boolean> {
-  if (!d) return false;
+export async function refreshRate(d: D1 | null): Promise<{ saved: boolean; reason: string; rate?: number }> {
+  if (!d) return { saved: false, reason: 'no_db' };
   const cur = await readRate(d);
   const got = await fetchRate();
   if (!got) {
     console.warn('[fx] 모든 환율 소스 실패 — 기존 값 유지:', cur.rate);
-    return false;
+    return { saved: false, reason: 'all_sources_failed' };
   }
   // 이상치 차단: 직전 값이 있을 때만 비교한다(최초 저장은 통과시킨다).
   if (cur.updatedAt) {
@@ -100,7 +105,7 @@ export async function refreshRate(d: D1 | null): Promise<boolean> {
         `⚠️ [환율 이상] ${cur.rate} → ${got.rate.toFixed(2)} (${(jump * 100).toFixed(1)}% 변동, ${got.source}) · ` +
           `적용하지 않았습니다. 관리자 화면에서 확인해 주세요.`,
       );
-      return false;
+      return { saved: false, reason: 'jump_guard', rate: got.rate };
     }
   }
   const now = new Date().toISOString();
@@ -112,10 +117,11 @@ export async function refreshRate(d: D1 | null): Promise<boolean> {
       )
       .bind(got.rate, now, got.source)
       .run();
-    return true;
+    return { saved: true, reason: got.source, rate: got.rate };
   } catch (e) {
+    // settings 테이블이 없거나 D1 오류 — 사유를 남겨야 원인을 좁힐 수 있다.
     console.error('[fx] 환율 저장 실패:', e);
-    return false;
+    return { saved: false, reason: 'db_write:' + String((e as Error)?.message ?? e).slice(0, 120) };
   }
 }
 
@@ -132,13 +138,32 @@ export async function getRate(d: D1 | null, waitUntil?: (p: Promise<unknown>) =>
     console.error('[fx] readRate 예외:', e);
     return { rate: cfgRate(), updatedAt: null, source: 'config' };
   }
-  if (!d || !waitUntil) return cur;
-  const age = cur.updatedAt ? Date.now() - Date.parse(cur.updatedAt) : Infinity;
-  if (!Number.isFinite(age) || age > STALE_MS) {
+  if (!d) return cur;
+
+  // 최초 1회(저장된 환율이 아예 없음)는 동기로 채운다.
+  // waitUntil 을 못 쓰는 환경이면 백그라운드 갱신이 영영 돌지 않아 폴백에 갇히기 때문이다.
+  // 이 경로는 부트스트랩 때 한 번만 타므로 응답 지연이 누적되지 않는다.
+  if (!cur.updatedAt) {
     try {
-      waitUntil(refreshRate(d).catch((e) => console.error('[fx] 백그라운드 갱신 실패:', e)));
+      const r = await withTimeout(refreshRate(d), 3000);
+      if (r && r.saved && r.rate) return { rate: r.rate, updatedAt: new Date().toISOString(), source: r.reason };
     } catch (e) {
-      /* waitUntil 사용 불가 환경 — 다음 요청에서 다시 시도된다 */
+      console.error('[fx] 부트스트랩 갱신 실패:', e);
+    }
+    return cur;
+  }
+
+  const age = Date.now() - Date.parse(cur.updatedAt);
+  if (!Number.isFinite(age) || age > STALE_MS) {
+    if (waitUntil) {
+      try {
+        waitUntil(refreshRate(d).catch((e) => console.error('[fx] 백그라운드 갱신 실패:', e)));
+      } catch (e) {
+        /* waitUntil 사용 불가 — 다음 요청에서 재시도 */
+      }
+    } else {
+      // waitUntil 이 없으면 응답을 막지 않도록 기다리지 않고 던져만 둔다.
+      void refreshRate(d).catch((e) => console.error('[fx] 갱신 실패:', e));
     }
   }
   return cur;
