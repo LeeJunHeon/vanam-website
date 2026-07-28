@@ -8,7 +8,6 @@ const lhref = (p) => getRelativeLocaleUrl(locale, p);
 const site = siteData[locale] ?? siteData.en;
 const home = site.home;
 const pillars = home.pillars;
-const HERO_MODE = 'video';   // 'scrub' 으로 바꾸면 기존 스크럽 히어로 복귀 (자산·코드 전부 보존)
 const title = home.metaTitle;
 const description = home.metaDescription;
 ---
@@ -18,56 +17,12 @@ const description = home.metaDescription;
        풀블리드 캔버스에 핀 고정(sticky 100vh, 스테이지 280vh)하고 스크롤로 스크럽한다.
        러프(lerp) 재생헤드가 스크롤을 부드럽게 뒤쫓고, 텍스트 카피는 여정 초반에 페이드아웃,
        종점은 canvas 톤 그라디언트로 다음 섹션에 핸드오프. (애플 제품 페이지 기법) -->
-  {HERO_MODE === 'scrub' && (
-  <div id="vn-stage" class="relative h-[380vh] bg-[#0b0d10]">
-    <link rel="preload" as="image" href="/media/hero/f001.avif" media="(min-width: 769px)" fetchpriority="high" />
-    <link rel="preload" as="image" href="/media/hero-m/f001.avif" media="(max-width: 768px)" fetchpriority="high" />
-    {/* 히어로는 헤더 "아래"에서 시작해 절대 가려지지 않는다.
-        헤더 높이를 CSS 변수로 잡아 sticky 오프셋·높이에 그대로 쓰므로,
-        스크롤 0에서 이미 고정된 상태 = 위치 이동도 없고 죽은 구간도 없다.
-        파싱 중 동기 실행이라 레이아웃 시프트 없음. */}
-    <script is:inline>
-      (() => {
-        const header = document.querySelector('header');
-        if (!header) return;
-        const apply = () => document.documentElement.style.setProperty('--vn-head', header.offsetHeight + 'px');
-        apply();
-        if ('ResizeObserver' in window) new ResizeObserver(apply).observe(header);
-        window.addEventListener('resize', apply);
-      })();
-    </script>
-    <div class="sticky w-full overflow-hidden" style="top:var(--vn-head,0px);height:calc(100dvh - var(--vn-head,0px))">
-      <canvas id="vn-scrub" class="h-full w-full transform-gpu"></canvas>
-      <div class="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/65 via-black/25 to-transparent" aria-hidden="true"></div>
-      <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_90%_at_50%_42%,transparent_55%,rgba(0,0,0,0.38))]" aria-hidden="true"></div>
-      <div class="pointer-events-none absolute inset-x-0 bottom-0 h-44 bg-gradient-to-b from-transparent to-canvas" aria-hidden="true"></div>
-
-      <div id="vn-hero-copy" class="absolute inset-0 flex items-center px-6">
-        <div class="vn-copy-in mx-auto w-full max-w-6xl">
-          <p class="mb-5 font-mono text-xs tracking-[0.25em] text-accent">VANA&nbsp;MATERIALS&nbsp;LAB.</p>
-          <h1 class="text-5xl font-bold leading-[1.05] tracking-tight text-white sm:text-7xl">{home.heroTitle.line1}<br />{home.heroTitle.line2}</h1>
-          <p class="mt-6 max-w-xl text-lg leading-relaxed text-white/75">{home.heroSubtitle.line1}<br />{home.heroSubtitle.line2}</p>
-          <div class="mt-9 flex flex-wrap gap-4">
-            <a href={lhref('/technology')} class="rounded-full bg-brand px-6 py-3 text-sm font-semibold text-onbrand transition hover:brightness-110">{home.heroCtaPrimary}</a>
-            <a href={lhref('/contact')} class="rounded-full border border-white/40 px-6 py-3 text-sm font-medium text-white/90 transition hover:border-white hover:text-white">{home.heroCtaSecondary}</a>
-          </div>
-        </div>
-      </div>
-
-      <div id="vn-scroll-hint" class="vn-bounce absolute bottom-7 left-1/2 flex -translate-x-1/2 flex-col items-center gap-1">
-        <span class="font-mono text-[10px] tracking-widest text-white/60">SCROLL</span>
-        <span class="text-white/70">↓</span>
-      </div>
-    </div>
-  </div>
-  )}
-
-  {HERO_MODE === 'video' && (
-  <section id="vn-vhero" class="relative h-[100svh] min-h-[560px] overflow-hidden bg-[#0b0d10]">
+  <section id="vn-vhero" class="vn-vhero relative overflow-hidden bg-[#0b0d10]">
     <link rel="preload" as="image" href="/media/hero-poster.webp" fetchpriority="high" />
     {/* 네이티브 비디오 파이프라인(컴포지터 직결) — 부드러움은 브라우저가 보증.
-        d/m 소스는 스크립트에서 선택, 루프 이음새는 검은 페이드로 봉합, 스크롤은 카피 페이드+미세 패럴랙스만. */}
-    <video id="vn-vid" class="absolute inset-0 h-full w-full scale-105 object-cover will-change-transform" autoplay muted loop playsinline preload="auto" poster="/media/hero-poster.webp" aria-hidden="true"></video>
+        확대(scale)를 걸지 않는다: 5% 확대는 좌우를 2.5%씩 잘라 우상단 로고 워터마크를 먹는다.
+        object-cover + 상단 기준 정렬이라 검은 여백 없이 상단 로고가 항상 온전히 보인다. */}
+    <video id="vn-vid" class="absolute inset-0 h-full w-full object-cover [object-position:center_top]" autoplay muted loop playsinline preload="auto" poster="/media/hero-poster.webp" aria-hidden="true"></video>
     <div class="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/65 via-black/25 to-transparent" aria-hidden="true"></div>
     <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_90%_at_50%_42%,transparent_55%,rgba(0,0,0,0.38))]" aria-hidden="true"></div>
     <div class="pointer-events-none absolute inset-x-0 bottom-0 h-44 bg-gradient-to-b from-transparent to-canvas" aria-hidden="true"></div>
@@ -89,7 +44,6 @@ const description = home.metaDescription;
       <span class="text-white/70">↓</span>
     </div>
   </section>
-  )}
 
   <section class="v-reveal mx-auto max-w-6xl px-6 py-20">
     <p class="mb-3 font-mono text-xs tracking-[0.16em] text-accent">01 / VISION</p>
@@ -121,370 +75,7 @@ const description = home.metaDescription;
 </BaseLayout>
 
 <script>
-  // 시네마틱 스크럽 v5 — 검증된 v1(<img>) 파이프라인 복원.
-  // v4(blob+ImageBitmap+LRU)는 "그릴 수 있는 프레임"을 디코드 창으로 제한해 가용 세트가
-  // 성겨졌고, 그 위의 보정 게이트가 홀드→도약(깜빡임)으로 나타났다.
-  // v1은 브라우저 이미지 캐시가 디코드를 관리 — 로드된 모든 프레임이 즉시 드로우 가능(조밀).
-  // 유지한 개선: 모션 적응 161프레임, 헤더 비가림(--vn-head), 백킹 1920, 성긴→촘촘 패스,
-  // 재생헤드 근접 우선, 첫·마지막 프레임 선확보, 모바일 스크롤 게이트.
-  (() => {
-    const canvas = document.getElementById('vn-scrub') as HTMLCanvasElement | null;
-    const stage = document.getElementById('vn-stage');
-    const copy = document.getElementById('vn-hero-copy');
-    const hint = document.getElementById('vn-scroll-hint');
-    if (!canvas || !stage) return;
-    const ctx = canvas.getContext('2d', { alpha: false });
-    if (!ctx) return;
-
-    const N = 276;
-    const MOBILE = window.matchMedia('(max-width: 768px)').matches;
-    const DIR = MOBILE ? '/media/hero-m/' : '/media/hero/';
-    const src = (i: number) => `${DIR}f${String(i + 1).padStart(3, '0')}.avif`;
-    const imgs: (HTMLImageElement | null)[] = new Array(N).fill(null);
-    const ready: boolean[] = new Array(N).fill(false);
-
-    // ── WebCodecs 하이브리드 ──
-    // 지원 데스크톱에선 hero.mp4(H.264·키프레임 8프레임 간격)를 하드웨어 디코드해
-    // 원본 화질·노이즈 일관성·균일 페이싱을 얻는다. 실패·미지원이면 아래 프레임 경로 그대로.
-    let mode = 'frames';
-    (window as any).__vnMode = 'frames';
-    let stopPump = false;
-    let vCur = -1, vEpoch = 0, vDrawnEpoch = -1;
-    let vMissWin = 0, vMiss = 0, vStrikes = 0;
-    const vc: any = { on: false, dead: false, total: 0, samples: null, syncs: [],
-      frames: new Map(), cfg: null, dec: null,
-      runKey: -1, runStart: -1, feed: -1, revCap: -1, eofFlushed: false, seeks: 0, failT: 0 };
-
-    let W = 0, H = 0, cur = -1, loadTick = 0, drawnTick = -1;
-    let target = 0, play = 0, lastScroll = 0;
-    let headH = 0, startY = 0, travel = 1;
-
-    const headIdx = () => Math.max(0, Math.min(N - 1, Math.round(play)));
-
-    const measure = () => {
-      const header = document.querySelector('header') as HTMLElement | null;
-      headH = header ? header.offsetHeight : 0;
-      const top = stage.getBoundingClientRect().top + window.scrollY;
-      startY = Math.max(0, top - headH);
-      travel = Math.max(1, stage.clientHeight - (window.innerHeight - headH));
-      const dprRaw = Math.min(1.5, window.devicePixelRatio || 1);
-      W = stage.clientWidth; H = Math.max(1, window.innerHeight - headH);
-      const dpr = Math.min(dprRaw, 1920 / Math.max(1, W));
-      canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
-      cur = -1; vCur = -1; vEpoch++;
-    };
-
-    const nearest = (idx: number) => {
-      for (let d = 0; d < N; d++) {
-        if (idx - d >= 0 && ready[idx - d]) return idx - d;
-        if (idx + d < N && ready[idx + d]) return idx + d;
-      }
-      return -1;
-    };
-
-    const frameRender = () => {
-      const k = nearest(headIdx());
-      if (k < 0 || (k === cur && drawnTick === loadTick)) return;
-      const im = imgs[k]!;
-      const iw = im.naturalWidth, ih = im.naturalHeight;
-      if (!iw || !ih) return;
-      const sc = Math.max(W / iw, H / ih);
-      const dw = iw * sc, dh = ih * sc;
-      ctx.drawImage(im, (W - dw) / 2, (H - dh) / 2, dw, dh);
-      cur = k; drawnTick = loadTick;
-    };
-
-    // ── 비디오 경로: 프레임 인덱스는 스크럽 진행도에서 파생(356프레임 도메인) ──
-    const headVid = () => Math.max(0, Math.min(vc.total - 1, Math.round(play / (N - 1) * (vc.total - 1))));
-    const gopOf = (i: number) => {
-      const ss = vc.syncs; let lo = 0, hi = ss.length - 1, r = 0;
-      while (lo <= hi) { const m = (lo + hi) >> 1; if (ss[m] <= i) { r = ss[m]; lo = m + 1; } else hi = m - 1; }
-      return r;
-    };
-    const evictV = () => {
-      const CAP = 30;                                   // 1920×916 GPU 프레임 ≈5MB → 상한 ~150MB
-      while (vc.frames.size > CAP) {
-        const h = headVid(); const back = target < play;
-        let far = -1, fd = -1;
-        vc.frames.forEach((_f: any, k: number) => {
-          let d = Math.abs(k - h);
-          if (back ? k > h + 6 : k < h - 6) d *= 2;      // 방금 지나온 쪽을 남겨 되감기 재디코드 최소화
-          if (d > fd) { fd = d; far = k; }
-        });
-        const fr = vc.frames.get(far); vc.frames.delete(far);
-        try { fr && fr.close(); } catch (e) {}
-      }
-    };
-    // ── 디코드 엔진 v3: 런(run) 모델 ──
-    // "런" = reset→configure 후 한 키프레임에서 시작해 앞으로만 흐르는 급유 구간.
-    // 규칙: ① 캐시에 head 가 있으면 그대로 진행(선행 급유만) ② 런이 head 를 덮으면 연장
-    // ③ 그 외에만 런 교체 — 교체 기준이 GOP 경계라 어떤 제스처든 8프레임 이동당 최대 1회 reset.
-    // 시간 기반 쿨다운·동결 없음. flush 는 파일 끝 1회뿐(저지연 모드가 1입력→1출력을 보장).
-    const pumpDecode = (h: number) => {
-      const dec = vc.dec; if (!dec || vc.feed < 0) return;
-      const lim = vc.revCap >= 0
-        ? Math.min(vc.revCap + 2, vc.total - 1)          // 역방향 배치: 필요분 +2 과급유로 꼬리 출력 보장
-        : Math.min(vc.total - 1, h + 20);                // 순방향: 재생헤드 앞 20 선행
-      const EC = (window as any).EncodedVideoChunk;
-      try {
-        while (vc.feed <= lim && dec.decodeQueueSize < 14) {
-          const i = vc.feed++;
-          const sm = vc.samples[i];
-          dec.decode(new EC({ type: sm.sync ? 'key' : 'delta', timestamp: (i * 1e6 / 30) | 0, data: sm.data }));
-        }
-        if (vc.feed >= vc.total && !vc.eofFlushed) {
-          vc.eofFlushed = true;
-          dec.flush().then(() => { vc.runKey = -1; vc.feed = -1; }).catch(() => {});
-        }
-      } catch (e) { vFail('decode'); }
-    };
-    const ensureVideo = () => {
-      if (!vc.on || vc.dead || !vc.dec) return;
-      const h = headVid();
-      if (vc.frames.has(h)) { pumpDecode(h); return; }    // ① 이미 있음 — 선행 급유만
-      const covered = vc.runKey >= 0 && h >= vc.runStart && h < vc.feed + 8;
-      if (covered) { vc.revCap = -1; pumpDecode(h); return; }   // ② 런 연장으로 충족
-      const back = target < play - 0.4;                   // ③ 런 교체(= GOP 경계에서만 갱신)
-      const key = gopOf(Math.max(0, h - (back ? 4 : 2)));
-      if (key !== vc.runKey || h < vc.runStart) {
-        try { vc.dec.reset(); vc.dec.configure(vc.cfg); }
-        catch (e) { vFail('reconf'); return; }
-        vc.runKey = key; vc.runStart = key; vc.feed = key; vc.eofFlushed = false;
-        vc.revCap = back ? Math.min(vc.total - 1, h + 4) : -1;
-        vc.seeks++;
-        (window as any).__vnStats = { seeks: vc.seeks, cached: vc.frames.size };
-      }
-      pumpDecode(h);
-    };
-    const goVideo = () => {
-      if (mode === 'video' || vc.dead) return;
-      mode = 'video'; stopPump = true;
-      if (vc.failT) { clearTimeout(vc.failT); vc.failT = 0; }
-      (window as any).__vnMode = 'video';
-      console.info('[vn-hero] mode: video (WebCodecs · HW decode)');
-    };
-    const vFail = (r: string) => {
-      if (vc.dead) return;
-      vc.dead = true; vc.on = false;
-      if (vc.failT) { clearTimeout(vc.failT); vc.failT = 0; }
-      try { vc.dec && vc.dec.close(); } catch (e) {}
-      vc.frames.forEach((f: any) => { try { f.close(); } catch (e) {} });
-      vc.frames.clear();
-      (window as any).__vnMode = 'frames:' + r;
-      if (mode === 'video') {                              // 전환 후 실패 → 프레임 경로로 실복귀
-        mode = 'frames'; stopPump = false; cur = -1;
-        try { startPump(); } catch (e) {}
-        console.info('[vn-hero] demoted to frames (' + r + ')');
-      } else console.info('[vn-hero] mode: frames (fallback: ' + r + ')');
-    };
-    const initVideo = () => {
-      const Wn = window as any;
-      if (MOBILE || !Wn.VideoDecoder || !Wn.EncodedVideoChunk) { if (!MOBILE) console.info('[vn-hero] mode: frames (no WebCodecs)'); return; }
-      if (document.hidden) {                               // 백그라운드 탭: rAF·타이머가 정지되므로 보일 때 시작
-        document.addEventListener('visibilitychange', () => { if (!document.hidden) initVideo(); }, { once: true });
-        return;
-      }
-      vc.failT = setTimeout(() => { if (mode !== 'video') vFail('timeout'); }, 12000);
-      fetch('/media/hero.mp4', { cache: 'force-cache' })
-        .then((r) => { if (!r.ok) throw 0; return r.arrayBuffer(); })
-        .then(async (ab) => {
-          const M: any = await import('mp4box');
-          const MP4: any = M && M.createFile ? M : M.default;
-          const mp4 = MP4.createFile();
-          mp4.onError = () => vFail('demux');
-          mp4.onSamples = (_id: any, _u: any, ss: any[]) => {
-            vc.samples = vc.samples || [];
-            for (const sm of ss) vc.samples.push({ data: sm.data, sync: sm.is_sync });
-            if (vc.total && vc.samples.length >= vc.total) {
-              vc.syncs = [];
-              vc.samples.forEach((sm: any, i: number) => { if (sm.sync) vc.syncs.push(i); });
-              vc.on = true;
-            }
-          };
-          mp4.onReady = (info: any) => {
-            const t = info.videoTracks && info.videoTracks[0];
-            if (!t) return vFail('notrack');
-            try {
-              const trak = mp4.getTrackById(t.id);
-              const entry = trak.mdia.minf.stbl.stsd.entries.find((x: any) => x.avcC);
-              const DS: any = MP4.DataStream;
-              const ds = new DS(undefined, 0, DS.BIG_ENDIAN);
-              entry.avcC.write(ds);
-              vc.cfg = { codec: t.codec, codedWidth: 1920, codedHeight: 916,
-                description: new Uint8Array(ds.buffer, 8), optimizeForLatency: true };
-            } catch (e) { return vFail('avcC'); }
-            vc.total = t.nb_samples;
-            // ⚠️ 추출은 "파싱이 mdat 를 지나기 전"에 동기로 켜야 한다.
-            // faststart(moov 선두)라 onReady 는 mdat 이전에 오므로, 여기서 즉시 start().
-            // (isConfigSupported 응답을 기다렸다 켜면 이미 소비된 mdat 에서 샘플이 나오지 않는다 — 실측 timeout 원인)
-            mp4.setExtractionOptions(t.id, null, { nbSamples: t.nb_samples });
-            mp4.start();
-            Wn.VideoDecoder.isConfigSupported(vc.cfg).then((sup: any) => {
-              if (!sup || !sup.supported) return vFail('unsupported');
-              vc.dec = new Wn.VideoDecoder({
-                output: (f: any) => {
-                  const i = Math.round(f.timestamp * 30 / 1e6);   // 타임스탬프 → 인덱스 역산: 순서·리셋 잔류에 무관
-                  if (i < 0 || i >= vc.total || vc.frames.has(i)) { f.close(); return; }
-                  vc.frames.set(i, f); evictV(); loadTick++;
-                  if (i === headVid()) goVideo();
-                },
-                error: () => vFail('decerr'),
-              });
-            }).catch(() => vFail('cfg'));
-          };
-          (ab as any).fileStart = 0;
-          mp4.appendBuffer(ab);
-          mp4.flush();
-        })
-        .catch(() => vFail('fetch'));
-    };
-
-    const videoRender = () => {
-      const h = headVid();
-      let k = -1, f: any = null;
-      if (vc.frames.has(h)) { k = h; f = vc.frames.get(h); }
-      else for (let d = 1; d <= 10 && !f; d++) {
-        if (vc.frames.has(h - d)) { k = h - d; f = vc.frames.get(h - d); break; }
-        if (vc.frames.has(h + d)) { k = h + d; f = vc.frames.get(h + d); break; }
-      }
-      // 성능 안전망: 스크럽 활동 중 60프레임 창에서 미스가 42회↑ ×3 연속이면
-      // 비디오 경로가 프레임 방식보다 못하다는 뜻 — 스스로 frames 로 강등한다.
-      if (Math.abs(target - play) > 1.5) {
-        vMissWin++;
-        if (!f || k !== h) vMiss++;
-        if (vMissWin >= 60) {
-          if (vMiss >= 42) { if (++vStrikes >= 3) { vFail('perf'); return; } }
-          else if (vStrikes > 0) vStrikes--;
-          vMissWin = 0; vMiss = 0;
-        }
-      }
-      if (!f) return;
-      if (k === vCur && vDrawnEpoch === vEpoch) return;   // 같은 프레임 재드로우 금지(NV12 변환 낭비 제거)
-      const iw = f.displayWidth || f.codedWidth, ih = f.displayHeight || f.codedHeight;
-      if (!iw || !ih) return;
-      const sc = Math.max(W / iw, H / ih);
-      const dw = iw * sc, dh = ih * sc;
-      ctx.drawImage(f, (W - dw) / 2, (H - dh) / 2, dw, dh);
-      vCur = k; vDrawnEpoch = vEpoch;
-    };
-
-    const render = () => { if (mode === 'video') videoRender(); else frameRender(); };
-
-    const onScroll = () => {
-      lastScroll = performance.now();
-      const p = Math.min(1, Math.max(0, (window.scrollY - startY) / travel));
-      target = p * (N - 1);
-      const t = Math.min(1, p / 0.28);
-      if (copy) {
-        copy.style.opacity = String(1 - t);
-        copy.style.transform = `translateY(${-36 * t}px)`;
-        copy.style.pointerEvents = t > 0.6 ? 'none' : '';
-      }
-      if (hint) hint.style.opacity = String(1 - Math.min(1, p / 0.12));
-    };
-
-    const load = (i: number, cb?: () => void) => {
-      const im = new Image();
-      im.decoding = 'async';
-      try { (im as any).fetchPriority = i === 0 ? 'high' : 'auto'; } catch (e) {}
-      const done = () => { ready[i] = true; loadTick++; if (cb) cb(); };
-      im.onload = () => {
-        if (im.decode) im.decode().then(done).catch(done);
-        else done();
-      };
-      im.src = src(i);
-      imgs[i] = im;
-    };
-
-    measure(); onScroll();
-
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      const still = Math.round((N - 1) * 0.62);
-      play = target = still;
-      load(still, render);
-      return;
-    }
-
-    // 성긴 패스 → 촘촘한 패스, 각 패스 안에서는 재생헤드 근접 우선.
-    const PASSES = MOBILE ? [8, 4, 2] : [16, 8, 4, 2, 1];
-    const requested = new Uint8Array(N);
-    requested[0] = 1;
-    requested[N - 1] = 1;                                   // 결말 선확보
-    let passIdx = 0, active = 0, pumpWait = false;
-    const pickNext = () => {
-      const head = headIdx();
-      for (; passIdx < PASSES.length; passIdx++) {
-        const step = PASSES[passIdx];
-        let best = -1, bestD = Infinity;
-        for (let i = 0; i < N; i += step) {
-          if (requested[i]) continue;
-          const d = Math.abs(i - head);
-          if (d < bestD) { bestD = d; best = i; }
-        }
-        if (best >= 0) return best;
-      }
-      return -1;
-    };
-    const pump = () => {
-      // 모바일만: 스크롤 직후 220ms 다운로드·디코드 휴지(스크럽 프레임률 보호)
-      if (MOBILE && performance.now() - lastScroll < 220) {
-        if (!pumpWait) { pumpWait = true; setTimeout(() => { pumpWait = false; pump(); }, 240); }
-        return;
-      }
-      if (stopPump) return;
-      while (active < (MOBILE ? 3 : 10)) {
-        const i = pickNext();
-        if (i < 0) return;
-        requested[i] = 1;
-        active++;
-        load(i, () => { active--; pump(); });
-      }
-    };
-
-    load(0, render);
-    load(N - 1);
-    initVideo();
-
-    let raf = 0, running = false;
-    const loop = () => {
-      play += (target - play) * 0.14;
-      if (Math.abs(target - play) < 0.02) play = target;
-      if (vc.on && !vc.dead) {
-        ensureVideo();
-        if (mode !== 'video' && vc.frames.has(headVid())) goVideo();
-      }
-      render();
-      raf = requestAnimationFrame(loop);
-    };
-    const startLoop = () => { if (!running) { running = true; raf = requestAnimationFrame(loop); } };
-    const stopLoop = () => { if (running) { running = false; cancelAnimationFrame(raf); } };
-
-    let pumpStarted = false;
-    const startPump = () => { if (!pumpStarted) { pumpStarted = true; pump(); } };
-    if (document.readyState === 'complete') {
-      if ('requestIdleCallback' in window) (window as any).requestIdleCallback(startPump, { timeout: 400 });
-      else setTimeout(startPump, 300);
-    } else {
-      window.addEventListener('load', () => {
-        if ('requestIdleCallback' in window) (window as any).requestIdleCallback(startPump, { timeout: 400 });
-        else setTimeout(startPump, 300);
-      }, { once: true });
-    }
-    window.addEventListener('scroll', startPump, { once: true, passive: true });
-
-    window.addEventListener('scroll', onScroll, { passive: true });
-    let rT: ReturnType<typeof setTimeout>;
-    window.addEventListener('resize', () => { clearTimeout(rT); rT = setTimeout(() => { measure(); onScroll(); }, 150); });
-    new IntersectionObserver((es) => (es[0].isIntersecting ? startLoop() : stopLoop())).observe(stage);
-    startLoop();
-  })();
-</script>
-
-<script>
-  // 비디오 히어로: 소스 선택·자동재생·카피 페이드·미세 패럴랙스·탭 숨김 일시정지
+  // 비디오 히어로: 소스 선택·자동재생·카피 페이드·탭 숨김 일시정지
   (() => {
     const sec = document.getElementById('vn-vhero');
     const vid = document.getElementById('vn-vid') as HTMLVideoElement | null;
@@ -505,7 +96,6 @@ const description = home.metaDescription;
         copy.style.pointerEvents = t > 0.6 ? 'none' : '';
       }
       if (hint) hint.style.opacity = String(1 - Math.min(1, y / 120));
-      if (!rm) vid.style.transform = `scale(${1.05 + 0.05 * t}) translateY(${10 * t}px)`;
     };
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
@@ -534,6 +124,10 @@ const description = home.metaDescription;
   @media (prefers-reduced-motion: reduce) {
     .vn-glow-a, .vn-glow-b, .vn-bounce { animation: none; }
   }
+  /* 히어로 높이를 영상 비율(1920×916 = 2.096:1) 이내로 제한한다.
+     컨테이너가 영상보다 세로로 길어지면 object-cover 가 좌우를 잘라 우상단 로고를 먹으므로,
+     높이 상한을 100vw/2.096 (=47.71vw) 으로 둔다. cover 유지라 검은 여백은 생기지 않는다. */
+  .vn-vhero { height: min(100svh, max(560px, 47.71vw)); min-height: 560px; }
   .vn-copy-in { animation: vnCopyIn .9s cubic-bezier(.2,.7,.2,1) .12s backwards; }
   @keyframes vnCopyIn { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
   @media (prefers-reduced-motion: reduce) { .vn-copy-in { animation: none; } }
