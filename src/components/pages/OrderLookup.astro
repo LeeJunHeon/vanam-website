@@ -47,6 +47,9 @@ const t = isKo
       payNote: '해외 고객 전용 USD 결제입니다 — 국내 결제(세금계산서·계좌이체)는 별도 문의해 주세요.',
       paidDone: '결제가 완료되었습니다',
       paidAt: '결제 완료',
+      tracking: '배송 정보',
+      trackingCourier: '택배사',
+      trackingNo: '송장번호',
     }
   : {
       meta: 'Track your order | VanaM', metaDesc: 'Check your order status with your order number and email.',
@@ -82,6 +85,9 @@ const t = isKo
       payNote: 'USD payment for international customers. For domestic payment (tax invoice / bank transfer), please contact us.',
       paidDone: 'Payment completed',
       paidAt: 'Paid',
+      tracking: 'Shipment',
+      trackingCourier: 'Carrier',
+      trackingNo: 'Tracking no.',
     };
 
 const inputClass =
@@ -101,7 +107,7 @@ const inputClass =
       data-label-loading={t.loading}
       data-labels={JSON.stringify(t.st)}
       data-inq={JSON.stringify(t.inq)}
-      data-pay={JSON.stringify({ paidDone: t.paidDone, paidAt: t.paidAt, mApproved: t.mApproved, mCreate: t.mCreate, mHeld: t.mHeld, mDeclined: t.mDeclined, mCapture: t.mCapture, mError: t.mError, mPaid: t.mPaid, mSetup: t.mSetup, payTitle: t.payTitle, payNote: t.payNote })}
+      data-pay={JSON.stringify({ tracking: t.tracking, trackingCourier: t.trackingCourier, trackingNo: t.trackingNo, paidDone: t.paidDone, paidAt: t.paidAt, mApproved: t.mApproved, mCreate: t.mCreate, mHeld: t.mHeld, mDeclined: t.mDeclined, mCapture: t.mCapture, mError: t.mError, mPaid: t.mPaid, mSetup: t.mSetup, payTitle: t.payTitle, payNote: t.payNote })}
       data-copy={JSON.stringify({
         status: t.status, amount: t.amount, ordered: t.ordered,
         items: t.items, shipTo: t.shipTo, taxYes: t.taxYes, noShip: t.noShip,
@@ -365,6 +371,21 @@ const inputClass =
                 <p class="mt-4 rounded-lg border border-ok/25 bg-ok/10 p-3 text-center text-sm font-semibold text-ok">✅ ${P2.paidAt} — ${when(o.paid_at)}${o.paid_usd ? ` ($${Number(o.paid_usd).toFixed(2)})` : ''}</p>` : ''}
               ${!o.paid_at && o.status === 'pending' ? payBlock(o.id, Number(o.amount), String(o.currency ?? 'KRW')) : ''}
             </div>
+
+            ${o.tracking_no || o.tracking_courier ? `
+            <div class="mt-7 border-t border-ink/10 pt-6 text-sm">
+              <p class="text-xs font-medium uppercase tracking-widest text-accent">${P.tracking}</p>
+              <dl class="mt-3 space-y-1.5">
+                ${o.tracking_courier ? `<div class="flex gap-3">
+                  <dt class="w-20 shrink-0 text-ink/40">${P.trackingCourier}</dt>
+                  <dd class="text-ink/80">${esc(o.tracking_courier)}</dd>
+                </div>` : ''}
+                ${o.tracking_no ? `<div class="flex gap-3">
+                  <dt class="w-20 shrink-0 text-ink/40">${P.trackingNo}</dt>
+                  <dd class="font-mono text-ink/80">${esc(o.tracking_no)}</dd>
+                </div>` : ''}
+              </dl>
+            </div>` : ''}
 
             <div class="mt-7 border-t border-ink/10 pt-6 text-sm">
               <p class="text-xs font-medium uppercase tracking-widest text-accent">${C.shipTo}</p>

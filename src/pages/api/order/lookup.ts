@@ -85,7 +85,25 @@ export const POST: APIRoute = async ({ request }) => {
       .bind(id)
       .all();
 
-    return json({ ok: true, order: o, items });
+    // 행 전체를 그대로 내보내면 관리자 메모까지 고객에게 전송된다.
+    // 고객에게 필요한 항목만 골라서 내려보낸다.
+    const safe = {
+      id: o.id,
+      status: o.status,
+      amount: o.amount,
+      currency: o.currency,
+      amount_usd: o.amount_usd,
+      paid_usd: o.paid_usd,
+      paid_at: o.paid_at,
+      pay_method: o.pay_method,
+      created_at: o.created_at,
+      needs_shipping: o.needs_shipping,
+      ship_country: o.ship_country,
+      tracking_no: o.tracking_no,
+      tracking_courier: o.tracking_courier,
+      tax_invoice: o.tax_invoice,
+    };
+    return json({ ok: true, order: safe, items });
   } catch (e) {
     console.error('[order/lookup] 조회 실패:', e);
     return json({ ok: false, error: 'db_error' }, 500);
