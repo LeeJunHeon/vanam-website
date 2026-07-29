@@ -29,7 +29,7 @@ const t = isKo
         title: '견적·주문 요청', received: '접수일', product: '요청 상품',
         amount: '견적 금액', vat: '(부가세 포함)',
         pending: '산정 중입니다 — 견적이 확정되면 이메일로 안내드립니다.',
-        st: { new: '접수됨 (검토 대기)', quoted: '견적 발송됨', replied: '회신 완료', closed: '종료' },
+        st: { new: '접수됨 (검토 대기)', quoted: '견적 발송됨', replied: '회신 완료', paid: '결제 완료', closed: '종료' },
       } as Record<string, unknown>,
       st: {
         pending: '결제 대기', paid: '결제 완료', preparing: '제작 중',
@@ -67,7 +67,7 @@ const t = isKo
         title: 'Quote / order request', received: 'Received', product: 'Requested item',
         amount: 'Quoted amount', vat: '(VAT included)',
         pending: 'Being prepared — we will email you once the quote is ready.',
-        st: { new: 'Received (in review)', quoted: 'Quote sent', replied: 'Replied', closed: 'Closed' },
+        st: { new: 'Received (in review)', quoted: 'Quote sent', replied: 'Replied', closed: 'Closed', paid: 'Paid' },
       } as Record<string, unknown>,
       st: {
         pending: 'Awaiting payment', paid: 'Paid', preparing: 'In production',
@@ -330,7 +330,7 @@ const inputClass =
                 <p class="mt-5 rounded-lg bg-ink/[0.05] p-4 text-sm leading-relaxed text-ink/65">${esc(q.quote_note)}</p>` : ''}
               ${q.paid_at ? `
                 <p class="mt-5 rounded-lg border border-ok/25 bg-ok/10 p-3 text-center text-sm font-semibold text-ok">✅ ${P2.paidAt} — ${when(q.paid_at)}</p>` : ''}
-              ${!q.paid_at && q.quote_currency === 'USD' && Number(q.quoted_amount) > 0 && ['quoted', 'replied'].includes(q.status) ? payBlock(q.id) : ''}
+              ${!q.paid_at && q.quote_currency === 'USD' && Number(q.quoted_amount) > 0 && q.status !== 'closed' ? payBlock(q.id) : ''}
             </div>`;
           resEl.hidden = false;
           initPP(data.email as string);

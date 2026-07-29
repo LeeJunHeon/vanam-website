@@ -124,90 +124,308 @@
       "equipGroupDesc": "Sputtering, thermal evaporator, in-line sputter, 6-inch and 12-inch ALDs",
       "coreViz": {
         "heads": [
-          { "no": "1", "t": "Data collection" },
-          { "no": "2", "t": "Data Integration & Preprocessing" },
-          { "no": "3", "t": "Multivariate Analysis & Change Detection" },
-          { "no": "4", "t": "Diagnosis & Cause Estimation" },
-          { "no": "5", "t": "Decision & Action" },
-          { "no": "6", "t": "Verification & Learning" }
+          {
+            "no": "1",
+            "t": "Data collection"
+          },
+          {
+            "no": "2",
+            "t": "Data Integration & Preprocessing"
+          },
+          {
+            "no": "3",
+            "t": "Multivariate Analysis & Change Detection"
+          },
+          {
+            "no": "4",
+            "t": "Diagnosis & Cause Estimation"
+          },
+          {
+            "no": "5",
+            "t": "Decision & Action"
+          },
+          {
+            "no": "6",
+            "t": "Verification & Learning"
+          }
         ],
         "col1": [
-          { "label": "ALD", "img": "ald.jpg" },
-          { "label": "Sputter", "img": "sputter.jpg" },
-          { "label": "Measurement", "img": "measurement.jpg" }
+          {
+            "label": "ALD",
+            "img": "ald.jpg"
+          },
+          {
+            "label": "Sputter",
+            "img": "sputter.jpg"
+          },
+          {
+            "label": "Measurement",
+            "img": "measurement.jpg"
+          }
         ],
         "s2": {
-          "a": { "h": "A. Data Integration Repository", "bullets": ["Raw data storage", "Time synchronization", "Metadata mapping"], "img": "s2-repo.jpg" },
-          "b": { "h": "B. Preprocessing & Quality Validation", "bullets": ["Data Validation", "Outlier Filtering", "Missing Value Check", "Measurement Quality Assessment"], "img": "s2-quality.jpg" },
+          "a": {
+            "h": "A. Data Integration Repository",
+            "bullets": [
+              "Raw data storage",
+              "Time synchronization",
+              "Metadata mapping"
+            ],
+            "img": "s2-repo.jpg"
+          },
+          "b": {
+            "h": "B. Preprocessing & Quality Validation",
+            "bullets": [
+              "Data Validation",
+              "Outlier Filtering",
+              "Missing Value Check",
+              "Measurement Quality Assessment"
+            ],
+            "img": "s2-quality.jpg"
+          },
           "badge": "Data quality"
         },
         "s3": {
-          "dash": { "h": "A. Integrated Monitoring Dashboard", "panels": [
-            { "t": "Trend monitoring", "img": "s3-trend.jpg" },
-            { "t": "OES peak monitoring", "img": "s3-oes.jpg" },
-            { "t": "Key Index extraction", "img": "s3-keyindex.jpg", "cap": "Thickness · TCR · ΔR · dT · TMI" }
-          ] },
-          "change": { "h": "B. Change Detection (Early Anomaly Detection)", "panels": [
-            { "t": "Multivariate statistical monitoring (Hotelling's T² / SPE)", "img": "s3-t2.jpg" },
-            { "t": "PCA-based Monitoring (Score Plot)", "img": "s3-pca.jpg" }
-          ] },
-          "alarm": { "t": "Alarm Level", "levels": [
-            { "t": "Normal", "l1": "Stable pattern", "l2": "Continuous monitoring" },
-            { "t": "Warning", "l1": "Minor change", "l2": "Trend observation" },
-            { "t": "Critical", "l1": "Significant change", "l2": "Cause analysis" }
-          ] }
+          "dash": {
+            "h": "A. Integrated Monitoring Dashboard",
+            "panels": [
+              {
+                "t": "Trend monitoring",
+                "img": "s3-trend.jpg"
+              },
+              {
+                "t": "OES peak monitoring",
+                "img": "s3-oes.jpg"
+              },
+              {
+                "t": "Key Index extraction",
+                "img": "s3-keyindex.jpg",
+                "cap": "Thickness · TCR · ΔR · dT · TMI"
+              }
+            ]
+          },
+          "change": {
+            "h": "B. Change Detection (Early Anomaly Detection)",
+            "panels": [
+              {
+                "t": "Multivariate statistical monitoring (Hotelling's T² / SPE)",
+                "img": "s3-t2.jpg"
+              },
+              {
+                "t": "PCA-based Monitoring (Score Plot)",
+                "img": "s3-pca.jpg"
+              }
+            ]
+          },
+          "alarm": {
+            "t": "Alarm Level",
+            "levels": [
+              {
+                "t": "Normal",
+                "l1": "Stable pattern",
+                "l2": "Continuous monitoring"
+              },
+              {
+                "t": "Warning",
+                "l1": "Minor change",
+                "l2": "Trend observation"
+              },
+              {
+                "t": "Critical",
+                "l1": "Significant change",
+                "l2": "Cause analysis"
+              }
+            ]
+          }
         },
         "s4": {
           "charts": [
-            { "t": "Contribution analysis", "img": "s4-contribution.jpg" },
-            { "t": "Variable Importance (VIP)", "img": "s4-vip.jpg" },
-            { "t": "Correlation analysis / Contribution factors", "img": "s4-corr.jpg" }
+            {
+              "t": "Contribution analysis",
+              "img": "s4-contribution.jpg"
+            },
+            {
+              "t": "Variable Importance (VIP)",
+              "img": "s4-vip.jpg"
+            },
+            {
+              "t": "Correlation analysis / Contribution factors",
+              "img": "s4-corr.jpg"
+            }
           ],
-          "result": { "h": "Diagnosis result", "s": "Identify the key factors and main causes of the process condition change" }
+          "result": {
+            "h": "Diagnosis result",
+            "s": "Identify the key factors and main causes of the process condition change"
+          }
         },
         "s5": {
           "feedback": "Action Execution (Feedback)",
-          "decision": { "h": "Decision making", "rows": [
-            { "img": "s5-wrench.jpg", "t": "Condition Adjustment", "s": "Power / Pressure / Temperature …" },
-            { "img": "s5-recipe.jpg", "t": "Recipe modification", "s": "Pulse / Purge / Sequence …" },
-            { "img": "s5-tools.jpg", "t": "Maintenance", "s": "Inspection / Cleaning" },
-            { "img": "s5-flask.jpg", "t": "Additional experiment", "s": "DOE" }
-          ] },
-          "conduct": { "h": "Conduct experiment", "lines": ["Execute selected action immediately", "Or apply to the next lot"] }
+          "decision": {
+            "h": "Decision making",
+            "rows": [
+              {
+                "img": "s5-wrench.jpg",
+                "t": "Condition Adjustment",
+                "s": "Power / Pressure / Temperature …"
+              },
+              {
+                "img": "s5-recipe.jpg",
+                "t": "Recipe modification",
+                "s": "Pulse / Purge / Sequence …"
+              },
+              {
+                "img": "s5-tools.jpg",
+                "t": "Maintenance",
+                "s": "Inspection / Cleaning"
+              },
+              {
+                "img": "s5-flask.jpg",
+                "t": "Additional experiment",
+                "s": "DOE"
+              }
+            ]
+          },
+          "conduct": {
+            "h": "Conduct experiment",
+            "lines": [
+              "Execute selected action immediately",
+              "Or apply to the next lot"
+            ]
+          }
         },
         "s6": {
           "cards": [
-            { "t": "Effect verification", "img": "s6-before-after.jpg" },
-            { "t": "Verify Metric improvement", "bullets": ["Electrical Properties", "TMI / dT / TCR Stabilization", "Reproducibility / Yield"] },
-            { "t": "Standardization & Documentation", "bullets": ["Optimal Condition Update", "Recipe Standardization"] },
-            { "t": "Continuous improvement loop", "img": "s6-loop.jpg", "loop": true }
+            {
+              "t": "Effect verification",
+              "img": "s6-before-after.jpg"
+            },
+            {
+              "t": "Verify Metric improvement",
+              "bullets": [
+                "Electrical Properties",
+                "TMI / dT / TCR Stabilization",
+                "Reproducibility / Yield"
+              ]
+            },
+            {
+              "t": "Standardization & Documentation",
+              "bullets": [
+                "Optimal Condition Update",
+                "Recipe Standardization"
+              ]
+            },
+            {
+              "t": "Continuous improvement loop",
+              "img": "s6-loop.jpg",
+              "loop": true
+            }
           ]
         },
-        "cycle": { "t": "Feedback loop" },
+        "cycle": {
+          "t": "Feedback loop"
+        },
         "valuesTitle": "CORE VALUE",
         "valuesSub": "Early Detection → Fast Action → Better Result",
-        "values": ["Early detection", "Fast diagnosis", "Accurate control", "Continuous optimization"],
-        "finalGoal": { "t": "Final goal", "lines": ["High yield & Reproducibility", "Minimize process variation", "Data-driven smart factory realization"] }
+        "values": [
+          "Early detection",
+          "Fast diagnosis",
+          "Accurate control",
+          "Continuous optimization"
+        ],
+        "finalGoal": {
+          "t": "Final goal",
+          "lines": [
+            "High yield & Reproducibility",
+            "Minimize process variation",
+            "Data-driven smart factory realization"
+          ]
+        }
       },
       "p2Viz": {
-        "flow": ["From Bulk Components", "To A Single Thin Film", "Extra Sensory", "Super Safe"],
-        "benefitsTitle": "KEY THIN FILM BENEFITS",
-        "benefits": [
-          { "t": "Energy-sensitive", "s": "Sensitive to heat and electrical energy" },
-          { "t": "Integrated", "s": "Passive & active components into one thin film" },
-          { "t": "Efficient", "s": "Enhanced accuracy · lightweight · low-power" },
-          { "t": "Applications", "s": "Thermal management & control · protection circuits" }
+        "transform": {
+          "fromT": "From Bulk Components",
+          "fromImg": "bulk.webp",
+          "fromAlt": "Discrete bulk electronic components — capacitors, inductors, diodes and ICs",
+          "toT": "To A Single Thin Film",
+          "toImg": "film.webp",
+          "toAlt": "A single multifunctional semiconductor thin film on a substrate"
+        },
+        "photos": [
+          {
+            "t": "Extra Sensory",
+            "img": "sensory.webp",
+            "s": "Sensitive to heat and electrical energy",
+            "alt": "Circuit board close-up — sensitive to heat and electrical energy"
+          },
+          {
+            "t": "Super Safe",
+            "img": "safe.webp",
+            "s": "Passive & active components into a single thin film",
+            "alt": "Flame over a protected circuit — passive and active components into a single thin film"
+          }
         ],
-        "marketsTitle": "SCALABLE OPPORTUNITIES",
-        "markets": [
-          { "t": "IR Image Sensing", "v": "$8 Bn" },
-          { "t": "Military (Stealth)", "v": "$42 Bn" },
-          { "t": "Smart Glass", "v": "$15 Bn" },
-          { "t": "AI Semiconductors", "v": "$123 Bn" },
-          { "t": "Power Electronics", "v": "$50 Bn" },
-          { "t": "Energy Storage", "v": "$256 Bn" }
-        ],
-        "source": "Source: MarketsandMarkets · MMR · Precedence Research · Fact.MR"
+        "benefits": {
+          "t": "Key Thin Film Benefits",
+          "items": [
+            {
+              "img": "ben-heat.webp",
+              "s": "Sensitive to heat and electrical energy"
+            },
+            {
+              "img": "ben-film.webp",
+              "s": "Passive & active components into one thin film"
+            },
+            {
+              "img": "ben-accuracy.webp",
+              "s": "Enhanced accuracy, lightweight system, lower-power operation"
+            },
+            {
+              "img": "ben-apps.webp",
+              "s": "Applications: Thermal management & control systems, protection circuits"
+            }
+          ]
+        },
+        "markets": {
+          "t": "Scalable Opportunities / Areas",
+          "cards": [
+            {
+              "img": "mkt-ir.webp",
+              "t": "IR Image Sensing",
+              "v": "$8 Bn",
+              "tone": "accent"
+            },
+            {
+              "img": "mkt-military.webp",
+              "t": "Military (Stealth)",
+              "v": "$42 Bn",
+              "tone": "ink"
+            },
+            {
+              "img": "mkt-glass.webp",
+              "t": "Smart Glass",
+              "v": "$15 Bn",
+              "tone": "accent"
+            },
+            {
+              "img": "mkt-ai.webp",
+              "t": "AI Semiconductors",
+              "v": "$123 Bn",
+              "tone": "info"
+            },
+            {
+              "img": "mkt-power.webp",
+              "t": "Power Electronics",
+              "v": "$50 Bn",
+              "tone": "accent"
+            },
+            {
+              "img": "mkt-battery.webp",
+              "t": "Energy Storage",
+              "v": "$256 Bn",
+              "tone": "ok"
+            }
+          ]
+        }
       },
       "quantumViz": {
         "comps": [
@@ -248,10 +466,22 @@
         "band": {
           "title": "Key Thin Films for Next-Gen PICs & Quantum Systems",
           "mats": [
-            { "k": "SNSPD", "v": "NbTiN" },
-            { "k": "Waveguide", "v": "Ta₂O₅" },
-            { "k": "Modulator", "v": "BTO, STO" },
-            { "k": "DBR", "v": "Si-SiO₂-TiO₂" }
+            {
+              "k": "SNSPD",
+              "v": "NbTiN"
+            },
+            {
+              "k": "Waveguide",
+              "v": "Ta₂O₅"
+            },
+            {
+              "k": "Modulator",
+              "v": "BTO, STO"
+            },
+            {
+              "k": "DBR",
+              "v": "Si-SiO₂-TiO₂"
+            }
           ],
           "metrics": [
             "Superconducting transition T ~ 11K",
@@ -265,20 +495,68 @@
         "markets": {
           "t": "Scalable Opportunities / Areas",
           "cards": [
-            { "img": "mkt-qc.webp", "t": "Quantum Computers", "v": "$13 Bn", "cagr": "CAGR 32%", "tone": "accent" },
-            { "img": "mkt-qcomm.webp", "t": "Quantum Communication", "v": "$12 Bn", "cagr": "CAGR 30%", "tone": "accent" },
-            { "img": "mkt-qsensor.webp", "t": "Quantum Sensors", "v": "$1.6 Bn", "cagr": "CAGR 26%", "tone": "info" },
-            { "img": "mkt-lidar.webp", "t": "Laser & LiDAR", "v": "$22 Bn", "cagr": "CAGR 30%", "tone": "accent" },
-            { "img": "mkt-glass.webp", "t": "Glass Core Substrate", "v": "$223 Bn", "cagr": "CAGR 8%", "tone": "ok" },
-            { "img": "mkt-siph.webp", "t": "Silicon Photonics", "v": "$1.9 Bn", "cagr": "CAGR 17%", "tone": "info" }
+            {
+              "img": "mkt-qc.webp",
+              "t": "Quantum Computers",
+              "v": "$13 Bn",
+              "cagr": "CAGR 32%",
+              "tone": "accent"
+            },
+            {
+              "img": "mkt-qcomm.webp",
+              "t": "Quantum Communication",
+              "v": "$12 Bn",
+              "cagr": "CAGR 30%",
+              "tone": "accent"
+            },
+            {
+              "img": "mkt-qsensor.webp",
+              "t": "Quantum Sensors",
+              "v": "$1.6 Bn",
+              "cagr": "CAGR 26%",
+              "tone": "info"
+            },
+            {
+              "img": "mkt-lidar.webp",
+              "t": "Laser & LiDAR",
+              "v": "$22 Bn",
+              "cagr": "CAGR 30%",
+              "tone": "accent"
+            },
+            {
+              "img": "mkt-glass.webp",
+              "t": "Glass Core Substrate",
+              "v": "$223 Bn",
+              "cagr": "CAGR 8%",
+              "tone": "ok"
+            },
+            {
+              "img": "mkt-siph.webp",
+              "t": "Silicon Photonics",
+              "v": "$1.9 Bn",
+              "cagr": "CAGR 17%",
+              "tone": "info"
+            }
           ]
         }
       },
       "bigdataViz": {
         "stages": [
-          { "no": "01", "t": "IN-SITU SENSING", "s": "Self-developed sputter · 3 real-time sensors" },
-          { "no": "02", "t": "BIG DATA + AI", "s": "Collection · training · analysis" },
-          { "no": "03", "t": "OUTCOMES", "s": "Optimization · prediction" }
+          {
+            "no": "01",
+            "t": "IN-SITU SENSING",
+            "s": "Self-developed sputter · 3 real-time sensors"
+          },
+          {
+            "no": "02",
+            "t": "BIG DATA + AI",
+            "s": "Collection · training · analysis"
+          },
+          {
+            "no": "03",
+            "t": "OUTCOMES",
+            "s": "Optimization · prediction"
+          }
         ],
         "sputter": "Self-developed Sputter",
         "sensorLegend": "RGA — Residual Gas Analyzer · OES — Optical Emission Spectrometer · TSP — Titanium Sublimation Pump",
@@ -287,8 +565,18 @@
         "aiTitle": "Big Data + AI",
         "aiSub": "Process-data collection · machine-learning training",
         "outputs": [
-          { "t": "Process Optimization", "s": "Thin film process optimization", "img": "out-optimization.jpg", "alt": "AI-driven thin film process optimization" },
-          { "t": "Property Prediction Model", "s": "Characteristic prediction model", "img": "out-prediction.jpg", "alt": "Machine-learning characteristic prediction model dashboard" }
+          {
+            "t": "Process Optimization",
+            "s": "Thin film process optimization",
+            "img": "out-optimization.jpg",
+            "alt": "AI-driven thin film process optimization"
+          },
+          {
+            "t": "Property Prediction Model",
+            "s": "Characteristic prediction model",
+            "img": "out-prediction.jpg",
+            "alt": "Machine-learning characteristic prediction model dashboard"
+          }
         ]
       },
       "analysisHeading": "Analysis & Measurement Solution",
@@ -328,48 +616,33 @@
       "p2Heading": "Multifunctional VO₂ thin films that sense, respond, and protect.",
       "p2Body": "VanaM developed the world's first multifunctional semiconductor thin-film that responds to changes in thermal and electrical energy, enabling sensing, switching, protection, and energy-management functions to be integrated into compact devices and surfaces.",
       "p2Items": [
-        { "name": "Thermal & Electrical Sensing & Smart Switching", "desc": "Energy-responsive thin films that detect changes in temperature and electrical conditions for real-time sensing and monitoring." },
-        { "name": "One Thin Film, Multiple Functions", "desc": "Multifunctional thin film that can replace several traditional active and passive components, for simplified, less energy-consuming systems." },
-        { "name": "Safety & Protection", "desc": "Responsive thin films for early heat and abnormal-condition detection, supporting applications such as fire detection and electronic system protection." },
-        { "name": "Energy Management", "desc": "Functional coatings that help control heat, light, and energy flow for more efficient buildings, electronics, and intelligent surfaces." }
-      ],
-      "p2Viz": {
-        "transform": {
-          "fromT": "From Bulk Components",
-          "fromImg": "bulk.webp",
-          "fromAlt": "Discrete bulk electronic components — capacitors, inductors, diodes and ICs",
-          "toT": "To A Single Thin Film",
-          "toImg": "film.webp",
-          "toAlt": "A single multifunctional semiconductor thin film on a substrate"
+        {
+          "name": "Thermal & Electrical Sensing & Smart Switching",
+          "desc": "Energy-responsive thin films that detect changes in temperature and electrical conditions for real-time sensing and monitoring."
         },
-        "photos": [
-          { "t": "Extra Sensory", "img": "sensory.webp", "s": "Sensitive to heat and electrical energy", "alt": "Circuit board close-up — sensitive to heat and electrical energy" },
-          { "t": "Super Safe", "img": "safe.webp", "s": "Passive & active components into a single thin film", "alt": "Flame over a protected circuit — passive and active components into a single thin film" }
-        ],
-        "benefits": {
-          "t": "Key Thin Film Benefits",
-          "items": [
-            { "img": "ben-heat.webp", "s": "Sensitive to heat and electrical energy" },
-            { "img": "ben-film.webp", "s": "Passive & active components into one thin film" },
-            { "img": "ben-accuracy.webp", "s": "Enhanced accuracy, lightweight system, lower-power operation" },
-            { "img": "ben-apps.webp", "s": "Applications: Thermal management & control systems, protection circuits" }
-          ]
+        {
+          "name": "One Thin Film, Multiple Functions",
+          "desc": "Multifunctional thin film that can replace several traditional active and passive components, for simplified, less energy-consuming systems."
         },
-        "markets": {
-          "t": "Scalable Opportunities / Areas",
-          "cards": [
-            { "img": "mkt-ir.webp", "t": "IR Image Sensing", "v": "$8 Bn", "tone": "accent" },
-            { "img": "mkt-military.webp", "t": "Military (Stealth)", "v": "$42 Bn", "tone": "ink" },
-            { "img": "mkt-glass.webp", "t": "Smart Glass", "v": "$15 Bn", "tone": "accent" },
-            { "img": "mkt-ai.webp", "t": "AI Semiconductors", "v": "$123 Bn", "tone": "info" },
-            { "img": "mkt-power.webp", "t": "Power Electronics", "v": "$50 Bn", "tone": "accent" },
-            { "img": "mkt-battery.webp", "t": "Energy Storage", "v": "$256 Bn", "tone": "ok" }
-          ]
+        {
+          "name": "Safety & Protection",
+          "desc": "Responsive thin films for early heat and abnormal-condition detection, supporting applications such as fire detection and electronic system protection."
+        },
+        {
+          "name": "Energy Management",
+          "desc": "Functional coatings that help control heat, light, and energy flow for more efficient buildings, electronics, and intelligent surfaces."
         }
-      },
+      ],
       "p2VizSource": "Source: MarketsandMarkets, MMR, Precedence Research, Fact.MR",
       "p2TargetLabel": "Target applications",
-      "p2Targets": ["thermal sensing", "fire & safety systems", "battery protection circuits", "smart electronics", "IR sensing", "smart glass"]
+      "p2Targets": [
+        "thermal sensing",
+        "fire & safety systems",
+        "battery protection circuits",
+        "smart electronics",
+        "IR sensing",
+        "smart glass"
+      ]
     },
     "about": {
       "heroTitle": {
@@ -533,7 +806,10 @@
         "titleOrder": "Order request",
         "introOrder": "This is a fixed-price item. Leave your details and shipping address — we'll confirm the order and payment by email.",
         "submitOrder": "Send order request",
-        "msgSuccessOrder": "Your order request was sent. We'll confirm availability and payment within 1–2 business days."
+        "msgSuccessOrder": "Your order request was sent. We'll confirm availability and payment within 1–2 business days.",
+        "msgSeqProcess": "st step: please choose a process.",
+        "msgSeqMaterial": "st step: please choose a material.",
+        "msgSeqValue": "st step: please enter a value."
       }
     },
     "shop": {
@@ -557,7 +833,6 @@
       "added": "Added to cart",
       "requestQuote": "Request a quote",
       "orderRequest": "Place an order",
-      "addToCart": "Add to cart",
       "buyNow": "Buy now",
       "addedToCart": "Added to cart.",
       "goCart": "View cart →",
@@ -728,90 +1003,308 @@
       "equipGroupDesc": "스퍼터링 · 열 증발 증착기 · 인라인 스퍼터 · 6인치/12인치 ALD",
       "coreViz": {
         "heads": [
-          { "no": "1", "t": "데이터 수집" },
-          { "no": "2", "t": "데이터 통합 · 전처리" },
-          { "no": "3", "t": "다변량 분석 · 변화 감지" },
-          { "no": "4", "t": "진단 · 원인 추정" },
-          { "no": "5", "t": "의사결정 · 조치" },
-          { "no": "6", "t": "검증 · 학습" }
+          {
+            "no": "1",
+            "t": "데이터 수집"
+          },
+          {
+            "no": "2",
+            "t": "데이터 통합 · 전처리"
+          },
+          {
+            "no": "3",
+            "t": "다변량 분석 · 변화 감지"
+          },
+          {
+            "no": "4",
+            "t": "진단 · 원인 추정"
+          },
+          {
+            "no": "5",
+            "t": "의사결정 · 조치"
+          },
+          {
+            "no": "6",
+            "t": "검증 · 학습"
+          }
         ],
         "col1": [
-          { "label": "ALD", "img": "ald.jpg" },
-          { "label": "Sputter", "img": "sputter.jpg" },
-          { "label": "Measurement", "img": "measurement.jpg" }
+          {
+            "label": "ALD",
+            "img": "ald.jpg"
+          },
+          {
+            "label": "Sputter",
+            "img": "sputter.jpg"
+          },
+          {
+            "label": "Measurement",
+            "img": "measurement.jpg"
+          }
         ],
         "s2": {
-          "a": { "h": "A. 데이터 통합 저장소", "bullets": ["원시 데이터 저장", "시간 동기화", "메타데이터 매핑"], "img": "s2-repo.jpg" },
-          "b": { "h": "B. 전처리 · 품질 검증", "bullets": ["데이터 유효성 검증", "이상치 필터링", "결측값 확인", "측정 품질 평가"], "img": "s2-quality.jpg" },
+          "a": {
+            "h": "A. 데이터 통합 저장소",
+            "bullets": [
+              "원시 데이터 저장",
+              "시간 동기화",
+              "메타데이터 매핑"
+            ],
+            "img": "s2-repo.jpg"
+          },
+          "b": {
+            "h": "B. 전처리 · 품질 검증",
+            "bullets": [
+              "데이터 유효성 검증",
+              "이상치 필터링",
+              "결측값 확인",
+              "측정 품질 평가"
+            ],
+            "img": "s2-quality.jpg"
+          },
           "badge": "Data quality"
         },
         "s3": {
-          "dash": { "h": "A. 통합 모니터링 대시보드", "panels": [
-            { "t": "Trend monitoring", "img": "s3-trend.jpg" },
-            { "t": "OES peak monitoring", "img": "s3-oes.jpg" },
-            { "t": "Key Index extraction", "img": "s3-keyindex.jpg", "cap": "Thickness · TCR · ΔR · dT · TMI" }
-          ] },
-          "change": { "h": "B. 변화 감지 (조기 이상 탐지)", "panels": [
-            { "t": "다변량 통계 모니터링 (Hotelling's T² / SPE)", "img": "s3-t2.jpg" },
-            { "t": "PCA 기반 모니터링 (Score Plot)", "img": "s3-pca.jpg" }
-          ] },
-          "alarm": { "t": "Alarm Level", "levels": [
-            { "t": "Normal", "l1": "안정 패턴", "l2": "지속 모니터링" },
-            { "t": "Warning", "l1": "경미한 변화", "l2": "추이 관찰" },
-            { "t": "Critical", "l1": "유의미한 변화", "l2": "원인 분석" }
-          ] }
+          "dash": {
+            "h": "A. 통합 모니터링 대시보드",
+            "panels": [
+              {
+                "t": "Trend monitoring",
+                "img": "s3-trend.jpg"
+              },
+              {
+                "t": "OES peak monitoring",
+                "img": "s3-oes.jpg"
+              },
+              {
+                "t": "Key Index extraction",
+                "img": "s3-keyindex.jpg",
+                "cap": "Thickness · TCR · ΔR · dT · TMI"
+              }
+            ]
+          },
+          "change": {
+            "h": "B. 변화 감지 (조기 이상 탐지)",
+            "panels": [
+              {
+                "t": "다변량 통계 모니터링 (Hotelling's T² / SPE)",
+                "img": "s3-t2.jpg"
+              },
+              {
+                "t": "PCA 기반 모니터링 (Score Plot)",
+                "img": "s3-pca.jpg"
+              }
+            ]
+          },
+          "alarm": {
+            "t": "Alarm Level",
+            "levels": [
+              {
+                "t": "Normal",
+                "l1": "안정 패턴",
+                "l2": "지속 모니터링"
+              },
+              {
+                "t": "Warning",
+                "l1": "경미한 변화",
+                "l2": "추이 관찰"
+              },
+              {
+                "t": "Critical",
+                "l1": "유의미한 변화",
+                "l2": "원인 분석"
+              }
+            ]
+          }
         },
         "s4": {
           "charts": [
-            { "t": "Contribution analysis", "img": "s4-contribution.jpg" },
-            { "t": "Variable Importance (VIP)", "img": "s4-vip.jpg" },
-            { "t": "Correlation analysis / Contribution factors", "img": "s4-corr.jpg" }
+            {
+              "t": "Contribution analysis",
+              "img": "s4-contribution.jpg"
+            },
+            {
+              "t": "Variable Importance (VIP)",
+              "img": "s4-vip.jpg"
+            },
+            {
+              "t": "Correlation analysis / Contribution factors",
+              "img": "s4-corr.jpg"
+            }
           ],
-          "result": { "h": "Diagnosis result", "s": "공정 조건 변화의 핵심 인자와 주요 원인을 규명합니다" }
+          "result": {
+            "h": "Diagnosis result",
+            "s": "공정 조건 변화의 핵심 인자와 주요 원인을 규명합니다"
+          }
         },
         "s5": {
           "feedback": "Action Execution (Feedback)",
-          "decision": { "h": "Decision making", "rows": [
-            { "img": "s5-wrench.jpg", "t": "Condition Adjustment", "s": "Power / Pressure / Temperature …" },
-            { "img": "s5-recipe.jpg", "t": "Recipe modification", "s": "Pulse / Purge / Sequence …" },
-            { "img": "s5-tools.jpg", "t": "Maintenance", "s": "Inspection / Cleaning" },
-            { "img": "s5-flask.jpg", "t": "Additional experiment", "s": "DOE" }
-          ] },
-          "conduct": { "h": "Conduct experiment", "lines": ["선택한 조치를 즉시 실행", "또는 다음 로트에 반영"] }
+          "decision": {
+            "h": "Decision making",
+            "rows": [
+              {
+                "img": "s5-wrench.jpg",
+                "t": "Condition Adjustment",
+                "s": "Power / Pressure / Temperature …"
+              },
+              {
+                "img": "s5-recipe.jpg",
+                "t": "Recipe modification",
+                "s": "Pulse / Purge / Sequence …"
+              },
+              {
+                "img": "s5-tools.jpg",
+                "t": "Maintenance",
+                "s": "Inspection / Cleaning"
+              },
+              {
+                "img": "s5-flask.jpg",
+                "t": "Additional experiment",
+                "s": "DOE"
+              }
+            ]
+          },
+          "conduct": {
+            "h": "Conduct experiment",
+            "lines": [
+              "선택한 조치를 즉시 실행",
+              "또는 다음 로트에 반영"
+            ]
+          }
         },
         "s6": {
           "cards": [
-            { "t": "Effect verification", "img": "s6-before-after.jpg" },
-            { "t": "Verify Metric improvement", "bullets": ["Electrical Properties", "TMI / dT / TCR 안정화", "재현성 / 수율"] },
-            { "t": "Standardization & Documentation", "bullets": ["최적 조건 업데이트", "레시피 표준화"] },
-            { "t": "Continuous improvement loop", "img": "s6-loop.jpg", "loop": true }
+            {
+              "t": "Effect verification",
+              "img": "s6-before-after.jpg"
+            },
+            {
+              "t": "Verify Metric improvement",
+              "bullets": [
+                "Electrical Properties",
+                "TMI / dT / TCR 안정화",
+                "재현성 / 수율"
+              ]
+            },
+            {
+              "t": "Standardization & Documentation",
+              "bullets": [
+                "최적 조건 업데이트",
+                "레시피 표준화"
+              ]
+            },
+            {
+              "t": "Continuous improvement loop",
+              "img": "s6-loop.jpg",
+              "loop": true
+            }
           ]
         },
-        "cycle": { "t": "피드백 루프" },
+        "cycle": {
+          "t": "피드백 루프"
+        },
         "valuesTitle": "CORE VALUE",
         "valuesSub": "조기 감지 → 빠른 조치 → 더 나은 결과",
-        "values": ["조기 감지", "빠른 진단", "정밀 제어", "지속 최적화"],
-        "finalGoal": { "t": "최종 목표", "lines": ["고수율 & 재현성", "공정 변동 최소화", "데이터 기반 스마트 팩토리 구현"] }
+        "values": [
+          "조기 감지",
+          "빠른 진단",
+          "정밀 제어",
+          "지속 최적화"
+        ],
+        "finalGoal": {
+          "t": "최종 목표",
+          "lines": [
+            "고수율 & 재현성",
+            "공정 변동 최소화",
+            "데이터 기반 스마트 팩토리 구현"
+          ]
+        }
       },
       "p2Viz": {
-        "flow": ["From Bulk Components", "To A Single Thin Film", "Extra Sensory", "Super Safe"],
-        "benefitsTitle": "핵심 박막 강점",
-        "benefits": [
-          { "t": "에너지 감응", "s": "열·전기 에너지에 민감하게 반응" },
-          { "t": "일체 집적", "s": "수동·능동 소자를 하나의 박막으로 통합" },
-          { "t": "고효율", "s": "정확도 향상 · 경량 · 저전력 구동" },
-          { "t": "응용 분야", "s": "열 관리·제어 시스템 · 보호 회로" }
+        "transform": {
+          "fromT": "From Bulk Components",
+          "fromImg": "bulk.webp",
+          "fromAlt": "Discrete bulk electronic components — capacitors, inductors, diodes and ICs",
+          "toT": "To A Single Thin Film",
+          "toImg": "film.webp",
+          "toAlt": "A single multifunctional semiconductor thin film on a substrate"
+        },
+        "photos": [
+          {
+            "t": "Extra Sensory",
+            "img": "sensory.webp",
+            "s": "Sensitive to heat and electrical energy",
+            "alt": "Circuit board close-up — sensitive to heat and electrical energy"
+          },
+          {
+            "t": "Super Safe",
+            "img": "safe.webp",
+            "s": "Passive & active components into a single thin film",
+            "alt": "Flame over a protected circuit — passive and active components into a single thin film"
+          }
         ],
-        "marketsTitle": "확장 가능 시장",
-        "markets": [
-          { "t": "IR 이미지 센싱", "v": "$8 Bn" },
-          { "t": "국방 (스텔스)", "v": "$42 Bn" },
-          { "t": "스마트 글라스", "v": "$15 Bn" },
-          { "t": "AI 반도체", "v": "$123 Bn" },
-          { "t": "전력 반도체", "v": "$50 Bn" },
-          { "t": "에너지 저장", "v": "$256 Bn" }
-        ],
-        "source": "출처: MarketsandMarkets · MMR · Precedence Research · Fact.MR"
+        "benefits": {
+          "t": "Key Thin Film Benefits",
+          "items": [
+            {
+              "img": "ben-heat.webp",
+              "s": "Sensitive to heat and electrical energy"
+            },
+            {
+              "img": "ben-film.webp",
+              "s": "Passive & active components into one thin film"
+            },
+            {
+              "img": "ben-accuracy.webp",
+              "s": "Enhanced accuracy, lightweight system, lower-power operation"
+            },
+            {
+              "img": "ben-apps.webp",
+              "s": "Applications: Thermal management & control systems, protection circuits"
+            }
+          ]
+        },
+        "markets": {
+          "t": "Scalable Opportunities / Areas",
+          "cards": [
+            {
+              "img": "mkt-ir.webp",
+              "t": "IR Image Sensing",
+              "v": "$8 Bn",
+              "tone": "accent"
+            },
+            {
+              "img": "mkt-military.webp",
+              "t": "Military (Stealth)",
+              "v": "$42 Bn",
+              "tone": "ink"
+            },
+            {
+              "img": "mkt-glass.webp",
+              "t": "Smart Glass",
+              "v": "$15 Bn",
+              "tone": "accent"
+            },
+            {
+              "img": "mkt-ai.webp",
+              "t": "AI Semiconductors",
+              "v": "$123 Bn",
+              "tone": "info"
+            },
+            {
+              "img": "mkt-power.webp",
+              "t": "Power Electronics",
+              "v": "$50 Bn",
+              "tone": "accent"
+            },
+            {
+              "img": "mkt-battery.webp",
+              "t": "Energy Storage",
+              "v": "$256 Bn",
+              "tone": "ok"
+            }
+          ]
+        }
       },
       "quantumViz": {
         "comps": [
@@ -852,10 +1345,22 @@
         "band": {
           "title": "Key Thin Films for Next-Gen PICs & Quantum Systems",
           "mats": [
-            { "k": "SNSPD", "v": "NbTiN" },
-            { "k": "Waveguide", "v": "Ta₂O₅" },
-            { "k": "Modulator", "v": "BTO, STO" },
-            { "k": "DBR", "v": "Si-SiO₂-TiO₂" }
+            {
+              "k": "SNSPD",
+              "v": "NbTiN"
+            },
+            {
+              "k": "Waveguide",
+              "v": "Ta₂O₅"
+            },
+            {
+              "k": "Modulator",
+              "v": "BTO, STO"
+            },
+            {
+              "k": "DBR",
+              "v": "Si-SiO₂-TiO₂"
+            }
           ],
           "metrics": [
             "Superconducting transition T ~ 11K",
@@ -869,20 +1374,68 @@
         "markets": {
           "t": "Scalable Opportunities / Areas",
           "cards": [
-            { "img": "mkt-qc.webp", "t": "Quantum Computers", "v": "$13 Bn", "cagr": "CAGR 32%", "tone": "accent" },
-            { "img": "mkt-qcomm.webp", "t": "Quantum Communication", "v": "$12 Bn", "cagr": "CAGR 30%", "tone": "accent" },
-            { "img": "mkt-qsensor.webp", "t": "Quantum Sensors", "v": "$1.6 Bn", "cagr": "CAGR 26%", "tone": "info" },
-            { "img": "mkt-lidar.webp", "t": "Laser & LiDAR", "v": "$22 Bn", "cagr": "CAGR 30%", "tone": "accent" },
-            { "img": "mkt-glass.webp", "t": "Glass Core Substrate", "v": "$223 Bn", "cagr": "CAGR 8%", "tone": "ok" },
-            { "img": "mkt-siph.webp", "t": "Silicon Photonics", "v": "$1.9 Bn", "cagr": "CAGR 17%", "tone": "info" }
+            {
+              "img": "mkt-qc.webp",
+              "t": "Quantum Computers",
+              "v": "$13 Bn",
+              "cagr": "CAGR 32%",
+              "tone": "accent"
+            },
+            {
+              "img": "mkt-qcomm.webp",
+              "t": "Quantum Communication",
+              "v": "$12 Bn",
+              "cagr": "CAGR 30%",
+              "tone": "accent"
+            },
+            {
+              "img": "mkt-qsensor.webp",
+              "t": "Quantum Sensors",
+              "v": "$1.6 Bn",
+              "cagr": "CAGR 26%",
+              "tone": "info"
+            },
+            {
+              "img": "mkt-lidar.webp",
+              "t": "Laser & LiDAR",
+              "v": "$22 Bn",
+              "cagr": "CAGR 30%",
+              "tone": "accent"
+            },
+            {
+              "img": "mkt-glass.webp",
+              "t": "Glass Core Substrate",
+              "v": "$223 Bn",
+              "cagr": "CAGR 8%",
+              "tone": "ok"
+            },
+            {
+              "img": "mkt-siph.webp",
+              "t": "Silicon Photonics",
+              "v": "$1.9 Bn",
+              "cagr": "CAGR 17%",
+              "tone": "info"
+            }
           ]
         }
       },
       "bigdataViz": {
         "stages": [
-          { "no": "01", "t": "IN-SITU SENSING", "s": "자체 스퍼터 · 실시간 센서 3종" },
-          { "no": "02", "t": "BIG DATA + AI", "s": "수집 · 학습 · 분석" },
-          { "no": "03", "t": "OUTCOMES", "s": "공정 최적화 · 특성 예측" }
+          {
+            "no": "01",
+            "t": "IN-SITU SENSING",
+            "s": "자체 스퍼터 · 실시간 센서 3종"
+          },
+          {
+            "no": "02",
+            "t": "BIG DATA + AI",
+            "s": "수집 · 학습 · 분석"
+          },
+          {
+            "no": "03",
+            "t": "OUTCOMES",
+            "s": "공정 최적화 · 특성 예측"
+          }
         ],
         "sputter": "자체 개발 스퍼터",
         "sensorLegend": "RGA — 잔류 가스 분석기 · OES — 광학 발광 분광기 · TSP — 티타늄 승화 펌프",
@@ -891,8 +1444,18 @@
         "aiTitle": "Big Data + AI",
         "aiSub": "공정 데이터 수집 · 머신러닝 학습",
         "outputs": [
-          { "t": "공정 최적화", "s": "Thin film process optimization", "img": "out-optimization.jpg", "alt": "AI 기반 박막 공정 최적화" },
-          { "t": "특성 예측 모델", "s": "Characteristic prediction model", "img": "out-prediction.jpg", "alt": "머신러닝 특성 예측 모델 대시보드" }
+          {
+            "t": "공정 최적화",
+            "s": "Thin film process optimization",
+            "img": "out-optimization.jpg",
+            "alt": "AI 기반 박막 공정 최적화"
+          },
+          {
+            "t": "특성 예측 모델",
+            "s": "Characteristic prediction model",
+            "img": "out-prediction.jpg",
+            "alt": "머신러닝 특성 예측 모델 대시보드"
+          }
         ]
       },
       "analysisHeading": "분석·측정 솔루션",
@@ -932,48 +1495,33 @@
       "p2Heading": "감지하고, 반응하고, 보호하는 다기능 VO₂ 박막",
       "p2Body": "반암은 열·전기 에너지 변화에 반응하는 세계 최초의 다기능 반도체 박막을 개발했습니다. 감지·스위칭·보호·에너지 관리 기능을 소형 소자와 표면에 통합할 수 있습니다.",
       "p2Items": [
-        { "name": "열·전기 감지 & 스마트 스위칭", "desc": "온도와 전기적 조건의 변화를 감지해 실시간 센싱과 모니터링을 구현하는 에너지 반응형 박막." },
-        { "name": "하나의 박막, 다수의 기능", "desc": "여러 전통적인 능동·수동 소자를 대체할 수 있는 다기능 박막 — 시스템을 단순화하고 에너지 소비를 줄입니다." },
-        { "name": "안전 & 보호", "desc": "열과 이상 상태를 조기에 감지하는 반응형 박막으로, 화재 감지와 전자 시스템 보호 등에 활용됩니다." },
-        { "name": "에너지 관리", "desc": "열·빛·에너지 흐름 제어를 돕는 기능성 코팅으로, 더 효율적인 건물·전자기기·지능형 표면을 구현합니다." }
-      ],
-      "p2Viz": {
-        "transform": {
-          "fromT": "From Bulk Components",
-          "fromImg": "bulk.webp",
-          "fromAlt": "Discrete bulk electronic components — capacitors, inductors, diodes and ICs",
-          "toT": "To A Single Thin Film",
-          "toImg": "film.webp",
-          "toAlt": "A single multifunctional semiconductor thin film on a substrate"
+        {
+          "name": "열·전기 감지 & 스마트 스위칭",
+          "desc": "온도와 전기적 조건의 변화를 감지해 실시간 센싱과 모니터링을 구현하는 에너지 반응형 박막."
         },
-        "photos": [
-          { "t": "Extra Sensory", "img": "sensory.webp", "s": "Sensitive to heat and electrical energy", "alt": "Circuit board close-up — sensitive to heat and electrical energy" },
-          { "t": "Super Safe", "img": "safe.webp", "s": "Passive & active components into a single thin film", "alt": "Flame over a protected circuit — passive and active components into a single thin film" }
-        ],
-        "benefits": {
-          "t": "Key Thin Film Benefits",
-          "items": [
-            { "img": "ben-heat.webp", "s": "Sensitive to heat and electrical energy" },
-            { "img": "ben-film.webp", "s": "Passive & active components into one thin film" },
-            { "img": "ben-accuracy.webp", "s": "Enhanced accuracy, lightweight system, lower-power operation" },
-            { "img": "ben-apps.webp", "s": "Applications: Thermal management & control systems, protection circuits" }
-          ]
+        {
+          "name": "하나의 박막, 다수의 기능",
+          "desc": "여러 전통적인 능동·수동 소자를 대체할 수 있는 다기능 박막 — 시스템을 단순화하고 에너지 소비를 줄입니다."
         },
-        "markets": {
-          "t": "Scalable Opportunities / Areas",
-          "cards": [
-            { "img": "mkt-ir.webp", "t": "IR Image Sensing", "v": "$8 Bn", "tone": "accent" },
-            { "img": "mkt-military.webp", "t": "Military (Stealth)", "v": "$42 Bn", "tone": "ink" },
-            { "img": "mkt-glass.webp", "t": "Smart Glass", "v": "$15 Bn", "tone": "accent" },
-            { "img": "mkt-ai.webp", "t": "AI Semiconductors", "v": "$123 Bn", "tone": "info" },
-            { "img": "mkt-power.webp", "t": "Power Electronics", "v": "$50 Bn", "tone": "accent" },
-            { "img": "mkt-battery.webp", "t": "Energy Storage", "v": "$256 Bn", "tone": "ok" }
-          ]
+        {
+          "name": "안전 & 보호",
+          "desc": "열과 이상 상태를 조기에 감지하는 반응형 박막으로, 화재 감지와 전자 시스템 보호 등에 활용됩니다."
+        },
+        {
+          "name": "에너지 관리",
+          "desc": "열·빛·에너지 흐름 제어를 돕는 기능성 코팅으로, 더 효율적인 건물·전자기기·지능형 표면을 구현합니다."
         }
-      },
+      ],
       "p2VizSource": "Source: MarketsandMarkets, MMR, Precedence Research, Fact.MR",
       "p2TargetLabel": "타겟 응용 분야",
-      "p2Targets": ["열 감지", "화재·안전 시스템", "배터리 보호 회로", "스마트 전자기기", "IR 센싱", "스마트 글라스"]
+      "p2Targets": [
+        "열 감지",
+        "화재·안전 시스템",
+        "배터리 보호 회로",
+        "스마트 전자기기",
+        "IR 센싱",
+        "스마트 글라스"
+      ]
     },
     "about": {
       "metaTitle": "회사 소개 | VanaM",
@@ -1137,7 +1685,10 @@
         "titleOrder": "주문 요청",
         "introOrder": "고정가 상품입니다. 연락처와 배송 주소를 남겨주시면 주문 확인과 결제 안내를 이메일로 드립니다.",
         "submitOrder": "주문 요청 보내기",
-        "msgSuccessOrder": "주문 요청이 전송되었습니다. 1~2 영업일 내에 재고 확인과 결제 안내를 드리겠습니다."
+        "msgSuccessOrder": "주문 요청이 전송되었습니다. 1~2 영업일 내에 재고 확인과 결제 안내를 드리겠습니다.",
+        "msgSeqProcess": "번째 단계의 공정을 선택해 주세요.",
+        "msgSeqMaterial": "번째 단계의 물질을 선택해 주세요.",
+        "msgSeqValue": "번째 단계의 수치를 입력해 주세요."
       }
     },
     "shop": {
@@ -1157,11 +1708,10 @@
       "priceOnRequest": "가격 문의",
       "vatIncluded": "부가세 포함",
       "viewDetail": "자세히 보기",
-      "addToCart": "장바구니 담기",
+      "addToCart": "카트에 담기",
       "added": "장바구니에 담았습니다",
       "requestQuote": "견적 요청",
       "orderRequest": "주문 요청",
-      "addToCart": "카트에 담기",
       "buyNow": "바로 구매",
       "addedToCart": "카트에 담았습니다.",
       "goCart": "카트 보기 →",

@@ -78,7 +78,6 @@ export const SUBSTRATE_SIZES: { value: string; en: string; ko: string }[] = [
 ];
 
 export const DELIVERY_METHODS: { value: string; en: string; ko: string }[] = [
-  { value: 'direct', en: 'Deliver in person', ko: '직접 전달' },
-  { value: 'courier', en: 'Courier / shipping', ko: '택배' },
-  { value: 'purchase', en: 'Purchase from VanaM', ko: '구매' },
+  { value: 'courier', en: 'Courier', ko: '택배' },
+  { value: 'direct', en: 'Pick up in person', ko: '직접 수령' },
 ];

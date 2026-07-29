@@ -57,6 +57,9 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
       data-msg-required={c.msgRequired}
       data-msg-captcha={c.msgCaptcha}
       data-msg-noprocess={q.msgNoProcess}
+      data-msg-seq-process={q.msgSeqProcess}
+      data-msg-seq-material={q.msgSeqMaterial}
+      data-msg-seq-value={q.msgSeqValue}
       data-label-send={simple ? q.submitOrder : q.submit}
       data-label-sending={c.sending}
       data-lbl-step={q.processStep}
@@ -270,12 +273,13 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
           data-language="auto"
         ></div>
 
-        <div class="flex flex-wrap items-center gap-4">
+        <div class="flex flex-wrap items-center justify-end gap-4">
+          <p id="quote-status" class="mr-auto text-sm" role="status" aria-live="polite"></p>
           <button type="submit" id="quote-submit"
             class="inline-flex items-center gap-2 rounded-lg bg-brand px-7 py-3 font-semibold text-onbrand transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60">
             <span id="quote-submit-label">{simple ? q.submitOrder : q.submit}</span>
           </button>
-          <p id="quote-status" class="text-sm" role="status" aria-live="polite"></p>
+
         </div>
       </div>
     </form>
@@ -521,6 +525,32 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
     return { text: lines.join("\n"), json };
   }
 
+  // ── 버튼 게이팅 ────────────────────────────────────
+  // 필수 입력·동의·보안확인이 모두 끝나야 버튼이 열린다(웨이퍼 주문서와 동일한 방식).
+  const submitBtn = document.getElementById("quote-submit") as HTMLButtonElement | null;
+  if (form && submitBtn) {
+    // 화면에 보이지 않는 입력이 required 로 남으면 브라우저가 제출을 막으면서도
+    // 경고 대상을 찾지 못해 "눌러도 반응 없음" 이 된다.
+    const isHidden = (el: HTMLElement) => !el.offsetParent && getComputedStyle(el).position !== "fixed";
+    const tokenOk = () =>
+      Boolean((form.querySelector('[name="cf-turnstile-response"]') as HTMLInputElement | null)?.value);
+    const fieldsOk = () => {
+      for (const el of Array.from(form.elements) as HTMLElement[]) {
+        const f = el as HTMLInputElement;
+        if (!f.name || f.disabled || f.type === "hidden") continue;
+        if (f.name === "vanam_hp_email") continue;
+        if (isHidden(f)) continue;
+        if (f.required && !f.checkValidity()) return false;
+      }
+      return true;
+    };
+    const syncGate = () => { submitBtn.disabled = !(fieldsOk() && tokenOk()); };
+    form.addEventListener("input", syncGate);
+    form.addEventListener("change", syncGate);
+    setInterval(syncGate, 1000);   // 보안확인 토큰은 비동기로 채워진다
+    syncGate();
+  }
+
   form?.addEventListener("submit", async (e) => {
     e.preventDefault();
 
@@ -538,6 +568,26 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
     if (!isSimple && seq.json.length === 0) {
       setStatus(M.msgNoprocess!, false);
       return;
+    }
+    // 행을 추가만 하고 내용을 비워두는 경우가 많다.
+    // 화면에 보이는 입력칸(물질·수치)은 모두 채워야 한다. '기타 조건'은 선택 사항이다.
+    if (!isSimple && listEl) {
+      const rows = Array.from(listEl.querySelectorAll<HTMLElement>('.q-process-row'));
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        const proc = (row.querySelector('.q-row-process') as HTMLSelectElement)?.value ?? '';
+        if (!proc) { setStatus(`${i + 1}${M.msgSeqProcess}`, false); return; }
+        const matWrap = row.querySelector('.q-material-wrap') as HTMLElement | null;
+        const matSel = row.querySelector('.q-row-material') as HTMLSelectElement | null;
+        if (matWrap && !matWrap.hidden && matSel && !matSel.value) {
+          setStatus(`${i + 1}${M.msgSeqMaterial}`, false); return;
+        }
+        const valWrap = row.querySelector('.q-value-wrap') as HTMLElement | null;
+        const valInput = row.querySelector('.q-row-value') as HTMLInputElement | null;
+        if (valWrap && !valWrap.hidden && valInput && !valInput.value.trim()) {
+          setStatus(`${i + 1}${M.msgSeqValue}`, false); return;
+        }
+      }
     }
     if (seqInput) seqInput.value = JSON.stringify(seq.json);
 

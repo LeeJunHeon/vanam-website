@@ -76,7 +76,7 @@ export async function settlePayment(
   const now = new Date().toISOString();
   if (inq) {
     await d
-      .prepare(`UPDATE inquiries SET paid_at = ?, paid_usd = ?, paypal_capture_id = ? WHERE id = ? AND paid_at IS NULL`)
+      .prepare(`UPDATE inquiries SET status = 'paid', paid_at = ?, paid_usd = ?, paypal_capture_id = ? WHERE id = ? AND paid_at IS NULL`)
       .bind(now, args.paidUsd, args.captureId ?? null, ref)
       .run();
   } else {
