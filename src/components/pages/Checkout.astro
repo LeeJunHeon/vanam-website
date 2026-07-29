@@ -100,7 +100,7 @@ const t = isKo
       eyebrow: '주문서', heading: '주문 정보',
       empty: '장바구니가 비어 있습니다.', backToShop: '제품으로 돌아가기',
       secBuyer: '주문자', secShip: '배송지', secTax: '세금계산서', secAgree: '확인 및 동의', secSummary: '주문 요약',
-      desiredDate: '희망 완료일 (선택)', desiredDatePh: '예: 2026-09 또는 자유롭게 기재',
+      desiredDate: '희망 완료일 (선택)', desiredDateShip: '희망 배송일 (선택)', desiredDatePh: '예: 2026-09 또는 자유롭게 기재',
       orderNote: '요청사항 (선택)', orderNotePh: '추가 요청·참고사항이 있으면 적어주세요',
       name: '이름', email: '이메일', phone: '연락처', company: '회사 / 소속',
       phoneHint: '해외 연락처는 국가번호를 포함해 주세요 (예: +1 555 000 0000)',
@@ -141,7 +141,7 @@ const t = isKo
       eyebrow: 'Checkout', heading: 'Order details',
       empty: 'Your cart is empty.', backToShop: 'Back to products',
       secBuyer: 'Purchaser', secShip: 'Shipping', secTax: 'Tax invoice', secAgree: 'Confirm & agree', secSummary: 'Order summary',
-      desiredDate: 'Desired completion (optional)', desiredDatePh: 'e.g. 2026-09, or free text',
+      desiredDate: 'Desired completion (optional)', desiredDateShip: 'Preferred delivery date (optional)', desiredDatePh: 'e.g. 2026-09, or free text',
       orderNote: 'Additional requests (optional)', orderNotePh: 'Anything else we should know',
       name: 'Name', email: 'Email', phone: 'Phone', company: 'Company / Affiliation',
       phoneHint: 'Please include your country code (e.g. +1 555 000 0000)',
@@ -232,7 +232,7 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
                 <input id="buyerCompany" name="buyerCompany" type="text" autocomplete="organization" class={inputClass} />
               </div>
               <div class="sm:col-span-2">
-                <label for="desiredDate" class={labelClass}>{t.desiredDate}</label>
+                <label for="desiredDate" class={labelClass}>{quote ? t.desiredDate : t.desiredDateShip}</label>
                 <input id="desiredDate" name="desiredDate" type="text" class={inputClass} placeholder={t.desiredDatePh} />
               </div>
               <div class="sm:col-span-2">
@@ -590,6 +590,28 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
       if (el) el.required = on;
     };
 
+    // 숨겨진 필드가 required 로 남으면 브라우저가 제출을 막으면서도
+    // 경고를 띄울 대상을 찾지 못해 **아무 반응 없이 멈춘다**
+    // (콘솔: "An invalid form control ... is not focusable").
+    // 화면에 보이지 않는 입력은 required 를 해제하고 검증에서 제외한다.
+    const isHidden = (el: HTMLElement) => !el.offsetParent && getComputedStyle(el).position !== 'fixed';
+    const syncHiddenRequired = () => {
+      for (const el of Array.from(form.elements) as HTMLElement[]) {
+        const f = el as HTMLInputElement;
+        if (!f.name || f.type === 'hidden') continue;
+        if (isHidden(f)) {
+          if (f.required) { f.dataset.wasRequired = '1'; f.required = false; }
+          f.disabled = true;            // 값도 함께 전송되지 않도록
+        } else if (f.dataset.wasRequired === '1') {
+          f.disabled = false;
+          f.required = true;
+          delete f.dataset.wasRequired;
+        } else if (f.disabled && f.dataset.autoDisabled === '1') {
+          f.disabled = false;
+        }
+      }
+    };
+
     // ── 국가에 따라 주소 폼·세금계산서 전환 ────────────
     const countrySel = document.getElementById('shipCountry') as HTMLSelectElement;
     const taxWant = $i('tax-want');
@@ -630,6 +652,7 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
     }
     countrySel?.addEventListener('change', applyCountry);
     applyCountry();
+    syncHiddenRequired();
 
     // ── 배송지: 주문자와 동일 ──────────────────────────
     const shipSame = $i('ship-same');
@@ -640,11 +663,13 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
     }
     shipSame?.addEventListener('change', applySame);
     applySame();
+    syncHiddenRequired();
 
     // ── 세금계산서 ─────────────────────────────────────
     taxWant?.addEventListener('change', () => {
       $('tax-fields').hidden = !taxWant.checked;
       for (const id of ['taxBizNo', 'taxBizName', 'taxEmail']) setReq(id, taxWant.checked);
+      syncHiddenRequired();
     });
 
     function validBizNo(raw: string) {
@@ -678,6 +703,7 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
         const f = el as HTMLInputElement;
         if (!f.name || f.disabled || f.type === 'hidden') continue;
         if (f.name === 'vanam_hp_note') continue;
+        if (isHidden(f)) continue;                    // 화면에 없는 입력은 판정하지 않는다
         if (f.required && !f.checkValidity()) return false;
       }
       return true;
@@ -716,6 +742,7 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
 
     // ── 제출 ───────────────────────────────────────────
     form.addEventListener('submit', async (e) => {
+      syncHiddenRequired();
       e.preventDefault();
 
       // 미끼칸이 차 있어도 조용히 되돌리지 않는다.

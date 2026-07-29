@@ -32,6 +32,19 @@ function validBizNo(raw: string): boolean {
 }
 
 export const POST: APIRoute = async ({ request, locals }) => {
+  // 예기치 못한 예외가 그대로 500(빈 본문)으로 나가면 화면에는
+  // "Unexpected end of JSON input" 만 보여 원인을 알 수 없다.
+  // 어떤 실패든 JSON 으로 사유를 돌려주고 서버 로그에 남긴다.
+  try {
+    return await handleOrder({ request, locals });
+  } catch (e) {
+    const err = e as Error;
+    console.error('[order] 처리 실패:', err?.stack ?? err);
+    return json({ ok: false, error: 'server_error', detail: String(err?.message ?? e).slice(0, 200) }, 500);
+  }
+};
+
+async function handleOrder({ request, locals }: { request: Request; locals: unknown }) {
   let body: Record<string, unknown>;
   try {
     body = (await request.json()) as Record<string, unknown>;
@@ -330,4 +343,4 @@ export const POST: APIRoute = async ({ request, locals }) => {
   }
 
   return json({ ok: true, orderId, amount });
-};
+}
