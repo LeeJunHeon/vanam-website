@@ -96,7 +96,6 @@ export const POST: APIRoute = async ({ request }) => {
   // 실무에서 송장 입력 = 발송이므로, 상태를 따로 바꾸는 것을 잊기 쉽다.
   // ※ trackingNo 선언 뒤에 와야 한다(위에 두면 ReferenceError).
   if (trackingNo && status === 'preparing') status = 'shipped';
-  const adminMemo = str(body.adminMemo).slice(0, 2000);
   const now = nowIso();
 
   try {
@@ -106,11 +105,10 @@ export const POST: APIRoute = async ({ request }) => {
             SET status = ?,
                 tracking_no = ?,
                 tracking_courier = ?,
-                admin_memo = ?,
                 updated_at = ?
           WHERE id = ?`,
       )
-      .bind(status, trackingNo || null, trackingCourier || null, adminMemo || null, now, id)
+      .bind(status, trackingNo || null, trackingCourier || null, now, id)
       .run();
   } catch (e) {
     console.error('[admin/order] 갱신 실패:', e);
