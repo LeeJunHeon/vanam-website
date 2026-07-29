@@ -26,6 +26,9 @@ function withTimeout<T>(p: Promise<T>, ms: number): Promise<T | null> {
   return Promise.race([p, new Promise<null>((res) => setTimeout(() => res(null), ms))]);
 }
 
+/** Keystatic '사업자 정보'의 환율 방식. 'manual' 이면 자동 갱신을 하지 않는다. */
+const isManual = () => String((company as Record<string, unknown>).fxMode ?? 'auto') === 'manual';
+
 const cfgRate = () => {
   const n = Number((company as Record<string, unknown>).usdRate);
   return Number.isFinite(n) && n >= MIN_RATE && n <= MAX_RATE ? n : HARD_FALLBACK;
@@ -38,6 +41,8 @@ const sane = (n: unknown): n is number =>
 /** D1 에 저장된 환율을 읽는다. 없거나 이상하면 설정값으로 폴백. */
 export async function readRate(d: D1 | null): Promise<FxRate> {
   const fallback: FxRate = { rate: cfgRate(), updatedAt: null, source: 'config' };
+  // 수동 모드: 설정값이 유일한 진실원. D1 에 저장된 자동 환율은 무시한다.
+  if (isManual()) return { rate: cfgRate(), updatedAt: null, source: 'manual' };
   if (!d) return fallback;
   try {
     const row = await d
@@ -89,6 +94,7 @@ async function fetchRate(): Promise<{ rate: number; source: string } | null> {
  * 반환값은 실제로 저장했는지 여부.
  */
 export async function refreshRate(d: D1 | null): Promise<{ saved: boolean; reason: string; rate?: number }> {
+  if (isManual()) return { saved: false, reason: 'manual_mode' };
   if (!d) return { saved: false, reason: 'no_db' };
   const cur = await readRate(d);
   const got = await fetchRate();
@@ -138,7 +144,7 @@ export async function getRate(d: D1 | null, waitUntil?: (p: Promise<unknown>) =>
     console.error('[fx] readRate 예외:', e);
     return { rate: cfgRate(), updatedAt: null, source: 'config' };
   }
-  if (!d) return cur;
+  if (isManual() || !d) return cur;
 
   // 최초 1회(저장된 환율이 아예 없음)는 동기로 채운다.
   // waitUntil 을 못 쓰는 환경이면 백그라운드 갱신이 영영 돌지 않아 폴백에 갇히기 때문이다.

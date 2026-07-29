@@ -87,9 +87,27 @@ export default config({
         withdrawDays: fields.integer({ label: '청약철회 기간 (일)', defaultValue: 7, validation: { isRequired: true } }),
         refundDays: fields.integer({ label: '환불 처리 기간 (영업일)', defaultValue: 3, validation: { isRequired: true } }),
 
+        fxMode: fields.select({
+          label: '환율 적용 방식',
+          description:
+            '자동: 하루 한 번 시장 환율(중간환율)을 받아 적용합니다. 방문자 접속 시 갱신되며, ' +
+            '조회에 실패하면 마지막 정상값을 그대로 유지합니다. 직전 값 대비 ±10% 넘게 변동하면 ' +
+            '적용을 보류하고 알림을 보냅니다. / ' +
+            '수동: 아래 "수동 환율"만 사용하고 자동 갱신을 하지 않습니다. ' +
+            '※ 저장 후 사이트 재배포가 끝나야 반영됩니다(수 분 소요).',
+          options: [
+            { label: '자동 (실시간 시장 환율)', value: 'auto' },
+            { label: '수동 (아래 값 고정)', value: 'manual' },
+          ],
+          defaultValue: 'auto',
+        }),
+
         usdRate: fields.integer({
-          label: '달러 환율 (원/$)',
-          description: '달러 표시 가격 환산에 사용합니다. 예: 1500 → ₩429,000 = $286',
+          label: '수동 환율 (원/$)',
+          description:
+            '위 방식이 "수동"일 때 사용하는 환율입니다. ' +
+            '방식이 "자동"이면 이 값은 환율 조회 실패 시의 예비값으로만 쓰입니다. ' +
+            '예: 1450 → ₩429,000 = $295.86',
           defaultValue: 1500,
         }),
       },

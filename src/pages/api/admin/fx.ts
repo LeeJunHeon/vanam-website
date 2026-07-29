@@ -47,8 +47,10 @@ export const GET: APIRoute = async ({ request, locals }) => {
 };
 
 /**
- * POST { action: 'refresh' }        — 외부 API 로 즉시 갱신(사유 반환)
- * POST { action: 'set', rate: 1450 } — 수동 입력(비상용, 이상치 가드 우회)
+ * POST { action: 'refresh' } — 외부 API 로 즉시 갱신(사유 반환)
+ *
+ * 수동 환율은 Keystatic '사업자 정보'에서만 지정한다(진실원 단일화).
+ * 여기서도 값을 넣을 수 있게 두면 설정이 두 곳으로 갈라져 어느 쪽이 적용됐는지 알 수 없게 된다.
  */
 export const POST: APIRoute = async ({ request }) => {
   if (!(await isAdmin(request))) return json({ ok: false, error: 'unauthorized' }, 401);
@@ -69,23 +71,6 @@ export const POST: APIRoute = async ({ request }) => {
     const r = await refreshRate(d);
     const cur = await readRate(d);
     return json({ ok: true, saved: r.saved, reason: r.reason, rate: cur.rate, updatedAt: cur.updatedAt });
-  }
-
-  if (action === 'set') {
-    const n = Number(body.rate);
-    // 수동 입력은 이상치 가드를 우회하지만, 상식 범위는 지킨다.
-    if (!Number.isFinite(n) || n < 500 || n > 5000) {
-      return json({ ok: false, error: 'out_of_range' }, 400);
-    }
-    const now = new Date().toISOString();
-    await d
-      .prepare(
-        `INSERT INTO settings (key, value, updated_at, source) VALUES ('usd_rate', ?, ?, 'manual')
-         ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at, source = excluded.source`,
-      )
-      .bind(n, now, 'manual')
-      .run();
-    return json({ ok: true, saved: true, rate: n, updatedAt: now, source: 'manual' });
   }
 
   return json({ ok: false, error: 'bad_action' }, 400);

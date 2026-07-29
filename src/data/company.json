@@ -21,5 +21,6 @@
   "shipLeadEn": "Shipped within 7–14 business days after payment (made-to-order items are advised separately)",
   "withdrawDays": 7,
   "refundDays": 3,
+  "fxMode": "auto",
   "usdRate": 1600
 }
