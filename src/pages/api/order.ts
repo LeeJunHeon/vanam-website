@@ -231,10 +231,15 @@ async function handleOrder({ request, locals }: { request: Request; locals: unkn
     return json({ ok: false, error: 'no_db' }, 503);
   }
 
+  // 알림 본문(try 블록 밖)에서도 쓰이므로 블록 밖에 선언한다.
+  // const 는 블록 스코프여서, try 안에 두면 아래에서 ReferenceError 가 난다.
+  let fx: { rate: number } = { rate: 0 };
+  let amountUsd = 0;
+
   try {
     // 주문 시점의 라이브 환율로 USD 를 확정한다. 이후 환율이 변해도 청구액은 이 값으로 고정된다.
-    const fx = await getRate(d, pickWaitUntil(locals));
-    const amountUsd = Math.round((amount / fx.rate) * 100) / 100;
+    fx = await getRate(d, pickWaitUntil(locals));
+    amountUsd = Math.round((amount / fx.rate) * 100) / 100;
 
     await d
       .prepare(
