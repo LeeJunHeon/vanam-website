@@ -32,7 +32,7 @@ export const isInqRef = (ref: string) => /^INQ-\d{8}-[A-Z0-9]{4}$/.test(ref);
  */
 export async function settlePayment(
   d: DBLike,
-  args: { ref: string; ppOrderId: string; paidUsd: number; paidCur: string; source: 'browser' | 'webhook' },
+  args: { ref: string; ppOrderId: string; paidUsd: number; paidCur: string; source: 'browser' | 'webhook'; captureId?: string },
 ): Promise<SettleResult> {
   const ref = String(args.ref || '').toUpperCase();
   const inq = isInqRef(ref);
@@ -76,13 +76,13 @@ export async function settlePayment(
   const now = new Date().toISOString();
   if (inq) {
     await d
-      .prepare(`UPDATE inquiries SET paid_at = ?, paid_usd = ? WHERE id = ? AND paid_at IS NULL`)
-      .bind(now, args.paidUsd, ref)
+      .prepare(`UPDATE inquiries SET paid_at = ?, paid_usd = ?, paypal_capture_id = ? WHERE id = ? AND paid_at IS NULL`)
+      .bind(now, args.paidUsd, args.captureId ?? null, ref)
       .run();
   } else {
     await d
-      .prepare(`UPDATE orders SET status = 'paid', paid_at = ?, paid_usd = ? WHERE id = ? AND paid_at IS NULL`)
-      .bind(now, args.paidUsd, ref)
+      .prepare(`UPDATE orders SET status = 'paid', paid_at = ?, paid_usd = ?, paypal_capture_id = ? WHERE id = ? AND paid_at IS NULL`)
+      .bind(now, args.paidUsd, args.captureId ?? null, ref)
       .run();
   }
 

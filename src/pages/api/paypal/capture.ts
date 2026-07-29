@@ -53,6 +53,7 @@ export const POST: APIRoute = async ({ request }) => {
       paidUsd,
       paidCur,
       source: 'browser',
+      captureId: String(capture?.id ?? '') || undefined,
     });
     if (!r.ok) {
       const code = r.code === 'not_found' ? 404 : r.code === 'bad_ref' ? 500 : 409;

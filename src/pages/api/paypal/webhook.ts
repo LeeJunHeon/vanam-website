@@ -22,6 +22,7 @@ const pickCapture = (res: Record<string, any>) => ({
   paidUsd: Number(res?.amount?.value ?? 0),
   paidCur: String(res?.amount?.currency_code ?? ''),
   ppOrderId: String(res?.supplementary_data?.related_ids?.order_id ?? ''),
+  captureId: String(res?.id ?? ''),   // 환불에 필요한 캡처 ID
 });
 
 export const POST: APIRoute = async ({ request }) => {
@@ -86,15 +87,18 @@ export const POST: APIRoute = async ({ request }) => {
           paidUsd: Number(c?.amount?.value ?? 0),
           paidCur: String(c?.amount?.currency_code ?? ''),
           source: 'webhook',
+          captureId: String(c?.id ?? '') || undefined,
         });
         return ok({ ok: r.ok, via: 'approved' });
       }
 
       // 결제가 실제로 완료됨 — 브라우저 경로가 실패했더라도 여기서 확정된다.
       case 'PAYMENT.CAPTURE.COMPLETED': {
-        const { ref, paidUsd, paidCur, ppOrderId } = pickCapture(res);
+        const { ref, paidUsd, paidCur, ppOrderId, captureId } = pickCapture(res);
         if (!ref) return ok({ ok: true, skipped: 'no_ref' });
-        const r = await settlePayment(d, { ref, ppOrderId, paidUsd, paidCur, source: 'webhook' });
+        const r = await settlePayment(d, {
+          ref, ppOrderId, paidUsd, paidCur, source: 'webhook', captureId: captureId || undefined,
+        });
         return ok({ ok: r.ok, via: 'completed' });
       }
 

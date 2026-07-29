@@ -146,6 +146,26 @@ export async function ppVerifyWebhook(
   }
 }
 
+/**
+ * 캡처 건 환불. 전액이면 amount 를 비우고, 부분 환불이면 금액을 넣는다.
+ * captureId 는 캡처 응답의 purchase_units[].payments.captures[].id 다.
+ */
+export async function ppRefund(captureId: string, amountUsd?: number) {
+  const { base } = paypalCfg();
+  const token = await ppToken();
+  const body =
+    typeof amountUsd === 'number' && amountUsd > 0
+      ? JSON.stringify({ amount: { value: amountUsd.toFixed(2), currency_code: 'USD' } })
+      : '{}';
+  const r = await fetch(`${base}/v2/payments/captures/${encodeURIComponent(captureId)}/refund`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body,
+  });
+  const j = (await r.json()) as Record<string, unknown>;
+  return { httpOk: r.ok, body: j };
+}
+
 export async function notifyChat(text: string) {
   const webhook = E('GOOGLE_CHAT_WEBHOOK');
   if (!webhook) return;

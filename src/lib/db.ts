@@ -90,6 +90,8 @@ const MIGRATIONS = [
   `ALTER TABLE orders ADD COLUMN paid_usd REAL`,
   `ALTER TABLE orders ADD COLUMN paypal_order_id TEXT`,
   `ALTER TABLE orders ADD COLUMN amount_usd REAL`,
+  `ALTER TABLE orders ADD COLUMN paypal_capture_id TEXT`,
+  `ALTER TABLE inquiries ADD COLUMN paypal_capture_id TEXT`,
   `ALTER TABLE inquiries ADD COLUMN quote_currency TEXT`,
   `ALTER TABLE inquiries ADD COLUMN paid_at TEXT`,
   `ALTER TABLE inquiries ADD COLUMN paid_usd REAL`,
