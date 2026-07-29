@@ -27,23 +27,6 @@ const name = isKo ? d.name : (d.name_en ?? d.name);
 const summary = isKo ? (d.summary ?? '') : (d.summary_en ?? d.summary ?? '');
 const description = isKo ? d.description : (d.description_en ?? d.description);
 const leadTime = isKo ? d.leadTime : (d.leadTime_en ?? d.leadTime);
-// 배송 정보 — 입력된 값만 사양표에 덧붙인다(미입력 항목은 아예 표시하지 않는다).
-// 숫자로 보관하고 표시할 때만 단위를 붙인다 → 배송비 계산에는 원본 숫자를 그대로 쓴다.
-const box = [d.shipBoxLcm, d.shipBoxWcm, d.shipBoxHcm];
-const shipRows: { label: string; value: string }[] = [];
-if (typeof d.shipUnitWeightKg === 'number') {
-  shipRows.push({ label: isKo ? '1장 무게' : 'Unit weight', value: `${d.shipUnitWeightKg} kg` });
-}
-if (typeof d.shipPackWeightKg === 'number') {
-  shipRows.push({ label: isKo ? '포장재 무게' : 'Packaging weight', value: `${d.shipPackWeightKg} kg` });
-}
-if (box.every((v) => typeof v === 'number')) {
-  shipRows.push({
-    label: isKo ? '박스 규격' : 'Box size',
-    value: `${box[0]} × ${box[1]} × ${box[2]} cm`,
-  });
-}
-
 const refundPolicy = isKo ? d.refundPolicy : (d.refundPolicy_en ?? d.refundPolicy);
 const img = d.image ? waferImages[d.image]?.default : undefined;
 ---
@@ -127,7 +110,7 @@ const img = d.image ? waferImages[d.image]?.default : undefined;
       </div>
     </div>
 
-    {(d.specs.length > 0 || shipRows.length > 0) && (
+    {d.specs.length > 0 && (
       <div class="mt-20 max-w-3xl">
         <h2 class="text-sm font-medium uppercase tracking-widest text-accent">{s.specs}</h2>
         <dl class="mt-6 divide-y divide-ink/10 border-t border-ink/10">
@@ -135,12 +118,6 @@ const img = d.image ? waferImages[d.image]?.default : undefined;
             <div class="grid grid-cols-3 gap-4 py-4">
               <dt class="text-sm text-ink/50">{isKo ? sp.label : (sp.label_en ?? sp.label)}</dt>
               <dd class="col-span-2 text-sm text-ink/90">{isKo ? sp.value : (sp.value_en ?? sp.value)}</dd>
-            </div>
-          ))}
-          {shipRows.map((r) => (
-            <div class="grid grid-cols-3 gap-4 py-4">
-              <dt class="text-sm text-ink/50">{r.label}</dt>
-              <dd class="col-span-2 text-sm text-ink/90">{r.value}</dd>
             </div>
           ))}
         </dl>

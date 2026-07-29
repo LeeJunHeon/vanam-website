@@ -8,7 +8,7 @@ const opt = <T extends z.ZodTypeAny>(s: T) =>
 
 // B 방식 전환 1차: team / news / history / materials 4개 컬렉션
 // 모두 JSON 데이터 파일 + file() 로더 (Astro 6.x Content Layer API).
-// partners / achievements / services 는 다음 단계.
+// partners / achievements 는 다음 단계.
 
 // 1. TEAM ──────────────────────────────
 const team = defineCollection({
@@ -103,7 +103,7 @@ const materials = defineCollection({
   }),
 });
 
-// ── B 방식 전환 2차: partners / achievements / services ──────────
+// ── B 방식 전환 2차: partners / achievements ──────────
 
 // 5. PARTNERS (collaboration) ──────────
 const partners = defineCollection({
@@ -130,19 +130,6 @@ const achievements = defineCollection({
   }),
 });
 
-// 7. SERVICES ──────────────────────────
-const services = defineCollection({
-  loader: glob({ pattern: '*.json', base: './src/content/services' }),
-  schema: z.object({
-    title: z.string(),                       // EN
-    description: z.string(),                 // EN
-    title_ko: opt(z.string()),         // KO
-    bullets: opt(z.array(z.string())),        // 상세 항목 (EN)
-    bullets_ko: opt(z.array(z.string())),
-    description_ko: opt(z.string()),   // KO
-    order: z.number().default(0),
-  }),
-});
 
 // 8. FAQ ───────────────────────────────
 // 근거(사이트/콘텐츠 데이터)가 있는 답만 작성. 운영 정보처럼 근거 없는 항목은
@@ -200,12 +187,6 @@ const wafers = defineCollection({
     description_en: opt(z.string()),
     image: opt(z.string()),                             // 대표 이미지 (Keystatic 업로드)
     specs: z.array(z.object({ label: z.string(), value: z.string(), label_en: z.string().optional(), value_en: z.string().optional() })).default([]),
-    // 배송 정보 (해외 배송비 계산용) — 숫자로 받아야 계산에 바로 쓸 수 있다
-    shipUnitWeightKg: opt(z.number()),                  // 웨이퍼 1장 무게 (kg)
-    shipPackWeightKg: opt(z.number()),                  // 포장재 무게 (kg, 수량 무관 고정)
-    shipBoxLcm: opt(z.number()),                        // 박스 가로 (cm)
-    shipBoxWcm: opt(z.number()),                        // 박스 세로 (cm)
-    shipBoxHcm: opt(z.number()),                        // 박스 높이 (cm)
     leadTime: opt(z.string()),                          // 납기 안내
     leadTime_en: opt(z.string()),
     refundPolicy: opt(z.string()),                      // 환불 규정 (스펙과 별도로 하단 표시)
@@ -249,21 +230,6 @@ const policies = defineCollection({
   }),
 });
 
-// 기존 벌크 공정 vs 반암 박막 공정 비교 (기술 페이지)
-const comparison = defineCollection({
-  loader: glob({ pattern: '*.json', base: './src/content/comparison' }),
-  schema: z.object({
-    label: z.string(),                 // 비교 항목 (EN)
-    label_ko: opt(z.string()),
-    bulk: z.string(),                  // 기존 벌크 쪽 값
-    bulk_ko: opt(z.string()),
-    film: z.string(),                  // 반암 박막 쪽 값
-    film_ko: opt(z.string()),
-    note: opt(z.string()),             // 박막 값에 붙는 보조 설명 (예: "1만분의 1 이하")
-    note_ko: opt(z.string()),
-    order: z.number().default(0),
-  }),
-});
 
 // 증착 장비 · 공정 데이터 수집 시스템
 const equipment = defineCollection({
@@ -292,7 +258,7 @@ const analysis = defineCollection({
 });
 
 export const collections = {
-  team, news, blog, history, materials, partners, achievements, services, faq,
-  products, certificates, policies, comparison, equipment, analysis,
+  team, news, blog, history, materials, partners, achievements, faq,
+  products, certificates, policies, equipment, analysis,
   wafers,
 };

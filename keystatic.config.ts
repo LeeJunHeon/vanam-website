@@ -29,7 +29,7 @@ export default config({
     navigation: {
       '콘텐츠': ['banner', 'popup', 'news', 'blog', 'team', 'faq'],
       '회사 정보': ['history', 'achievements', 'partners', 'certificates'],
-      '기술 데이터': ['services', 'materials'],
+      '기술 데이터': ['materials'],
       '스토어': ['products', 'wafers'],
       '사업자·정책': ['company', 'policies'],
     },
@@ -352,21 +352,6 @@ export default config({
           }),
           { label: '사양', itemLabel: (p) => `${p.fields.label.value}: ${p.fields.value.value}` },
         ),
-        // ── 배송 정보 (해외 배송비 계산용) ──
-        // 화면 사양표에도 함께 표시되며, 배송비 조회 시 이 숫자를 그대로 사용한다.
-        // 문자열이 아닌 숫자로 받는 이유: "2.5kg" 같은 표기 흔들림이 계산을 깨뜨리기 때문.
-        shipUnitWeightKg: fields.number({
-          label: '웨이퍼 1장 무게 (kg)',
-          description: '웨이퍼 낱장 무게. 포장재는 아래 항목에 따로 입력합니다. 예: 0.012',
-        }),
-        shipPackWeightKg: fields.number({
-          label: '포장재 무게 (kg)',
-          description: '박스·완충재·카세트 등 수량과 무관하게 더해지는 무게. 예: 0.8',
-        }),
-        shipBoxLcm: fields.number({ label: '박스 가로 (cm)', description: '기본 포장 기준. 예: 30' }),
-        shipBoxWcm: fields.number({ label: '박스 세로 (cm)', description: '예: 30' }),
-        shipBoxHcm: fields.number({ label: '박스 높이 (cm)', description: '예: 15' }),
-
         leadTime: fields.text({ label: '납기 안내 (한글)', description: '예: 사양 확정 후 협의' }),
         leadTime_en: fields.text({ label: '납기 안내 (영문)' }),
         refundPolicy: fields.text({ label: '환불 규정 (한글)', description: '상세 하단에 표시됩니다', multiline: true }),
@@ -590,31 +575,6 @@ export default config({
     }),
 
     // ── 서비스 ────────────────────────────────────────
-    services: collection({
-      label: '서비스',
-      path: 'src/content/services/*',
-      format: { data: 'json' },
-      slugField: 'title',
-      columns: ['order'],
-      schema: {
-        title: fields.slug({
-          name: { label: '서비스명 (영문)', validation: { isRequired: true } },
-          slug: { label: '파일 ID (영문)' },
-        }),
-        description: fields.text({ label: '설명 (영문)', multiline: true, validation: { isRequired: true } }),
-        title_ko: fields.text({ label: '서비스명 (한글)', description: '비우면 영문이 표시됩니다' }),
-        description_ko: fields.text({ label: '설명 (한글)', multiline: true }),
-        bullets: fields.array(fields.text({ label: '항목' }), {
-          label: '상세 항목 (영문)',
-          itemLabel: (p) => p.value,
-        }),
-        bullets_ko: fields.array(fields.text({ label: '항목' }), {
-          label: '상세 항목 (한글)',
-          itemLabel: (p) => p.value,
-        }),
-        order: fields.integer({ label: '표시 순서', defaultValue: 99, validation: { isRequired: true } }),
-      },
-    }),
 
     // ── 소재 라이브러리 (개발자/연구팀용) ─────────────
     materials: collection({
@@ -661,24 +621,6 @@ export default config({
     }),
 
     // ── 벌크 vs 박막 비교 (기술 페이지) ──────────────
-    comparison: collection({
-      label: '벌크 vs 박막 비교',
-      path: 'src/content/comparison/*',
-      format: { data: 'json' },
-      slugField: 'label',
-      columns: ['label_ko', 'order'],
-      schema: {
-        label: fields.slug({ name: { label: '비교 항목 (영문)', description: '예: Process steps' } }),
-        label_ko: fields.text({ label: '비교 항목 (한글)', description: '예: 공정 단계' }),
-        bulk: fields.text({ label: '기존 벌크 (영문)' }),
-        bulk_ko: fields.text({ label: '기존 벌크 (한글)' }),
-        film: fields.text({ label: '반암 박막 (영문)' }),
-        film_ko: fields.text({ label: '반암 박막 (한글)' }),
-        note: fields.text({ label: '보조 설명 (영문)', description: '박막 값 아래 작게 붙습니다. 예: under 1/10,000' }),
-        note_ko: fields.text({ label: '보조 설명 (한글)' }),
-        order: fields.integer({ label: '표시 순서', defaultValue: 0 }),
-      },
-    }),
 
     // ── 장비 ─────────────────────────────────────────
     equipment: collection({
