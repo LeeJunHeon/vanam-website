@@ -11,8 +11,23 @@
 //  2) 스크립트:   const rate = await liveRate(fallback); ... 직접 렌더
 export const FX_ENDPOINT = '/api/paypal/config';
 
+const LS_KEY = 'vanam_fx_rate';
+
 let cached: number | null = null;
 let inflight: Promise<number | null> | null = null;
+
+const isSane = (n: unknown): n is number =>
+  typeof n === 'number' && Number.isFinite(n) && n >= 500 && n <= 5000;
+
+/** 직전 방문에서 받아둔 환율. 네트워크 없이 즉시 쓸 수 있어 가격 깜빡임을 없앤다. */
+export function cachedRate(): number | null {
+  try {
+    const n = Number(localStorage.getItem(LS_KEY));
+    return isSane(n) ? n : null;
+  } catch (e) {
+    return null;
+  }
+}
 
 /** 서버가 저장한 현재 환율. 실패하면 null. 한 페이지에서 한 번만 호출된다. */
 export function fetchRate(): Promise<number | null> {
@@ -23,7 +38,10 @@ export function fetchRate(): Promise<number | null> {
     .then((j: { usdRate?: number } | null) => {
       const n = Number(j?.usdRate);
       // 상식 범위를 벗어난 값은 쓰지 않는다(잘못된 값이 가격에 반영되는 것이 최악).
-      cached = Number.isFinite(n) && n >= 500 && n <= 5000 ? n : null;
+      cached = isSane(n) ? n : null;
+      if (cached !== null) {
+        try { localStorage.setItem(LS_KEY, String(cached)); } catch (e) { /* 저장 실패는 무시 */ }
+      }
       return cached;
     })
     .catch(() => null)
@@ -46,17 +64,28 @@ const fmt = (usd: number) =>
  * `data-krw` 가 붙은 요소의 텍스트를 현재 환율 기준 USD 로 갱신한다.
  * 환율 조회에 실패하면 아무것도 하지 않는다(기존 표시 유지).
  */
-export async function syncPriceTags(root: ParentNode = document): Promise<void> {
-  const els = Array.from(root.querySelectorAll<HTMLElement>('[data-krw]'));
-  if (els.length === 0) return;
-  const rate = await fetchRate();
-  if (!rate) return;
+function paint(els: HTMLElement[], rate: number): void {
   for (const el of els) {
     const krw = Number(el.dataset.krw);
     if (!Number.isFinite(krw) || krw <= 0) continue;
     const suffix = el.dataset.krwSuffix ?? '';
-    el.textContent = fmt(krw / rate) + suffix;
+    const next = fmt(krw / rate) + suffix;
+    if (el.textContent !== next) el.textContent = next;
   }
+}
+
+export async function syncPriceTags(root: ParentNode = document): Promise<void> {
+  const els = Array.from(root.querySelectorAll<HTMLElement>('[data-krw]'));
+  if (els.length === 0) return;
+
+  // ① 직전 방문에서 받아둔 값이 있으면 네트워크를 기다리지 않고 곧바로 반영한다.
+  //    빌드 시점 가격이 잠깐 보였다가 바뀌는 깜빡임을 없애기 위함.
+  const prev = cachedRate();
+  if (prev) paint(els, prev);
+
+  // ② 최신 값을 받아 달라졌을 때만 다시 그린다(대개 변화 없음).
+  const rate = await fetchRate();
+  if (rate && rate !== prev) paint(els, rate);
 }
 
 // 정적 표기(1번 방식)는 자동으로 처리한다.

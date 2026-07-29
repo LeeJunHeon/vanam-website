@@ -174,8 +174,16 @@ const img = d.image ? waferImages[d.image]?.default : undefined;
   addBtn?.addEventListener('click', () => {
     if (addToCart() && msgEl) msgEl.classList.remove('hidden');
   });
+  // 즉시 구매는 장바구니에 담지 않는다.
+  // 담아버리면 결제하지 않고 나갔을 때 항목이 남아, 다음 즉시 구매 때 함께 주문된다.
+  // 세션 한정 키에 이번 건만 넣고, 주문서는 그 키를 우선 사용한다.
   buyBtn?.addEventListener('click', () => {
-    if (addToCart()) location.href = buyBtn.dataset.checkoutUrl ?? '/checkout';
+    const sku = addBtn?.dataset.sku;
+    if (!sku) return;
+    try {
+      sessionStorage.setItem('vanam_buynow', JSON.stringify([{ sku, qty: clampQty() }]));
+    } catch (e) { /* 저장 불가 시 아래 이동만 수행 */ }
+    location.href = buyBtn.dataset.checkoutUrl ?? '/checkout';
   });
 
 </script>

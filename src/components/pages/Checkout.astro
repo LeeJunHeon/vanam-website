@@ -467,6 +467,7 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
     const M = form.dataset;
     const quoteId = M.quote || '';
     const CART_KEY = 'vanam_cart';
+    const BUYNOW_KEY = 'vanam_buynow';
 
     // 전화번호 입력(구매자·수령인)에 국가번호 드롭다운 적용
     const lang = document.documentElement.lang || "en";
@@ -501,7 +502,14 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
     let needsShipping = quoteId ? M.quoteShip === 'true' : false;
 
     if (!quoteId) {
-      try { items = JSON.parse(localStorage.getItem(CART_KEY) ?? '[]'); } catch { items = []; }
+      // 즉시 구매로 들어왔으면 그 항목만 주문한다(장바구니와 섞이지 않게).
+      let buyNow: unknown = null;
+      try { buyNow = JSON.parse(sessionStorage.getItem(BUYNOW_KEY) ?? 'null'); } catch { buyNow = null; }
+      if (Array.isArray(buyNow) && buyNow.length) {
+        items = buyNow as typeof items;
+      } else {
+        try { items = JSON.parse(localStorage.getItem(CART_KEY) ?? '[]'); } catch { items = []; }
+      }
       // localStorage 는 조작 가능하므로 수량을 1~99 정수로 강제한다 (금액은 어차피 서버가 재계산)
       items = items
         .filter((i) => i && typeof i.sku === 'string' && byId.has(i.sku))
@@ -726,7 +734,13 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
         const j = await res.json();
         if (!res.ok || !j.ok) throw new Error(j.error ?? res.status);
 
-        if (!quoteId) localStorage.removeItem(CART_KEY);
+        if (!quoteId) {
+          // 즉시 구매로 들어온 주문은 장바구니를 비우지 않는다(담아둔 다른 상품을 잃지 않도록).
+          let wasBuyNow = false;
+          try { wasBuyNow = Boolean(JSON.parse(sessionStorage.getItem(BUYNOW_KEY) ?? 'null')); } catch (e) {}
+          if (wasBuyNow) sessionStorage.removeItem(BUYNOW_KEY);
+          else localStorage.removeItem(CART_KEY);
+        }
         const base = document.documentElement.lang === 'ko' ? '/ko' : '';
         location.href = `${base}/order/done?id=${encodeURIComponent(j.orderId)}`;
       } catch (err) {
