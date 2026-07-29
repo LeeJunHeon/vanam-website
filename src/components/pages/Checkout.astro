@@ -486,7 +486,7 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
 <script>
   import { initTelInput, normalizeTelInputs } from '../../lib/telInput';
 
-  import { liveRate } from '../../lib/fx-client';
+  import { liveRate, cachedRate } from '../../lib/fx-client';
 
   // Turnstile 전역 API 타입 (api.js 가 window.turnstile 을 주입한다)
   declare global {
@@ -529,7 +529,8 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
     const hintEl = $('pay-hint');
     const feeEl = $('ship-fee');
 
-    let RATE = Number((totalEl as HTMLElement | null)?.dataset.usdRate) || 1500;
+    // 캐시된 환율을 먼저 써서 첫 렌더부터 최신 금액이 나오게 한다(깜빡임 방지).
+    let RATE = cachedRate() || Number((totalEl as HTMLElement | null)?.dataset.usdRate) || 1500;
     const usd = (krw: number) =>
       '$' + (krw / RATE).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 

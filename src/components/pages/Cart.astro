@@ -89,12 +89,14 @@ const quoteCatalog = [
 
   const CART_KEY = 'vanam_cart';
   const root = document.getElementById('cart-root')!;
-  import { liveRate } from '../../lib/fx-client';
+  import { liveRate, cachedRate } from '../../lib/fx-client';
 
   const M = root.dataset;
   const catalog: Product[] = JSON.parse(document.getElementById('catalog')!.textContent ?? '[]');
   const byId = new Map(catalog.map((p) => [p.sku, p]));
-  let RATE = Number(M.usdRate) || 1500;
+  // 첫 렌더 전에 직전 방문의 환율을 먼저 적용한다.
+  // 이 장치가 없으면 빌드 시점 환율로 한 번 그려진 뒤 교체되어 가격이 깜빡인다.
+  let RATE = cachedRate() || Number(M.usdRate) || 1500;
   let rateSynced = false;
   const usd = (krw: number) =>
     '$' + (krw / RATE).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });

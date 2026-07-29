@@ -249,9 +249,9 @@ async function handleOrder({ request, locals }: { request: Request; locals: unkn
             needs_shipping, ship_name, ship_phone, ship_country, ship_zip,
             ship_addr1, ship_addr2, ship_city, ship_state, ship_memo, ship_courier_acct,
             tax_invoice, tax_biz_no, tax_biz_name, tax_ceo, tax_email,
-            desired_date, order_note, amount_usd,
+            desired_date, order_note, amount_usd, pay_method,
             inquiry_id, agreed_terms, locale, created_at)
-         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       )
       .bind(
         orderId, 'pending', amount, 'KRW',
@@ -266,6 +266,7 @@ async function handleOrder({ request, locals }: { request: Request; locals: unkn
         // 주문 시점 환율로 USD 를 확정 저장한다. 이후 환율이 바뀌어도
         // 고객에게 보인 금액과 실제 청구액이 어긋나지 않는다(결제 대조의 기준값).
         amountUsd,
+        payMethod,
         inquiryId || null, 1, locale, created,
       )
       .run();
