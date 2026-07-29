@@ -18,6 +18,7 @@ import company from '../../data/company.json';
 import { COUNTRIES } from '../../lib/countries';
 import { shipLabel, isCollect } from '../../lib/shipping';
 import { db } from '../../lib/db';
+import { getRate, pickWaitUntil } from '../../lib/fx';
 
 const locale = (Astro.currentLocale ?? 'en') as 'ko' | 'en';
 const isKo = locale === 'ko';
@@ -79,6 +80,15 @@ const quoteNeedsShipping = quote
 const countries = COUNTRIES.map((c) => ({ code: c.code, label: isKo ? c.ko : c.en }));
 
 // 배송비 정책 (Keystatic '사업자 정보'에서 국내/해외 각각 설정)
+// 표시 환율은 서버가 저장한 라이브 값을 쓴다.
+// 빌드 시점 company.usdRate 를 박아두면 환율이 바뀌어도 화면만 옛 금액에 머문다.
+let liveRate = company.usdRate || 1500;
+try {
+  liveRate = (await getRate(await db(), pickWaitUntil(Astro.locals))).rate || liveRate;
+} catch (e) {
+  console.error('[checkout] 환율 조회 실패 — 폴백:', e);
+}
+
 const shipFeeDomestic = shipLabel(company.shipDomesticMode, locale);
 const shipFeeIntl = shipLabel(company.shipIntlMode, locale);
 const collectDomestic = isCollect(company.shipDomesticMode);
@@ -118,6 +128,7 @@ const t = isKo
       errBiz: '사업자등록번호가 올바르지 않습니다.',
       errFail: '주문 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.',
       errCaptcha: '봇 확인이 끝날 때까지 잠시 기다렸다가 다시 시도해주세요.',
+      captchaHint: '보안 확인이 끝나면 결제 버튼이 활성화됩니다.',
     }
   : {
       meta: 'Checkout | VanaM', metaDesc: 'Enter your order details and pay.',
@@ -152,6 +163,7 @@ const t = isKo
       errBiz: 'The business registration number is not valid.',
       errFail: 'Could not create the order. Please try again.',
       errCaptcha: 'Please wait a moment for the verification to finish, then try again.',
+      captchaHint: 'The payment button unlocks once the security check completes.',
     };
 
 const req = ' *';
@@ -375,8 +387,6 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
                 data-theme="auto"
                 data-language="auto"
                 data-refresh-expired="auto"
-                data-retry="auto"
-                data-retry-interval="3000"
               ></div>
             </div>
           </fieldset>
@@ -407,7 +417,7 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
                 <p class="text-sm text-ink/60">{t.total}</p>
                 <p class="text-xs text-ink/35">{t.vat}</p>
               </div>
-              <p id="summary-total" data-usd-rate={company.usdRate || 1500} class="text-2xl font-bold text-ink">
+              <p id="summary-total" data-usd-rate={liveRate} class="text-2xl font-bold text-ink">
                 {quote ? `$${Number(quote.quoted_amount ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '$0.00'}
               </p>
             </div>
@@ -417,6 +427,7 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
               <span id="pay-label">{t.submit}</span>
             </button>
             <p id="pay-status" class="mt-3 text-sm" role="status" aria-live="polite"></p>
+            <p id="pay-hint" class="mt-2 hidden text-xs text-ink/45">{t.captchaHint}</p>
 
             <p id="empty-cart" class="mt-4 text-center text-sm text-ink/40" hidden>
               {t.empty} <a href={lhref('/product')} class="text-accent hover:underline">{t.backToShop} →</a>
@@ -475,6 +486,7 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
     const btn = $('pay-btn') as HTMLButtonElement;
     const label = $('pay-label');
     const statusEl = $('pay-status');
+    const hintEl = $('pay-hint');
     const feeEl = $('ship-fee');
 
     const RATE = Number((totalEl as HTMLElement | null)?.dataset.usdRate) || 1500;
@@ -626,11 +638,10 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
       const okAll = gateOk();
       btn.disabled = !okAll;
       // 입력은 다 됐는데 보안 확인만 안 끝난 경우 — 왜 못 누르는지 알려준다
-      if (!okAll && fieldsOk() && !hasToken()) {
-        if (statusEl.textContent !== M.msgCaptcha) setStatus(M.msgCaptcha!, false);
-      } else if (statusEl.textContent === M.msgCaptcha) {
-        statusEl.textContent = '';
-      }
+      // 보안 확인 대기 상태는 '오류'가 아니다.
+      // 1초마다 오류 문구를 다시 띄우고 화면을 스크롤하면 무한 반복처럼 보인다.
+      // 조용한 힌트만 켜고, 실제 오류 문구는 사용자가 제출을 시도했을 때만 띄운다.
+      if (hintEl) hintEl.classList.toggle('hidden', !(!okAll && fieldsOk() && !hasToken()));
     };
     form.addEventListener('input', syncGate);
     form.addEventListener('change', syncGate);
