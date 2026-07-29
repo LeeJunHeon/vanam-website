@@ -195,6 +195,67 @@ const spec = (r: Row) =>
           <div class="mt-6 rounded-lg border border-danger/30 bg-danger/10 p-4 text-sm text-danger">{dbError}</div>
         )}
 
+        <!-- ── 환율 ─────────────────────────────────────── -->
+        <!-- 환율의 진실원은 이 화면 하나다(Keystatic 에는 환율 항목이 없다). -->
+        <section class="mt-10">
+          <div class="rounded-xl border border-ink/10 bg-ink/[0.02] p-5">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <h2 class="text-lg font-semibold text-accent">환율 (USD/KRW)</h2>
+              <div class="flex items-center gap-2">
+                <button id="fx-refresh" type="button"
+                  class="rounded-lg border border-ink/15 px-3 py-1.5 text-sm text-ink/70 transition hover:border-accent hover:text-accent">
+                  지금 갱신
+                </button>
+              </div>
+            </div>
+
+            <dl id="fx-body" class="mt-4 grid gap-x-8 gap-y-2 text-sm sm:grid-cols-2">
+              <div class="flex justify-between border-b border-ink/10 py-2">
+                <dt class="text-ink/50">현재 환율</dt>
+                <dd id="fx-rate" class="font-semibold text-ink">—</dd>
+              </div>
+              <div class="flex justify-between border-b border-ink/10 py-2">
+                <dt class="text-ink/50">적용 방식</dt>
+                <dd id="fx-mode" class="text-ink/90">—</dd>
+              </div>
+              <div class="flex justify-between border-b border-ink/10 py-2">
+                <dt class="text-ink/50">갱신 시각</dt>
+                <dd id="fx-updated" class="text-ink/90">—</dd>
+              </div>
+              <div class="flex justify-between border-b border-ink/10 py-2">
+                <dt class="text-ink/50">출처</dt>
+                <dd id="fx-source" class="text-ink/90">—</dd>
+              </div>
+            </dl>
+
+            <div class="mt-4 flex flex-wrap items-end gap-3">
+              <label class="text-sm">
+                <span class="block text-ink/50">방식</span>
+                <select id="fx-mode-sel" class="mt-1 rounded-lg border border-ink/15 bg-canvas px-3 py-1.5 text-sm">
+                  <option value="auto">자동 (실시간 시장 환율)</option>
+                  <option value="manual">수동 (아래 값 고정)</option>
+                </select>
+              </label>
+              <label class="text-sm">
+                <span class="block text-ink/50">수동 환율 (원/$)</span>
+                <input id="fx-rate-in" type="number" min="500" max="5000" step="0.01" placeholder="예: 1450"
+                  class="mt-1 w-40 rounded-lg border border-ink/15 bg-canvas px-3 py-1.5 text-sm" />
+              </label>
+              <button id="fx-save" type="button"
+                class="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-onbrand transition hover:brightness-110">
+                저장
+              </button>
+              <p id="fx-msg" class="text-sm" role="status" aria-live="polite"></p>
+            </div>
+
+            <p class="mt-3 text-xs leading-relaxed text-ink/40">
+              자동: 하루 한 번 시장 중간환율을 받아 적용합니다. 방문자 접속 시 갱신되며, 조회에 실패하면 마지막 정상값을 유지합니다.
+              직전 값 대비 ±10% 넘게 변동하면 적용을 보류하고 알림을 보냅니다.
+              수동: 지정한 값만 사용하고 자동 갱신을 하지 않습니다. 저장 즉시 사이트에 반영됩니다.
+            </p>
+          </div>
+        </section>
+
         <!-- 견적 요청 -->
         <!-- ── 주문 ─────────────────────────────────────── -->
         <section class="mt-10">
@@ -387,6 +448,101 @@ const spec = (r: Row) =>
     )}
 
     <script>
+      // ── 환율 ──────────────────────────────────────────
+      // 값을 넣는 창구는 이 화면 하나뿐이다(Keystatic 에는 환율 항목이 없다).
+      (() => {
+        const $ = (id: string) => document.getElementById(id);
+        const box = $('fx-body');
+        if (!box) return;
+        const msg = $('fx-msg')!;
+        const sel = $('fx-mode-sel') as HTMLSelectElement;
+        const input = $('fx-rate-in') as HTMLInputElement;
+
+        const say = (t: string, ok = true) => {
+          msg.textContent = t;
+          msg.style.color = ok ? 'var(--color-accent)' : 'var(--color-danger)';
+        };
+
+        const ago = (iso: string | null) => {
+          if (!iso) return '갱신 기록 없음';
+          const h = (Date.now() - Date.parse(iso)) / 36e5;
+          if (!isFinite(h)) return iso;
+          const when = new Date(iso).toLocaleString('ko-KR', { dateStyle: 'short', timeStyle: 'short' });
+          const rel = h < 1 ? '방금 전' : h < 24 ? `${Math.floor(h)}시간 전` : `${Math.floor(h / 24)}일 전`;
+          return `${when} (${rel})`;
+        };
+
+        const paint = (d: Record<string, unknown>) => {
+          const rate = Number(d.rate) || 0;
+          const mode = String(d.mode ?? 'auto');
+          const updated = (d.updatedAt as string) ?? null;
+          $('fx-rate')!.textContent = rate ? `${rate.toLocaleString('ko-KR', { maximumFractionDigits: 2 })} 원/$` : '—';
+          $('fx-mode')!.textContent = mode === 'manual' ? '수동 (고정)' : '자동 (실시간)';
+          $('fx-source')!.textContent = String(d.source ?? '—');
+
+          const el = $('fx-updated')!;
+          el.textContent = ago(updated);
+          // 자동인데 하루 넘게 갱신이 없으면 눈에 띄게 — 조용히 멈춰 있는 상황을 놓치지 않도록
+          const stale = mode === 'auto' && (!updated || Date.now() - Date.parse(updated) > 26 * 36e5);
+          el.style.color = stale ? 'var(--color-danger)' : '';
+
+          sel.value = mode === 'manual' ? 'manual' : 'auto';
+          if (!input.value && rate) input.value = String(Math.round(rate * 100) / 100);
+          input.disabled = sel.value !== 'manual';
+        };
+
+        const load = async () => {
+          try {
+            const r = await fetch('/api/admin/fx', { cache: 'no-store' });
+            const j = await r.json();
+            if (j.ok) paint(j);
+            else say(j.error ?? '조회 실패', false);
+          } catch (e) {
+            say('환율 정보를 불러오지 못했습니다.', false);
+          }
+        };
+
+        const post = async (body: Record<string, unknown>) => {
+          const r = await fetch('/api/admin/fx', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+          });
+          return r.json();
+        };
+
+        sel.addEventListener('change', () => { input.disabled = sel.value !== 'manual'; });
+
+        $('fx-refresh')?.addEventListener('click', async () => {
+          say('갱신 중…');
+          try {
+            const j = await post({ action: 'refresh' });
+            if (j.ok && j.saved) say(`갱신 완료 (${j.reason})`);
+            else if (j.ok) say(`갱신하지 않음: ${j.reason}`, false);
+            else say(j.error ?? '갱신 실패', false);
+          } catch (e) { say('갱신 실패', false); }
+          await load();
+        });
+
+        $('fx-save')?.addEventListener('click', async () => {
+          say('저장 중…');
+          try {
+            if (sel.value === 'manual') {
+              const n = Number(input.value);
+              if (!isFinite(n) || n < 500 || n > 5000) { say('500~5000 사이 숫자를 입력해 주세요.', false); return; }
+              const a = await post({ action: 'set', rate: n });
+              if (!a.ok) { say(a.error === 'out_of_range' ? '범위를 벗어난 값입니다.' : (a.error ?? '저장 실패'), false); return; }
+            }
+            const b = await post({ action: 'mode', mode: sel.value });
+            if (b.ok) say('저장했습니다. 사이트에 즉시 반영됩니다.');
+            else say(b.error ?? '저장 실패', false);
+          } catch (e) { say('저장 실패', false); }
+          await load();
+        });
+
+        void load();
+      })();
+
       // 로그인
       const lf = document.getElementById('login-form') as HTMLFormElement | null;
       lf?.addEventListener('submit', async (e) => {
