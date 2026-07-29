@@ -442,14 +442,14 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
               <legend class="text-sm text-ink/60">{t.payMethod}</legend>
               <div class="mt-2 space-y-2">
                 <label class="flex cursor-pointer gap-3 rounded-lg border border-ink/10 bg-ink/[0.02] p-3 transition hover:border-accent/40">
-                  <input type="radio" name="payMethod" value="paypal" checked class="mt-1 shrink-0" />
+                  <input type="radio" form="checkout-form" name="payMethod" value="paypal" checked class="mt-1 shrink-0" />
                   <span class="min-w-0">
                     <span class="block text-sm font-medium text-ink">{t.payPaypal}</span>
                     <span class="mt-0.5 block text-xs leading-relaxed text-ink/40">{t.payPaypalNote}</span>
                   </span>
                 </label>
                 <label class="flex cursor-pointer gap-3 rounded-lg border border-ink/10 bg-ink/[0.02] p-3 transition hover:border-accent/40">
-                  <input type="radio" name="payMethod" value="bank" class="mt-1 shrink-0" />
+                  <input type="radio" form="checkout-form" name="payMethod" value="bank" class="mt-1 shrink-0" />
                   <span class="min-w-0">
                     <span class="block text-sm font-medium text-ink">{t.payBank}</span>
                     <span class="mt-0.5 block text-xs leading-relaxed text-ink/40">{t.payBankNote}</span>
@@ -727,12 +727,17 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
     };
     // 결제 수단에 따라 버튼 문구를 바꾼다 — 계좌이체는 '결제'가 아니라 '주문 접수'다.
     const payMethod = () =>
-      (form.querySelector('input[name="payMethod"]:checked') as HTMLInputElement | null)?.value ?? 'paypal';
+      (document.querySelector('input[name="payMethod"]:checked') as HTMLInputElement | null)?.value ?? 'paypal';
     const syncPayLabel = () => {
       if (gateBusy) return;
       label.textContent = payMethod() === 'bank' ? M.labelSendBank! : M.labelSend!;
     };
-    form.addEventListener('change', syncPayLabel);
+    // 라디오는 요약 카드(폼 바깥)에 있어 form 의 change 이벤트로는 잡히지 않는다.
+    // form 속성으로 폼에 소속시켰더라도 이벤트 버블링 경로는 DOM 트리를 따르므로 직접 연결한다.
+    const payRadios = Array.from(
+      document.querySelectorAll<HTMLInputElement>('input[name="payMethod"]'),
+    );
+    for (const r of payRadios) r.addEventListener('change', syncPayLabel);
     syncPayLabel();
 
     form.addEventListener('input', syncGate);
@@ -756,6 +761,8 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
       // 전화번호(구매자·수령인)를 국제표준(+82...)으로 변환한 뒤 수집
       normalizeTelInputs(form);
       const data = Object.fromEntries(new FormData(form).entries()) as Record<string, string>;
+      // 라디오가 폼 바깥에 있어 FormData 가 놓칠 수 있다. 판정값을 명시적으로 싣는다.
+      data.payMethod = payMethod();
       delete data.vanam_hp_note;
 
       // Turnstile 토큰 확인 (FormData 가 cf-turnstile-response 를 자동 수집한다)

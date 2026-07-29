@@ -15,13 +15,13 @@ const isKo = locale === 'ko';
 const lhref = (p: string) => getRelativeLocaleUrl(locale, p);
 
 const orderId = Astro.url.searchParams.get('id') ?? '';
-let order: { id: string; amount: number; currency?: string; status: string; buyer_email: string; tax_invoice: number; paid_at?: string | null; amount_usd?: number | null; paid_usd?: number | null } | null = null;
+let order: { id: string; amount: number; currency?: string; status: string; buyer_email: string; tax_invoice: number; paid_at?: string | null; amount_usd?: number | null; paid_usd?: number | null; pay_method?: string | null } | null = null;
 
 if (/^ORD-\d{8}-[A-Z0-9]{4}$/.test(orderId)) {
   const d = await db();
   if (d) {
     order = await d
-      .prepare(`SELECT id, amount, currency, status, buyer_email, tax_invoice, paid_at, amount_usd, paid_usd FROM orders WHERE id = ?`)
+      .prepare(`SELECT id, amount, currency, status, buyer_email, tax_invoice, paid_at, amount_usd, paid_usd, pay_method FROM orders WHERE id = ?`)
       .bind(orderId)
       .first();
   }
@@ -31,7 +31,10 @@ const pp = paypalCfg();
 const paypalOn = pp.enabled;
 const ppClient = pp.clientId;
 // 계좌이체 주문은 결제 단계가 없다 — 주문서에서 넘긴 표식으로 구분한다.
-const isBank = Astro.url.searchParams.get('pay') === 'bank';
+// 저장된 결제수단이 진실이다. URL 표식은 DB 값이 없을 때의 보조 수단으로만 쓴다.
+const isBank = order
+  ? String(order.pay_method ?? '') === 'bank'
+  : Astro.url.searchParams.get('pay') === 'bank';
 
 const usdRate = company.usdRate || 1500;
 // 표시 금액 우선순위: 실제 청구액(paid_usd) → 주문 시점 확정액(amount_usd) → 환산 폴백.
