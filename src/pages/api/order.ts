@@ -84,6 +84,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
   const shipMemo = str(body.shipMemo).slice(0, 1000);
   const desiredDate = str(body.desiredDate).slice(0, 120);
   const orderNote = str(body.orderNote).slice(0, 2000);
+  // 결제 수단(paypal|bank) — 국내 고객은 PayPal 을 쓸 수 없어 계좌이체로 안내한다.
+  const payMethod = str(body.payMethod) === 'bank' ? 'bank' : 'paypal';
   const shipCourierAcct = str(body.shipCourierAcct).slice(0, 60);
 
   let shipCountry = str(body.shipCountry).toUpperCase().slice(0, 40);
@@ -278,8 +280,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
     '';
   const webhook = typeof rawHook === 'string' ? rawHook.trim().replace(/^["']|["']$/g, '') : '';
 
-  const text = [
-    '🛒 *새 주문 (결제 대기)*',
+  // 주문 상세 — 계좌이체는 접수 즉시, PayPal 은 결제가 완료된 뒤에 이 내용을 보낸다.
+  const detail = [
     `주문번호: ${orderId}`,
     `금액: ₩${amount.toLocaleString('ko-KR')} (≈ $${amountUsd.toFixed(2)} USD · 환율 ${Math.round(fx.rate).toLocaleString('ko-KR')})`,
     ...lines.map((l) => `· ${l.name} × ${l.qty} = ₩${l.subtotal.toLocaleString('ko-KR')} (≈ $${(l.subtotal / fx.rate).toFixed(2)})`),
@@ -295,7 +297,21 @@ export const POST: APIRoute = async ({ request, locals }) => {
     `(${locale} · ${created})`,
   ].filter(Boolean).join('\n');
 
-  if (webhook) {
+  // 결제 완료 시 같은 내용을 보낼 수 있도록 주문에 저장해 둔다.
+  // (결제는 시간이 지난 뒤 다른 경로(웹훅)로 확정될 수 있어, 그 시점에 재구성이 어렵다)
+  try {
+    await d?.prepare(`UPDATE orders SET chat_detail = ? WHERE id = ?`).bind(detail, orderId).run();
+  } catch (e) {
+    console.error('[order] 알림 본문 저장 실패(주문은 정상):', e);
+  }
+
+  // PayPal 을 고른 주문은 여기서 알리지 않는다 — 결제하지 않고 이탈하는 경우가 많다.
+  // 실제 결제가 확정되는 순간(paypal-settle)에 같은 내용이 발송된다.
+  const text = payMethod === 'bank'
+    ? ['🏦 *새 주문 (국내 · 계좌이체 안내 필요)*', detail].join('\n')
+    : '';
+
+  if (webhook && text) {
     try {
       await fetch(webhook, {
         method: 'POST',
@@ -305,6 +321,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
     } catch (e) {
       console.error('[order] 알림 실패 (주문은 저장됨):', e);
     }
+  } else if (webhook) {
+    // PayPal 주문 — 결제 완료 시 발송되므로 접수 시점에는 알리지 않는다.
   } else {
     // ⚠️ payload(text)에는 주문자 이름·이메일·전화·배송지가 들어있다. 로그에 남기지 않는다.
     //    진단은 주문번호만으로 충분하다.

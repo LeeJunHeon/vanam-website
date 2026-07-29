@@ -86,8 +86,12 @@ export async function settlePayment(
       .run();
   }
 
-  // 어느 경로로 확정됐는지 남긴다 — 문제 추적 시 결정적인 단서가 된다.
+  // 결제가 확정된 지금이 알릴 시점이다(주문 접수 시점에는 알리지 않는다 —
+  // PayPal 을 고르고 결제하지 않는 경우가 많아 소음이 된다).
+  // 주문 접수 때 저장해 둔 상세를 그대로 붙여 담당자가 한 번에 파악하게 한다.
   const via = args.source === 'webhook' ? ' · 웹훅 확정' : '';
-  await notifyChat(`💳 [PayPal 결제완료] ${ref} — $${args.paidUsd.toFixed(2)} USD (paypal: ${args.ppOrderId})${via}`);
+  const head = `💳 *결제 완료* — $${args.paidUsd.toFixed(2)} USD (paypal: ${args.ppOrderId})${via}`;
+  const detail = String(row.chat_detail ?? '').trim();
+  await notifyChat(detail ? `${head}\n${detail}` : `${head}\n주문번호: ${ref}`);
   return { ok: true, ref, paidUsd: args.paidUsd, duplicate: false };
 }
