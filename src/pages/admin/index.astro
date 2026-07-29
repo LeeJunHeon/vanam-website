@@ -95,8 +95,6 @@ const when = (v: string) => {
 const STATUS_KO: Record<string, string> = {
   new: '신규', quoted: '견적 발송', replied: '회신 완료', paid: '결제 완료', closed: '종료',
 };
-// 관리자가 고를 수 있는 상태 (paid 는 결제 경로만 기록)
-const QUOTE_EDITABLE = ['new', 'quoted', 'replied', 'closed'];
 const STATUS_COLOR: Record<string, string> = {
   paid: 'bg-ok/15 text-ok border-ok/30',
   new: 'bg-accent/15 text-accent border-accent/30',
@@ -304,139 +302,114 @@ const spec = (r: Row) =>
             <div class="mt-5 space-y-4">
               {orders.map((o) => (
                 <article class="rounded-xl border border-ink/10 bg-ink/[0.02] p-5" data-order={o.id}>
-                  <div class="flex flex-wrap items-start justify-between gap-3">
-                    <div class="min-w-0">
-                      <div class="flex flex-wrap items-center gap-2">
-                        {/* PayPal 주문은 결제 전이면 시스템이 이미 아는 상태이므로 별도 "결제 대기" 개념이 필요 없다.
-                            계좌이체만 사람이 확인해야 하므로 "입금 대기"로 구분한다. */}
-                        <span class={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${
-                          o.status === 'pending'
-                            ? (o.pay_method === 'bank' ? 'border-warn/30 bg-warn/10 text-warn' : 'border-ink/10 bg-ink/5 text-ink/40')
-                            : (ORDER_COLOR[o.status] ?? '')
-                        }`}>
-                          {o.status === 'pending'
-                            ? (o.pay_method === 'bank' ? '입금 대기' : '미결제')
-                            : (ORDER_LABEL[o.status] ?? o.status)}
-                        </span>
-                        <span class="font-mono text-xs text-ink/35">{o.id}</span>
-                        <span class="text-xs text-ink/35">{when(o.created_at)}</span>
-                        {o.inquiry_id && <span class="font-mono text-xs text-info/60">← {o.inquiry_id}</span>}
-                      </div>
-
-                      {/* 접히는 영역 — 목록이 길어지지 않도록 기본은 요약만 보인다 */}
-                      <div data-order-body hidden>
-                      <ul class="mt-3 space-y-1 text-sm">
-                        {(orderItems[o.id] ?? []).map((i) => (
-                          <li class="text-ink/70">
-                            {i.name} <span class="text-ink/35">× {i.qty}</span>
-                            <span class="ml-2 text-ink/50">{won(i.subtotal)}</span>
-                          </li>
-                        ))}
-                      </ul>
-
-                      <p class="mt-3 text-sm text-ink/50">
-                        {o.buyer_name}{o.buyer_company ? ` · ${o.buyer_company}` : ''}<br />
-                        <a href={`mailto:${o.buyer_email}`} class="text-accent hover:underline">{o.buyer_email}</a>
-                        {o.buyer_phone ? ` · ${o.buyer_phone}` : ''}
-                      </p>
-
-                      {o.needs_shipping ? (
-                        <p class="mt-3 text-sm leading-relaxed text-ink/45">
-                          <span class="text-ink/30">배송</span> [{o.ship_country}] {o.ship_name} · {o.ship_phone}<br />
-                          ({o.ship_zip}) {[o.ship_addr1, o.ship_addr2, o.ship_city, o.ship_state].filter(Boolean).join(', ')}
-                          {o.ship_memo && <><br /><span class="text-ink/30">요청</span> {o.ship_memo}</>}
-                          {o.desired_date && <><br /><span class="text-ink/30">희망 완료</span> {o.desired_date}</>}
-                          {o.order_note && <><br /><span class="text-ink/30">요청사항</span> {o.order_note}</>}
-                          {o.ship_courier_acct && <><br /><span class="text-ink/30">착불 계정</span> {o.ship_courier_acct}</>}
-                        </p>
-                      ) : (
-                        <p class="mt-3 text-sm text-ink/35">실물 배송 없음 (분석 서비스)</p>
-                      )}
-
-                      {o.tax_invoice === 1 && (
-                        <p class="mt-3 rounded-lg border border-ink/10 bg-ink/[0.03] p-3 text-sm text-ink/60">
-                          📄 세금계산서 — {o.tax_biz_name} ({o.tax_biz_no})
-                          {o.tax_ceo ? ` · 대표 ${o.tax_ceo}` : ''}<br />
-                          <span class="text-ink/40">수신</span> {o.tax_email}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* 실제 청구된 통화·금액이 사실이다. 환산액은 참고로 작게 붙인다. */}
-                    <div class="shrink-0 text-right">
-                      {Number(o.paid_usd) > 0 ? (
-                        <>
-                          <p class="text-xl font-bold text-ink">${Number(o.paid_usd).toFixed(2)} <span class="text-sm font-normal text-ink/40">USD</span></p>
-                          <p class="mt-0.5 text-xs text-ink/35">결제 완료 · {won(o.amount)}</p>
-                        </>
-                      ) : Number(o.amount_usd) > 0 ? (
-                        <>
-                          <p class="text-xl font-bold text-ink">${Number(o.amount_usd).toFixed(2)} <span class="text-sm font-normal text-ink/40">USD</span></p>
-                          <p class="mt-0.5 text-xs text-ink/35">결제 예정 · {won(o.amount)}</p>
-                        </>
-                      ) : (
-                        <>
-                          <p class="text-xl font-bold text-ink">{won(o.amount)}</p>
-                          <p class="mt-0.5 text-xs text-ink/35">
-                            {o.pay_method === 'bank' ? '국내 · 계좌이체' : '미결제'}
-                          </p>
-                        </>
-                      )}
-                    </div>
+                  {/* 1행: 상태 · 날짜 · 구분선 */}
+                  <div class="flex items-center gap-3">
+                    <span class={`shrink-0 rounded-full border px-2.5 py-0.5 text-xs font-medium ${
+                      o.status === 'pending'
+                        ? (o.pay_method === 'bank' ? 'border-warn/30 bg-warn/10 text-warn' : 'border-ink/10 bg-ink/5 text-ink/40')
+                        : (ORDER_COLOR[o.status] ?? '')
+                    }`}>
+                      {o.status === 'pending'
+                        ? (o.pay_method === 'bank' ? '입금 대기' : '미결제')
+                        : (ORDER_LABEL[o.status] ?? o.status)}
+                    </span>
+                    <span class="shrink-0 text-xs text-ink/35">{when(o.created_at)}</span>
+                    <span class="h-px flex-1 bg-ink/10"></span>
                   </div>
 
-                  <!-- 상태 변경 -->
-                  <div class="mt-5 grid gap-3 border-t border-ink/10 pt-5 md:grid-cols-[10rem_9rem_1fr_auto]">
+                  {/* 2행: 주문번호(크게) · 금액(우측) */}
+                  <div class="mt-3 flex flex-wrap items-start justify-between gap-4">
+                    <div class="min-w-0">
+                      <p class="font-mono text-lg font-bold tracking-tight text-ink">{o.id}</p>
+                      {o.inquiry_id && <p class="mt-0.5 font-mono text-xs text-info/60">← {o.inquiry_id}</p>}
+                    </div>
+                    <p class="shrink-0 text-right text-2xl font-bold text-ink">
+                      {Number(o.paid_usd) > 0
+                        ? <>${Number(o.paid_usd).toFixed(2)} <span class="text-sm font-normal text-ink/40">USD</span></>
+                        : Number(o.amount_usd) > 0
+                          ? <>${Number(o.amount_usd).toFixed(2)} <span class="text-sm font-normal text-ink/40">USD</span></>
+                          : won(o.amount)}
+                    </p>
+                  </div>
+
+                  {/* 3행: 진행 처리 — 금액 아래 우측 정렬 */}
+                  <div class="mt-4 flex flex-wrap items-center justify-end gap-2">
                     <select name="status" class="rounded-lg border border-ink/10 bg-ink/[0.03] px-3 py-2 text-sm text-ink">
-                      {ORDER_EDITABLE.map((s) => (
-                        <option value={s.value} selected={s.value === o.status}>{s.label}</option>
+                      {ORDER_EDITABLE.map((st) => (
+                        <option value={st.value} selected={st.value === o.status}>{st.label}</option>
                       ))}
                     </select>
                     <input name="trackingCourier" type="text" placeholder="택배사" value={o.tracking_courier ?? ''}
-                      class="rounded-lg border border-ink/10 bg-ink/[0.03] px-3 py-2 text-sm text-ink placeholder-ink/25" />
+                      class="w-28 rounded-lg border border-ink/10 bg-ink/[0.03] px-3 py-2 text-sm text-ink placeholder-ink/30" />
                     <input name="trackingNo" type="text" placeholder="송장번호" value={o.tracking_no ?? ''}
-                      class="rounded-lg border border-ink/10 bg-ink/[0.03] px-3 py-2 text-sm text-ink placeholder-ink/25" />
+                      class="w-40 rounded-lg border border-ink/10 bg-ink/[0.03] px-3 py-2 text-sm text-ink placeholder-ink/30" />
                     <button type="button" data-save-order={o.id}
-                      class="rounded-lg bg-brand px-5 py-2 text-sm font-semibold text-onbrand transition hover:brightness-110 disabled:opacity-50">저장</button>
+                      class="rounded-lg bg-brand px-5 py-2 text-sm font-semibold text-onbrand transition hover:brightness-110">저장</button>
                   </div>
-                  {/* 결제 관련 액션 — 진행 상태(위)와 구분되도록 한 줄로 모으고 우측 정렬한다.
-                      취소는 결제수단과 무관하게 미결제 주문이면 가능하다. */}
-                  <div class="mt-3 flex flex-wrap items-center justify-end gap-2 border-t border-ink/10 pt-3">
+
+                  {/* 결제 액션 */}
+                  <div class="mt-2 flex flex-wrap items-center justify-end gap-2">
                     {!o.paid_at && o.pay_method === 'bank' && (
                       <button type="button" data-confirm-deposit={o.id}
-                        class="rounded-lg border border-ok/30 px-3 py-1.5 text-xs font-medium text-ok transition hover:bg-ok/10">
-                        입금 확인
-                      </button>
+                        class="rounded-lg border border-ok/30 px-3 py-1.5 text-xs font-medium text-ok transition hover:bg-ok/10">입금 확인</button>
                     )}
                     {!o.paid_at && o.status !== 'cancelled' && (
                       <button type="button" data-cancel-order={o.id}
-                        class="rounded-lg border border-ink/15 px-3 py-1.5 text-xs font-medium text-ink/50 transition hover:border-danger/40 hover:text-danger">
-                        주문 취소
-                      </button>
+                        class="rounded-lg border border-ink/15 px-3 py-1.5 text-xs font-medium text-ink/50 transition hover:border-danger/40 hover:text-danger">주문 취소</button>
                     )}
                     {o.paid_at && o.paypal_capture_id && o.status !== 'refunded' && (
                       <button type="button" data-refund={o.id}
-                        class="rounded-lg border border-danger/30 px-3 py-1.5 text-xs font-medium text-danger transition hover:bg-danger/10">
-                        환불 (PayPal)
-                      </button>
-                    )}
-                    {o.paid_at && !o.paypal_capture_id && (
-                      <span class="text-xs text-ink/30">환불은 PayPal 대시보드에서 처리</span>
+                        class="rounded-lg border border-danger/30 px-3 py-1.5 text-xs font-medium text-danger transition hover:bg-danger/10">환불</button>
                     )}
                   </div>
-                  <input name="adminMemo" type="text" placeholder="관리자 메모 (고객에게 안 보임)" value={o.admin_memo ?? ''}
-                    class="mt-3 w-full rounded-lg border border-ink/10 bg-ink/[0.03] px-3 py-2 text-sm text-ink placeholder-ink/25" />
-                  <p class="mt-2 text-sm" data-order-status={o.id} role="status" aria-live="polite"></p>
-                      </div>
-                <div class="mt-3 flex justify-end">
-                  <button type="button" data-toggle-order aria-expanded="false"
-                    class="flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs text-ink/40 transition hover:text-accent">
-                    세부정보
-                    <svg data-chevron class="h-3.5 w-3.5 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M6 9l6 6 6-6" />
-                    </svg>
-                  </button>
-                </div>
+
+                  <p class="mt-2 text-right text-sm" data-order-status={o.id} role="status" aria-live="polite"></p>
+
+                  {/* 세부정보 — 클릭 시 아래에 상세가 펼쳐진다 */}
+                  <div class="mt-3 flex justify-end border-t border-ink/10 pt-3">
+                    <button type="button" data-toggle-order aria-expanded="false"
+                      class="flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs text-ink/40 transition hover:text-accent">
+                      세부정보
+                      <svg data-chevron class="h-3.5 w-3.5 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M6 9l6 6 6-6" />
+                      </svg>
+                    </button>
+                  </div>
+
+                  <div data-order-body hidden class="mt-3 space-y-3 border-t border-ink/10 pt-3 text-sm">
+                    <ul class="space-y-1">
+                      {(orderItems[o.id] ?? []).map((i) => (
+                        <li class="text-ink/70">{i.name} <span class="text-ink/35">× {i.qty}</span>
+                          <span class="ml-2 text-ink/50">{won(i.subtotal)}</span></li>
+                      ))}
+                    </ul>
+                    <p class="text-ink/50">
+                      {o.buyer_name}{o.buyer_company ? ` · ${o.buyer_company}` : ''}<br />
+                      <a href={`mailto:${o.buyer_email}`} class="text-accent hover:underline">{o.buyer_email}</a>
+                      {o.buyer_phone ? ` · ${o.buyer_phone}` : ''}
+                    </p>
+                    {o.needs_shipping ? (
+                      <p class="leading-relaxed text-ink/45">
+                        <span class="text-ink/30">배송</span> [{o.ship_country}] {o.ship_name} · {o.ship_phone}<br />
+                        ({o.ship_zip}) {[o.ship_addr1, o.ship_addr2, o.ship_city, o.ship_state].filter(Boolean).join(', ')}
+                        {o.ship_memo && <><br /><span class="text-ink/30">요청</span> {o.ship_memo}</>}
+                        {o.desired_date && <><br /><span class="text-ink/30">희망일</span> {o.desired_date}</>}
+                        {o.order_note && <><br /><span class="text-ink/30">요청사항</span> {o.order_note}</>}
+                        {o.ship_courier_acct && <><br /><span class="text-ink/30">착불 계정</span> {o.ship_courier_acct}</>}
+                      </p>
+                    ) : (
+                      <p class="text-ink/35">실물 배송 없음 (분석 서비스)</p>
+                    )}
+                    {o.tax_invoice === 1 && (
+                      <p class="rounded-lg border border-ink/10 bg-ink/[0.03] p-3 text-ink/60">
+                        📄 세금계산서 — {o.tax_biz_name} ({o.tax_biz_no})
+                        {o.tax_ceo ? ` · 대표 ${o.tax_ceo}` : ''}<br />
+                        <span class="text-ink/40">수신</span> {o.tax_email}
+                      </p>
+                    )}
+                    <input name="adminMemo" type="text" placeholder="관리자 메모 (저장 버튼으로 반영)" value={o.admin_memo ?? ''}
+                      class="w-full rounded-lg border border-ink/10 bg-ink/[0.03] px-3 py-2 text-sm text-ink placeholder-ink/30" />
+                  </div>
                 </article>
               ))}
             </div>
@@ -493,15 +466,6 @@ const spec = (r: Row) =>
                       <label class="block text-xs text-ink/45">메모</label>
                       <input name="note" type="text" value={r.quote_note ?? ''} placeholder="고객 회신에 넣을 설명"
                         class="mt-1 w-full rounded-lg border border-ink/10 bg-ink/[0.03] px-3 py-2 text-sm text-ink outline-none focus:border-accent" />
-                    </div>
-                    <div>
-                      <label class="block text-xs text-ink/45">상태</label>
-                      <select name="status"
-                        class="mt-1 rounded-lg border border-ink/10 bg-ink/[0.03] px-3 py-2 text-sm text-ink outline-none focus:border-accent">
-                        {QUOTE_EDITABLE.map((v) => ([v, STATUS_KO[v]] as const)).map(([v, l]) => (
-                          <option value={v} selected={r.status === v}>{l}</option>
-                        ))}
-                      </select>
                     </div>
                     <button type="submit"
                       class="rounded-lg bg-brand px-5 py-2 text-sm font-semibold text-onbrand transition hover:brightness-110">

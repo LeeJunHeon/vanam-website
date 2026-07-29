@@ -286,6 +286,9 @@ const inputClass =
                   throw new Error(j2.error || 'capture_failed');
                 }
                 wrap.innerHTML = `<p class="rounded-lg border border-ok/25 bg-ok/10 p-3 text-center text-sm font-semibold text-ok">✅ ${P.paidDone} — $${Number(j2.paidUsd).toFixed(2)} USD</p>`;
+                // 결제로 상태가 바뀌었으므로 조회를 다시 실행한다.
+                // (버튼만 바꾸면 상단 상태 배지가 옛 값으로 남는다)
+                setTimeout(function () { form.requestSubmit(); }, 900);
               },
               onError: (e2: unknown) => { console.error(e2); if (!handled) showErr(P.mError); },
             }).render(btnEl);

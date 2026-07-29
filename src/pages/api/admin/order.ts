@@ -89,12 +89,13 @@ export const POST: APIRoute = async ({ request }) => {
   let status = str(body.status) as Status;
   if (!STATUSES.includes(status)) return json({ ok: false, error: 'bad_status' }, 400);
 
-  // 송장번호를 새로 넣었는데 상태가 아직 '제작 중'이면 '발송 완료'로 올린다.
-  // 실무에서 송장 입력 = 발송이므로, 상태를 따로 바꾸는 것을 잊기 쉽다.
-  if (trackingNo && status === 'preparing') status = 'shipped';
-
-  let trackingNo = str(body.trackingNo).slice(0, 60);
+  const trackingNo = str(body.trackingNo).slice(0, 60);
   const trackingCourier = str(body.trackingCourier).slice(0, 40);
+
+  // 송장번호를 넣었는데 상태가 아직 '제작 중'이면 '발송 완료'로 올린다.
+  // 실무에서 송장 입력 = 발송이므로, 상태를 따로 바꾸는 것을 잊기 쉽다.
+  // ※ trackingNo 선언 뒤에 와야 한다(위에 두면 ReferenceError).
+  if (trackingNo && status === 'preparing') status = 'shipped';
   const adminMemo = str(body.adminMemo).slice(0, 2000);
   const now = nowIso();
 
