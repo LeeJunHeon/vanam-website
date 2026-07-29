@@ -77,8 +77,9 @@ const usdRate = company.usdRate || 1500;
 const waferKrws = allWafers
   .filter((w) => w.data.published && typeof w.data.priceKrw === 'number' && w.data.priceKrw > 0)
   .map((w) => w.data.priceKrw as number);
-const waferFromLabel = waferKrws.length
-  ? (isKo ? `${formatUsd(Math.min(...waferKrws), usdRate)} 부터` : `From ${formatUsd(Math.min(...waferKrws), usdRate)}`)
+const waferMinKrw = waferKrws.length ? Math.min(...waferKrws) : 0;
+const waferFromLabel = waferMinKrw
+  ? (isKo ? `${formatUsd(waferMinKrw, usdRate)} 부터` : `From ${formatUsd(waferMinKrw, usdRate)}`)
   : null;
 ---
 
@@ -166,9 +167,13 @@ const waferFromLabel = waferKrws.length
                   <p class="mt-2 line-clamp-2 text-sm leading-relaxed text-ink/50">{summary(p)}</p>
                   <div class="mt-5 flex items-end justify-between gap-3 pt-1">
                     {p.data.category === 'wafer' && waferFromLabel ? (
-                      <p class="text-lg font-bold text-ink">{waferFromLabel}</p>
+                      <p class="text-lg font-bold text-ink">
+                        {isKo
+                          ? (<><span data-krw={waferMinKrw}>{formatUsd(waferMinKrw, usdRate)}</span> 부터</>)
+                          : (<>From <span data-krw={waferMinKrw}>{formatUsd(waferMinKrw, usdRate)}</span></>)}
+                      </p>
                     ) : p.data.pricingType === 'fixed' && p.data.price ? (
-                      <p class="text-xl font-bold text-ink">{formatUsd(p.data.price, usdRate)}<span class="ml-1.5 text-xs font-normal text-ink/40">USD</span></p>
+                      <p class="text-xl font-bold text-ink"><span data-krw={p.data.price}>{formatUsd(p.data.price, usdRate)}</span><span class="ml-1.5 text-xs font-normal text-ink/40">USD</span></p>
                     ) : (
                       <p class="text-base font-semibold text-accent">{s.priceOnRequest}</p>
                     )}
@@ -445,4 +450,9 @@ const waferFromLabel = waferKrws.length
     slider.addEventListener('mouseenter', () => clearInterval(timer));
     slider.addEventListener('mouseleave', reset);
   });
+</script>
+
+<script>
+  // 정적 페이지라 가격이 빌드 시점 환율로 박힌다. 현재 환율로 표시만 갱신한다.
+  import '../../lib/fx-client';
 </script>

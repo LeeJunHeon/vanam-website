@@ -56,7 +56,7 @@ const usdRate = company.usdRate || 1500;
         <div class="mt-8 border-y border-ink/10 py-6">
           {isFixed ? (
             <p class="text-3xl font-bold text-ink">
-              {formatUsd(d.price, usdRate)}<span class="ml-2 text-sm font-normal text-ink/40">USD</span>
+              <span data-krw={d.price}>{formatUsd(d.price, usdRate)}</span><span class="ml-2 text-sm font-normal text-ink/40">USD</span>
             </p>
           ) : (
             <p class="text-2xl font-semibold text-accent">{s.priceOnRequest}</p>
@@ -177,4 +177,9 @@ const usdRate = company.usdRate || 1500;
   });
 
   paint();
+</script>
+
+<script>
+  // 정적 페이지라 가격이 빌드 시점 환율로 박힌다. 현재 환율로 표시만 갱신한다.
+  import '../../lib/fx-client';
 </script>

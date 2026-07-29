@@ -450,6 +450,8 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
 <script>
   import { initTelInput, normalizeTelInputs } from '../../lib/telInput';
 
+  import { liveRate } from '../../lib/fx-client';
+
   // Turnstile 전역 API 타입 (api.js 가 window.turnstile 을 주입한다)
   declare global {
     interface Window {
@@ -482,6 +484,7 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
 
     const linesEl = document.getElementById('summary-lines');
     const totalEl = $('summary-total');
+    let rateSynced = false;
     const emptyEl = $('empty-cart');
     const btn = $('pay-btn') as HTMLButtonElement;
     const label = $('pay-label');
@@ -489,7 +492,7 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
     const hintEl = $('pay-hint');
     const feeEl = $('ship-fee');
 
-    const RATE = Number((totalEl as HTMLElement | null)?.dataset.usdRate) || 1500;
+    let RATE = Number((totalEl as HTMLElement | null)?.dataset.usdRate) || 1500;
     const usd = (krw: number) =>
       '$' + (krw / RATE).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -519,6 +522,14 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
         linesEl!.appendChild(li);
       }
       totalEl.textContent = usd(total);
+      // HTML 이 캐시되었거나 SSR 환율 조회가 실패했을 수 있다.
+      // 현재 환율을 받아 값이 다르면 한 번만 다시 그린다(레이아웃 변화 없음).
+      if (!rateSynced) {
+        rateSynced = true;
+        void liveRate(RATE).then((r) => {
+          if (r > 0 && Math.abs(r - RATE) > 0.5) { RATE = r; render(); }
+        });
+      }
 
       if (items.length === 0) {
         btn.disabled = true;

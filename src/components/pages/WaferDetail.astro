@@ -56,7 +56,7 @@ const img = d.image ? waferImages[d.image]?.default : undefined;
 
         <div class="mt-8 border-y border-ink/10 py-6">
           {typeof d.priceKrw === 'number' && d.priceKrw > 0 ? (
-            <p class="text-3xl font-bold text-ink">{formatUsd(d.priceKrw, usdRate)}<span class="ml-1.5 text-sm font-normal text-ink/40">USD</span></p>
+            <p class="text-3xl font-bold text-ink"><span data-krw={d.priceKrw}>{formatUsd(d.priceKrw, usdRate)}</span><span class="ml-1.5 text-sm font-normal text-ink/40">USD</span></p>
           ) : (
             <p class="text-2xl font-semibold text-accent">{s.priceOnRequest}</p>
           )}
@@ -180,3 +180,8 @@ const img = d.image ? waferImages[d.image]?.default : undefined;
 
 </script>
 </BaseLayout>
+
+<script>
+  // 정적 페이지라 가격이 빌드 시점 환율로 박힌다. 현재 환율로 표시만 갱신한다.
+  import '../../lib/fx-client';
+</script>

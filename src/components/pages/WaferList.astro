@@ -74,7 +74,7 @@ const summary = (w) => (isKo ? (w.data.summary ?? '') : (w.data.summary_en ?? w.
                 <p class="mt-2 line-clamp-2 text-sm leading-relaxed text-ink/50">{summary(w)}</p>
                 <div class="mt-5 flex items-end justify-between gap-3 pt-1">
                   {typeof w.data.priceKrw === 'number' && w.data.priceKrw > 0 ? (
-                    <p class="text-lg font-bold text-ink">{formatUsd(w.data.priceKrw, usdRate)}<span class="ml-1 text-[11px] font-normal text-ink/40">USD</span></p>
+                    <p class="text-lg font-bold text-ink"><span data-krw={w.data.priceKrw}>{formatUsd(w.data.priceKrw, usdRate)}</span><span class="ml-1 text-[11px] font-normal text-ink/40">USD</span></p>
                   ) : (
                     <p class="text-base font-semibold text-accent">{s.priceOnRequest}</p>
                   )}
@@ -88,3 +88,8 @@ const summary = (w) => (isKo ? (w.data.summary ?? '') : (w.data.summary_en ?? w.
     )}
   </section>
 </BaseLayout>
+
+<script>
+  // 정적 페이지라 가격이 빌드 시점 환율로 박힌다. 현재 환율로 표시만 갱신한다.
+  import '../../lib/fx-client';
+</script>
