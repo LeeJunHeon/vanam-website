@@ -317,14 +317,89 @@ const spec = (r: Row) =>
                     <span class="h-px flex-1 bg-ink/10"></span>
                   </div>
 
-                  {/* 2행: 주문번호 · 결제금액 (라벨을 붙여 무슨 숫자인지 바로 알 수 있게) */}
-                  <div class="mt-3 flex flex-wrap items-start justify-between gap-4">
+                  {/* 본문 3열: 주문번호(좌) · 주문 정보(중앙) · 금액(우)
+                      가운데가 비어 보이지 않도록 상세를 중앙에 배치하고, 각 값에 라벨을 붙인다. */}
+                  <div class="mt-3 grid gap-6 lg:grid-cols-[minmax(0,16rem)_minmax(0,1fr)_minmax(0,12rem)]">
                     <div class="min-w-0">
                       <p class="text-xs text-ink/40">주문번호</p>
                       <p class="font-mono text-lg font-bold tracking-tight text-ink">{o.id}</p>
                       {o.inquiry_id && <p class="mt-0.5 font-mono text-xs text-info/60">← {o.inquiry_id}</p>}
+                      <p class="mt-3 text-xs text-ink/40">주문 상품</p>
+                      <ul class="mt-0.5 space-y-0.5 text-sm">
+                        {(orderItems[o.id] ?? []).map((i) => (
+                          <li class="text-ink/70">{i.name} <span class="text-ink/35">× {i.qty}</span>
+                            <span class="ml-1 text-ink/50">{won(i.subtotal)}</span></li>
+                        ))}
+                      </ul>
                     </div>
-                    <div class="shrink-0 text-right">
+
+                    <dl class="min-w-0 space-y-1.5 text-sm">
+                      <div class="flex gap-3">
+                        <dt class="w-16 shrink-0 text-xs text-ink/40">이름</dt>
+                        <dd class="min-w-0 text-ink/75">{o.buyer_name}{o.buyer_company ? ` · ${o.buyer_company}` : ''}</dd>
+                      </div>
+                      <div class="flex gap-3">
+                        <dt class="w-16 shrink-0 text-xs text-ink/40">이메일</dt>
+                        <dd class="min-w-0 break-all">
+                          <a href={`mailto:${o.buyer_email}`} class="text-accent hover:underline">{o.buyer_email}</a>
+                        </dd>
+                      </div>
+                      {o.buyer_phone && (
+                        <div class="flex gap-3">
+                          <dt class="w-16 shrink-0 text-xs text-ink/40">연락처</dt>
+                          <dd class="text-ink/75">{o.buyer_phone}</dd>
+                        </div>
+                      )}
+                      {o.needs_shipping ? (
+                        <div class="flex gap-3">
+                          <dt class="w-16 shrink-0 text-xs text-ink/40">배송지</dt>
+                          <dd class="min-w-0 leading-relaxed text-ink/60">
+                            [{o.ship_country}] {o.ship_name} · {o.ship_phone}<br />
+                            ({o.ship_zip}) {[o.ship_addr1, o.ship_addr2, o.ship_city, o.ship_state].filter(Boolean).join(', ')}
+                          </dd>
+                        </div>
+                      ) : (
+                        <div class="flex gap-3">
+                          <dt class="w-16 shrink-0 text-xs text-ink/40">배송</dt>
+                          <dd class="text-ink/40">실물 배송 없음 (분석 서비스)</dd>
+                        </div>
+                      )}
+                      {o.ship_memo && (
+                        <div class="flex gap-3">
+                          <dt class="w-16 shrink-0 text-xs text-ink/40">배송 요청</dt>
+                          <dd class="text-ink/60">{o.ship_memo}</dd>
+                        </div>
+                      )}
+                      {o.desired_date && (
+                        <div class="flex gap-3">
+                          <dt class="w-16 shrink-0 text-xs text-ink/40">희망일</dt>
+                          <dd class="text-ink/60">{o.desired_date}</dd>
+                        </div>
+                      )}
+                      {o.order_note && (
+                        <div class="flex gap-3">
+                          <dt class="w-16 shrink-0 text-xs text-ink/40">요청사항</dt>
+                          <dd class="text-ink/60">{o.order_note}</dd>
+                        </div>
+                      )}
+                      {o.ship_courier_acct && (
+                        <div class="flex gap-3">
+                          <dt class="w-16 shrink-0 text-xs text-ink/40">착불 계정</dt>
+                          <dd class="text-ink/60">{o.ship_courier_acct}</dd>
+                        </div>
+                      )}
+                      {o.tax_invoice === 1 && (
+                        <div class="flex gap-3">
+                          <dt class="w-16 shrink-0 text-xs text-ink/40">세금계산서</dt>
+                          <dd class="min-w-0 leading-relaxed text-ink/60">
+                            {o.tax_biz_name} ({o.tax_biz_no}){o.tax_ceo ? ` · 대표 ${o.tax_ceo}` : ''}<br />
+                            <span class="text-ink/35">수신</span> {o.tax_email}
+                          </dd>
+                        </div>
+                      )}
+                    </dl>
+
+                    <div class="text-right">
                       <p class="text-xs text-ink/40">결제 금액</p>
                       <p class="text-2xl font-bold text-ink">
                         {Number(o.paid_usd) > 0
@@ -339,41 +414,7 @@ const spec = (r: Row) =>
                     </div>
                   </div>
 
-                  {/* 주문 내용 — 항상 표시 */}
-                  <div class="mt-4 space-y-2 border-t border-ink/10 pt-4 text-sm">
-                    <ul class="space-y-1">
-                      {(orderItems[o.id] ?? []).map((i) => (
-                        <li class="text-ink/70">{i.name} <span class="text-ink/35">× {i.qty}</span>
-                          <span class="ml-2 text-ink/50">{won(i.subtotal)}</span></li>
-                      ))}
-                    </ul>
-                    <p class="text-ink/50">
-                      {o.buyer_name}{o.buyer_company ? ` · ${o.buyer_company}` : ''}<br />
-                      <a href={`mailto:${o.buyer_email}`} class="text-accent hover:underline">{o.buyer_email}</a>
-                      {o.buyer_phone ? ` · ${o.buyer_phone}` : ''}
-                    </p>
-                    {o.needs_shipping ? (
-                      <p class="leading-relaxed text-ink/45">
-                        <span class="text-ink/30">배송</span> [{o.ship_country}] {o.ship_name} · {o.ship_phone}<br />
-                        ({o.ship_zip}) {[o.ship_addr1, o.ship_addr2, o.ship_city, o.ship_state].filter(Boolean).join(', ')}
-                        {o.ship_memo && <><br /><span class="text-ink/30">요청</span> {o.ship_memo}</>}
-                        {o.desired_date && <><br /><span class="text-ink/30">희망일</span> {o.desired_date}</>}
-                        {o.order_note && <><br /><span class="text-ink/30">요청사항</span> {o.order_note}</>}
-                        {o.ship_courier_acct && <><br /><span class="text-ink/30">착불 계정</span> {o.ship_courier_acct}</>}
-                      </p>
-                    ) : (
-                      <p class="text-ink/35">실물 배송 없음 (분석 서비스)</p>
-                    )}
-                    {o.tax_invoice === 1 && (
-                      <p class="rounded-lg border border-ink/10 bg-ink/[0.03] p-3 text-ink/60">
-                        📄 세금계산서 — {o.tax_biz_name} ({o.tax_biz_no})
-                        {o.tax_ceo ? ` · 대표 ${o.tax_ceo}` : ''}<br />
-                        <span class="text-ink/40">수신</span> {o.tax_email}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* 처리 — 저장 우측에 취소/환불을 나란히 둔다 */}
+                  {/* 처리 */}
                   <div class="mt-4 flex flex-wrap items-center justify-end gap-2 border-t border-ink/10 pt-4">
                     <select name="status" class="rounded-lg border border-ink/10 bg-ink/[0.03] px-3 py-2 text-sm text-ink">
                       {ORDER_EDITABLE.map((st) => (
