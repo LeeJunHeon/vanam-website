@@ -200,6 +200,12 @@ const wafers = defineCollection({
     description_en: opt(z.string()),
     image: opt(z.string()),                             // 대표 이미지 (Keystatic 업로드)
     specs: z.array(z.object({ label: z.string(), value: z.string(), label_en: z.string().optional(), value_en: z.string().optional() })).default([]),
+    // 배송 정보 (해외 배송비 계산용) — 숫자로 받아야 계산에 바로 쓸 수 있다
+    shipUnitWeightKg: opt(z.number()),                  // 웨이퍼 1장 무게 (kg)
+    shipPackWeightKg: opt(z.number()),                  // 포장재 무게 (kg, 수량 무관 고정)
+    shipBoxLcm: opt(z.number()),                        // 박스 가로 (cm)
+    shipBoxWcm: opt(z.number()),                        // 박스 세로 (cm)
+    shipBoxHcm: opt(z.number()),                        // 박스 높이 (cm)
     leadTime: opt(z.string()),                          // 납기 안내
     leadTime_en: opt(z.string()),
     refundPolicy: opt(z.string()),                      // 환불 규정 (스펙과 별도로 하단 표시)

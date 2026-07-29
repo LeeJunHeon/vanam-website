@@ -352,6 +352,21 @@ export default config({
           }),
           { label: '사양', itemLabel: (p) => `${p.fields.label.value}: ${p.fields.value.value}` },
         ),
+        // ── 배송 정보 (해외 배송비 계산용) ──
+        // 화면 사양표에도 함께 표시되며, 배송비 조회 시 이 숫자를 그대로 사용한다.
+        // 문자열이 아닌 숫자로 받는 이유: "2.5kg" 같은 표기 흔들림이 계산을 깨뜨리기 때문.
+        shipUnitWeightKg: fields.number({
+          label: '웨이퍼 1장 무게 (kg)',
+          description: '웨이퍼 낱장 무게. 포장재는 아래 항목에 따로 입력합니다. 예: 0.012',
+        }),
+        shipPackWeightKg: fields.number({
+          label: '포장재 무게 (kg)',
+          description: '박스·완충재·카세트 등 수량과 무관하게 더해지는 무게. 예: 0.8',
+        }),
+        shipBoxLcm: fields.number({ label: '박스 가로 (cm)', description: '기본 포장 기준. 예: 30' }),
+        shipBoxWcm: fields.number({ label: '박스 세로 (cm)', description: '예: 30' }),
+        shipBoxHcm: fields.number({ label: '박스 높이 (cm)', description: '예: 15' }),
+
         leadTime: fields.text({ label: '납기 안내 (한글)', description: '예: 사양 확정 후 협의' }),
         leadTime_en: fields.text({ label: '납기 안내 (영문)' }),
         refundPolicy: fields.text({ label: '환불 규정 (한글)', description: '상세 하단에 표시됩니다', multiline: true }),
