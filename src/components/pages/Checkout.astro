@@ -567,6 +567,12 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
         linesEl!.appendChild(li);
       }
       totalEl.textContent = usd(total);
+      // 주문을 마치고 뒤로 돌아오면 장바구니가 이미 비어 있다.
+      // $0.00 짜리 주문서를 그대로 보여주면 오류처럼 보이므로 결제 영역을 잠근다.
+      if (items.length === 0) {
+        btn.disabled = true;
+        gateBusy = true;
+      }
       // HTML 이 캐시되었거나 SSR 환율 조회가 실패했을 수 있다.
       // 현재 환율을 받아 값이 다르면 한 번만 다시 그린다(레이아웃 변화 없음).
       if (!rateSynced) {
@@ -820,7 +826,11 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
           let wasBuyNow = false;
           try { wasBuyNow = Boolean(JSON.parse(sessionStorage.getItem(BUYNOW_KEY) ?? 'null')); } catch (e) {}
           if (wasBuyNow) sessionStorage.removeItem(BUYNOW_KEY);
-          else localStorage.removeItem(CART_KEY);
+          else {
+            // 결제 품목만 지우면 '견적 문의' 품목이 남아 장바구니가 어중간하게 채워져 보인다.
+            // 주문이 끝났으므로 장바구니 전체를 비운다.
+            localStorage.removeItem(CART_KEY);
+          }
         }
         const base = document.documentElement.lang === 'ko' ? '/ko' : '';
         // 계좌이체는 결제 단계가 없다. 완료 화면에서 안내만 받도록 표식을 넘긴다.

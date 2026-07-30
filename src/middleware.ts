@@ -33,7 +33,9 @@ const CSP =
   "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; " +
   "font-src 'self' https://cdn.jsdelivr.net data:; " +
   "img-src 'self' data: https://www.paypalobjects.com https://www.paypal.com; " +
-  "connect-src 'self' https://challenges.cloudflare.com https://www.paypal.com https://www.sandbox.paypal.com; " +
+  // cdn.jsdelivr.net: Pretendard CSS 의 소스맵을 브라우저가 추가로 요청한다.
+  //   기능에는 영향이 없지만 매 페이지 콘솔에 CSP 위반 경고가 찍혀 실제 오류를 가린다.
+  "connect-src 'self' https://challenges.cloudflare.com https://www.paypal.com https://www.sandbox.paypal.com https://cdn.jsdelivr.net; " +
   "object-src 'none'; " +
   "frame-src https://challenges.cloudflare.com https://www.google.com https://maps.google.com https://www.linkedin.com https://www.paypal.com https://www.sandbox.paypal.com; " +
   "frame-ancestors 'none'; " +
