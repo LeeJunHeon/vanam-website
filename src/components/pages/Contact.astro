@@ -45,7 +45,6 @@ const labelClass = 'block text-sm font-medium text-ink/80';
     </div>
 
     <form id="inquiry-form" class="v-reveal mt-14 space-y-8"
-      data-msg-honeypot={f.msgHoneypot}
       data-msg-success={f.msgSuccess}
       data-msg-error={f.msgError}
       data-msg-captcha={f.msgCaptcha}
@@ -54,7 +53,7 @@ const labelClass = 'block text-sm font-medium text-ink/80';
       <!-- Honeypot: hidden from humans (spam trap) -->
       <div class="absolute left-[-9999px]" aria-hidden="true">
         <label>{f.honeypot}
-          <input type="text" name="vanam_hp_email" tabindex="-1" autocomplete="off" />
+          <input type="text" name="vanam_hp_note" tabindex="-1" autocomplete="new-password" />
         </label>
       </div>
 
@@ -211,18 +210,16 @@ const labelClass = 'block text-sm font-medium text-ink/80';
   form?.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    // 허니팟이 채워졌으면 봇 → 조용히 성공한 척
-    const hp = form.elements.namedItem("vanam_hp_email") as HTMLInputElement | null;
-    if (hp && hp.value.trim() !== "") {
-      setStatus(M.msgHoneypot!, true);
-      form.reset();
-      return;
-    }
+    // 미끼칸이 차 있어도 조용히 가짜 성공을 띄우지 않는다.
+    // 브라우저 자동완성 오탐(이름에 email 포함)이 실제 문의를 "접수된 척"만 하게 만들었다.
+    // 값만 비우고 정상 진행한다 — 직접 POST 하는 봇은 서버측 미끼칸 검사와 Turnstile 이 막는다.
+    const hp = form.elements.namedItem("vanam_hp_note") as HTMLInputElement | null;
+    if (hp) hp.value = "";
 
     // 전화번호를 국제표준(+82...)으로 변환한 뒤 수집
     normalizeTelInputs(form);
     const data = Object.fromEntries(new FormData(form).entries()) as Record<string, string>;
-    delete data.vanam_hp_email;
+    delete data.vanam_hp_note;
     data.type = "general";
     data.locale = document.documentElement.lang || "en";
 

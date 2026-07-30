@@ -51,7 +51,6 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
       data-product={product.id}
       data-product-name={productName}
       data-simple={simple ? '1' : ''}
-      data-msg-honeypot={c.msgHoneypot}
       data-msg-success={simple ? q.msgSuccessOrder : q.msgSuccess}
       data-msg-error={c.msgError}
       data-msg-required={c.msgRequired}
@@ -78,7 +77,7 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
       <!-- Honeypot: 사람에겐 안 보임 (스팸 트랩) -->
       <div class="absolute left-[-9999px]" aria-hidden="true">
         <label>{c.honeypot}
-          <input type="text" name="vanam_hp_email" tabindex="-1" autocomplete="off" />
+          <input type="text" name="vanam_hp_note" tabindex="-1" autocomplete="new-password" />
         </label>
       </div>
 
@@ -538,7 +537,7 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
       for (const el of Array.from(form.elements) as HTMLElement[]) {
         const f = el as HTMLInputElement;
         if (!f.name || f.disabled || f.type === "hidden") continue;
-        if (f.name === "vanam_hp_email") continue;
+        if (f.name === "vanam_hp_note") continue;
         if (isHidden(f)) continue;
         if (f.required && !f.checkValidity()) return false;
       }
@@ -554,12 +553,12 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
   form?.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    const hp = form.elements.namedItem("vanam_hp_email") as HTMLInputElement | null;
-    if (hp && hp.value.trim() !== "") {
-      setStatus(M.msgHoneypot!, true);
-      form.reset();
-      return;
-    }
+    // 미끼칸이 차 있어도 조용히 가짜 성공을 띄우지 않는다.
+    // 브라우저 자동완성이 채우는 오탐이 흔해서(이름에 email 이 들어가면 특히),
+    // 실제 고객의 견적이 "접수된 척"만 하고 서버·관리자에 도달하지 못했다.
+    // 값만 비우고 정상 진행한다 — 직접 POST 하는 봇은 서버측 미끼칸 검사와 Turnstile 이 막는다.
+    const hp = form.elements.namedItem("vanam_hp_note") as HTMLInputElement | null;
+    if (hp) hp.value = "";
 
     const isSimple = !!M.simple;
 
@@ -593,7 +592,7 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
 
     normalizeTelInputs(form);
     const data = Object.fromEntries(new FormData(form).entries()) as Record<string, string>;
-    delete data.vanam_hp_email;
+    delete data.vanam_hp_note;
 
     if (data.substrateType === "__other__") data.substrateType = (data.substrateTypeOther || "").trim();
     if (data.substrateSize === "__other__") data.substrateSize = (data.substrateSizeOther || "").trim();
@@ -676,6 +675,7 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
         body: JSON.stringify(data),
       });
       if (!res.ok) throw new Error("HTTP " + res.status);
+      const j = (await res.json().catch(() => ({}))) as { id?: string };
       form.reset();
       // 공정 빌더는 풀 모드에만 존재 — simple(웨이퍼 주문) 폼에서는 null 이라
       // 여기서 예외가 나면 "성공했는데 실패 메시지"가 뜨는 버그가 됨 (가드 필수)
@@ -684,7 +684,10 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
         refreshStepLabels();
       }
       window.turnstile?.reset();
-      setStatus(M.msgSuccess!, true);
+      // 접수번호(INQ-…)를 함께 보여준다 — 접수 사실이 분명해지고, 주문 조회에 그대로 쓸 수 있다.
+      setStatus(j.id ? `${M.msgSuccess} (${j.id})` : M.msgSuccess!, true);
+      // 폼이 길어 성공 문구가 화면 밖에 있으면 "아무 일도 안 일어난 것"처럼 보인다 — 시야로 끌어온다.
+      try { statusEl.scrollIntoView({ block: "center", behavior: "smooth" }); } catch (err2) { /* 무시 */ }
     } catch (err) {
       console.error(err);
       window.turnstile?.reset();

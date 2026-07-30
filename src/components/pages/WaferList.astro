@@ -42,7 +42,7 @@ const summary = (w) => (isKo ? (w.data.summary ?? '') : (w.data.summary_en ?? w.
       <div class="flex shrink-0 items-center gap-2">
         <a href={`${base}/order/lookup`} class="inline-flex items-center rounded-lg border border-ink/15 px-5 py-2.5 text-sm font-medium text-ink/80 transition hover:border-accent hover:text-ink">{s.trackOrder}</a>
         <a href={`${base}/cart`} class="inline-flex items-center gap-2 rounded-lg border border-ink/15 px-5 py-2.5 text-sm font-medium text-ink/80 transition hover:border-accent hover:text-ink">
-          {s.cart} <span class="cart-count rounded bg-brand px-1.5 py-0.5 text-xs font-bold text-onbrand">0</span>
+          {s.cart} <span class="cart-count inline-flex h-5 min-w-5 items-center justify-center rounded bg-brand px-1.5 text-xs font-bold leading-none text-onbrand">0</span>
         </a>
       </div>
     </div>
