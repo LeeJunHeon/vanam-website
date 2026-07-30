@@ -99,6 +99,7 @@ const t = isKo
       meta: '주문서 | VanaM', metaDesc: '주문 정보를 입력하고 결제를 진행합니다.',
       eyebrow: '주문서', heading: '주문 정보',
       empty: '장바구니가 비어 있습니다.', backToShop: '제품으로 돌아가기',
+      buynowExpired: '주문 정보가 만료되었습니다. 상품 페이지에서 다시 시도해 주세요.',
       secBuyer: '주문자', secShip: '배송지', secTax: '세금계산서', secAgree: '확인 및 동의', secSummary: '주문 요약',
       desiredDate: '희망 완료일 (선택)', desiredDateShip: '희망 배송일 (선택)', desiredDatePh: '예: 2026-09 또는 자유롭게 기재',
       orderNote: '요청사항 (선택)', orderNotePh: '추가 요청·참고사항이 있으면 적어주세요',
@@ -140,6 +141,7 @@ const t = isKo
       meta: 'Checkout | VanaM', metaDesc: 'Enter your order details and pay.',
       eyebrow: 'Checkout', heading: 'Order details',
       empty: 'Your cart is empty.', backToShop: 'Back to products',
+      buynowExpired: 'This order session has expired. Please start again from the product page.',
       secBuyer: 'Purchaser', secShip: 'Shipping', secTax: 'Tax invoice', secAgree: 'Confirm & agree', secSummary: 'Order summary',
       desiredDate: 'Desired completion (optional)', desiredDateShip: 'Preferred delivery date (optional)', desiredDatePh: 'e.g. 2026-09, or free text',
       orderNote: 'Additional requests (optional)', orderNotePh: 'Anything else we should know',
@@ -205,7 +207,8 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
           data-msg-captcha={t.errCaptcha}
           data-label-send={t.submit}
           data-label-send-bank={t.submitBank}
-          data-label-sending={t.sending}>
+          data-label-sending={t.sending}
+          data-buynow-expired={t.buynowExpired}>
           <div class="absolute left-[-9999px]" aria-hidden="true">
             {/* 스팸 방지 미끼칸. 이름에 email 이 들어가면 크롬 자동완성이 채워버려 정상 주문이 막힌다 → 중립적 이름 사용 */}
             <input type="text" name="vanam_hp_note" tabindex="-1" autocomplete="new-password" />
@@ -466,7 +469,7 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
             <p id="pay-hint" class="mt-2 hidden text-xs text-ink/45">{t.captchaHint}</p>
 
             <p id="empty-cart" class="mt-4 text-center text-sm text-ink/40" hidden>
-              {t.empty} <a href={lhref('/product')} class="text-accent hover:underline">{t.backToShop} →</a>
+              <span id="empty-msg">{t.empty}</span> <a href={lhref('/product')} class="text-accent hover:underline">{t.backToShop} →</a>
             </p>
           </div>
         </aside>
@@ -534,31 +537,29 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
     const usd = (krw: number) =>
       '$' + (krw / RATE).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-    // ── 장바구니 → 요약 · 배송 필요 여부 판단 ──────────
+    // ── 주문 품목: 소스 결정 → 요약 렌더 ───────────────
+    // 규칙: 주문서는 진입 URL 로 '선언된 소스 하나만' 읽는다.
+    //   /checkout?buynow=1 → sessionStorage 즉시 구매 항목
+    //   /checkout          → localStorage 장바구니
+    // 키 존재 여부로 추측하면 두 흐름이 섞인다:
+    //   · 즉시 구매를 취소하고 남은 잔여 키가 나중의 장바구니 주문을 가로채고,
+    //   · 즉시 구매 완료 후 되돌아오면 키가 없어 장바구니로 폴백되어 '다른 주문서'가 된다.
+    const isBuyNow = !quoteId && new URLSearchParams(location.search).has('buynow');
     let items: Item[] = [];
     let needsShipping = quoteId ? M.quoteShip === 'true' : false;
+    // 상태 플래그는 모든 사용처보다 먼저 선언한다.
+    // let 이 사용처 아래에 있으면 TDZ ReferenceError 로 스크립트가 통째로 죽는다(전례 있음).
+    let gateBusy = false;   // 제출 중·잠금 상태 — 게이트가 버튼을 다시 열지 못하게 한다
+    let orderDone = false;  // 이 페이지에서 주문을 마쳤는지 (bfcache 복원 감지용)
 
-    if (!quoteId) {
-      // 즉시 구매로 들어왔으면 그 항목만 주문한다(장바구니와 섞이지 않게).
-      let buyNow: unknown = null;
-      try { buyNow = JSON.parse(sessionStorage.getItem(BUYNOW_KEY) ?? 'null'); } catch { buyNow = null; }
-      if (Array.isArray(buyNow) && buyNow.length) {
-        items = buyNow as typeof items;
-      } else {
-        try { items = JSON.parse(localStorage.getItem(CART_KEY) ?? '[]'); } catch { items = []; }
-      }
-      // localStorage 는 조작 가능하므로 수량을 1~99 정수로 강제한다 (금액은 어차피 서버가 재계산)
-      items = items
-        .filter((i) => i && typeof i.sku === 'string' && byId.has(i.sku))
-        .map((i) => ({ sku: i.sku, qty: Math.max(1, Math.min(99, Math.floor(Number(i.qty)) || 1)) }));
-
+    // 품목·합계 표시만 담당한다. 환율이 갱신되면 이 함수를 다시 호출해 같은 품목을 새 환율로 그린다.
+    function render() {
       let total = 0;
       linesEl!.innerHTML = '';
       for (const i of items) {
         const p = byId.get(i.sku)!;
         const sub = p.price * i.qty;
         total += sub;
-        if (p.ship) needsShipping = true;
         const li = document.createElement('li');
         li.className = 'flex justify-between gap-3';
         li.innerHTML =
@@ -567,12 +568,43 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
         linesEl!.appendChild(li);
       }
       totalEl.textContent = usd(total);
-      // 주문을 마치고 뒤로 돌아오면 장바구니가 이미 비어 있다.
-      // $0.00 짜리 주문서를 그대로 보여주면 오류처럼 보이므로 결제 영역을 잠근다.
+    }
+
+    if (!quoteId) {
+      if (isBuyNow) {
+        // 즉시 구매: 세션 키만 읽는다. 장바구니는 읽지도, 건드리지도 않는다.
+        try {
+          const b: unknown = JSON.parse(sessionStorage.getItem(BUYNOW_KEY) ?? '[]');
+          items = Array.isArray(b) ? (b as Item[]) : [];
+        } catch { items = []; }
+      } else {
+        // 장바구니: 이전 즉시 구매의 잔여 키가 끼어들지 않도록 먼저 비운다.
+        try { sessionStorage.removeItem(BUYNOW_KEY); } catch (e) { /* 접근 불가 시 무시 */ }
+        try {
+          const c: unknown = JSON.parse(localStorage.getItem(CART_KEY) ?? '[]');
+          items = Array.isArray(c) ? (c as Item[]) : [];
+        } catch { items = []; }
+      }
+      // localStorage 는 조작 가능하므로 수량을 1~99 정수로 강제한다 (금액은 어차피 서버가 재계산)
+      items = items
+        .filter((i) => i && typeof i.sku === 'string' && byId.has(i.sku))
+        .map((i) => ({ sku: i.sku, qty: Math.max(1, Math.min(99, Math.floor(Number(i.qty)) || 1)) }));
+      for (const i of items) if (byId.get(i.sku)!.ship) needsShipping = true;
+
+      render();
+
+      // 소스가 비면 결제를 잠근다 — 주문서 URL 직접 진입, 주문 완료 후 재방문,
+      // 즉시 구매 세션 만료(새 탭에 URL 만 옮겨 붙인 경우 등)가 여기 해당한다.
       if (items.length === 0) {
         btn.disabled = true;
-        gateBusy = true;
+        gateBusy = true; // syncGate 가 버튼을 다시 열지 못하게
+        if (isBuyNow) {
+          const m = document.getElementById('empty-msg');
+          if (m) m.textContent = M.buynowExpired!;
+        }
+        emptyEl.hidden = false;
       }
+
       // HTML 이 캐시되었거나 SSR 환율 조회가 실패했을 수 있다.
       // 현재 환율을 받아 값이 다르면 한 번만 다시 그린다(레이아웃 변화 없음).
       if (!rateSynced) {
@@ -580,11 +612,6 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
         void liveRate(RATE).then((r) => {
           if (r > 0 && Math.abs(r - RATE) > 0.5) { RATE = r; render(); }
         });
-      }
-
-      if (items.length === 0) {
-        btn.disabled = true;
-        emptyEl.hidden = false;
       }
     }
 
@@ -702,7 +729,7 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
     // ── 버튼 게이팅 ────────────────────────────────────
     // 필수 입력·필수 동의가 모두 충족될 때만 결제 버튼을 연다.
     // (기존엔 항상 활성 → 미입력 상태로 눌러 실패 원인을 알기 어려웠다)
-    let gateBusy = false;
+    // gateBusy 플래그는 위(소스 결정 블록)에서 선언한다 — 빈 소스 잠금이 먼저 쓰기 때문.
     const fieldsOk = () => {
       if (!quoteId && items.length === 0) return false;
       const els = Array.from(form.elements) as HTMLElement[];
@@ -822,20 +849,34 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
         if (!res.ok || !j.ok) throw new Error(j.error ?? res.status);
 
         if (!quoteId) {
-          // 즉시 구매로 들어온 주문은 장바구니를 비우지 않는다(담아둔 다른 상품을 잃지 않도록).
-          let wasBuyNow = false;
-          try { wasBuyNow = Boolean(JSON.parse(sessionStorage.getItem(BUYNOW_KEY) ?? 'null')); } catch (e) {}
-          if (wasBuyNow) sessionStorage.removeItem(BUYNOW_KEY);
-          else {
-            // 결제 품목만 지우면 '견적 문의' 품목이 남아 장바구니가 어중간하게 채워져 보인다.
-            // 주문이 끝났으므로 장바구니 전체를 비운다.
-            localStorage.removeItem(CART_KEY);
+          if (isBuyNow) {
+            // 즉시 구매: 세션 키만 정리한다. 장바구니는 손대지 않는다.
+            try { sessionStorage.removeItem(BUYNOW_KEY); } catch (e) { /* 무시 */ }
+          } else {
+            // 장바구니: '이번 주문에 포함된 품목만' 제거한다.
+            // 전체를 비우면 이번 주문에 포함되지도 않은 견적 문의 품목까지 사라진다.
+            // 견적 품목만 남은 장바구니(합계 $0.00 + 견적 요청서 인쇄)는 설계된 정상 상태다.
+            try {
+              const ordered = new Set(items.map((i) => i.sku));
+              const raw: unknown = JSON.parse(localStorage.getItem(CART_KEY) ?? '[]');
+              const left = (Array.isArray(raw) ? (raw as Item[]) : []).filter(
+                (i) => i && typeof i.sku === 'string' && !ordered.has(i.sku),
+              );
+              localStorage.setItem(CART_KEY, JSON.stringify(left));
+              // 헤더 배지도 갱신 — 숫자가 그대로면 주문이 안 된 것처럼 보인다.
+              document.querySelectorAll('.cart-count').forEach((el) => {
+                el.textContent = String(left.reduce((s, i) => s + (Math.floor(Number(i.qty)) || 0), 0));
+              });
+            } catch (e) { /* 저장소 접근 불가 — 주문은 이미 성공했으므로 무시 */ }
           }
         }
+        orderDone = true;
         const base = document.documentElement.lang === 'ko' ? '/ko' : '';
         // 계좌이체는 결제 단계가 없다. 완료 화면에서 안내만 받도록 표식을 넘긴다.
         const suffix = payMethod() === 'bank' ? '&pay=bank' : '';
-        location.href = `${base}/order/done?id=${encodeURIComponent(j.orderId)}${suffix}`;
+        // href 대신 replace — 주문서를 히스토리에서 제거한다(PRG 패턴).
+        // 완료 화면에서 뒤로가기를 누르면 주문서가 아니라 그 이전 페이지(장바구니·상품)로 간다.
+        location.replace(`${base}/order/done?id=${encodeURIComponent(j.orderId)}${suffix}`);
       } catch (err) {
         console.error(err);
         // 원인을 감추면 어느 칸이 문제인지 알 수 없다 — 서버 코드별 안내로 바꾼다
@@ -849,7 +890,7 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
           bad_items: '장바구니 상품을 다시 확인해 주세요 · Check the cart items.',
           captcha_failed: '자동입력 방지 확인에 실패했습니다. 잠시 후 다시 시도해 주세요 · Captcha failed, please retry.',
         };
-        if (MAP[code]) { setStatus(MAP[code], false); btn.disabled = false; label.textContent = M.labelSend!; window.turnstile?.reset(); return; }
+        if (MAP[code]) { setStatus(MAP[code], false); gateBusy = false; btn.disabled = false; label.textContent = M.labelSend!; window.turnstile?.reset(); return; }
         // 토큰은 1회용 — 실패 시 리셋해 재시도를 준비한다. (성공 시엔 페이지가 이동하므로 불필요)
         window.turnstile?.reset();
         setStatus(M.msgFail!, false);
@@ -857,6 +898,15 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
         btn.disabled = false;
         label.textContent = M.labelSend!;
       }
+    });
+
+    // bfcache(뒤로가기 캐시) 안전망.
+    // replace 로 히스토리에서 지워도 iOS Safari 등은 다른 경로의 뒤로가기로
+    // 이 페이지를 '제출 당시 상태 그대로' 되살릴 수 있다. 주문을 마친 페이지가
+    // 되살아나면 새로고침해 저장소 기준의 현재 상태(빈 소스 잠금)로 되돌린다.
+    // 주문 전에 이탈했다 돌아온 경우는 입력값 보존이 이득이므로 건드리지 않는다.
+    window.addEventListener('pageshow', (e) => {
+      if (e.persisted && orderDone) location.reload();
     });
   }
 </script>
