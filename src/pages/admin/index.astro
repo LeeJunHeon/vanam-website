@@ -296,12 +296,41 @@ const spec = (r: Row) =>
             </p>
           </div>
 
+          {/* 검색 · 상태 필터 · 정렬 — SSR 카드(최근 300건)를 클라이언트에서 거른다 */}
+          <div class="mt-5 flex flex-wrap items-center gap-2" data-ftools="orders">
+            <input type="search" data-f="q" placeholder="검색 — 주문번호·이름·소속·이메일·상품"
+              class="w-72 max-w-full rounded-lg border border-ink/15 bg-transparent px-3 py-2 text-sm text-ink placeholder:text-ink/30 focus:border-accent focus:outline-none" />
+            <select data-f="cat" class="rounded-lg border border-ink/15 bg-canvas px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none">
+              <option value="">전체 상태</option>
+              <option value="unpaid">미결제</option>
+              <option value="bankwait">입금 대기</option>
+              <option value="paid">결제 완료</option>
+              <option value="preparing">제작 중</option>
+              <option value="shipped">발송 완료</option>
+              <option value="done">완료</option>
+              <option value="cancelled">취소</option>
+              <option value="refunded">환불</option>
+            </select>
+            <select data-f="sort" class="rounded-lg border border-ink/15 bg-canvas px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none">
+              <option value="new">최신순</option>
+              <option value="old">오래된순</option>
+              <option value="amt-desc">금액 높은순</option>
+              <option value="amt-asc">금액 낮은순</option>
+            </select>
+            <span data-f="count" class="ml-auto text-xs text-ink/35"></span>
+          </div>
+          <p data-f="empty" hidden class="mt-4 text-sm text-ink/40">조건에 맞는 결과가 없습니다.</p>
+
           {orders.length === 0 ? (
             <p class="mt-4 text-sm text-ink/40">아직 주문이 없습니다.</p>
           ) : (
-            <div class="mt-5 space-y-4">
+            <div class="mt-5 space-y-4" data-cards>
               {orders.map((o) => (
-                <article class="rounded-xl border border-ink/10 bg-ink/[0.02] p-5" data-order={o.id}>
+                <article class="rounded-xl border border-ink/10 bg-ink/[0.02] p-5" data-order={o.id}
+                  data-status={o.status === 'pending' ? (o.pay_method === 'bank' ? 'bankwait' : 'unpaid') : o.status}
+                  data-ts={o.created_at}
+                  data-amt={Number(o.amount_usd) || 0}
+                  data-search={[o.id, o.buyer_name, o.buyer_company, o.buyer_email, o.buyer_phone, (orderItems[o.id] ?? []).map((i) => i.name).join(' ')].filter(Boolean).join(' ').toLowerCase()}>
                   {/* 1행: 상태 · 날짜 · 구분선 */}
                   <div class="flex items-center gap-3">
                     <span class={`shrink-0 rounded-full border px-2.5 py-0.5 text-xs font-medium ${
@@ -451,12 +480,38 @@ const spec = (r: Row) =>
         <!-- ── 견적 ─────────────────────────────────────── -->
         <section class="mt-8" data-panel="quotes" hidden>
           <h2 class="text-lg font-semibold text-accent">견적 요청</h2>
+          {/* 검색 · 상태 필터 · 정렬 */}
+          <div class="mt-5 flex flex-wrap items-center gap-2" data-ftools="quotes">
+            <input type="search" data-f="q" placeholder="검색 — 접수번호·이름·소속·이메일·상품"
+              class="w-72 max-w-full rounded-lg border border-ink/15 bg-transparent px-3 py-2 text-sm text-ink placeholder:text-ink/30 focus:border-accent focus:outline-none" />
+            <select data-f="cat" class="rounded-lg border border-ink/15 bg-canvas px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none">
+              <option value="">전체 상태</option>
+              <option value="new">신규</option>
+              <option value="quoted">견적 발송</option>
+              <option value="replied">회신 완료</option>
+              <option value="paid">결제 완료</option>
+              <option value="closed">종료</option>
+            </select>
+            <select data-f="sort" class="rounded-lg border border-ink/15 bg-canvas px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none">
+              <option value="new">최신순</option>
+              <option value="old">오래된순</option>
+              <option value="amt-desc">금액 높은순</option>
+              <option value="amt-asc">금액 낮은순</option>
+            </select>
+            <span data-f="count" class="ml-auto text-xs text-ink/35"></span>
+          </div>
+          <p data-f="empty" hidden class="mt-4 text-sm text-ink/40">조건에 맞는 결과가 없습니다.</p>
+
           {quotes.length === 0 ? (
             <p class="mt-4 text-sm text-ink/40">아직 견적 요청이 없습니다.</p>
           ) : (
-            <div class="mt-5 space-y-4">
+            <div class="mt-5 space-y-4" data-cards>
               {quotes.map((r) => (
-                <article class="rounded-xl border border-ink/10 bg-ink/[0.02] p-5">
+                <article class="rounded-xl border border-ink/10 bg-ink/[0.02] p-5"
+                  data-status={r.status}
+                  data-ts={r.created_at}
+                  data-amt={Number(r.quoted_amount) || 0}
+                  data-search={[r.id, r.name, r.company, r.email, r.phone, r.product_name, r.material].filter(Boolean).join(' ').toLowerCase()}>
                   <div class="flex flex-wrap items-start justify-between gap-3">
                     <div class="min-w-0">
                       <div class="flex flex-wrap items-center gap-2">
@@ -514,12 +569,26 @@ const spec = (r: Row) =>
         <!-- 일반 문의 -->
         <section class="mt-8" data-panel="generals" hidden>
           <h2 class="text-lg font-semibold text-ink/70">일반 문의</h2>
+          {/* 검색 · 정렬 */}
+          <div class="mt-5 flex flex-wrap items-center gap-2" data-ftools="generals">
+            <input type="search" data-f="q" placeholder="검색 — 접수번호·이름·소속·이메일·내용"
+              class="w-72 max-w-full rounded-lg border border-ink/15 bg-transparent px-3 py-2 text-sm text-ink placeholder:text-ink/30 focus:border-accent focus:outline-none" />
+            <select data-f="sort" class="rounded-lg border border-ink/15 bg-canvas px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none">
+              <option value="new">최신순</option>
+              <option value="old">오래된순</option>
+            </select>
+            <span data-f="count" class="ml-auto text-xs text-ink/35"></span>
+          </div>
+          <p data-f="empty" hidden class="mt-4 text-sm text-ink/40">조건에 맞는 결과가 없습니다.</p>
+
           {generals.length === 0 ? (
             <p class="mt-4 text-sm text-ink/40">아직 문의가 없습니다.</p>
           ) : (
-            <div class="mt-5 space-y-3">
+            <div class="mt-5 space-y-3" data-cards>
               {generals.map((r) => (
-                <article class="rounded-xl border border-ink/10 bg-ink/[0.02] p-5">
+                <article class="rounded-xl border border-ink/10 bg-ink/[0.02] p-5"
+                  data-ts={r.created_at}
+                  data-search={[r.id, r.name, r.company, r.email, r.phone, r.message].filter(Boolean).join(' ').toLowerCase()}>
                   <div class="flex flex-wrap items-center gap-2">
                     <span class="font-mono text-xs text-ink/35">{r.id}</span>
                     <span class="text-xs text-ink/35">{when(r.created_at)}</span>
@@ -827,6 +896,55 @@ const spec = (r: Row) =>
           }
         });
       });
+
+      // ── 목록 검색 · 상태 필터 · 정렬 ──────────────────
+      // SSR 로 그려진 카드(최근 300건)를 클라이언트에서 숨김/재배열한다.
+      // created_at 은 UTC 'YYYY-MM-DD HH:MM:SS' 형식이라 문자열 비교로 시간순이 보장된다.
+      function initFilter(panel: string) {
+        const root = document.querySelector<HTMLElement>(`[data-panel="${panel}"]`);
+        if (!root) return;
+        const tools = root.querySelector<HTMLElement>('[data-ftools]');
+        const wrap = root.querySelector<HTMLElement>('[data-cards]');
+        if (!tools) return;
+        const q = tools.querySelector<HTMLInputElement>('[data-f="q"]');
+        const cat = tools.querySelector<HTMLSelectElement>('[data-f="cat"]');
+        const sortSel = tools.querySelector<HTMLSelectElement>('[data-f="sort"]');
+        const cnt = tools.querySelector<HTMLElement>('[data-f="count"]');
+        const emptyMsg = root.querySelector<HTMLElement>('[data-f="empty"]');
+        const cards = wrap ? (Array.from(wrap.children) as HTMLElement[]) : [];
+
+        const apply = () => {
+          const term = (q?.value ?? '').trim().toLowerCase();
+          const c = cat?.value ?? '';
+          let shown = 0;
+          for (const el of cards) {
+            const ok =
+              (!term || (el.dataset.search ?? '').includes(term)) &&
+              (!c || el.dataset.status === c);
+            el.hidden = !ok;
+            if (ok) shown++;
+          }
+          const s = sortSel?.value ?? 'new';
+          if (wrap) {
+            const sorted = [...cards].sort((a, b) => {
+              const d = s.startsWith('amt')
+                ? Number(a.dataset.amt ?? 0) - Number(b.dataset.amt ?? 0)
+                : String(a.dataset.ts ?? '').localeCompare(String(b.dataset.ts ?? ''));
+              return s === 'new' || s === 'amt-desc' ? -d : d;
+            });
+            for (const el of sorted) wrap.appendChild(el);
+          }
+          if (cnt) cnt.textContent = cards.length ? `${shown} / ${cards.length}건` : '';
+          if (emptyMsg) emptyMsg.hidden = shown !== 0 || cards.length === 0;
+        };
+        q?.addEventListener('input', apply);
+        cat?.addEventListener('change', apply);
+        sortSel?.addEventListener('change', apply);
+        apply();
+      }
+      initFilter('orders');
+      initFilter('quotes');
+      initFilter('generals');
     </script>
   </body>
 </html>
