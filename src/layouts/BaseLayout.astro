@@ -112,9 +112,9 @@ const popupHref = popup.linkUrl
 const popupAlt = popup.alt || (isKo ? 'VanaM 공지' : 'VanaM notice');
 const fl = isKo
   ? { ceo: '대표', bizNo: '사업자등록번호', mailOrder: '통신판매업 신고번호',
-      privacy: '개인정보처리방침', terms: '이용약관', refund: '환불·교환 정책', lookup: '주문 조회' }
+      privacy: '개인정보처리방침', terms: '이용약관', refund: '환불·교환 정책' }
   : { ceo: 'CEO', bizNo: 'Business Reg. No.', mailOrder: 'E-Commerce Reg. No.',
-      privacy: 'Privacy Policy', terms: 'Terms of Service', refund: 'Refund & Exchange', lookup: 'Track order' };
+      privacy: 'Privacy Policy', terms: 'Terms of Service', refund: 'Refund & Exchange' };
 
 const nav = [
   { href: '/', label: 'Home', labelKo: '홈' },
@@ -509,7 +509,6 @@ const childHref = (path) => {
         </div>
 
         <nav class="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-[13px]" aria-label={fl.privacy}>
-          <a href={localizedHref('/order/lookup')} class="font-medium text-ink/60 transition hover:text-accent">{fl.lookup}</a>
           <a href={localizedHref('/privacy')} class="font-medium text-ink/60 transition hover:text-accent">{fl.privacy}</a>
           <a href={localizedHref('/terms')} class="text-ink/60 transition hover:text-accent">{fl.terms}</a>
           <a href={localizedHref('/refund')} class="text-ink/60 transition hover:text-accent">{fl.refund}</a>
