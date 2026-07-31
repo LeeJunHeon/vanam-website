@@ -1,0 +1,170 @@
+---
+// 견적 요청 완료 — 접수번호 + 방금 제출한 내용 표시.
+//
+// 제출 내용은 sessionStorage('vanam_quote_done') 로 전달받는다.
+// 이 페이지는 정적이고 DB 를 읽지 않으므로, 접수번호(URL)만 아는 제3자에게
+// 연락처·공정 정보가 노출될 표면이 애초에 없다. (내용은 요청한 브라우저에서만 보인다)
+// 진행 상태는 언제든 접수번호 + 이메일로 /order/lookup 에서 조회할 수 있다.
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import company from '../../data/company.json';
+
+const locale = (Astro.currentLocale ?? 'en') as 'ko' | 'en';
+const isKo = locale === 'ko';
+const lhref = (p: string) => getRelativeLocaleUrl(locale, p);
+
+const t = isKo
+  ? {
+      meta: '견적 요청 완료 | VanaM',
+      metaDesc: '견적 요청이 접수되었습니다.',
+      heading: '견적 요청이 접수되었습니다',
+      refNo: '접수번호',
+      copy: '복사', copied: '복사됨',
+      reply: '1~2 영업일 내에 검토 후 이메일로 회신드리겠습니다.',
+      keep: '접수번호를 보관해 주세요. 접수번호와 이메일로 진행 상태를 확인하실 수 있습니다.',
+      summaryTitle: '제출하신 요청 내용',
+      detailsTitle: '상세 내용',
+      print: '요청서 인쇄 · PDF 저장',
+      expired: '제출 내용은 요청하신 브라우저에서만 표시됩니다. 지금은 내용을 확인할 수 없지만, 접수번호와 이메일로 진행 상태를 조회하실 수 있습니다.',
+      lookup: '진행 상태 조회', shop: '제품 보기', contact: '문의하기',
+      labels: { product: '요청 상품', name: '이름', company: '소속', email: '이메일', phone: '연락처', material: '소재', method: '공정', substrate: '기판' },
+      docTitle: '견적 요청서',
+    }
+  : {
+      meta: 'Quote request received | VanaM',
+      metaDesc: 'Your quote request has been received.',
+      heading: 'Your quote request has been received',
+      refNo: 'Reference no.',
+      copy: 'Copy', copied: 'Copied',
+      reply: 'We will review it and reply by email within 1–2 business days.',
+      keep: 'Please keep this reference number. You can check the status anytime with the number and your email.',
+      summaryTitle: 'Your submitted request',
+      detailsTitle: 'Details',
+      print: 'Print · Save as PDF',
+      expired: 'The submitted content is only shown in the browser you used. You can still check the status with the reference number and your email.',
+      lookup: 'Check status', shop: 'Products', contact: 'Contact',
+      labels: { product: 'Requested item', name: 'Name', company: 'Company', email: 'Email', phone: 'Phone', material: 'Material', method: 'Process', substrate: 'Substrate' },
+      docTitle: 'Quote Request',
+    };
+---
+
+<BaseLayout title={t.meta} description={t.metaDesc}>
+  <section class="mx-auto max-w-2xl px-6 py-32">
+    <div class="text-center">
+      <div class="mx-auto flex size-16 items-center justify-center rounded-full border border-accent/30 bg-accent/10">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke='var(--color-accent)' stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+      </div>
+      <h1 class="mt-8 text-3xl font-bold text-ink md:text-4xl">{t.heading}</h1>
+    </div>
+
+    <div id="qd-root" class="mt-10 rounded-xl border border-ink/10 bg-ink/[0.02] p-8"
+      data-labels={JSON.stringify(t.labels)}
+      data-doc-title={t.docTitle}>
+      <div>
+        <p class="text-sm text-ink/45">{t.refNo}</p>
+        <div class="mt-1 flex items-center gap-3">
+          <p id="qd-id" class="font-mono text-2xl font-bold tracking-tight text-ink">—</p>
+          <button id="qd-copy" data-copy={t.copy} data-copied={t.copied}
+            class="rounded border border-ink/15 px-2.5 py-1 text-xs text-ink/60 transition hover:border-ink/40 hover:text-ink">{t.copy}</button>
+        </div>
+      </div>
+      <p class="mt-4 text-sm leading-relaxed text-ink/60">{t.reply}</p>
+
+      <div id="qd-summary" hidden class="mt-6 border-t border-ink/10 pt-6">
+        <p class="text-sm font-semibold text-ink/80">{t.summaryTitle}</p>
+        <dl id="qd-rows" class="mt-4 space-y-2 text-sm"></dl>
+        <div id="qd-details-wrap" hidden class="mt-4">
+          <p class="text-xs text-ink/40">{t.detailsTitle}</p>
+          <pre id="qd-details" class="mt-1 whitespace-pre-wrap rounded-lg bg-ink/[0.05] p-4 font-sans text-sm leading-relaxed text-ink/70"></pre>
+        </div>
+        <button id="qd-print"
+          class="mt-5 rounded-lg border border-ink/15 px-4 py-2 text-sm text-ink/70 transition hover:border-ink/40 hover:text-ink">🖨 {t.print}</button>
+      </div>
+
+      <p id="qd-expired" hidden class="mt-6 border-t border-ink/10 pt-6 text-sm leading-relaxed text-ink/50">{t.expired}</p>
+
+      <p class="mt-6 border-t border-ink/10 pt-6 text-sm leading-relaxed text-ink/50">{t.keep}</p>
+      <p class="mt-4 text-sm text-ink/45">{company.email} · {company.tel}</p>
+    </div>
+
+    <div class="mt-10 flex flex-wrap justify-center gap-4">
+      <a href={lhref('/product')} class="rounded-lg border border-ink/15 px-6 py-3 text-sm text-ink/70 transition hover:border-ink/40 hover:text-ink">{t.shop}</a>
+      <a id="qd-lookup" href={lhref('/order/lookup')} class="rounded-lg border border-ink/15 px-6 py-3 text-sm text-ink/70 transition hover:border-ink/40 hover:text-ink">{t.lookup}</a>
+      <a href={lhref('/contact')} class="rounded-lg bg-brand px-6 py-3 text-sm font-semibold text-onbrand transition hover:brightness-110">{t.contact}</a>
+    </div>
+  </section>
+</BaseLayout>
+
+<script>
+  // 접수번호는 URL 로, 제출 내용은 세션으로 받는다.
+  const root = document.getElementById('qd-root')!;
+  const L: Record<string, string> = JSON.parse(root.dataset.labels || '{}');
+  const id = new URLSearchParams(location.search).get('id') ?? '';
+  document.getElementById('qd-id')!.textContent = id || '—';
+
+  // 조회 링크에 접수번호를 미리 채워 넘긴다
+  const lk = document.getElementById('qd-lookup') as HTMLAnchorElement | null;
+  if (lk && id) lk.href = `${lk.getAttribute('href')}?id=${encodeURIComponent(id)}`;
+
+  const cb = document.getElementById('qd-copy') as HTMLButtonElement | null;
+  cb?.addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(id); } catch (e) { /* 클립보드 불가 시 무시 */ }
+    cb.textContent = cb.dataset.copied!;
+    setTimeout(() => { cb.textContent = cb.dataset.copy!; }, 1600);
+  });
+
+  let raw: Record<string, string> | null = null;
+  try { raw = JSON.parse(sessionStorage.getItem('vanam_quote_done') ?? 'null'); } catch { raw = null; }
+  // 다른 접수 건의 세션이 남아 있으면 보여주지 않는다 (번호와 내용의 불일치 방지)
+  if (raw && id && raw.id && raw.id !== id) raw = null;
+
+  const esc = (s: unknown) =>
+    String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  if (raw) {
+    const d = raw; // 클로저 안에서도 non-null 로 좁혀 쓰기 위한 별칭
+    const order = ['product', 'name', 'company', 'email', 'phone', 'material', 'method', 'substrate'];
+    const pairs = order
+      .filter((k) => (d[k] ?? '').trim() !== '')
+      .map((k) => ({ l: L[k] ?? k, v: d[k] }));
+
+    document.getElementById('qd-rows')!.innerHTML = pairs
+      .map((p) => `<div class="flex gap-3"><dt class="w-20 shrink-0 text-xs leading-6 text-ink/40">${esc(p.l)}</dt><dd class="min-w-0 text-ink/75">${esc(p.v)}</dd></div>`)
+      .join('');
+
+    const det = (d.details ?? '').trim();
+    if (det) {
+      (document.getElementById('qd-details') as HTMLElement).textContent = det;
+      (document.getElementById('qd-details-wrap') as HTMLElement).hidden = false;
+    }
+    (document.getElementById('qd-summary') as HTMLElement).hidden = false;
+
+    // 인쇄 — 장바구니 견적 요청서와 같은 방식(새 창 + print → 브라우저에서 PDF 저장 가능)
+    document.getElementById('qd-print')?.addEventListener('click', () => {
+      const esc2 = (v: string) => v.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+      const rows = pairs.map((p) => `<tr><th>${esc2(p.l)}</th><td>${esc2(p.v)}</td></tr>`).join('');
+      const html = `<!doctype html><html><head><meta charset="utf-8"><title>${esc2(root.dataset.docTitle!)} ${esc2(id)}</title>
+<style>
+  body{font-family:'Pretendard',-apple-system,sans-serif;color:#111;margin:40px;line-height:1.6}
+  h1{font-size:20px;margin:0 0 4px}
+  .sub{color:#666;font-size:12px;margin:0 0 24px}
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  th,td{border:1px solid #ddd;padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:#f6f6f6;width:120px;font-weight:600}
+  pre{white-space:pre-wrap;font-family:inherit;font-size:13px;border:1px solid #ddd;padding:12px;margin-top:16px;background:#fafafa}
+</style></head><body>
+<h1>VANAM — ${esc2(root.dataset.docTitle!)}</h1>
+<p class="sub">${esc2(id)} · ${esc2((d.at || '').slice(0, 10))}</p>
+<table>${rows}</table>
+${det ? `<pre>${esc2(det)}</pre>` : ''}
+</body></html>`;
+      const w2 = window.open('', '_blank');
+      if (!w2) return; // 팝업 차단 시 조용히 중단 — 버튼으로 재시도 가능
+      w2.document.write(html);
+      w2.document.close();
+      setTimeout(() => { try { w2.print(); } catch (e) { /* 사용자가 창에서 직접 인쇄 */ } }, 400);
+    });
+  } else {
+    (document.getElementById('qd-expired') as HTMLElement).hidden = false;
+  }
+</script>

@@ -335,24 +335,24 @@ const spec = (r: Row) =>
 
                     <dl class="min-w-0 space-y-1.5 text-sm">
                       <div class="flex gap-3">
-                        <dt class="w-16 shrink-0 text-xs text-ink/40">이름</dt>
+                        <dt class="w-20 shrink-0 text-xs text-ink/40">이름 / 소속</dt>
                         <dd class="min-w-0 text-ink/75">{o.buyer_name}{o.buyer_company ? ` / ${o.buyer_company}` : ''}</dd>
                       </div>
                       <div class="flex gap-3">
-                        <dt class="w-16 shrink-0 text-xs text-ink/40">이메일</dt>
+                        <dt class="w-20 shrink-0 text-xs text-ink/40">이메일</dt>
                         <dd class="min-w-0 break-all">
                           <a href={`mailto:${o.buyer_email}`} class="text-accent hover:underline">{o.buyer_email}</a>
                         </dd>
                       </div>
                       {o.buyer_phone && (
                         <div class="flex gap-3">
-                          <dt class="w-16 shrink-0 text-xs text-ink/40">연락처</dt>
+                          <dt class="w-20 shrink-0 text-xs text-ink/40">연락처</dt>
                           <dd class="text-ink/75">{o.buyer_phone}</dd>
                         </div>
                       )}
                       {o.needs_shipping ? (
                         <div class="flex gap-3">
-                          <dt class="w-16 shrink-0 text-xs text-ink/40">배송지</dt>
+                          <dt class="w-20 shrink-0 text-xs text-ink/40">배송지</dt>
                           <dd class="min-w-0 leading-relaxed text-ink/60">
                             [{o.ship_country}] {o.ship_name} · {o.ship_phone}<br />
                             ({o.ship_zip}) {[o.ship_addr1, o.ship_addr2, o.ship_city, o.ship_state].filter(Boolean).join(', ')}
@@ -360,37 +360,37 @@ const spec = (r: Row) =>
                         </div>
                       ) : (
                         <div class="flex gap-3">
-                          <dt class="w-16 shrink-0 text-xs text-ink/40">배송</dt>
+                          <dt class="w-20 shrink-0 text-xs text-ink/40">배송</dt>
                           <dd class="text-ink/40">실물 배송 없음 (분석 서비스)</dd>
                         </div>
                       )}
                       {o.ship_memo && (
                         <div class="flex gap-3">
-                          <dt class="w-16 shrink-0 text-xs text-ink/40">배송 요청</dt>
+                          <dt class="w-20 shrink-0 text-xs text-ink/40">배송 요청</dt>
                           <dd class="text-ink/60">{o.ship_memo}</dd>
                         </div>
                       )}
                       {o.desired_date && (
                         <div class="flex gap-3">
-                          <dt class="w-16 shrink-0 text-xs text-ink/40">희망일</dt>
+                          <dt class="w-20 shrink-0 text-xs text-ink/40">희망일</dt>
                           <dd class="text-ink/60">{o.desired_date}</dd>
                         </div>
                       )}
                       {o.order_note && (
                         <div class="flex gap-3">
-                          <dt class="w-16 shrink-0 text-xs text-ink/40">요청사항</dt>
+                          <dt class="w-20 shrink-0 text-xs text-ink/40">요청사항</dt>
                           <dd class="text-ink/60">{o.order_note}</dd>
                         </div>
                       )}
                       {o.ship_courier_acct && (
                         <div class="flex gap-3">
-                          <dt class="w-16 shrink-0 text-xs text-ink/40">착불 계정</dt>
+                          <dt class="w-20 shrink-0 text-xs text-ink/40">착불 계정</dt>
                           <dd class="text-ink/60">{o.ship_courier_acct}</dd>
                         </div>
                       )}
                       {o.tax_invoice === 1 && (
                         <div class="flex gap-3">
-                          <dt class="w-16 shrink-0 text-xs text-ink/40">세금계산서</dt>
+                          <dt class="w-20 shrink-0 text-xs text-ink/40">세금계산서</dt>
                           <dd class="min-w-0 leading-relaxed text-ink/60">
                             {o.tax_biz_name} ({o.tax_biz_no}){o.tax_ceo ? ` · 대표 ${o.tax_ceo}` : ''}<br />
                             <span class="text-ink/35">수신</span> {o.tax_email}

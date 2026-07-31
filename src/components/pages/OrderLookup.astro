@@ -27,6 +27,7 @@ const t = isKo
       help: '주문번호를 잊으셨나요? 아래로 연락 주시면 확인해 드립니다.',
       inq: {
         title: '견적·주문 요청', received: '접수일', product: '요청 상품',
+        method: '공정', substrate: '기판', reqBody: '요청 내용 보기',
         amount: '견적 금액', vat: '(부가세 포함)',
         pending: '산정 중입니다 — 견적이 확정되면 이메일로 안내드립니다.',
         st: { new: '접수됨 (검토 대기)', quoted: '견적 발송됨', replied: '회신 완료', paid: '결제 완료', closed: '종료' },
@@ -65,6 +66,7 @@ const t = isKo
       help: 'Lost your order number? Contact us and we will look it up for you.',
       inq: {
         title: 'Quote / order request', received: 'Received', product: 'Requested item',
+        method: 'Process', substrate: 'Substrate', reqBody: 'View request details',
         amount: 'Quoted amount', vat: '(VAT included)',
         pending: 'Being prepared — we will email you once the quote is ready.',
         st: { new: 'Received (in review)', quoted: 'Quote sent', replied: 'Replied', closed: 'Closed', paid: 'Paid' },
@@ -325,6 +327,15 @@ const inputClass =
                 <p class="mt-6 border-t border-ink/10 pt-5 text-sm text-ink/60">
                   ${esc(INQ.product)}: <span class="text-ink/80">${esc(q.product_name ?? q.material)}</span>
                 </p>` : ''}
+              ${q.method || q.substrate ? `
+                <p class="mt-2 text-sm text-ink/60">
+                  ${q.method ? `${esc(INQ.method)}: <span class="text-ink/80">${esc(q.method)}</span>` : ''}${q.method && q.substrate ? ' · ' : ''}${q.substrate ? `${esc(INQ.substrate)}: <span class="text-ink/80">${esc(q.substrate)}</span>` : ''}
+                </p>` : ''}
+              ${q.details ? `
+                <details class="mt-4 rounded-lg border border-ink/10 bg-ink/[0.03]">
+                  <summary class="cursor-pointer px-4 py-3 text-sm font-medium text-ink/70">${esc(INQ.reqBody)}</summary>
+                  <pre class="whitespace-pre-wrap border-t border-ink/10 px-4 py-3 font-sans text-sm leading-relaxed text-ink/65">${esc(q.details)}</pre>
+                </details>` : ''}
               <div class="mt-5 flex items-center justify-between border-t border-ink/10 pt-5">
                 <span class="text-sm text-ink/60">${esc(INQ.amount)} <span class="text-ink/35">${esc(INQ.vat)}</span></span>
                 <span class="text-xl font-bold text-ink">${amt ?? `<span class="text-base font-medium text-ink/45">${esc(INQ.pending)}</span>`}</span>

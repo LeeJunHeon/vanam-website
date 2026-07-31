@@ -98,7 +98,7 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
             <input id="q-phone" name="phone" type="tel" required class={inputClass} />
           </div>
           <div>
-            <label for="q-company" class={labelClass}>{c.company} <span class="text-danger">*</span></label>
+            <label for="q-company" class={labelClass}>{c.company}</label>
             <input id="q-company" name="company" type="text" class={inputClass} placeholder={c.companyPlaceholder} />
           </div>
         </div>
@@ -676,6 +676,22 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
       });
       if (!res.ok) throw new Error("HTTP " + res.status);
       const j = (await res.json().catch(() => ({}))) as { id?: string };
+      // 완료 페이지에서 "무엇을 제출했는지"를 조회 없이 보여주기 위해
+      // 방금 구성한 내용을 세션에 담아 넘긴다. 완료 페이지는 정적이고 DB 를 읽지 않으므로
+      // 접수번호만 아는 제3자에게 연락처·공정 정보가 노출될 표면이 없다.
+      const doneData = {
+        id: j.id ?? "",
+        at: new Date().toISOString(),
+        product: String(data.productName ?? ""),
+        name: String(data.name ?? ""),
+        company: String(data.company ?? ""),
+        email: String(data.email ?? ""),
+        phone: String(data.phone ?? ""),
+        material: String(data.material ?? ""),
+        method: String(data.method ?? ""),
+        substrate: String(data.substrate ?? ""),
+        details: String(data.details ?? ""),
+      };
       form.reset();
       // 공정 빌더는 풀 모드에만 존재 — simple(웨이퍼 주문) 폼에서는 null 이라
       // 여기서 예외가 나면 "성공했는데 실패 메시지"가 뜨는 버그가 됨 (가드 필수)
@@ -684,9 +700,16 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
         refreshStepLabels();
       }
       window.turnstile?.reset();
-      // 접수번호(INQ-…)를 함께 보여준다 — 접수 사실이 분명해지고, 주문 조회에 그대로 쓸 수 있다.
-      setStatus(j.id ? `${M.msgSuccess} (${j.id})` : M.msgSuccess!, true);
-      // 폼이 길어 성공 문구가 화면 밖에 있으면 "아무 일도 안 일어난 것"처럼 보인다 — 시야로 끌어온다.
+      if (j.id) {
+        // 주문 흐름과 같은 규칙(PRG): 접수번호가 보이는 완료 페이지로 이동하고,
+        // 제출이 성공한 폼 페이지는 히스토리에서 제거한다.
+        try { sessionStorage.setItem("vanam_quote_done", JSON.stringify(doneData)); } catch (err2) { /* 세션 불가 — 완료 페이지가 접수번호만 표시 */ }
+        const base = document.documentElement.lang === "ko" ? "/ko" : "";
+        location.replace(`${base}/quote/done?id=${encodeURIComponent(j.id)}`);
+        return;
+      }
+      // 구버전 응답(id 없음) 폴백 — 인라인 성공 안내
+      setStatus(M.msgSuccess!, true);
       try { statusEl.scrollIntoView({ block: "center", behavior: "smooth" }); } catch (err2) { /* 무시 */ }
     } catch (err) {
       console.error(err);
