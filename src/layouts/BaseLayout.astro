@@ -226,12 +226,12 @@ const childHref = (path) => {
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonicalURL} />
-    <meta property="og:site_name" content="VanaM" />
+    <meta property="og:site_name" content="VanaM INC." />
     <meta property="og:locale" content={ogLocale} />
     <meta property="og:image" content={new URL('/og.png', Astro.site).href} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="VanaM — VANA Materials Lab" />
+    <meta property="og:image:alt" content="VanaM INC. — Thin Films, All Around" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:image" content={new URL('/og.png', Astro.site).href} />
     <link rel="preconnect" href="https://cdn.jsdelivr.net" />
@@ -500,7 +500,8 @@ const childHref = (path) => {
         <p class="mt-1">{ui.tagline}</p>
 
         <!-- 전자상거래법상 표시 의무 항목 (PG 심사 필수) -->
-        <div class="mt-5 space-y-1 text-[13px] leading-relaxed text-ink/60">
+        <!-- translate="no": 크롬 자동 번역이 상호·대표자·주소를 음차("(주)바나엠" 등)로 훼손하는 것 방지 -->
+        <div translate="no" class="mt-5 space-y-1 text-[13px] leading-relaxed text-ink/60">
           <p>{fl.ceo}: {biz.ceo} &nbsp;·&nbsp; {fl.bizNo}: {company.bizNo}</p>
           <p>{fl.mailOrder}: {company.mailOrderNo}</p>
           <p>({company.zip}) {biz.address}</p>
@@ -524,7 +525,7 @@ const childHref = (path) => {
         </div>
         </div>
 
-        <p class="mt-10 border-t border-ink/[0.06] pt-6 text-ink/55">© 2026 {company.nameEn} All rights reserved.</p>
+        <p translate="no" class="mt-10 border-t border-ink/[0.06] pt-6 text-ink/55">© 2026 {company.nameEn} All rights reserved.</p>
       </div>
     </footer>
 
