@@ -70,10 +70,10 @@ const img = d.image ? waferImages[d.image]?.default : undefined;
             <div>
               <div class="flex flex-wrap items-center gap-3">
                 <div class="flex items-center rounded-lg border border-ink/15">
-                  <button type="button" data-qty="-1" class="grid h-12 w-10 place-items-center text-lg text-ink/60 transition hover:text-accent" aria-label="수량 감소">−</button>
+                  <button type="button" data-qty="-1" class="grid h-12 w-10 place-items-center text-lg text-ink/60 transition hover:text-accent" aria-label={s.qtyDec}>−</button>
                   <input id="buy-qty" type="number" min="1" max="99" value="1"
                     class="h-12 w-14 border-x border-ink/15 bg-transparent text-center text-sm font-semibold text-ink outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
-                  <button type="button" data-qty="1" class="grid h-12 w-10 place-items-center text-lg text-ink/60 transition hover:text-accent" aria-label="수량 증가">＋</button>
+                  <button type="button" data-qty="1" class="grid h-12 w-10 place-items-center text-lg text-ink/60 transition hover:text-accent" aria-label={s.qtyInc}>＋</button>
                 </div>
                 <button type="button" id="add-cart" data-sku={`wafer:${wafer.id}`} data-cart-url={`${base}/cart`}
                   class="inline-flex items-center gap-2 rounded-lg bg-brand px-7 py-3 font-semibold text-onbrand transition hover:brightness-110">

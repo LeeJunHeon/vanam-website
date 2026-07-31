@@ -65,6 +65,8 @@ const quoteCatalog = [
       data-total={c.total}
       data-vat={s.vatIncluded}
       data-fx-note={s.fxNote}
+      data-qty-dec={s.qtyDec}
+      data-qty-inc={s.qtyInc}
       data-checkout={c.checkout}
       data-checkout-url={`${base}/checkout`}
       data-continue={c.continueShopping}
@@ -86,6 +88,10 @@ const quoteCatalog = [
 
 <script>
   type Item = { sku: string; qty: number };
+  // 카탈로그(CMS) 값이라 신뢰 수준은 높지만, innerHTML 에 넣는 값은 일괄 이스케이프한다
+  // (RFQ 인쇄부의 esc2 와 동일한 원칙 — 표기 일관성).
+  const esc = (v: unknown) =>
+    String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   type Product = { sku: string; name: string; price: number; url: string; quote?: boolean };
 
   const CART_KEY = 'vanam_cart';
@@ -136,16 +142,16 @@ const quoteCatalog = [
       return `
         <div class="flex flex-wrap items-center gap-4 py-5" data-sku="${p.sku}">
           <div class="min-w-0 flex-1">
-            <a href="${p.url}" class="font-medium text-ink transition hover:text-accent">${p.name}</a>
+            <a href="${esc(p.url)}" class="font-medium text-ink transition hover:text-accent">${esc(p.name)}</a>
             ${p.quote
               ? `<p class="mt-1"><span class="inline-flex rounded-full border border-accent/30 bg-accent/[0.06] px-2.5 py-0.5 text-xs font-semibold text-accent">${M.quoteBadge}</span></p>`
               : `<p class="mt-1 text-sm text-ink/50">${usd(p.price)}</p>`}
           </div>
           <div class="flex shrink-0 items-center gap-1 self-center">
-            <button type="button" data-act="dec" class="size-9 rounded-lg border border-ink/15 text-ink/70 transition hover:border-accent hover:text-ink">−</button>
+            <button type="button" data-act="dec" aria-label="${M.qtyDec}" class="size-9 rounded-lg border border-ink/15 text-ink/70 transition hover:border-accent hover:text-ink">−</button>
             <input type="number" min="1" max="99" value="${i.qty}" data-act="qty"
               class="h-9 w-14 rounded-lg border border-ink/10 bg-ink/[0.03] text-center text-ink outline-none focus:border-accent [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
-            <button type="button" data-act="inc" class="size-9 rounded-lg border border-ink/15 text-ink/70 transition hover:border-accent hover:text-ink">+</button>
+            <button type="button" data-act="inc" aria-label="${M.qtyInc}" class="size-9 rounded-lg border border-ink/15 text-ink/70 transition hover:border-accent hover:text-ink">+</button>
           </div>
           ${p.quote
             ? `<span class="w-28 shrink-0 text-right text-sm text-ink/30">—</span>`

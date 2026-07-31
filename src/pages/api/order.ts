@@ -182,7 +182,7 @@ async function handleOrder({ request, locals }: { request: Request; locals: unkn
     for (const it of raw) {
       const sku = str((it as Record<string, unknown>)?.sku);
       const qty = Number((it as Record<string, unknown>)?.qty);
-      if (!sku || !Number.isInteger(qty) || qty < 1 || qty > 999) {
+      if (!sku || !Number.isInteger(qty) || qty < 1 || qty > 99) { // 클라이언트 상한(99)과 일치
         return json({ ok: false, error: 'bad_item' }, 400);
       }
       if (sku.startsWith('wafer:')) {
