@@ -101,6 +101,15 @@ export const POST: APIRoute = async ({ request }) => {
       pay_method: o.pay_method,
       created_at: o.created_at,
       needs_shipping: o.needs_shipping,
+      // 배송지 표시용 — DB(SELECT *)에는 있었지만 허용목록에서 빠져
+      // 조회 화면이 빈 값을 조합해 "·" 만 남던 결함(지뢰 ㉟형)의 수정.
+      ship_name: o.ship_name ?? null,
+      ship_phone: o.ship_phone ?? null,
+      ship_zip: o.ship_zip ?? null,
+      ship_addr1: o.ship_addr1 ?? null,
+      ship_addr2: o.ship_addr2 ?? null,
+      ship_city: o.ship_city ?? null,
+      ship_state: o.ship_state ?? null,
       ship_country: o.ship_country,
       tracking_no: o.tracking_no,
       tracking_courier: o.tracking_courier,

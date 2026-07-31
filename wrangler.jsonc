@@ -1,5 +1,8 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
+  // workers.dev 공개 주소 비활성. 대시보드에서 꺼도 다음 배포가 이 파일 기준으로 되살리므로
+  // 소스에 false 를 못 박아야 유지된다. 정식 접속은 커스텀 도메인(vanam.co.kr)만.
+  "workers_dev": false,
   "d1_databases": [
     { "binding": "DB", "database_name": "vanam-orders" }
   ]
