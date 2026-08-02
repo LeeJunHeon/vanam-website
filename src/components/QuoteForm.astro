@@ -560,6 +560,17 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
     const hp = form.elements.namedItem("vanam_hp_note") as HTMLInputElement | null;
     if (hp) hp.value = "";
 
+    // details 라벨 로캘 — 이 텍스트는 고객의 완료 페이지·요청서 PDF·주문 조회에 그대로 노출되므로
+    // 페이지 언어를 따른다. (기존엔 한국어 고정이라 영문 제출에도 [공정 시퀀스] 등이 섞였다)
+    const isKoDoc = document.documentElement.lang === "ko";
+    const DL = isKoDoc
+      ? { qty: "수량", shipHdr: "[배송 주소]", country: "국가", addr: "주소", cityState: "도시/주", postal: "우편번호",
+          notes: "요청사항", seqHdr: "[공정 시퀀스]", analysis: "[분석]", delivery: "기판 전달",
+          samples: "총 샘플 수량", due: "완료 희망일", caution: "주의사항" }
+      : { qty: "Quantity", shipHdr: "[Shipping address]", country: "Country", addr: "Address", cityState: "City/State", postal: "Postal code",
+          notes: "Notes", seqHdr: "[Process sequence]", analysis: "[Analysis]", delivery: "Substrate delivery",
+          samples: "Total samples", due: "Target completion", caution: "Notes" };
+
     const isSimple = !!M.simple;
 
     // 공정 시퀀스 (최소 1개) — 단일 상품(simple)은 공정이 없으므로 건너뛴다
@@ -619,13 +630,13 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
       data.material = M.productName || "Product request";
       data.substrate = "";
       data.details = [
-        data.sampleCount ? `수량: ${data.sampleCount}` : "",
-        "[배송 주소]",
-        shipCountry ? `국가: ${shipCountry}` : "",
-        shipAddr ? `주소: ${shipAddr}` : "",
-        shipCityLine ? `도시/주: ${shipCityLine}` : "",
-        data.shipPostal ? `우편번호: ${data.shipPostal}` : "",
-        data.notes ? `요청사항: ${data.notes}` : "",
+        data.sampleCount ? `${DL.qty}: ${data.sampleCount}` : "",
+        DL.shipHdr,
+        shipCountry ? `${DL.country}: ${shipCountry}` : "",
+        shipAddr ? `${DL.addr}: ${shipAddr}` : "",
+        shipCityLine ? `${DL.cityState}: ${shipCityLine}` : "",
+        data.shipPostal ? `${DL.postal}: ${data.shipPostal}` : "",
+        data.notes ? `${DL.notes}: ${data.notes}` : "",
       ].filter(Boolean).join("\n");
       delete data.shipCountry; delete data.shipCountryOther;
       delete data.shipAddr1; delete data.shipAddr2;
@@ -643,14 +654,14 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
       data.method = uniq(depRows.map((s) => s.process)).join(", ");
       data.substrate = [data.substrateType, sizeLabel].filter(Boolean).join(" / ");
       data.details = [
-        "[공정 시퀀스]",
+        DL.seqHdr,
         seq.text,
-        measures.length ? `\n[분석] ${measures.join(", ")}` : "",
+        measures.length ? `\n${DL.analysis} ${measures.join(", ")}` : "",
         "",
-        deliveryLabel ? `기판 전달: ${deliveryLabel}` : "",
-        data.sampleCount ? `총 샘플 수량: ${data.sampleCount}` : "",
-        data.completionDate ? `완료 희망일: ${data.completionDate}` : "",
-        data.notes ? `주의사항: ${data.notes}` : "",
+        deliveryLabel ? `${DL.delivery}: ${deliveryLabel}` : "",
+        data.sampleCount ? `${DL.samples}: ${data.sampleCount}` : "",
+        data.completionDate ? `${DL.due}: ${data.completionDate}` : "",
+        data.notes ? `${DL.caution}: ${data.notes}` : "",
       ].filter(Boolean).join("\n");
     }
 

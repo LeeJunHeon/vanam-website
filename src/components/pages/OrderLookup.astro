@@ -309,8 +309,11 @@ const inputClass =
             replied: 'border-ok/30 bg-ok/10 text-ok',
             closed: 'border-ink/10 bg-ink/5 text-ink/40',
           };
+          // KRW 견적을 USD 로 환산 표시하면 소액에서 $0.00 으로 왜곡된다 — 산정 통화 그대로 보여준다.
           const amt = q.quoted_amount == null ? null
-            : `$${Number(q.quote_currency === 'USD' ? q.quoted_amount : Number(q.quoted_amount) / (usdRateClient || 1500)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            : q.quote_currency === 'USD'
+              ? `$${Number(q.quoted_amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+              : `₩${Number(q.quoted_amount).toLocaleString('ko-KR')}`;
           resEl.innerHTML = `
             <div class="rounded-xl border border-ink/10 bg-ink/[0.02] p-7">
               <div class="flex flex-wrap items-start justify-between gap-4">
