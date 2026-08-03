@@ -43,3 +43,9 @@
 /about/*                    /             301
 /ko/about                   /ko/          301
 /ko/about/*                 /ko/          301
+
+# ── 블로그 목록 (0167: News 와 통합) — 상세(/blog/*)는 유지하므로 와일드카드 금지 ──
+/blog                       /news         301
+/blog/                      /news         301
+/ko/blog                    /ko/news      301
+/ko/blog/                   /ko/news      301

@@ -153,8 +153,13 @@ const nav = [
       { href: '/product#equipment', label: 'Equipment Solution', labelKo: '장비 솔루션' },
     ],
   },
-  { href: '/news', label: 'News', labelKo: '뉴스' },
-  { href: '/blog', label: 'Blog', labelKo: '블로그' },
+  {
+    href: '/news', label: 'News & Blog', labelKo: '뉴스 · 블로그',
+    children: [
+      { href: '/news#press', label: 'News', labelKo: '뉴스' },
+      { href: '/news#blog', label: 'Blog', labelKo: '블로그' },
+    ],
+  },
   {
     href: '/contact', label: 'Contact', labelKo: '문의',
     children: [
@@ -525,7 +530,8 @@ const childHref = (path) => {
         </div>
 
         <!-- 소셜 채널 — 우측 열(데스크톱). 아이콘 확대 + 이름·설명 + 새 탭 안내 -->
-        <div class="w-full md:w-[320px] md:shrink-0">
+        {/* 모바일에선 채널을 회사 정보 위로 (0167) */}
+        <div class="max-md:order-first w-full md:w-[320px] md:shrink-0">
           <p class="text-xs font-medium uppercase tracking-widest text-accent">{currentLocale === 'ko' ? '채널' : 'Channels'}</p>
           <p class="mt-1.5 text-xs text-ink/45">{currentLocale === 'ko' ? '아이콘을 누르면 각 채널이 새 탭으로 열립니다.' : 'Each channel opens in a new tab.'}</p>
           <div class="mt-4"><SnsChannels /></div>
