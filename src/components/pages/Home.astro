@@ -36,7 +36,7 @@ const description = home.metaDescription;
              다크 테마의 시안(#1ebbf0)으로 고정한다. -->
         <p translate="no" class="mb-5 font-mono text-xs tracking-[0.25em] text-[#1ebbf0]">VANA&nbsp;MATERIALS&nbsp;LAB.</p>
         <h1 class="text-5xl font-bold leading-[1.05] tracking-tight text-white sm:text-7xl">{home.heroTitle.line1}<br />{home.heroTitle.line2}</h1>
-        <p class="mt-6 max-w-xl text-lg leading-relaxed text-white/75">{home.heroSubtitle.line1}<br />{home.heroSubtitle.line2}</p>
+        <p class="mt-6 max-w-xl text-lg leading-relaxed text-white/75">{home.heroSubtitle.line1}{home.heroSubtitle.line2 && <><br />{home.heroSubtitle.line2}</>}</p>
         <div class="mt-9 flex flex-wrap gap-4">
           <a href={lhref('/technology')} class="rounded-full bg-brand px-6 py-3 text-sm font-semibold text-onbrand transition hover:brightness-110">{home.heroCtaPrimary}</a>
           <a href={lhref('/contact')} class="rounded-full border border-white/40 px-6 py-3 text-sm font-medium text-white/90 transition hover:border-white hover:text-white">{home.heroCtaSecondary}</a>
