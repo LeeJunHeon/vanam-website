@@ -103,6 +103,24 @@ const mt = {
 // 시스템별 사전 필터(템플릿에서는 단층 map 만 사용 — 검증된 형태)
 const pvdPanels = matPanels.filter((p) => p.system !== 'ALD');
 const aldPanels = matPanels.filter((p) => p.system === 'ALD');
+
+// SEO(0169): 아코디언 본문(HTML 내 존재 = 색인 대상)과 별개로, 소재 전목록을 기계가독 형태로 명시 제공
+const materialsLd = {
+  '@context': 'https://schema.org',
+  '@type': 'ItemList',
+  name: title,
+  numberOfItems: matPanels.length,
+  itemListElement: matPanels.map((p, i) => ({
+    '@type': 'ListItem',
+    position: i + 1,
+    item: {
+      '@type': 'Product',
+      name: p.name ? `${p.formula} (${p.name})` : p.formula,
+      category: `${p.system} · ${p.category}`,
+      url: new URL(`${lhref('/materials')}#mat-${p.id}`, Astro.site).href,
+    },
+  })),
+};
 ---
 <BaseLayout title={title} description={description} zebra>
 
@@ -118,7 +136,7 @@ const aldPanels = matPanels.filter((p) => p.system === 'ALD');
   <section>
     <div class="mx-auto max-w-6xl px-6 py-16">
       <div class="mt-10 grid gap-6 lg:grid-cols-2">
-      <div id="pvd" class="v-reveal scroll-mt-28 rounded-2xl border border-ink/10 bg-ink/[0.03] p-7">
+      <div class="v-reveal rounded-2xl border border-ink/10 bg-ink/[0.03] p-7">
         <h3 class="text-lg font-bold text-accent">PVD — Sputter &amp; Evaporator</h3>
         {Object.entries(sputter).map(([group, items]) => (
           <div class="mt-5">
@@ -135,7 +153,7 @@ const aldPanels = matPanels.filter((p) => p.system === 'ALD');
         ))}
       </div>
 
-      <div id="ald" class="v-reveal scroll-mt-28 rounded-2xl border border-ink/10 bg-ink/[0.03] p-7">
+      <div class="v-reveal rounded-2xl border border-ink/10 bg-ink/[0.03] p-7">
         <h3 class="text-lg font-bold text-accent">ALD</h3>
         {Object.entries(ald).map(([group, items]) => (
           <div class="mt-5">
@@ -157,16 +175,17 @@ const aldPanels = matPanels.filter((p) => p.system === 'ALD');
 
   <section>
     <div class="mx-auto max-w-6xl px-6 py-20">
-      <h2 class="v-reveal text-3xl font-semibold text-ink">PVD — Sputter &amp; Evaporator</h2>
+      <h2 id="pvd" class="v-reveal scroll-mt-28 text-3xl font-semibold text-ink">PVD — Sputter &amp; Evaporator</h2>
       <div class="mt-6 grid items-start gap-3 lg:grid-cols-2">
         {pvdPanels.map((p) => <MaterialCard p={p} mt={mt} />)}
       </div>
-      <h2 class="v-reveal mt-16 text-3xl font-semibold text-ink">ALD</h2>
+      <h2 id="ald" class="v-reveal mt-16 scroll-mt-28 text-3xl font-semibold text-ink">ALD</h2>
       <div class="mt-6 grid items-start gap-3 lg:grid-cols-2">
         {aldPanels.map((p) => <MaterialCard p={p} mt={mt} />)}
       </div>
     </div>
   </section>
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(materialsLd)} />
 </BaseLayout>
 
 <script>
