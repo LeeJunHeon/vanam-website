@@ -1,0 +1,10 @@
+---
+// 브랜드 표기를 크롬 자동 번역 음차로부터 보호 (0170).
+// 문장 전체가 아니라 브랜드 토큰만 <span translate="no"> 로 감싸,
+// 나머지 문장은 사용자가 원하는 언어로 번역될 수 있게 한다.
+const { text } = Astro.props;
+const RX = /(VanaM|VANAM|반암|바나엠)/g;
+const parts = String(text ?? '').split(RX);
+const isBrand = (t: string) => /^(VanaM|VANAM|반암|바나엠)$/.test(t);
+---
+{parts.map((t) => (isBrand(t) ? <span translate="no">{t}</span> : t))}

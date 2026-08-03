@@ -678,7 +678,7 @@ const childHref = (path) => {
     <!--
       구 워드프레스의 해시 링크를 새 주소로 넘긴다.
       해시(#team)는 서버로 전송되지 않아 _redirects 로는 처리할 수 없다. 브라우저에서만 가능하다.
-        구:  vanam.co.kr/#team              →  신: /about#team
+        구:  vanam.co.kr/#team              →  신: 홈에 그대로 존재 (0165 통합)
         구:  vanam.co.kr/technology-solution/#core  →  _redirects 가 /technology 로 보내고, 여기서 #core 를 붙인다
     -->
     <script is:inline>
@@ -690,17 +690,15 @@ const childHref = (path) => {
         var base = ko ? '/ko' : '';
         var home = p === base || p === '';
 
-        // 홈에 있던 구 앵커 → /about
-        var ABOUT = ['vision', 'team', 'history', 'achievement', 'collaboration'];
-        if (home && ABOUT.indexOf(h) >= 0) {
-          location.replace(base + '/about#' + h);
-          return;
-        }
+        // (0170) 구 '홈 앵커 → /about' 매핑 삭제 — About 이 홈으로 흡수(0165)돼 앵커가 홈에 실재한다.
+        // 유지하면 /about → / 301 과 맞물려 무한 리다이렉트 루프(홈 깜빡임·무한 로딩)가 난다.
+        // 홈 해시는 아래 공통 scrollIntoView 가 처리한다.
         // Technology 에서 Product 로 옮겨간 섹션 → 새 위치로 (2026-07 개편)
         //   #analysis / #equipment 는 /product 의 같은 앵커, #fs(서비스, 삭제됨)는 /product 상단
         if (p === base + '/technology') {
           if (h === 'analysis' || h === 'equipment') { location.replace(base + '/product#' + h); return; }
           if (h === 'fs') { location.replace(base + '/product'); return; }
+          if (h === 'materials') { location.replace(base + '/materials'); return; } // 0169: 전용 페이지로 분리
         }
         // 이미 목적지 페이지인데 해당 요소가 있으면 스크롤만 맞춘다
         var el = document.getElementById(h);
@@ -730,6 +728,7 @@ const childHref = (path) => {
           if (!el) return;
 
           e.preventDefault();
+          if (el.tagName === 'DETAILS') el.open = true; // 아코디언 앵커는 펼친 뒤 스크롤 (0170)
           el.scrollIntoView({ behavior: 'smooth', block: 'start' });
           // 주소창 해시도 갱신(뒤로가기·북마크 유지). 스크롤은 위에서 이미 처리.
           history.pushState(null, '', hash);

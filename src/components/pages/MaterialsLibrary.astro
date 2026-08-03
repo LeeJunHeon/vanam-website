@@ -197,6 +197,7 @@ const materialsLd = {
   };
   openFromHash();
   window.addEventListener('hashchange', openFromHash);
+  window.addEventListener('popstate', openFromHash); // pushState 내비의 뒤로가기 대응 (0170)
 </script>
 
 <style is:global>

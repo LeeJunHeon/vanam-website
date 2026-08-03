@@ -3,6 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getRelativeLocaleUrl } from 'astro:i18n';
 import siteData from '../../data/site.json';
 import AboutBlocks from '../home/AboutBlocks.astro';
+import BrandGuard from '../BrandGuard.astro';
 
 const locale = Astro.currentLocale ?? 'en';
 const lhref = (p) => getRelativeLocaleUrl(locale, p);
@@ -58,8 +59,8 @@ const description = home.metaDescription;
       <h2 class="mb-5 max-w-3xl text-3xl font-semibold leading-snug text-ink">{about.visionBody}</h2>
       {/* About 통합(0165→0168): 제목 = 구 About 비전 선언문(about.visionBody, 원문 그대로).
           본문 순서: 회사 정의(heroSubtitle) → 기존 visionBody → 파운드리 운영(companyP1). 문구 수정 금지. */}
-      <p class="max-w-2xl text-base leading-relaxed text-ink/65">{about.heroSubtitle}</p>
-      <p class="mt-5 max-w-2xl whitespace-pre-line text-base leading-relaxed text-ink/65">{home.visionBody}</p>
+      <p class="max-w-2xl text-base leading-relaxed text-ink/65"><BrandGuard text={about.heroSubtitle} /></p>
+      <p class="mt-5 max-w-2xl whitespace-pre-line text-base leading-relaxed text-ink/65"><BrandGuard text={home.visionBody} /></p>
       <p class="mt-5 max-w-2xl text-base leading-relaxed text-ink/65">{about.companyP1}</p>
     </div>
   </section>
