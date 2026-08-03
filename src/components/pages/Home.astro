@@ -55,13 +55,12 @@ const description = home.metaDescription;
   <section id="vision" class="scroll-mt-24">
     <div class="v-reveal mx-auto max-w-6xl px-6 py-20">
       <p class="mb-3 font-mono text-xs tracking-[0.16em] text-accent">01 / VISION</p>
-      <h2 class="mb-5 text-3xl font-semibold text-ink">{home.visionHeading}</h2>
-      {/* About 통합(0165): 아래 세 단락은 구 About 원문을 그대로 편입 — 문구 수정 금지.
-          순서: 회사 정의(heroSubtitle) → 기존 visionBody → 파운드리 운영(companyP1) → 비전 선언(visionBody). */}
+      <h2 class="mb-5 max-w-3xl text-3xl font-semibold leading-snug text-ink">{about.visionBody}</h2>
+      {/* About 통합(0165→0168): 제목 = 구 About 비전 선언문(about.visionBody, 원문 그대로).
+          본문 순서: 회사 정의(heroSubtitle) → 기존 visionBody → 파운드리 운영(companyP1). 문구 수정 금지. */}
       <p class="max-w-2xl text-base leading-relaxed text-ink/65">{about.heroSubtitle}</p>
       <p class="mt-5 max-w-2xl whitespace-pre-line text-base leading-relaxed text-ink/65">{home.visionBody}</p>
       <p class="mt-5 max-w-2xl text-base leading-relaxed text-ink/65">{about.companyP1}</p>
-      <p class="mt-10 max-w-3xl text-2xl font-semibold leading-snug text-ink md:text-3xl">{about.visionBody}</p>
     </div>
   </section>
 

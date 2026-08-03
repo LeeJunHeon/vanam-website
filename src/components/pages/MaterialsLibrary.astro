@@ -158,16 +158,27 @@ const aldPanels = matPanels.filter((p) => p.system === 'ALD');
   <section>
     <div class="mx-auto max-w-6xl px-6 py-20">
       <h2 class="v-reveal text-3xl font-semibold text-ink">PVD — Sputter &amp; Evaporator</h2>
-      <div class="mt-8 space-y-8">
+      <div class="mt-6 grid items-start gap-3 lg:grid-cols-2">
         {pvdPanels.map((p) => <MaterialCard p={p} mt={mt} />)}
       </div>
       <h2 class="v-reveal mt-16 text-3xl font-semibold text-ink">ALD</h2>
-      <div class="mt-8 space-y-8">
+      <div class="mt-6 grid items-start gap-3 lg:grid-cols-2">
         {aldPanels.map((p) => <MaterialCard p={p} mt={mt} />)}
       </div>
     </div>
   </section>
 </BaseLayout>
+
+<script>
+  // 인덱스 배지(#mat-…) 클릭·직접 진입 시 해당 아코디언을 자동으로 연다
+  const openFromHash = () => {
+    if (!location.hash) return;
+    const el = document.getElementById(location.hash.slice(1));
+    if (el instanceof HTMLDetailsElement) el.open = true;
+  };
+  openFromHash();
+  window.addEventListener('hashchange', openFromHash);
+</script>
 
 <style is:global>
   html { scroll-behavior: smooth; }

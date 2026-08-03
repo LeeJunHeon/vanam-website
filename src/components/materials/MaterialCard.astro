@@ -1,22 +1,19 @@
 ---
-// 소재 상세 카드 (0166) — 구 Technology 모달 패널의 원문 마크업.
-// MaterialsLibrary 에서 시스템별 단층 map 으로 렌더한다.
-// (중첩 map 래퍼 안에서는 Astro 컴파일러가 표현식을 조용히 떨궈 카드가 통째로 사라졌다 — 지뢰)
+// 소재 상세 카드 (0166 → 0168 표현 개편) — 카탈로그형 컴팩트 아코디언.
+// Lesker 류 소재 카탈로그의 "목록은 짧게, 상세는 펼쳐서" 패턴: 요약줄(화학식·이름·분류)만 보이고
+// 펼치면 스펙 도판·사양·타깃·CTA. 데이터는 0166 그대로, 표현만 압축.
+// <details> 네이티브: JS 없이 동작하고 전문이 DOM 에 있어 SEO 유지. 배지 앵커 진입 시 스크립트가 자동 open.
 const { p, mt } = Astro.props;
 ---
-<article id={`mat-${p.id}`} class="mat-card scroll-mt-28 rounded-2xl border border-ink/10 bg-ink/[0.03] p-6 md:p-8">
-          <div class="pr-8">
-            <h2 class="flex flex-wrap items-end gap-x-3 gap-y-1">
-              <span class="text-5xl font-black leading-none tracking-tight text-ink">{p.formula}</span>
-              <span class="pb-1 text-base font-medium text-ink/55">({p.name})</span>
-            </h2>
-            <div class="mt-3 flex flex-wrap gap-x-8 gap-y-1.5 text-sm">
-              <div><span class="text-ink/45">{mt.system}: </span><span class="text-ink/80">{p.system}</span></div>
-              <div><span class="text-ink/45">{mt.category}: </span><span class="text-ink/80">{p.category}</span></div>
-            </div>
-          </div>
-
-          {p.hasA4 ? (
+<details id={`mat-${p.id}`} class="mat-card group scroll-mt-28 self-start overflow-hidden rounded-xl border border-ink/10 bg-ink/[0.03] transition open:border-accent/40">
+  <summary class="flex cursor-pointer select-none list-none items-center gap-3 px-4 py-3.5 transition hover:bg-ink/[0.03] [&::-webkit-details-marker]:hidden">
+    <span class="text-xl font-black tracking-tight text-ink">{p.formula}</span>
+    <span class="min-w-0 truncate text-sm text-ink/55">{p.name}</span>
+    <span class="ml-auto hidden shrink-0 rounded-full border border-ink/10 bg-ink/[0.04] px-2.5 py-0.5 text-[11px] text-ink/60 sm:inline">{p.category}</span>
+    <svg class="h-4 w-4 shrink-0 text-ink/40 transition-transform group-open:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+  </summary>
+  <div class="border-t border-ink/10 px-4 pb-6 pt-1 md:px-6">
+    {p.hasA4 ? (
             <>
               <div class="mt-6 flex items-center gap-2.5">
                 <span class="h-5 w-1 rounded-full bg-accent" aria-hidden="true"></span>
@@ -97,4 +94,5 @@ const { p, mt } = Astro.props;
               {mt.cta} →
             </a>
           </div>
-        </article>
+        </div>
+</details>
