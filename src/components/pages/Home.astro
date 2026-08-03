@@ -2,17 +2,19 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getRelativeLocaleUrl } from 'astro:i18n';
 import siteData from '../../data/site.json';
+import AboutBlocks from '../home/AboutBlocks.astro';
 
 const locale = Astro.currentLocale ?? 'en';
 const lhref = (p) => getRelativeLocaleUrl(locale, p);
 const site = siteData[locale] ?? siteData.en;
 const home = site.home;
 const pillars = home.pillars;
+const about = site.about;
 const title = home.metaTitle;
 const description = home.metaDescription;
 ---
 
-<BaseLayout title={title} description={description}>
+<BaseLayout title={title} description={description} zebra>
   <!-- 시네마틱 히어로: 소개 영상(분자 결합 클립)을 프레임 시퀀스로 쪼개
        풀블리드 캔버스에 핀 고정(sticky 100vh, 스테이지 280vh)하고 스크롤로 스크럽한다.
        러프(lerp) 재생헤드가 스크롤을 부드럽게 뒤쫓고, 텍스트 카피는 여정 초반에 페이드아웃,
@@ -50,14 +52,22 @@ const description = home.metaDescription;
     </div>
   </section>
 
-  <section class="v-reveal mx-auto max-w-6xl px-6 py-20">
-    <p class="mb-3 font-mono text-xs tracking-[0.16em] text-accent">01 / VISION</p>
-    <h2 class="mb-5 text-3xl font-semibold text-ink">{home.visionHeading}</h2>
-    <p class="max-w-2xl whitespace-pre-line text-base leading-relaxed text-ink/65">{home.visionBody}</p>
+  <section id="vision" class="scroll-mt-24">
+    <div class="v-reveal mx-auto max-w-6xl px-6 py-20">
+      <p class="mb-3 font-mono text-xs tracking-[0.16em] text-accent">01 / VISION</p>
+      <h2 class="mb-5 text-3xl font-semibold text-ink">{home.visionHeading}</h2>
+      {/* About 통합(0165): 아래 세 단락은 구 About 원문을 그대로 편입 — 문구 수정 금지.
+          순서: 회사 정의(heroSubtitle) → 기존 visionBody → 파운드리 운영(companyP1) → 비전 선언(visionBody). */}
+      <p class="max-w-2xl text-base leading-relaxed text-ink/65">{about.heroSubtitle}</p>
+      <p class="mt-5 max-w-2xl whitespace-pre-line text-base leading-relaxed text-ink/65">{home.visionBody}</p>
+      <p class="mt-5 max-w-2xl text-base leading-relaxed text-ink/65">{about.companyP1}</p>
+      <p class="mt-10 max-w-3xl text-2xl font-semibold leading-snug text-ink md:text-3xl">{about.visionBody}</p>
+    </div>
   </section>
 
-  <section class="v-reveal mx-auto max-w-6xl px-6 py-12">
-    <p class="mb-6 font-mono text-xs tracking-[0.16em] text-accent">02 / CORE TECHNOLOGIES</p>
+  <section id="core" class="scroll-mt-24">
+    <div class="v-reveal mx-auto max-w-6xl px-6 py-12">
+      <p class="mb-6 font-mono text-xs tracking-[0.16em] text-accent">02 / CORE TECHNOLOGIES</p>
     <h2 class="sr-only">{locale === 'ko' ? '핵심 기술' : 'Core technologies'}</h2>
     <div class="grid gap-5 sm:grid-cols-3">
       {pillars.map((p) => (
@@ -68,13 +78,18 @@ const description = home.metaDescription;
         </div>
       ))}
     </div>
+    </div>
   </section>
 
-  <section class="v-reveal mx-auto max-w-6xl px-6 py-16">
+  <AboutBlocks />
+
+  <section>
+    <div class="v-reveal mx-auto max-w-6xl px-6 py-16">
     <div class="relative overflow-hidden rounded-3xl border border-accent/20 bg-panel px-8 py-14 text-center">
       <h2 class="text-2xl font-semibold text-ink sm:text-3xl">{home.ctaHeading}</h2>
       <p class="mx-auto mt-4 max-w-xl text-ink/60" set:html={home.ctaBodyHtml}></p>
       <a href={lhref('/contact')} class="mt-8 inline-block rounded-full bg-brand px-7 py-3 text-sm font-semibold text-onbrand transition hover:brightness-110">{home.ctaButton}</a>
+    </div>
     </div>
   </section>
 </BaseLayout>

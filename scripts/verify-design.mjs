@@ -4,7 +4,7 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
 const DIST = 'dist/client';
-const ZEBRA_PAGES = ['about', 'technology', 'ko/about', 'ko/technology'];
+const ZEBRA_PAGES = ['(home)', 'ko', 'technology', 'ko/technology']; // 0165: About→Home 통합으로 홈이 지브라 페이지
 
 const pages = [];
 (function walk(dir) {

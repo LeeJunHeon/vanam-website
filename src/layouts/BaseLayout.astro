@@ -117,16 +117,16 @@ const fl = isKo
       privacy: 'Privacy Policy', terms: 'Terms of Service', refund: 'Refund & Exchange' };
 
 const nav = [
-  { href: '/', label: 'Home', labelKo: '홈' },
   {
-    href: '/about', label: 'About', labelKo: '회사소개',
+    href: '/', label: 'Home', labelKo: '홈',
     children: [
-      { href: '/about#vision', label: 'Company', labelKo: '회사 개요' },
-      { href: '/about#team', label: 'Team', labelKo: '팀' },
-      { href: '/about#history', label: 'History', labelKo: '연혁' },
-      { href: '/about#achievement', label: 'Global Activity', labelKo: '글로벌 활동' },
-      { href: '/about#patent', label: 'Patent & Certification', labelKo: '특허 · 인증' },
-      { href: '/about#collaboration', label: 'Collaboration', labelKo: '협력' },
+      { href: '/#vision', label: 'Vision', labelKo: '비전' },
+      { href: '/#core', label: 'Core Technologies', labelKo: '핵심 기술' },
+      { href: '/#team', label: 'Team', labelKo: '팀' },
+      { href: '/#history', label: 'History', labelKo: '연혁' },
+      { href: '/#achievement', label: 'Global Activity', labelKo: '글로벌 활동' },
+      { href: '/#patent', label: 'Patent & Certification', labelKo: '특허 · 인증' },
+      { href: '/#collaboration', label: 'Collaboration', labelKo: '협력' },
     ],
   },
   {
@@ -165,7 +165,9 @@ const childLabel = (item) => currentLocale === 'ko' ? item.labelKo : item.label;
 const childHref = (path) => {
   const [p, hash] = path.split('#');
   const base = localizedHref(p);
-  return hash ? `${base.replace(/\/$/, '')}#${hash}` : base;
+  const stripped = base.replace(/\/$/, '');
+  // 루트('/')를 strip 하면 빈 문자열이 되어 '#team' 같은 페이지 상대 앵커가 된다 → '/' 복원 (0165)
+  return hash ? `${stripped || '/'}#${hash}` : base;
 };
 ---
 <!doctype html>
