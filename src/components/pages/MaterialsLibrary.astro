@@ -8,7 +8,7 @@ import { getImage } from 'astro:assets';
 import { getRelativeLocaleUrl } from 'astro:i18n';
 import type { ImageMetadata } from 'astro';
 import siteData from '../../data/site.json';
-import MaterialCard from '../materials/MaterialCard.astro';
+import PeriodicBg from '../materials/PeriodicBg.astro';
 const locale = Astro.currentLocale ?? 'en';
 const lhref = (p) => getRelativeLocaleUrl(locale, p);
 const site = siteData[locale] ?? siteData.en;
@@ -100,9 +100,6 @@ const mt = {
   cta: locale === 'ko' ? '이 물질로 견적 문의' : 'Request a quote for this material',
   close: locale === 'ko' ? '닫기' : 'Close',
 };
-// 시스템별 사전 필터(템플릿에서는 단층 map 만 사용 — 검증된 형태)
-const pvdPanels = matPanels.filter((p) => p.system !== 'ALD');
-const aldPanels = matPanels.filter((p) => p.system === 'ALD');
 
 // SEO(0169): 아코디언 본문(HTML 내 존재 = 색인 대상)과 별개로, 소재 전목록을 기계가독 형태로 명시 제공
 const materialsLd = {
@@ -117,15 +114,19 @@ const materialsLd = {
       '@type': 'Product',
       name: p.name ? `${p.formula} (${p.name})` : p.formula,
       category: `${p.system} · ${p.category}`,
-      url: new URL(`${lhref('/materials')}#mat-${p.id}`, Astro.site).href,
+      url: new URL(lhref('/materials'), Astro.site).href,
     },
   })),
 };
 ---
 <BaseLayout title={title} description={description} zebra>
 
-  <section>
-    <div class="mx-auto max-w-6xl px-6 pt-28 pb-12 md:pt-36">
+  <section class="relative overflow-hidden">
+    <div class="pointer-events-none absolute inset-y-0 right-0 hidden w-[62%] text-ink opacity-[0.07] md:block"
+      style="-webkit-mask-image: radial-gradient(ellipse 75% 70% at 70% 45%, #000 30%, transparent 78%); mask-image: radial-gradient(ellipse 75% 70% at 70% 45%, #000 30%, transparent 78%);" aria-hidden="true">
+      <PeriodicBg />
+    </div>
+    <div class="relative mx-auto max-w-6xl px-6 pt-28 pb-12 md:pt-36">
       <div class="v-reveal">
         <h1 class="text-4xl font-bold leading-tight text-ink md:text-5xl">{tech.materialsHeading}</h1>
         <p class="mt-6 max-w-2xl text-lg leading-relaxed text-ink/60">{tech.materialsLibraryDesc}</p>
@@ -143,10 +144,10 @@ const materialsLd = {
             <p class="text-xs font-semibold uppercase tracking-wider text-ink/55">{catLabel[group]}</p>
             <div class="mt-2 flex flex-wrap gap-2">
               {items.map((m) => (
-                <a href={`#mat-${m.id}`}
+                <button type="button" data-mat={m.id}
                   class="cursor-pointer rounded-md border border-ink/10 bg-ink/[0.04] px-2.5 py-1 text-sm text-ink/75 transition hover:border-accent/40 hover:bg-accent/[0.08] hover:text-accent">
                   {m.formula}
-                </a>
+                </button>
               ))}
             </div>
           </div>
@@ -160,10 +161,10 @@ const materialsLd = {
             <p class="text-xs font-semibold uppercase tracking-wider text-ink/55">{catLabel[group]}</p>
             <div class="mt-2 flex flex-wrap gap-2">
               {items.map((m) => (
-                <a href={`#mat-${m.id}`}
+                <button type="button" data-mat={m.id}
                   class="cursor-pointer rounded-md border border-ink/10 bg-ink/[0.04] px-2.5 py-1 text-sm text-ink/75 transition hover:border-accent/40 hover:bg-accent/[0.08] hover:text-accent">
                   {m.formula}
-                </a>
+                </button>
               ))}
             </div>
           </div>
@@ -173,34 +174,178 @@ const materialsLd = {
     </div>
   </section>
 
+
   <section>
-    <div class="mx-auto max-w-6xl px-6 py-20">
-      <h2 id="pvd" class="v-reveal scroll-mt-28 text-3xl font-semibold text-ink">PVD — Sputter &amp; Evaporator</h2>
-      <div class="mt-6 grid items-start gap-3 lg:grid-cols-2">
-        {pvdPanels.map((p) => <MaterialCard p={p} mt={mt} />)}
-      </div>
-      <h2 id="ald" class="v-reveal mt-16 scroll-mt-28 text-3xl font-semibold text-ink">ALD</h2>
-      <div class="mt-6 grid items-start gap-3 lg:grid-cols-2">
-        {aldPanels.map((p) => <MaterialCard p={p} mt={mt} />)}
+    <div class="mx-auto max-w-6xl px-6 py-24 text-center">
+      <div class="v-reveal">
+        <h2 class="text-3xl font-bold text-ink md:text-4xl">{tech.ctaHeading}</h2>
+        <p class="mx-auto mt-4 max-w-xl text-base text-ink/60" set:html={tech.ctaBodyHtml}></p>
+        <a href={lhref('/contact')} class="mt-8 inline-flex items-center gap-2 rounded-lg bg-brand px-7 py-3 font-semibold text-onbrand transition hover:brightness-110">{tech.ctaButton}</a>
       </div>
     </div>
   </section>
+  <!-- ── 물질 상세 팝업(모달) ──────────────────────────────
+       물질 배지를 누르면 이 모달이 열린다(페이지 이동 없음).
+       내용은 아래 JSON 데이터에서 클라이언트가 채운다. 이미지 없으면 placeholder. -->
+  <div
+    id="mat-modal"
+    class="fixed inset-0 z-[100] hidden items-center justify-center p-4"
+    role="dialog"
+    aria-modal="true"
+    aria-label={locale === "ko" ? "물질 상세" : "Material details"}
+  >
+    <div class="mat-backdrop absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+    <div class="mat-panel relative max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-ink/10 bg-canvas p-6 shadow-2xl md:p-8">
+      <button
+        type="button"
+        class="mat-close absolute right-3 top-3 rounded-md p-2.5 text-ink/50 transition hover:bg-ink/10 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        aria-label={mt.close}
+      >
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+
+      {matPanels.map((p) => (
+        <div data-mat-panel={p.id} class="hidden">
+          <div class="pr-8">
+            <h2 class="flex flex-wrap items-end gap-x-3 gap-y-1">
+              <span class="text-5xl font-black leading-none tracking-tight text-ink">{p.formula}</span>
+              <span class="pb-1 text-base font-medium text-ink/55">({p.name})</span>
+            </h2>
+            <div class="mt-3 flex flex-wrap gap-x-8 gap-y-1.5 text-sm">
+              <div><span class="text-ink/45">{mt.system}: </span><span class="text-ink/80">{p.system}</span></div>
+              <div><span class="text-ink/45">{mt.category}: </span><span class="text-ink/80">{p.category}</span></div>
+            </div>
+          </div>
+
+          {p.hasA4 ? (
+            <>
+              <div class="mt-6 flex items-center gap-2.5">
+                <span class="h-5 w-1 rounded-full bg-accent" aria-hidden="true"></span>
+                <h3 class="text-xl font-bold text-ink">Specifications</h3>
+              </div>
+
+              <p class="mt-4 inline-flex items-center gap-2 rounded-md border border-accent/30 bg-accent/[0.08] px-3 py-1 text-[13px] font-bold text-accent">Thin-Film Specifications</p>
+              {p.figs.length > 0 && (
+                <div class={'mt-3 grid grid-cols-2 gap-2 ' + (p.figs.length <= 2 ? 'sm:grid-cols-2' : 'sm:grid-cols-3')}>
+                  {p.figs.map((src, i) => (
+                    <div class="flex items-center justify-center rounded-lg border border-ink/10 bg-plate p-1.5">
+                      <img src={src} alt={`${p.name} characterization data ${i + 1}`} class="max-h-40 w-auto max-w-full" loading="lazy" />
+                    </div>
+                  ))}
+                </div>
+              )}
+              {p.filmSpecs.length > 0 && (
+                <ul class="mt-3.5 space-y-1.5 border-l-2 border-accent/50 pl-4">
+                  {p.filmSpecs.map((sp) => {
+                    const ci = sp.indexOf(':');
+                    const split = ci > 0 && ci < 44;
+                    return (
+                      <li class="text-sm leading-relaxed text-ink/70">
+                        {split ? (
+                          <>
+                            <span class="font-semibold text-ink/85">{sp.slice(0, ci).trim()}</span>
+                            <span> : {sp.slice(ci + 1).trim()}</span>
+                          </>
+                        ) : (
+                          sp
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+
+              {(p.band2Specs.length > 0 || p.targetSrc) && (
+                <>
+                  <p class="mt-6 inline-flex items-center gap-2 rounded-md border border-accent/30 bg-accent/[0.08] px-3 py-1 text-[13px] font-bold text-accent">{p.band2Title}</p>
+                  <div class="mt-3.5 flex flex-wrap items-start gap-6">
+                    {p.band2Specs.length > 0 && (
+                      <ul class="min-w-0 flex-1 basis-60 space-y-1.5 border-l-2 border-accent/50 pl-4">
+                        {p.band2Specs.map((sp) => {
+                          const ci = sp.indexOf(':');
+                          const split = ci > 0 && ci < 44;
+                          return (
+                            <li class="text-sm leading-relaxed text-ink/70">
+                              {split ? (
+                                <>
+                                  <span class="font-semibold text-ink/85">{sp.slice(0, ci).trim()}</span>
+                                  <span> : {sp.slice(ci + 1).trim()}</span>
+                                </>
+                              ) : (
+                                sp
+                              )}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                    {p.targetSrc && (
+                      <div class="w-36 shrink-0 text-center sm:w-40">
+                        <img src={p.targetSrc} alt={`${p.name} sputtering target`} class="mx-auto w-full rounded-lg drop-shadow-md" loading="lazy" />
+                        <span class="mt-2 inline-block rounded bg-ink/80 px-3 py-0.5 text-[11px] font-bold tracking-wide text-canvas">Target</span>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </>
+          ) : (
+            <p class="mt-6 rounded-lg border border-dashed border-ink/20 bg-ink/[0.03] px-4 py-7 text-center text-sm text-ink/45">{mt.preparing}</p>
+          )}
+
+          <div class="mt-8">
+            <a href={p.quoteHref} class="inline-flex items-center gap-2 rounded-lg bg-brand px-5 py-3 text-sm font-semibold text-onbrand transition hover:brightness-110">
+              {mt.cta} →
+            </a>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+
+
+  <script>
+    const modal = document.getElementById('mat-modal');
+    if (modal) {
+      const panels = modal.querySelectorAll<HTMLElement>('[data-mat-panel]');
+      const scroller = modal.querySelector<HTMLElement>('.mat-panel');
+      const closeBtn = modal.querySelector<HTMLElement>('.mat-close');
+      const backdrop = modal.querySelector<HTMLElement>('.mat-backdrop');
+      let lastFocused: HTMLElement | null = null;
+
+      function open(id: string) {
+        let found = false;
+        panels.forEach((p) => {
+          const on = p.getAttribute('data-mat-panel') === id;
+          p.classList.toggle('hidden', !on);
+          if (on) found = true;
+        });
+        if (!found) return;
+        lastFocused = document.activeElement as HTMLElement;
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        document.body.style.overflow = 'hidden';
+        if (scroller) scroller.scrollTop = 0;
+        closeBtn?.focus();
+      }
+
+      function close() {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        document.body.style.overflow = '';
+        lastFocused?.focus();
+      }
+
+      document.querySelectorAll<HTMLElement>('[data-mat]').forEach((btn) => {
+        btn.addEventListener('click', () => open(btn.getAttribute('data-mat') || ''));
+      });
+      closeBtn?.addEventListener('click', close);
+      backdrop?.addEventListener('click', close);
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('flex')) close();
+      });
+    }
+  </script>
+
   <script type="application/ld+json" is:inline set:html={JSON.stringify(materialsLd)} />
 </BaseLayout>
-
-<script>
-  // 인덱스 배지(#mat-…) 클릭·직접 진입 시 해당 아코디언을 자동으로 연다
-  const openFromHash = () => {
-    if (!location.hash) return;
-    const el = document.getElementById(location.hash.slice(1));
-    if (el instanceof HTMLDetailsElement) el.open = true;
-  };
-  openFromHash();
-  window.addEventListener('hashchange', openFromHash);
-  window.addEventListener('popstate', openFromHash); // pushState 내비의 뒤로가기 대응 (0170)
-</script>
-
-<style is:global>
-  html { scroll-behavior: smooth; }
-  .mat-card:target { outline: 2px solid var(--v-accent); outline-offset: 6px; }
-</style>

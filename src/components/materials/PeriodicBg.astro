@@ -1,0 +1,31 @@
+---
+// 주기율표 장식 배경 (0171) — currentColor 라 테마 자동 대응. 부모가 크기·불투명도·마스크를 정한다.
+const rows: Record<number, number[]> = {
+  1: [1, 18],
+  2: [1, 2, 13, 14, 15, 16, 17, 18],
+  3: [1, 2, 13, 14, 15, 16, 17, 18],
+  4: Array.from({ length: 18 }, (_, i) => i + 1),
+  5: Array.from({ length: 18 }, (_, i) => i + 1),
+  6: Array.from({ length: 18 }, (_, i) => i + 1),
+  7: Array.from({ length: 18 }, (_, i) => i + 1),
+};
+const cells: { p: number; g: number }[] = [];
+for (const [p, gs] of Object.entries(rows)) gs.forEach((g) => cells.push({ p: Number(p), g }));
+const fcells: { p: number; g: number }[] = [];
+for (let r = 0; r < 2; r++) for (let g = 3; g <= 17; g++) fcells.push({ p: 8 + r, g });
+// 우리 소재군과 맞닿은 원소만 은은히 강조
+const HL: Record<string, [number, number]> = { O: [2, 16], N: [2, 15], Al: [3, 13], Si: [3, 14], Ti: [4, 4], Zr: [5, 4], Hf: [6, 4], Ta: [6, 5], W: [6, 6] };
+const S = 10.4, C = 9.2;
+const x = (g: number) => (g - 1) * S;
+const y = (p: number) => (p - 1) * S + (p >= 8 ? 5 : 0);
+---
+<svg viewBox="0 0 188 104" class="h-full w-full" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+  {cells.map((c) => <rect x={x(c.g)} y={y(c.p)} width={C} height={C} rx="1.6" fill="none" stroke="currentColor" stroke-opacity="0.5" stroke-width="0.55" />)}
+  {fcells.map((c) => <rect x={x(c.g)} y={y(c.p)} width={C} height={C} rx="1.6" fill="none" stroke="currentColor" stroke-opacity="0.35" stroke-width="0.5" />)}
+  {Object.entries(HL).map(([sym, [p, g]]) => (
+    <>
+      <rect x={x(g)} y={y(p)} width={C} height={C} rx="1.6" fill="currentColor" fill-opacity="0.12" stroke="currentColor" stroke-opacity="0.8" stroke-width="0.6" />
+      <text x={x(g) + C / 2} y={y(p) + C / 2 + 1.6} text-anchor="middle" font-size="4.4" font-weight="700" fill="currentColor">{sym}</text>
+    </>
+  ))}
+</svg>

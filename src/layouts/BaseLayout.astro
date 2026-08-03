@@ -137,13 +137,7 @@ const nav = [
       { href: '/technology#project2', label: 'Energy-Responsive Semiconductor', labelKo: '에너지 반응형 반도체' },
     ],
   },
-  {
-    href: '/materials', label: 'Materials Library', labelKo: '소재 라이브러리',
-    children: [
-      { href: '/materials#pvd', label: 'PVD — Sputter & Evaporator', labelKo: 'PVD — Sputter & Evaporator' },
-      { href: '/materials#ald', label: 'ALD', labelKo: 'ALD' },
-    ],
-  },
+  { href: '/materials', label: 'Materials Library', labelKo: '소재 라이브러리' },
   {
     href: '/product', label: 'Product & Solution', labelKo: '제품 · 솔루션',
     children: [
@@ -447,9 +441,9 @@ const childHref = (path) => {
             ))}
           </nav>
           <div class="flex items-center gap-1.5 text-xs font-medium" aria-label={ui.lang}>
-            <a href={enPathFull} hreflang="en" class={currentLocale === 'en' ? 'text-accent' : 'text-ink/50 transition hover:text-ink'}>EN</a>
+            <a href={enPathFull} hreflang="en" data-lang-switch class={currentLocale === 'en' ? 'text-accent' : 'text-ink/50 transition hover:text-ink'}>EN</a>
             <span class="text-ink/20">/</span>
-            <a href={koPathFull} hreflang="ko" class={currentLocale === 'ko' ? 'text-accent' : 'text-ink/50 transition hover:text-ink'}>KO</a>
+            <a href={koPathFull} hreflang="ko" data-lang-switch class={currentLocale === 'ko' ? 'text-accent' : 'text-ink/50 transition hover:text-ink'}>KO</a>
           </div>
 
           <button
@@ -674,6 +668,16 @@ const childHref = (path) => {
       const clear = (e) => { if (isField(e.target)) e.target.setCustomValidity(''); };
       document.addEventListener('input', clear, true);
       document.addEventListener('change', clear, true);
+    </script>
+    <script is:inline>
+      // 언어 전환 시 현재 섹션(해시)을 유지한다 (0171).
+      // 상대 언어 페이지에 같은 id 가 있으면 그 섹션으로 착지하고, 없으면 상단(무해).
+      document.addEventListener('click', function (e) {
+        var a = e.target.closest && e.target.closest('a[data-lang-switch]');
+        if (!a || !location.hash) return;
+        e.preventDefault();
+        location.href = a.getAttribute('href') + location.hash;
+      });
     </script>
     <!--
       구 워드프레스의 해시 링크를 새 주소로 넘긴다.
