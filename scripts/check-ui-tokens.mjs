@@ -41,16 +41,25 @@ const RULES = [
     exempt: () => false,
   },
   {
+    // 파일 단위 예외는 두지 않는다. 히어로 알약 버튼은 .v-btn-hero 라는 '다른 역할'로 이름을 붙였다.
+    // (예전엔 Home.astro 전체를 예외로 뒀다가, 같은 파일 하단 CTA 가 알약으로 남은 걸 놓쳤다)
     name: '주 버튼',
-    re: /rounded-(?:lg|md|full|xl) bg-brand px-/,
-    use: 'v-btn / v-btn-sm',
-    // 홈 히어로만 예외 — 어두운 영상 위 전용 알약 버튼(본문 버튼과 형태를 맞추면 어색하다).
-    exempt: (f) => f.endsWith('/Home.astro'),
+    re: /rounded-(?:lg|md|xl|full) bg-brand px-/,
+    use: 'v-btn / v-btn-sm / v-btn-hero',
+    exempt: () => false,
   },
   {
+    // ⚠️ 모서리(rounded-*)를 고정하지 않는다. 예전 규칙이 rounded-lg 만 봐서
+    //    404 의 rounded-full 보조 버튼을 놓쳤다(실제로 화면에서 어긋나 보였다).
     name: '보조(외곽선) 버튼',
-    re: /rounded-lg border border-ink\/15 px-\d[^"]*text-ink\/(?:70|80) transition hover:border-/,
+    re: /rounded-(?:lg|md|xl|full) border border-ink\/15 px-\d[^"]*text-ink\/(?:70|80) transition hover:/,
     use: 'v-btn-ghost',
+    exempt: () => false,
+  },
+  {
+    name: '입력칸',
+    re: /placeholder-ink\/30 outline-none transition focus:border-accent/,
+    use: 'v-input',
     exempt: () => false,
   },
 ];

@@ -41,8 +41,8 @@ const description = home.metaDescription;
         <h1 class="text-5xl font-bold leading-[1.05] tracking-tight text-white sm:text-7xl">{home.heroTitle.line1}<br />{home.heroTitle.line2}</h1>
         <p class="mt-6 max-w-xl text-lg leading-relaxed text-white/75">{home.heroSubtitle.line1}{home.heroSubtitle.line2 && <><br />{home.heroSubtitle.line2}</>}</p>
         <div class="mt-9 flex flex-wrap gap-4">
-          <a href={lhref('/technology')} class="rounded-full bg-brand px-6 py-3 text-sm font-semibold text-onbrand transition hover:brightness-110">{home.heroCtaPrimary}</a>
-          <a href={lhref('/contact')} class="rounded-full border border-white/40 px-6 py-3 text-sm font-medium text-white/90 transition hover:border-white hover:text-white">{home.heroCtaSecondary}</a>
+          <a href={lhref('/technology')} class="v-btn-hero">{home.heroCtaPrimary}</a>
+          <a href={lhref('/contact')} class="v-btn-hero-ghost">{home.heroCtaSecondary}</a>
         </div>
       </div>
     </div>
@@ -88,7 +88,7 @@ const description = home.metaDescription;
     <div class="relative overflow-hidden rounded-3xl border border-accent/20 bg-panel px-8 py-14 text-center">
       <h2 class="text-2xl font-semibold text-ink sm:text-3xl">{home.ctaHeading}</h2>
       <p class="mx-auto mt-4 max-w-xl text-ink/60" set:html={home.ctaBodyHtml}></p>
-      <a href={lhref('/contact')} class="mt-8 inline-block rounded-full bg-brand px-7 py-3 text-sm font-semibold text-onbrand transition hover:brightness-110">{home.ctaButton}</a>
+      <a href={lhref('/contact')} class="mt-8 v-btn">{home.ctaButton}</a>
     </div>
     </div>
   </section>

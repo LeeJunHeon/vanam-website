@@ -134,6 +134,9 @@
 
   [data-theme='light'] .placeholder-ink\/25::placeholder { color: color-mix(in oklab, var(--color-ink) 42%, transparent); }
   [data-theme='light'] .placeholder-ink\/30::placeholder { color: color-mix(in oklab, var(--color-ink) 46%, transparent); }
+  /* .v-input 은 placeholder-ink/30 을 @apply 로 흡수하므로 위 규칙이 안 걸린다.
+     라이트 테마 대비 보정을 같은 값으로 명시해 준다(빠뜨리면 안내문구가 너무 옅어진다). */
+  [data-theme='light'] .v-input::placeholder { color: color-mix(in oklab, var(--color-ink) 46%, transparent); }
 }
 
 /* 브라우저가 그리는 select 팝업 */
@@ -243,6 +246,16 @@ body.v-zebra main > section:nth-of-type(even) {
   .v-btn      { @apply inline-flex items-center gap-2 rounded-lg bg-brand px-7 py-3 font-semibold text-onbrand transition hover:brightness-110; }
   .v-btn-sm   { @apply inline-flex items-center gap-2 rounded-lg bg-brand px-5 py-2.5 text-sm font-semibold text-onbrand transition hover:brightness-110; }
   .v-btn-ghost{ @apply inline-flex items-center gap-2 rounded-lg border border-ink/15 px-5 py-2.5 text-sm font-medium text-ink/80 transition hover:border-accent hover:text-ink; }
+
+  /* 히어로 전용 알약 버튼 — 어두운 영상 위 전용 디자인이라 본문 버튼과 형태가 다르다.
+     ⚠️ 이건 '예외'가 아니라 '다른 역할'이다. 그래서 클래스로 이름을 붙여 둔다.
+        (예전엔 파일 단위 예외로 두었더니, 같은 파일의 하단 CTA 까지 알약으로 남아 있는 걸 놓쳤다) */
+  .v-btn-hero       { @apply rounded-full bg-brand px-6 py-3 text-sm font-semibold text-onbrand transition hover:brightness-110; }
+  .v-btn-hero-ghost { @apply rounded-full border border-white/40 px-6 py-3 text-sm font-medium text-white/90 transition hover:border-white hover:text-white; }
+
+  /* 입력칸 — 문의·견적·주문서·조회 4개 폼에 같은 문자열이 각각 복사돼 있었다 */
+  .v-input    { @apply mt-2 w-full rounded-lg border border-ink/10 bg-ink/[0.03] px-4 py-3 text-ink placeholder-ink/30 outline-none transition focus:border-accent focus:ring-1 focus:ring-accent; }
+  .v-input-sm { @apply w-full rounded-lg border border-ink/10 bg-ink/[0.03] px-3 py-2.5 text-sm text-ink outline-none transition focus:border-accent focus:ring-1 focus:ring-accent; }
 
   /* 폼 전송용 전체폭 버튼 (주문서 결제 · 조회 등) */
   .v-btn-block { @apply w-full rounded-lg bg-brand px-6 py-3.5 font-semibold text-onbrand transition hover:brightness-110; }

@@ -16,7 +16,7 @@ const c = site.contact.form;   // 연락처 필드 라벨 (문의 폼과 공용)
 const q = site.quote.form;     // 견적 전용
 
 const inputClass =
-  'mt-2 w-full rounded-lg border border-ink/10 bg-ink/[0.03] px-4 py-3 text-ink placeholder-ink/30 outline-none transition focus:border-accent focus:ring-1 focus:ring-accent';
+  'v-input';
 const selectClass = inputClass;
 const labelClass = 'block text-sm font-medium text-ink/80';
 const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
@@ -295,22 +295,22 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
     <div class="mt-4 grid gap-4 md:grid-cols-4">
       <div class="md:col-span-1">
         <label class="q-lbl-type block text-xs font-medium text-ink/60"></label>
-        <select class="q-row-process mt-1.5 w-full rounded-lg border border-ink/10 bg-ink/[0.03] px-3 py-2.5 text-sm text-ink outline-none transition focus:border-accent focus:ring-1 focus:ring-accent"></select>
+        <select class="q-row-process mt-1.5 v-input-sm"></select>
       </div>
       <div class="q-material-wrap md:col-span-1">
         <label class="q-lbl-material block text-xs font-medium text-ink/60"></label>
-        <select class="q-row-material mt-1.5 w-full rounded-lg border border-ink/10 bg-ink/[0.03] px-3 py-2.5 text-sm text-ink outline-none transition focus:border-accent focus:ring-1 focus:ring-accent"></select>
+        <select class="q-row-material mt-1.5 v-input-sm"></select>
       </div>
       <div class="q-value-wrap md:col-span-1">
         <label class="q-lbl-value block text-xs font-medium text-ink/60"></label>
         <div class="mt-1.5 flex items-center gap-2">
-          <input type="text" inputmode="decimal" class="q-row-value w-full rounded-lg border border-ink/10 bg-ink/[0.03] px-3 py-2.5 text-sm text-ink outline-none transition focus:border-accent focus:ring-1 focus:ring-accent" />
+          <input type="text" inputmode="decimal" class="q-row-value v-input-sm" />
           <span class="q-row-unit shrink-0 text-sm text-ink/50"></span>
         </div>
       </div>
       <div class="md:col-span-1">
         <label class="q-lbl-etc block text-xs font-medium text-ink/60"></label>
-        <input type="text" class="q-row-etc mt-1.5 w-full rounded-lg border border-ink/10 bg-ink/[0.03] px-3 py-2.5 text-sm text-ink outline-none transition focus:border-accent focus:ring-1 focus:ring-accent" />
+        <input type="text" class="q-row-etc mt-1.5 v-input-sm" />
       </div>
     </div>
   </div>
