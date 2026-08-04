@@ -4,6 +4,7 @@
 // 구성: ①연락처 ②기판 정보 ③공정 시퀀스 빌더(엑셀 대체) ④기타 요청.
 // 공정 시퀀스는 "공정 추가"로 행을 쌓고, 공정을 고르면 그에 맞는 물질/단위가 자동으로 바뀐다.
 // 제출 시 시퀀스를 사람이 읽을 수 있는 텍스트로 정리해 details 에, 원본은 JSON 으로 함께 보낸다.
+import { getRelativeLocaleUrl } from 'astro:i18n';
 import siteData from '../data/site.json';
 import { PROCESSES, MEASUREMENTS, SUBSTRATES, SUBSTRATE_SIZES, DELIVERY_METHODS, PRODUCT_MAT_FILTER, type MatCat } from '../lib/processes';
 import { COUNTRIES } from '../lib/countries';
@@ -39,6 +40,7 @@ const deliveryOpts = DELIVERY_METHODS.map((d) => ({ value: d.value, label: isKo 
 const countryOpts = COUNTRIES.map((cn) => ({ value: cn.code, label: isKo ? cn.ko : cn.en }));
 // 증착 공정 목록(두께 nm 단위) — 대표 소재 판정용 (세정 가스가 '소재'로 잡히던 문제 방지)
 const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name);
+const cartUrl = getRelativeLocaleUrl(locale, '/cart');
 ---
 
 <section id="quote" class="mt-20 scroll-mt-24 border-t border-ink/10 pt-16">
@@ -60,6 +62,10 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
       data-msg-seq-material={q.msgSeqMaterial}
       data-msg-seq-value={q.msgSeqValue}
       data-label-send={simple ? q.submitOrder : q.submit}
+      data-msg-cart-added={q.addedToCart}
+      data-lbl-material2={q.lblMaterial}
+      data-lbl-method2={q.lblMethod}
+      data-lbl-substrate2={q.lblSubstrate}
       data-label-sending={c.sending}
       data-lbl-step={q.processStep}
       data-lbl-process={q.processType}
@@ -272,14 +278,27 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
           data-language="auto"
         ></div>
 
+        {/* 담기 안내 — '추가'가 전송이 아니라는 점을 버튼 옆에서 분명히 한다 */}
+        {!simple && <p class="text-sm leading-relaxed text-ink/45">{q.cartHint}</p>}
+
         <div class="flex flex-wrap items-center justify-end gap-4">
           <p id="quote-status" class="mr-auto text-sm" role="status" aria-live="polite"></p>
+          {!simple && (
+            <button type="button" id="quote-cart" class="v-btn-ghost">{q.addToCart}</button>
+          )}
           <button type="submit" id="quote-submit"
             class="v-btn disabled:cursor-not-allowed disabled:opacity-60">
             <span id="quote-submit-label">{simple ? q.submitOrder : q.submit}</span>
           </button>
 
         </div>
+
+        {!simple && (
+          <p id="quote-cart-msg" class="hidden text-sm text-accent" role="status" aria-live="polite">
+            <span id="quote-cart-text"></span>
+            <a href={cartUrl} class="ml-1 underline underline-offset-2">{q.goCart}</a>
+          </p>
+        )}
       </div>
     </form>
   </div>
@@ -323,6 +342,8 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
 
 <script>
   import { initTelInput, normalizeTelInputs } from '../lib/telInput';
+  // 저장소 접근은 전부 lib/cart 한 곳을 통한다
+  import { addQuoteToCart } from '../lib/cart';
 
   // Turnstile 전역 API 타입
   declare global {
@@ -550,9 +571,10 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
     syncGate();
   }
 
-  form?.addEventListener("submit", async (e) => {
-    e.preventDefault();
-
+  // 견적 내용 조립 — '견적 요청'(서버 전송)과 '장바구니에 추가'(브라우저 저장)가 **같은 함수**를 쓴다.
+  // 두 곳에 따로 짜두면 한쪽만 고쳐져 화면과 실제 전송 내용이 어긋난다(같은 부류 사고 다수).
+  // 검증에 걸리면 상태 문구를 띄우고 null 을 돌려준다.
+  function buildQuote(): { data: Record<string, string>; lines: { l: string; v: string }[] } | null {
     // 미끼칸이 차 있어도 조용히 가짜 성공을 띄우지 않는다.
     // 브라우저 자동완성이 채우는 오탐이 흔해서(이름에 email 이 들어가면 특히),
     // 실제 고객의 견적이 "접수된 척"만 하고 서버·관리자에 도달하지 못했다.
@@ -577,7 +599,7 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
     const seq = collectSequence();
     if (!isSimple && seq.json.length === 0) {
       setStatus(M.msgNoprocess!, false);
-      return;
+      return null;
     }
     // 행을 추가만 하고 내용을 비워두는 경우가 많다.
     // 화면에 보이는 입력칸(물질·수치)은 모두 채워야 한다. '기타 조건'은 선택 사항이다.
@@ -586,16 +608,16 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
         const proc = (row.querySelector('.q-row-process') as HTMLSelectElement)?.value ?? '';
-        if (!proc) { setStatus(`${i + 1}${M.msgSeqProcess}`, false); return; }
+        if (!proc) { setStatus(`${i + 1}${M.msgSeqProcess}`, false); return null; }
         const matWrap = row.querySelector('.q-material-wrap') as HTMLElement | null;
         const matSel = row.querySelector('.q-row-material') as HTMLSelectElement | null;
         if (matWrap && !matWrap.hidden && matSel && !matSel.value) {
-          setStatus(`${i + 1}${M.msgSeqMaterial}`, false); return;
+          setStatus(`${i + 1}${M.msgSeqMaterial}`, false); return null;
         }
         const valWrap = row.querySelector('.q-value-wrap') as HTMLElement | null;
         const valInput = row.querySelector('.q-row-value') as HTMLInputElement | null;
         if (valWrap && !valWrap.hidden && valInput && !valInput.value.trim()) {
-          setStatus(`${i + 1}${M.msgSeqValue}`, false); return;
+          setStatus(`${i + 1}${M.msgSeqValue}`, false); return null;
         }
       }
     }
@@ -670,6 +692,30 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
     data.productName = M.productName!;
     data.locale = document.documentElement.lang || "en";
 
+    // 장바구니 표시용 요약 — 연락처는 **일부러 넣지 않는다.**
+    // 장바구니는 브라우저(localStorage)에 평문으로 남으므로 개인정보를 저장할 자리가 아니다.
+    // 견적 요청서(RFQ) 인쇄물에는 연락처 기입란이 따로 있다.
+    const lines = [
+      { l: M.lblMaterial2 || 'Material', v: String(data.material ?? '') },
+      { l: M.lblMethod2 || 'Process', v: String(data.method ?? '') },
+      { l: M.lblSubstrate2 || 'Substrate', v: String(data.substrate ?? '') },
+      { l: DL.samples, v: String(data.sampleCount ?? '') },
+      { l: DL.seqHdr.replace(/[[\]]/g, ''), v: seq.text },
+      { l: DL.analysis.replace(/[[\]]/g, ''), v: measures.join(', ') },
+      { l: DL.delivery, v: deliveryLabel },
+      { l: DL.due, v: String(data.completionDate ?? '') },
+      { l: DL.caution, v: String(data.notes ?? '') },
+    ].filter((x) => x.v.trim());
+
+    return { data, lines };
+  }
+
+  form?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const built = buildQuote();
+    if (!built) return;
+    const data = built.data;
+
     if (!data["cf-turnstile-response"]) {
       setStatus(M.msgCaptcha!, false);
       return;
@@ -730,5 +776,32 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
       btn.disabled = false;
       label.textContent = M.labelSend!;
     }
+  });
+
+  // ── 장바구니에 추가 — 서버로 보내지 않고 브라우저에만 저장한다 ──────────
+  // 같은 제품이라도 요청 내용이 다르므로 addQuoteToCart 가 **항상 새 줄**로 쌓는다.
+  const cartBtn = document.getElementById("quote-cart");
+  cartBtn?.addEventListener("click", () => {
+    if (!form) return;
+    // 담기는 전송이 아니므로 개인정보 동의·봇 검증은 요구하지 않는다.
+    // (required 를 잠깐 내렸다가 원복 — 나머지 필수 항목은 그대로 검사한다)
+    const privacyEl = form.elements.namedItem("privacy") as HTMLInputElement | null;
+    const wasRequired = !!privacyEl?.required;
+    if (privacyEl) privacyEl.required = false;
+    const valid = form.reportValidity();
+    if (privacyEl) privacyEl.required = wasRequired;
+    if (!valid) return;
+
+    const built = buildQuote();
+    if (!built) return;
+
+    addQuoteToCart(M.product!, 1, { title: M.productName!, lines: built.lines });
+
+    const msg = document.getElementById("quote-cart-msg");
+    const txt = document.getElementById("quote-cart-text");
+    if (txt) txt.textContent = M.msgCartAdded ?? "";
+    msg?.classList.remove("hidden");
+    setStatus("", true);
+    try { msg?.scrollIntoView({ block: "center", behavior: "smooth" }); } catch (e2) { /* 무시 */ }
   });
 </script>

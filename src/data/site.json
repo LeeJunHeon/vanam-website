@@ -810,7 +810,14 @@
         "msgSuccessOrder": "Your order request was sent. We'll confirm availability and payment within 1–2 business days.",
         "msgSeqProcess": "st step: please choose a process.",
         "msgSeqMaterial": "st step: please choose a material.",
-        "msgSeqValue": "st step: please enter a value."
+        "msgSeqValue": "st step: please enter a value.",
+        "addToCart": "Add to cart",
+        "addedToCart": "Added to your cart. It is saved in this browser only and has not been sent to us yet.",
+        "goCart": "View cart",
+        "cartHint": "“Add to cart” only saves this request in your browser — useful when preparing or comparing several requests. Press “Request a quote” to actually send it.",
+        "lblMaterial": "Material",
+        "lblMethod": "Process",
+        "lblSubstrate": "Substrate"
       }
     },
     "shop": {
@@ -875,6 +882,7 @@
       "total": "Total",
       "checkout": "Proceed to checkout",
       "quoteBadge": "Quote required",
+      "quoteDetails": "Request details",
       "quoteRowCta": "Request a quote →",
       "quoteNote": "Quote items are not included in the payment total — they proceed via a separate quote request.",
       "quoteOnly": "Your cart has quote items only — save the RFQ sheet below and email it to us.",
@@ -1693,7 +1701,14 @@
         "msgSuccessOrder": "주문 요청이 전송되었습니다. 1~2 영업일 내에 재고 확인과 결제 안내를 드리겠습니다.",
         "msgSeqProcess": "번째 단계의 공정을 선택해 주세요.",
         "msgSeqMaterial": "번째 단계의 물질을 선택해 주세요.",
-        "msgSeqValue": "번째 단계의 수치를 입력해 주세요."
+        "msgSeqValue": "번째 단계의 수치를 입력해 주세요.",
+        "addToCart": "장바구니에 추가",
+        "addedToCart": "장바구니에 담았습니다. 이 브라우저에만 저장되며 아직 저희에게 전송되지 않았습니다.",
+        "goCart": "장바구니 보기",
+        "cartHint": "‘장바구니에 추가’는 작성한 내용을 이 브라우저에 저장만 합니다. 여러 건을 준비하거나 비교할 때 쓰세요. 실제로 보내려면 ‘견적 요청’을 눌러 주세요.",
+        "lblMaterial": "소재",
+        "lblMethod": "공정",
+        "lblSubstrate": "기판"
       }
     },
     "shop": {
@@ -1758,6 +1773,7 @@
       "total": "합계",
       "checkout": "주문·결제하기",
       "quoteBadge": "견적 문의",
+      "quoteDetails": "요청 내용",
       "quoteRowCta": "견적 요청 →",
       "quoteNote": "견적 품목은 결제 금액에 포함되지 않습니다 — 해당 품목은 견적 요청으로 별도 진행됩니다.",
       "quoteOnly": "카트에 견적 품목만 있습니다 — 아래 견적 요청서를 저장해 이메일로 보내주세요.",
