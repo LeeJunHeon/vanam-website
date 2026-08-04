@@ -95,7 +95,7 @@ const quoteHref = productId
         </div>
 
         <div class="mt-6">
-          <p class="inline-block rounded-md bg-brand px-4 py-1.5 text-sm font-bold text-onbrand">Thin-Film Specifications</p>
+          <p class="v-badge">Thin-Film Specifications</p>
           {figImgs.length > 0 && (
             <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {figImgs.map((g, i) => (
@@ -129,7 +129,7 @@ const quoteHref = productId
 
         {((d.band2Specs?.length ?? 0) > 0 || targetPhoto) && (
           <div class="mt-8">
-            <p class="inline-block rounded-md bg-brand px-4 py-1.5 text-sm font-bold text-onbrand">{d.band2Title ?? 'Target Specifications'}</p>
+            <p class="v-badge">{d.band2Title ?? 'Target Specifications'}</p>
             <div class="mt-4 flex flex-wrap items-start gap-6">
               <ul class="min-w-0 flex-1 space-y-1.5 border-l-2 border-accent/50 pl-4">
                 {(d.band2Specs ?? []).map((s) => {
@@ -162,7 +162,7 @@ const quoteHref = productId
     ) : (
       <>
         <!-- 상세 이미지 (있으면 노출, 없으면 placeholder) -->
-        <div class="mt-10 overflow-hidden rounded-2xl border border-ink/10 bg-ink/[0.03]">
+        <div class="mt-10 overflow-hidden v-card">
           {detailImg ? (
             <img src={detailImg.src} alt={displayName} class="w-full" loading="lazy" />
           ) : (
@@ -189,7 +189,7 @@ const quoteHref = productId
     <!-- 견적 문의 CTA -->
     <div class="mt-12">
       <a href={quoteHref}
-        class="inline-flex items-center gap-2 rounded-lg bg-brand px-5 py-3 text-sm font-semibold text-onbrand transition hover:brightness-110">
+        class="v-btn-sm">
         {t.cta} →
       </a>
     </div>

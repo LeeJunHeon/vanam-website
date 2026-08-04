@@ -85,7 +85,7 @@ const waferFromLabel = waferMinKrw
 
 <BaseLayout title={s.metaTitle} description={s.metaDescription} zebra>
   <section id="products" class="scroll-mt-24 relative">
-  <div class="mx-auto max-w-6xl px-6 py-28 md:py-36">
+  <div class="v-wrap py-28 md:py-36">
     <div class="flex flex-wrap items-end justify-between gap-6">
       <div class="v-reveal">
         <p class="text-sm font-medium uppercase tracking-widest text-accent">{s.eyebrow}</p>
@@ -94,8 +94,8 @@ const waferFromLabel = waferMinKrw
         <p class="mt-3 text-sm text-ink/40">{s.guestNote}</p>
       </div>
       <div class="flex shrink-0 items-center gap-2">
-        <a href={`${base}/order/lookup`} class="inline-flex items-center rounded-lg border border-ink/15 px-5 py-2.5 text-sm font-medium text-ink/80 transition hover:border-accent hover:text-ink">{s.trackOrder}</a>
-        <a href={`${base}/cart`} class="inline-flex items-center gap-2 rounded-lg border border-ink/15 px-5 py-2.5 text-sm font-medium text-ink/80 transition hover:border-accent hover:text-ink">
+        <a href={`${base}/order/lookup`} class="v-btn-ghost">{s.trackOrder}</a>
+        <a href={`${base}/cart`} class="v-btn-ghost">
           {s.cart} <span class="cart-count inline-flex h-5 min-w-5 items-center justify-center rounded bg-brand px-1.5 text-xs font-bold leading-none text-onbrand">0</span>
         </a>
       </div>
@@ -193,7 +193,7 @@ const waferFromLabel = waferMinKrw
        WP의 "Deposition Process" 설명을 6단계로 정리했다.
        마지막에 견적 요청으로 이어진다 — 제품과 연결되는 지점. -->
   <section id="process" class="scroll-mt-24">
-  <div class="mx-auto max-w-6xl px-6 py-20">
+  <div class="v-wrap py-20">
     <div class="v-reveal">
       <h2 class="text-2xl font-bold text-ink">{tech.processHeading}</h2>
       <p class="mt-3 text-base text-ink/55">{tech.processSub}</p>
@@ -213,7 +213,7 @@ const waferFromLabel = waferMinKrw
 
     <div class="v-reveal mt-8 flex flex-wrap items-center gap-4">
       <a href={`${base}/product`}
-        class="inline-flex items-center gap-2 rounded-lg bg-brand px-6 py-3 text-sm font-semibold text-onbrand transition hover:brightness-110">
+        class="v-btn-sm">
         {tech.processCta}
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
       </a>
@@ -225,7 +225,7 @@ const waferFromLabel = waferMinKrw
        WP에만 있던 장비 목록(SEM/TEM/XRD/XPS…)을 옮겨왔다.
        제품의 분석 서비스 상품과 직결되는 정보라, 칩 형태로 한눈에 보이게 한다. -->
   <section id="analysis" class="scroll-mt-24">
-  <div class="mx-auto max-w-6xl px-6 py-20">
+  <div class="v-wrap py-20">
     <div class="v-reveal">
       <h2 class="text-2xl font-bold text-ink">{tech.analysisHeading}</h2>
       <p class="mt-3 text-base text-ink/55">{tech.analysisSub}</p>
@@ -236,7 +236,7 @@ const waferFromLabel = waferMinKrw
         { title: tech.analysisMaterial, items: analysisMaterial },
         { title: tech.analysisDevice, items: analysisDevice },
       ].map((g) => (
-        <div class="v-reveal rounded-2xl border border-ink/10 bg-ink/[0.03] p-6">
+        <div class="v-reveal v-card p-6">
           <p class="text-xs font-medium uppercase tracking-widest text-accent">{g.title}</p>
           <ul class="mt-5 space-y-3">
             {g.items.map((a) => (
@@ -257,7 +257,7 @@ const waferFromLabel = waferMinKrw
   <!-- ── 장비 ────────────────────────────────────────────
        "30년 경력 진공장비 전문가와 자체 개발" — WP에 묻혀 있던 강력한 신뢰 요소. -->
   <section id="equipment" class="scroll-mt-24">
-    <div class="mx-auto max-w-6xl px-6 py-20">
+    <div class="v-wrap py-20">
       <div class="v-reveal">
         <h2 class="text-2xl font-bold text-ink">{tech.equipmentHeading}</h2>
         <p class="mt-3 max-w-3xl text-base text-ink/55">{tech.equipmentSub}</p>

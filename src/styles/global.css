@@ -214,5 +214,45 @@ body.v-zebra main > section:nth-of-type(even) {
   border-bottom: 1px solid color-mix(in srgb, var(--v-ink) 10%, transparent);
 }
 
+/* ───────────────────────────────────────────────────────────────────────
+   공통 UI 클래스 (v- 접두사) — "같은 역할이면 같은 클래스"
+
+   왜 있는가: 같은 역할의 UI가 파일마다 조금씩 다른 조합으로 적혀 있었다.
+   주 버튼만 해도 rounded-lg / rounded-full / rounded-md, px-4·5·6·7 이 섞여 있었고,
+   카드 배경은 bg-ink/[0.03] 과 [0.035] 가 공존했다. 새 화면을 만들 때마다
+   가까운 파일에서 복사해 오다 보니 조금씩 어긋난 것이다.
+
+   → 역할별 클래스를 여기 한 곳에 정의하고, 마크업에서는 이 클래스를 쓴다.
+     `npm run verify` 의 scripts/check-ui-tokens.mjs 가 하드코딩 재발을 잡아낸다.
+
+   ⚠️ @layer components 안에 두는 이유: 유틸리티(px-8 등)로 개별 덮어쓰기가 가능해야 한다.
+      레이어 밖에 두면 항상 유틸리티를 이겨서 예외 처리가 불가능해진다.
+   ⚠️ 세로 여백(py-*)·안쪽 여백(p-*)은 화면마다 달라서 일부러 포함하지 않았다.
+      호출부에서 `class="v-wrap py-20"` 처럼 붙여 쓴다.
+   ─────────────────────────────────────────────────────────────────────── */
+@layer components {
+  /* 본문 컨테이너 — 사이트 전체가 이 폭(max-w-6xl)을 기준선으로 삼는다 */
+  .v-wrap { @apply mx-auto max-w-6xl px-6; }
+
+  /* 정보 카드 */
+  .v-card { @apply rounded-2xl border border-ink/10 bg-ink/[0.03]; }
+
+  /* 버튼 3종 — 주 버튼 / 작은 주 버튼 / 보조(외곽선) 버튼
+     ⚠️ 홈 히어로의 알약(rounded-full) 버튼만 예외다. 어두운 영상 위 전용 디자인이라
+        본문 버튼과 같은 형태로 만들면 오히려 어색하다. (404 등 일반 페이지는 표준형 사용) */
+  .v-btn      { @apply inline-flex items-center gap-2 rounded-lg bg-brand px-7 py-3 font-semibold text-onbrand transition hover:brightness-110; }
+  .v-btn-sm   { @apply inline-flex items-center gap-2 rounded-lg bg-brand px-5 py-2.5 text-sm font-semibold text-onbrand transition hover:brightness-110; }
+  .v-btn-ghost{ @apply inline-flex items-center gap-2 rounded-lg border border-ink/15 px-5 py-2.5 text-sm font-medium text-ink/80 transition hover:border-accent hover:text-ink; }
+
+  /* 폼 전송용 전체폭 버튼 (주문서 결제 · 조회 등) */
+  .v-btn-block { @apply w-full rounded-lg bg-brand px-6 py-3.5 font-semibold text-onbrand transition hover:brightness-110; }
+
+  /* 브랜드 채움 배지 — 버튼이 아니라 라벨이다(클릭 불가) */
+  .v-badge { @apply inline-block rounded-md bg-brand px-4 py-1.5 text-sm font-bold text-onbrand; }
+
+  /* 섹션 제목 — 굵기가 파일마다 bold/semibold 로 갈려 있었다. semibold 로 통일한다. */
+  .v-h2 { @apply text-3xl font-semibold text-ink; }
+}
+
 /* 이미지 무단 사용 억제: 드래그 저장 차단 (우클릭은 BaseLayout 스크립트) */
 img, video { -webkit-user-drag: none; user-drag: none; }

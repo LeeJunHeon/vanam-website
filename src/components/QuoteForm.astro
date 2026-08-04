@@ -275,7 +275,7 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
         <div class="flex flex-wrap items-center justify-end gap-4">
           <p id="quote-status" class="mr-auto text-sm" role="status" aria-live="polite"></p>
           <button type="submit" id="quote-submit"
-            class="inline-flex items-center gap-2 rounded-lg bg-brand px-7 py-3 font-semibold text-onbrand transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60">
+            class="v-btn disabled:cursor-not-allowed disabled:opacity-60">
             <span id="quote-submit-label">{simple ? q.submitOrder : q.submit}</span>
           </button>
 

@@ -32,7 +32,7 @@ const img = d.image ? waferImages[d.image]?.default : undefined;
 ---
 
 <BaseLayout title={`${name} | VanaM`} description={summary}>
-  <section class="relative mx-auto max-w-6xl px-6 py-28 md:py-32">
+  <section class="relative v-wrap py-28 md:py-32">
     <a href={`${base}/wafers`} class="text-sm text-ink/50 transition hover:text-accent">← {s.catWafer}</a>
 
     <div class="mt-8 grid gap-12 lg:grid-cols-2">
@@ -76,7 +76,7 @@ const img = d.image ? waferImages[d.image]?.default : undefined;
                   <button type="button" data-qty="1" class="grid h-12 w-10 place-items-center text-lg text-ink/60 transition hover:text-accent" aria-label={s.qtyInc}>＋</button>
                 </div>
                 <button type="button" id="add-cart" data-sku={`wafer:${wafer.id}`} data-cart-url={`${base}/cart`}
-                  class="inline-flex items-center gap-2 rounded-lg bg-brand px-7 py-3 font-semibold text-onbrand transition hover:brightness-110">
+                  class="v-btn">
                   {s.addToCart}
                 </button>
                 <button type="button" id="buy-now" data-checkout-url={`${base}/checkout`}
@@ -93,7 +93,7 @@ const img = d.image ? waferImages[d.image]?.default : undefined;
             </div>
           ) : (
             <a href={`${base}/contact`}
-              class="inline-flex items-center gap-2 rounded-lg bg-brand px-7 py-3 font-semibold text-onbrand transition hover:brightness-110">
+              class="v-btn">
               {s.requestQuote} →
             </a>
           )}

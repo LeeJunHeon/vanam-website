@@ -54,7 +54,7 @@ const description = home.metaDescription;
   </section>
 
   <section id="vision" class="scroll-mt-24">
-    <div class="v-reveal mx-auto max-w-6xl px-6 py-20">
+    <div class="v-reveal v-wrap py-20">
       <p class="mb-3 font-mono text-xs tracking-[0.16em] text-accent">01 / VISION</p>
       <h2 class="mb-5 max-w-3xl text-3xl font-semibold leading-snug text-ink">{about.visionBody}</h2>
       {/* About 통합(0165→0168): 제목 = 구 About 비전 선언문(about.visionBody, 원문 그대로).
@@ -66,12 +66,12 @@ const description = home.metaDescription;
   </section>
 
   <section id="core" class="scroll-mt-24">
-    <div class="v-reveal mx-auto max-w-6xl px-6 py-12">
+    <div class="v-reveal v-wrap py-12">
       <p class="mb-6 font-mono text-xs tracking-[0.16em] text-accent">02 / CORE CAPABILITIES</p>
     <h2 class="sr-only">{locale === 'ko' ? '핵심 역량' : 'Core capabilities'}</h2>
     <div class="grid gap-5 sm:grid-cols-3">
       {pillars.map((p) => (
-        <div class="rounded-2xl border border-ink/10 bg-ink/[0.035] p-6">
+        <div class="v-card p-6">
           <h3 class="text-lg font-medium text-ink">{p.title}</h3>
           <p class="mt-3 text-sm leading-relaxed text-ink/55">{p.desc}</p>
           {p.note && <p class="mt-3 text-sm leading-relaxed text-danger">{p.note}</p>}
@@ -84,7 +84,7 @@ const description = home.metaDescription;
   <AboutBlocks />
 
   <section>
-    <div class="v-reveal mx-auto max-w-6xl px-6 py-16">
+    <div class="v-reveal v-wrap py-16">
     <div class="relative overflow-hidden rounded-3xl border border-accent/20 bg-panel px-8 py-14 text-center">
       <h2 class="text-2xl font-semibold text-ink sm:text-3xl">{home.ctaHeading}</h2>
       <p class="mx-auto mt-4 max-w-xl text-ink/60" set:html={home.ctaBodyHtml}></p>

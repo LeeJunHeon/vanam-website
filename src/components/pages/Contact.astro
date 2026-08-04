@@ -99,7 +99,7 @@ const labelClass = 'block text-sm font-medium text-ink/80';
 
         <div class="flex flex-wrap items-center gap-4">
           <button type="submit" id="submit-btn"
-            class="inline-flex items-center gap-2 rounded-lg bg-brand px-7 py-3 font-semibold text-onbrand transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60">
+            class="v-btn disabled:cursor-not-allowed disabled:opacity-60">
             <span id="submit-label">{f.submit}</span>
           </button>
           <p id="form-status" class="text-sm" role="status" aria-live="polite"></p>
@@ -112,7 +112,7 @@ const labelClass = 'block text-sm font-medium text-ink/80';
   <section id="location" class="scroll-mt-24 mx-auto max-w-3xl px-6 pb-24">
     <div class="v-reveal">
       <p class="text-sm font-medium uppercase tracking-widest text-accent">{locLabels.eyebrow}</p>
-      <h2 class="mt-4 text-3xl font-bold text-ink">{locLabels.heading}</h2>
+      <h2 class="mt-4 v-h2">{locLabels.heading}</h2>
     </div>
     <div class="v-reveal mt-10 overflow-hidden rounded-xl border border-ink/10">
       <iframe
@@ -156,7 +156,7 @@ const labelClass = 'block text-sm font-medium text-ink/80';
     <section id="faq" class="scroll-mt-24 mx-auto max-w-3xl px-6 pb-28">
       <div class="v-reveal">
         <p class="text-sm font-medium uppercase tracking-widest text-accent">{c.faqEyebrow}</p>
-        <h2 class="mt-4 text-3xl font-bold text-ink">{c.faqHeading}</h2>
+        <h2 class="mt-4 v-h2">{c.faqHeading}</h2>
       </div>
       <div class="mt-10 divide-y divide-ink/10 border-t border-ink/10">
         {faqs.map((x) => (

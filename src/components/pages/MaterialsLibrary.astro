@@ -133,7 +133,7 @@ const materialsLd = {
         </div>
       </div>
     </div>
-    <div class="relative mx-auto max-w-6xl px-6 pt-28 pb-12 md:pt-36">
+    <div class="relative v-wrap pt-28 pb-12 md:pt-36">
       <div class="v-reveal">
         <h1 class="text-4xl font-bold leading-tight text-ink md:text-5xl">{tech.materialsHeading}</h1>
         <p class="mt-6 max-w-2xl text-lg leading-relaxed text-ink/60">{tech.materialsLibraryDesc}</p>
@@ -142,9 +142,9 @@ const materialsLd = {
   </section>
 
   <section>
-    <div class="mx-auto max-w-6xl px-6 py-16">
+    <div class="v-wrap py-16">
       <div class="mt-10 grid gap-6 lg:grid-cols-2">
-      <div class="v-reveal rounded-2xl border border-ink/10 bg-ink/[0.03] p-7">
+      <div class="v-reveal v-card p-7">
         <h3 class="text-lg font-bold text-accent">PVD — Sputter &amp; Evaporator</h3>
         {Object.entries(sputter).map(([group, items]) => (
           <div class="mt-5">
@@ -161,7 +161,7 @@ const materialsLd = {
         ))}
       </div>
 
-      <div class="v-reveal rounded-2xl border border-ink/10 bg-ink/[0.03] p-7">
+      <div class="v-reveal v-card p-7">
         <h3 class="text-lg font-bold text-accent">ALD</h3>
         {Object.entries(ald).map(([group, items]) => (
           <div class="mt-5">
@@ -183,11 +183,11 @@ const materialsLd = {
 
 
   <section>
-    <div class="mx-auto max-w-6xl px-6 py-24 text-center">
+    <div class="v-wrap py-24 text-center">
       <div class="v-reveal">
         <h2 class="text-3xl font-bold text-ink md:text-4xl" set:html={about.ctaHeadingHtml}></h2>
         <p class="mx-auto mt-4 max-w-xl text-base text-ink/60" set:html={about.ctaBodyHtml}></p>
-        <a href={lhref('/contact')} class="mt-8 inline-flex items-center gap-2 rounded-lg bg-brand px-7 py-3 font-semibold text-onbrand transition hover:brightness-110">{about.ctaButton}</a>
+        <a href={lhref('/contact')} class="mt-8 v-btn">{about.ctaButton}</a>
       </div>
     </div>
   </section>
@@ -301,7 +301,7 @@ const materialsLd = {
           )}
 
           <div class="mt-8">
-            <a href={p.quoteHref} class="inline-flex items-center gap-2 rounded-lg bg-brand px-5 py-3 text-sm font-semibold text-onbrand transition hover:brightness-110">
+            <a href={p.quoteHref} class="v-btn-sm">
               {mt.cta} →
             </a>
           </div>

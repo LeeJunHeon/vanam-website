@@ -31,7 +31,7 @@ const summary = (w) => (isKo ? (w.data.summary ?? '') : (w.data.summary_en ?? w.
 ---
 
 <BaseLayout title={s.waferMetaTitle} description={s.waferMetaDescription}>
-  <section class="relative mx-auto max-w-6xl px-6 py-28 md:py-36">
+  <section class="relative v-wrap py-28 md:py-36">
     <div class="flex flex-wrap items-end justify-between gap-6">
       <div class="v-reveal">
         <a href={`${base}/product`} class="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-ink/50 transition hover:text-accent">← {s.waferBack}</a>
@@ -40,8 +40,8 @@ const summary = (w) => (isKo ? (w.data.summary ?? '') : (w.data.summary_en ?? w.
         <p class="mt-6 max-w-xl text-base leading-relaxed text-ink/60">{s.waferIntro}</p>
       </div>
       <div class="flex shrink-0 items-center gap-2">
-        <a href={`${base}/order/lookup`} class="inline-flex items-center rounded-lg border border-ink/15 px-5 py-2.5 text-sm font-medium text-ink/80 transition hover:border-accent hover:text-ink">{s.trackOrder}</a>
-        <a href={`${base}/cart`} class="inline-flex items-center gap-2 rounded-lg border border-ink/15 px-5 py-2.5 text-sm font-medium text-ink/80 transition hover:border-accent hover:text-ink">
+        <a href={`${base}/order/lookup`} class="v-btn-ghost">{s.trackOrder}</a>
+        <a href={`${base}/cart`} class="v-btn-ghost">
           {s.cart} <span class="cart-count inline-flex h-5 min-w-5 items-center justify-center rounded bg-brand px-1.5 text-xs font-bold leading-none text-onbrand">0</span>
         </a>
       </div>

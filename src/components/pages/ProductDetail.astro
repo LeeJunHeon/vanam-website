@@ -31,7 +31,7 @@ const usdRate = company.usdRate || 1500;
 ---
 
 <BaseLayout title={`${name} | VanaM`} description={summary}>
-  <section class="relative mx-auto max-w-6xl px-6 py-28 md:py-32">
+  <section class="relative v-wrap py-28 md:py-32">
     <a href={`${base}/product`} class="text-sm text-ink/50 transition hover:text-accent">← {s.backToShop}</a>
 
     <div class="mt-8 grid gap-12 lg:grid-cols-2">
@@ -75,10 +75,10 @@ const usdRate = company.usdRate || 1500;
                 class="mt-2 w-24 rounded-lg border border-ink/10 bg-ink/[0.03] px-4 py-3 text-center text-ink outline-none transition focus:border-accent focus:ring-1 focus:ring-accent [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
             </div>
             <button type="button" id="add-btn"
-              class="inline-flex items-center gap-2 rounded-lg bg-brand px-7 py-3 font-semibold text-onbrand transition hover:brightness-110">
+              class="v-btn">
               {s.addToCart}
             </button>
-            <a href={`${base}/cart`} class="inline-flex items-center gap-2 rounded-lg border border-ink/15 px-5 py-3 text-sm font-medium text-ink/80 transition hover:border-accent hover:text-ink">
+            <a href={`${base}/cart`} class="v-btn-ghost">
               {s.cart} <span class="cart-count inline-flex h-5 min-w-5 items-center justify-center rounded bg-brand px-1.5 text-xs font-bold leading-none text-onbrand">0</span>
             </a>
             <p id="add-status" class="w-full text-sm text-accent" role="status" aria-live="polite"></p>
@@ -86,7 +86,7 @@ const usdRate = company.usdRate || 1500;
         ) : (
           <div class="mt-8">
             <a href="#quote" data-open-quote id="quote-add" data-sku={product.id}
-              class="inline-flex items-center gap-2 rounded-lg bg-brand px-7 py-3 font-semibold text-onbrand transition hover:brightness-110">
+              class="v-btn">
               {s.requestQuote} ↓
             </a>
           </div>

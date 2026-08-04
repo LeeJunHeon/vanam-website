@@ -120,7 +120,7 @@ const quoteCatalog = [
     if (items.length === 0) {
       root.innerHTML = `
         <p class="text-ink/50">${M.empty}</p>
-        <a href="${M.shopUrl}" class="mt-6 inline-flex items-center gap-2 rounded-lg border border-ink/15 px-5 py-3 text-sm font-medium text-ink/80 transition hover:border-accent hover:text-ink">${M.continue} →</a>`;
+        <a href="${M.shopUrl}" class="mt-6 v-btn-ghost">${M.continue} →</a>`;
       return;
     }
 
@@ -164,7 +164,7 @@ const quoteCatalog = [
       <div class="mt-8">
         ${buyables.length > 0
           ? `<a href="${M.checkoutUrl}"
-              class="inline-flex items-center gap-2 rounded-lg bg-brand px-7 py-3 font-semibold text-onbrand transition hover:brightness-110">${M.checkout}
+              class="v-btn">${M.checkout}
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </a>`
           : `<p class="text-sm font-medium text-ink/50">${M.quoteOnly}</p>`}

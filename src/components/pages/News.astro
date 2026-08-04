@@ -92,11 +92,11 @@ const fmtDate = (d) =>
   </section>
 
   <section id="press" class="mx-auto max-w-5xl scroll-mt-24 px-6 pb-20">
-    <h2 class="v-reveal text-3xl font-semibold text-ink">{bt.pressHeading}</h2>
+    <h2 class="v-reveal v-h2">{bt.pressHeading}</h2>
     <div class="mt-8 space-y-4">
       {news.map((n) => (
         <a href={n.data.url} target="_blank" rel="noopener noreferrer"
-           class="v-reveal group flex items-start gap-5 rounded-2xl border border-ink/10 bg-ink/[0.03] p-6 transition hover:border-accent/40 hover:bg-ink/[0.05]">
+           class="v-reveal group flex items-start gap-5 v-card p-6 transition hover:border-accent/40 hover:bg-ink/[0.05]">
           <span class="mt-0.5 grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-accent/25 bg-accent/[0.08] text-accent transition group-hover:border-accent/50 group-hover:bg-accent/[0.14]" aria-hidden="true">
             <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-4 0V6" /><path d="M18 14h-8M15 18h-5M10 6h8v4h-8z" /></svg>
           </span>
@@ -116,7 +116,7 @@ const fmtDate = (d) =>
   </section>
 
   <section id="blog" class="mx-auto max-w-6xl scroll-mt-24 px-6 pb-24">
-    <h2 class="v-reveal text-3xl font-semibold text-ink">{bt.heading}</h2>
+    <h2 class="v-reveal v-h2">{bt.heading}</h2>
     <p class="v-reveal mt-3 max-w-2xl text-base text-ink/55">{bt.sub}</p>
     <div class="mt-8">
     {posts.length > 0 ? (
@@ -184,7 +184,7 @@ const fmtDate = (d) =>
         </div>
       </>
     ) : (
-      <div class="v-reveal flex flex-col items-center justify-center gap-3 rounded-2xl border border-ink/10 bg-ink/[0.03] py-20 text-center">
+      <div class="v-reveal flex flex-col items-center justify-center gap-3 v-card py-20 text-center">
         <svg class="h-12 w-12 text-ink/20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
         <p class="text-lg font-semibold text-ink/70">{bt.emptyTitle}</p>
         <p class="text-sm text-ink/45">{bt.emptyBody}</p>

@@ -19,10 +19,10 @@ const partners = (await getCollection('partners')).sort((a, b) => a.data.order -
 function initials(name){ const p = name.replace('Dr. ','').split(' '); return (p[0][0] + (p[1] ? p[1][0] : '')).toUpperCase(); }
 ---
   <section id="team" class="scroll-mt-24">
-    <div class="mx-auto max-w-6xl px-6 py-20">
+    <div class="v-wrap py-20">
     <div class="v-reveal">
       <p class="mb-3 font-mono text-xs tracking-[0.16em] text-accent">03 / TEAM</p>
-      <h2 class="text-3xl font-semibold text-ink">{about.teamHeading}</h2>
+      <h2 class="v-h2">{about.teamHeading}</h2>
       <p class="mt-3 max-w-2xl text-base text-ink/55">{about.teamDesc}</p>
     </div>
     <div class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -53,8 +53,8 @@ function initials(name){ const p = name.replace('Dr. ','').split(' '); return (p
   </section>
 
   <section id="history" class="scroll-mt-24">
-    <div class="mx-auto max-w-6xl px-6 py-20">
-      <div class="v-reveal"><p class="mb-3 font-mono text-xs tracking-[0.16em] text-accent">04 / HISTORY</p><h2 class="text-3xl font-semibold text-ink">{about.historyHeading}</h2></div>
+    <div class="v-wrap py-20">
+      <div class="v-reveal"><p class="mb-3 font-mono text-xs tracking-[0.16em] text-accent">04 / HISTORY</p><h2 class="v-h2">{about.historyHeading}</h2></div>
       <div class="mt-12 space-y-12">
         {history.map((h) => {
           const items = locale === 'ko' ? (h.data.items_ko ?? h.data.items) : h.data.items;
@@ -105,10 +105,10 @@ function initials(name){ const p = name.replace('Dr. ','').split(' '); return (p
   </script>
 
   <section id="achievement" class="scroll-mt-24">
-    <div class="mx-auto max-w-6xl px-6 py-20">
+    <div class="v-wrap py-20">
       <div class="v-reveal">
         <p class="mb-3 font-mono text-xs tracking-[0.16em] text-accent">05 / GLOBAL ACTIVITY</p>
-        <h2 class="text-3xl font-semibold text-ink">{about.globalActivityHeading}</h2>
+        <h2 class="v-h2">{about.globalActivityHeading}</h2>
         <p class="mt-3 text-base text-ink/55">{about.globalActivityDesc}</p>
       </div>
       <div class="mt-8 flex flex-wrap gap-3">
@@ -129,8 +129,8 @@ function initials(name){ const p = name.replace('Dr. ','').split(' '); return (p
   />
 
   <section id="collaboration" class="scroll-mt-24">
-    <div class="mx-auto max-w-6xl px-6 py-20">
-    <div class="v-reveal"><p class="mb-3 font-mono text-xs tracking-[0.16em] text-accent">07 / COLLABORATION</p><h2 class="text-3xl font-semibold text-ink">{about.collaborationHeading}</h2></div>
+    <div class="v-wrap py-20">
+    <div class="v-reveal"><p class="mb-3 font-mono text-xs tracking-[0.16em] text-accent">07 / COLLABORATION</p><h2 class="v-h2">{about.collaborationHeading}</h2></div>
     <div class="v-reveal mt-8 space-y-4">
       {[0, 1].map((row) => {
         // 협력사를 두 줄로 나눠 각 줄이 반대 방향으로 흐르게 한다.

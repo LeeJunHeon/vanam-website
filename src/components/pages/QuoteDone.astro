@@ -79,7 +79,7 @@ const t = isKo
           <pre id="qd-details" class="mt-1 whitespace-pre-wrap rounded-lg bg-ink/[0.05] p-4 font-sans text-sm leading-relaxed text-ink/70"></pre>
         </div>
         <button id="qd-print"
-          class="mt-5 rounded-lg border border-ink/15 px-4 py-2 text-sm text-ink/70 transition hover:border-ink/40 hover:text-ink">🖨 {t.print}</button>
+          class="mt-5 v-btn-ghost">🖨 {t.print}</button>
       </div>
 
       <p id="qd-expired" hidden class="mt-6 border-t border-ink/10 pt-6 text-sm leading-relaxed text-ink/50">{t.expired}</p>
@@ -89,9 +89,9 @@ const t = isKo
     </div>
 
     <div class="mt-10 flex flex-wrap justify-center gap-4">
-      <a href={lhref('/product')} class="rounded-lg border border-ink/15 px-6 py-3 text-sm text-ink/70 transition hover:border-ink/40 hover:text-ink">{t.shop}</a>
-      <a id="qd-lookup" href={lhref('/order/lookup')} class="rounded-lg border border-ink/15 px-6 py-3 text-sm text-ink/70 transition hover:border-ink/40 hover:text-ink">{t.lookup}</a>
-      <a href={lhref('/contact')} class="rounded-lg bg-brand px-6 py-3 text-sm font-semibold text-onbrand transition hover:brightness-110">{t.contact}</a>
+      <a href={lhref('/product')} class="v-btn-ghost">{t.shop}</a>
+      <a id="qd-lookup" href={lhref('/order/lookup')} class="v-btn-ghost">{t.lookup}</a>
+      <a href={lhref('/contact')} class="v-btn-sm">{t.contact}</a>
     </div>
   </section>
 </BaseLayout>

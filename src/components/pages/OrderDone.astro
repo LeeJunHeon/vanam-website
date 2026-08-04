@@ -174,9 +174,9 @@ const t = isKo
         </div>
 
         <div class="mt-10 flex flex-wrap justify-center gap-4">
-          <a href={lhref('/product')} class="rounded-lg border border-ink/15 px-6 py-3 text-sm text-ink/70 transition hover:border-ink/40 hover:text-ink">{t.shop}</a>
-          <a href={`${lhref('/order/lookup')}?id=${order.id}`} class="rounded-lg border border-ink/15 px-6 py-3 text-sm text-ink/70 transition hover:border-ink/40 hover:text-ink">{t.lookup}</a>
-          <a href={lhref('/contact')} class="rounded-lg bg-brand px-6 py-3 text-sm font-semibold text-onbrand transition hover:brightness-110">{t.contact}</a>
+          <a href={lhref('/product')} class="v-btn-ghost">{t.shop}</a>
+          <a href={`${lhref('/order/lookup')}?id=${order.id}`} class="v-btn-ghost">{t.lookup}</a>
+          <a href={lhref('/contact')} class="v-btn-sm">{t.contact}</a>
         </div>
 
         <script is:inline>
