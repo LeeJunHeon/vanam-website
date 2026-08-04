@@ -42,6 +42,12 @@ const t = isKo
         title: '견적·주문 요청', received: '접수일', product: '요청 상품',
         method: '공정', substrate: '기판', reqBody: '요청 내용 보기',
         amount: '견적 금액', vat: '(부가세 포함)',
+        sheetBtn: '견적서 인쇄 · PDF 저장',
+        sheetTitle: '견적서',
+        sheetSupplier: '공급자',
+        sheetIssued: '발행일',
+        sheetStatus: '진행 상태',
+        sheetFoot: '본 견적서는 웹사이트 조회 화면에서 출력된 문서로 별도 직인이 없습니다. 문의는 아래 연락처로 부탁드립니다.',
         pending: '산정 중입니다 — 견적이 확정되면 이메일로 안내드립니다.',
         st: { new: '접수됨 (검토 대기)', quoted: '견적 완료', replied: '회신 완료', paid: '결제 완료', closed: '종료' },
       } as Record<string, unknown>,
@@ -81,6 +87,12 @@ const t = isKo
         title: 'Quote / order request', received: 'Received', product: 'Requested item',
         method: 'Process', substrate: 'Substrate', reqBody: 'View request details',
         amount: 'Quoted amount', vat: '(VAT included)',
+        sheetBtn: 'Print quotation (PDF)',
+        sheetTitle: 'Quotation',
+        sheetSupplier: 'Supplier',
+        sheetIssued: 'Issued',
+        sheetStatus: 'Status',
+        sheetFoot: 'This quotation was generated from the online lookup page and carries no company seal. Please use the contact below for any questions.',
         pending: 'Being prepared — we will email you once the quote is ready.',
         st: { new: 'Received (in review)', quoted: 'Quote ready', replied: 'Replied', closed: 'Closed', paid: 'Paid' },
       } as Record<string, unknown>,
@@ -123,6 +135,14 @@ const inputClass =
       data-labels={JSON.stringify(t.st)}
       data-inq={JSON.stringify(t.inq)}
       data-product-names={JSON.stringify(productNames)}
+      data-supplier={JSON.stringify({
+        name: isKo ? company.nameKo : company.nameEn,
+        ceo: isKo ? company.ceoKo : (company.ceoEn || company.ceoKo),
+        bizNo: company.bizNo,
+        address: isKo ? company.addressKo : (company.addressEn || company.addressKo),
+        tel: company.tel,
+        email: company.email,
+      })}
       data-pay={JSON.stringify({ tracking: t.tracking, trackingCourier: t.trackingCourier, trackingNo: t.trackingNo, paidDone: t.paidDone, paidAt: t.paidAt, mApproved: t.mApproved, mCreate: t.mCreate, mHeld: t.mHeld, mDeclined: t.mDeclined, mCapture: t.mCapture, mError: t.mError, mPaid: t.mPaid, mSetup: t.mSetup, payTitle: t.payTitle, payNote: t.payNote })}
       data-copy={JSON.stringify({
         status: t.status, amount: t.amount, ordered: t.ordered,
@@ -361,11 +381,69 @@ const inputClass =
               </div>
               ${q.quote_note ? `
                 <p class="mt-5 rounded-lg bg-ink/[0.05] p-4 text-sm leading-relaxed text-ink/65">${esc(q.quote_note)}</p>` : ''}
+              <button type="button" id="inq-sheet" class="mt-5 v-btn-ghost-sm">🖨 ${esc(INQ.sheetBtn)}</button>
               ${q.paid_at ? `
                 <p class="mt-5 rounded-lg border border-ok/25 bg-ok/10 p-3 text-center text-sm font-semibold text-ok">✅ ${P2.paidAt} — ${when(q.paid_at)}</p>` : ''}
               ${!q.paid_at && q.quote_currency === 'USD' && Number(q.quoted_amount) > 0 && q.status !== 'closed' ? payBlock(q.id) : ''}
             </div>`;
           resEl.hidden = false;
+
+          // 견적서 인쇄 — 접수 확인 페이지를 이미 닫았거나 나중에 다시 찾은 고객이
+          // 조회 화면에서 바로 견적서를 뽑을 수 있어야 한다(구매팀에 넘길 서류가 된다).
+          // 자동 인쇄하지 않는다 — 창 안의 버튼을 눌러야 인쇄창이 뜬다.
+          document.getElementById('inq-sheet')?.addEventListener('click', () => {
+            const sup = JSON.parse(M.supplier ?? '{}');
+            const today = new Date().toISOString().slice(0, 10);
+            const rows: [string, string][] = [
+              [String(INQ.title), String(q.id)],
+              [String(INQ.received), String(when(q.created_at))],
+              [String(INQ.sheetStatus), String(INQ.st?.[q.status] ?? q.status)],
+              [String(INQ.product), String(PNAMES[String(q.product_sku ?? '')] ?? q.product_name ?? q.material ?? '')],
+              [String(INQ.method), String(q.method ?? '')],
+              [String(INQ.substrate), String(q.substrate ?? '')],
+            ].filter((r) => r[1].trim()) as [string, string][];
+
+            const html = `<!doctype html><html><head><meta charset="utf-8"><title>${esc(String(INQ.sheetTitle))} ${esc(String(q.id))}</title>
+<style>
+  body{font-family:'Pretendard',-apple-system,Arial,sans-serif;color:#17202a;margin:40px auto;max-width:760px;line-height:1.6}
+  h1{font-size:20px;margin:0 0 4px}
+  .sub{color:#667;font-size:12px;margin:0 0 22px}
+  .sup{border:1px solid #c9d2da;background:#f6f9fb;padding:12px 14px;font-size:12px;line-height:1.9;margin-bottom:20px}
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  th,td{border:1px solid #c9d2da;padding:9px 11px;text-align:left;vertical-align:top}
+  th{background:#eef4f8;width:150px;font-weight:600}
+  pre{white-space:pre-wrap;font-family:inherit;font-size:13px;border:1px solid #c9d2da;padding:12px;margin-top:14px;background:#fafbfc}
+  .amt{margin-top:18px;border:2px solid #17202a;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;font-size:15px}
+  .amt b{font-size:20px}
+  .note{margin-top:24px;font-size:12px;color:#445;border-top:1px solid #dde;padding-top:12px;line-height:1.9}
+  .noprint{margin:0 0 22px}
+  .noprint button{font:inherit;font-size:13px;padding:8px 14px;border:1px solid #bbb;border-radius:8px;background:#f6f6f6;cursor:pointer}
+  @media print{.noprint{display:none}}
+</style></head><body>
+  <div class="noprint"><button type="button" id="qs-print">🖨 ${esc(String(INQ.sheetBtn))}</button></div>
+  <h1>VANAM — ${esc(String(INQ.sheetTitle))}</h1>
+  <p class="sub">${esc(String(INQ.sheetIssued))} ${today}</p>
+  <div class="sup">
+    <b>${esc(String(INQ.sheetSupplier))}</b><br>
+    ${esc(sup.name ?? '')} · ${esc(sup.ceo ?? '')}<br>
+    ${esc(sup.bizNo ?? '')}<br>
+    ${esc(sup.address ?? '')}<br>
+    ${esc(sup.tel ?? '')} · ${esc(sup.email ?? '')}
+  </div>
+  <table>${rows.map(([k, v]) => `<tr><th>${esc(k)}</th><td>${esc(v)}</td></tr>`).join('')}</table>
+  ${q.details ? `<pre>${esc(String(q.details))}</pre>` : ''}
+  <div class="amt"><span>${esc(String(INQ.amount))} ${esc(String(INQ.vat))}</span><b>${amt ?? esc(String(INQ.pending))}</b></div>
+  ${q.quote_note ? `<pre>${esc(String(q.quote_note))}</pre>` : ''}
+  <p class="note">${esc(String(INQ.sheetFoot))}<br>${esc(sup.email ?? '')} · vanam.co.kr</p>
+</body></html>`;
+
+            const w2 = window.open('', '_blank');
+            if (!w2) return;   // 팝업 차단 시 조용히 중단 — 버튼으로 재시도 가능
+            w2.document.write(html);
+            w2.document.close();
+            w2.document.getElementById('qs-print')?.addEventListener('click', () => w2.print());
+          });
+
           initPP(data.email as string);
           return;
         }
