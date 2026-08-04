@@ -22,6 +22,14 @@ const catLabel = isKo
   ? { Oxide: '산화물', Nitride: '질화물', Metal: '금속', Semiconductor: '반도체' }
   : { Oxide: 'Oxide', Nitride: 'Nitride', Metal: 'Metal', Semiconductor: 'Semiconductor' };
 const sysLabel = d.system === 'ald' ? 'ALD' : 'PVD — Sputter & Evaporator';
+// 같은 물질을 PVD·ALD 두 방식으로 각각 제공한다(예: TiO₂ = m03 sputter / m30 ald).
+// 본문은 사양이 완전히 다르지만 제목·설명이 똑같으면 검색엔진이 중복 문서로 본다.
+// → 제목과 기본 설명에 증착 방식을 넣어 구분한다. (실제로 9쌍 18페이지가 겹쳐 있었다)
+const sysShort = d.system === 'ald' ? 'ALD' : 'PVD';
+const metaTitle = `${displayName} (${sysShort}) | VanaM`;
+const metaDesc = desc ?? (isKo
+  ? `${sysShort} 방식으로 증착하는 ${displayName}(${d.formula}) 박막 — VanaM 소재 라이브러리의 사양·측정 데이터.`
+  : `${displayName} (${d.formula}) thin film deposited by ${sysShort} — specifications and measured data from the VanaM materials library.`);
 
 // 상세 이미지: 파일이 실제로 있을 때만 최적화 생성. 없으면 null → placeholder 표시.
 const matImages = import.meta.glob<{ default: ImageMetadata }>(
@@ -67,7 +75,7 @@ const quoteHref = productId
   : (isKo ? '/ko/contact' : '/contact');
 ---
 
-<BaseLayout title={`${displayName} | VanaM`} description={desc ?? `${displayName} — VanaM thin-film material`}>
+<BaseLayout title={metaTitle} description={metaDesc}>
   <section class="mx-auto max-w-5xl px-6 py-16">
     <a href={backHref} class="text-sm text-ink/55 transition hover:text-accent">{t.back}</a>
 
