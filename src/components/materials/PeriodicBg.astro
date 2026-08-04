@@ -20,11 +20,11 @@ const x = (g: number) => (g - 1) * S;
 const y = (p: number) => (p - 1) * S + (p >= 8 ? 5 : 0);
 ---
 <svg viewBox="0 0 188 104" class="h-full w-full" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
-  {cells.map((c) => <rect x={x(c.g)} y={y(c.p)} width={C} height={C} rx="1.6" fill="none" stroke="currentColor" stroke-opacity="0.5" stroke-width="0.55" />)}
-  {fcells.map((c) => <rect x={x(c.g)} y={y(c.p)} width={C} height={C} rx="1.6" fill="none" stroke="currentColor" stroke-opacity="0.35" stroke-width="0.5" />)}
+  {cells.map((c) => <rect x={x(c.g)} y={y(c.p)} width={C} height={C} rx="1.6" fill="none" stroke="currentColor" stroke-opacity="0.8" stroke-width="0.6" />)}
+  {fcells.map((c) => <rect x={x(c.g)} y={y(c.p)} width={C} height={C} rx="1.6" fill="none" stroke="currentColor" stroke-opacity="0.6" stroke-width="0.55" />)}
   {Object.entries(HL).map(([sym, [p, g]]) => (
     <>
-      <rect x={x(g)} y={y(p)} width={C} height={C} rx="1.6" fill="currentColor" fill-opacity="0.12" stroke="currentColor" stroke-opacity="0.8" stroke-width="0.6" />
+      <rect x={x(g)} y={y(p)} width={C} height={C} rx="1.6" fill="currentColor" fill-opacity="0.18" stroke="currentColor" stroke-opacity="1" stroke-width="0.6" />
       <text x={x(g) + C / 2} y={y(p) + C / 2 + 1.6} text-anchor="middle" font-size="4.4" font-weight="700" fill="currentColor">{sym}</text>
     </>
   ))}

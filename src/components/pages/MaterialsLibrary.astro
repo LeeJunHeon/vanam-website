@@ -15,6 +15,7 @@ const site = siteData[locale] ?? siteData.en;
 const tech = site.technology;
 const title = `${tech.materialsHeading} | VanaM`;
 const description = tech.materialsLibraryDesc;
+const about = site.about; // CTA 문구는 구 About 원문 사용 (0172 — tech 와 중복 회피)
 
 // materials 컬렉션에서 system 별로 category→formula[] 그룹을 재구성.
 // order 순으로 정렬해 기존 객체의 키/배열 순서를 그대로 보존한다.
@@ -122,7 +123,7 @@ const materialsLd = {
 <BaseLayout title={title} description={description} zebra>
 
   <section class="relative overflow-hidden">
-    <div class="pointer-events-none absolute inset-y-0 right-0 hidden w-[62%] text-ink opacity-[0.07] md:block"
+    <div class="pointer-events-none absolute inset-y-0 right-0 w-full text-ink opacity-[0.10] md:w-[64%] md:opacity-[0.16]"
       style="-webkit-mask-image: radial-gradient(ellipse 75% 70% at 70% 45%, #000 30%, transparent 78%); mask-image: radial-gradient(ellipse 75% 70% at 70% 45%, #000 30%, transparent 78%);" aria-hidden="true">
       <PeriodicBg />
     </div>
@@ -178,9 +179,9 @@ const materialsLd = {
   <section>
     <div class="mx-auto max-w-6xl px-6 py-24 text-center">
       <div class="v-reveal">
-        <h2 class="text-3xl font-bold text-ink md:text-4xl">{tech.ctaHeading}</h2>
-        <p class="mx-auto mt-4 max-w-xl text-base text-ink/60" set:html={tech.ctaBodyHtml}></p>
-        <a href={lhref('/contact')} class="mt-8 inline-flex items-center gap-2 rounded-lg bg-brand px-7 py-3 font-semibold text-onbrand transition hover:brightness-110">{tech.ctaButton}</a>
+        <h2 class="text-3xl font-bold text-ink md:text-4xl" set:html={about.ctaHeadingHtml}></h2>
+        <p class="mx-auto mt-4 max-w-xl text-base text-ink/60" set:html={about.ctaBodyHtml}></p>
+        <a href={lhref('/contact')} class="mt-8 inline-flex items-center gap-2 rounded-lg bg-brand px-7 py-3 font-semibold text-onbrand transition hover:brightness-110">{about.ctaButton}</a>
       </div>
     </div>
   </section>
