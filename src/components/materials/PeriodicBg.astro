@@ -1,31 +1,184 @@
 ---
-// 주기율표 장식 배경 (0171) — currentColor 라 테마 자동 대응. 부모가 크기·불투명도·마스크를 정한다.
-const rows: Record<number, number[]> = {
-  1: [1, 18],
-  2: [1, 2, 13, 14, 15, 16, 17, 18],
-  3: [1, 2, 13, 14, 15, 16, 17, 18],
-  4: Array.from({ length: 18 }, (_, i) => i + 1),
-  5: Array.from({ length: 18 }, (_, i) => i + 1),
-  6: Array.from({ length: 18 }, (_, i) => i + 1),
-  7: Array.from({ length: 18 }, (_, i) => i + 1),
-};
-const cells: { p: number; g: number }[] = [];
-for (const [p, gs] of Object.entries(rows)) gs.forEach((g) => cells.push({ p: Number(p), g }));
-const fcells: { p: number; g: number }[] = [];
-for (let r = 0; r < 2; r++) for (let g = 3; g <= 17; g++) fcells.push({ p: 8 + r, g });
-// 우리 소재군과 맞닿은 원소만 은은히 강조
-const HL: Record<string, [number, number]> = { O: [2, 16], N: [2, 15], Al: [3, 13], Si: [3, 14], Ti: [4, 4], Zr: [5, 4], Hf: [6, 4], Ta: [6, 5], W: [6, 6] };
-const S = 10.4, C = 9.2;
+// 주기율표 장식 배경 — 118종 전체 표. **자체 제작 SVG** 다.
+// 외부 주기율표 이미지는 대부분 저작권이 있어(예: 배경 참고용으로 받은 PNG 하단의 저작권 표기)
+// 상업 사이트에 그대로 올릴 수 없다. 원자번호·기호·이름·원자량은 사실 정보라 자유롭게 쓸 수 있으므로,
+// 표준 IUPAC 배치로 직접 그린다. 저작권 문제 없음 + 벡터라 확대해도 깨지지 않는다.
+//
+// 색은 전부 currentColor — 부모가 text-ink 로 색을, opacity 로 농도를 정한다.
+// 따라서 라이트/다크 테마가 자동으로 반대 색이 되어 별도 반전 처리가 필요 없다.
+type Cell = [number, number, number, string, string, string]; // 주기, 족, 원자번호, 기호, 이름, 원자량
+
+const CELLS: Cell[] = [
+  [1, 1, 1, 'H', 'Hydrogen', '1.008'],
+  [1, 18, 2, 'He', 'Helium', '4.003'],
+  [2, 1, 3, 'Li', 'Lithium', '6.941'],
+  [2, 2, 4, 'Be', 'Beryllium', '9.012'],
+  [2, 13, 5, 'B', 'Boron', '10.811'],
+  [2, 14, 6, 'C', 'Carbon', '12.011'],
+  [2, 15, 7, 'N', 'Nitrogen', '14.007'],
+  [2, 16, 8, 'O', 'Oxygen', '15.999'],
+  [2, 17, 9, 'F', 'Fluorine', '18.998'],
+  [2, 18, 10, 'Ne', 'Neon', '20.180'],
+  [3, 1, 11, 'Na', 'Sodium', '22.990'],
+  [3, 2, 12, 'Mg', 'Magnesium', '24.305'],
+  [3, 13, 13, 'Al', 'Aluminum', '26.982'],
+  [3, 14, 14, 'Si', 'Silicon', '28.086'],
+  [3, 15, 15, 'P', 'Phosphorus', '30.974'],
+  [3, 16, 16, 'S', 'Sulfur', '32.066'],
+  [3, 17, 17, 'Cl', 'Chlorine', '35.453'],
+  [3, 18, 18, 'Ar', 'Argon', '39.948'],
+  [4, 1, 19, 'K', 'Potassium', '39.098'],
+  [4, 2, 20, 'Ca', 'Calcium', '40.078'],
+  [4, 3, 21, 'Sc', 'Scandium', '44.956'],
+  [4, 4, 22, 'Ti', 'Titanium', '47.867'],
+  [4, 5, 23, 'V', 'Vanadium', '50.942'],
+  [4, 6, 24, 'Cr', 'Chromium', '51.996'],
+  [4, 7, 25, 'Mn', 'Manganese', '54.938'],
+  [4, 8, 26, 'Fe', 'Iron', '55.845'],
+  [4, 9, 27, 'Co', 'Cobalt', '58.933'],
+  [4, 10, 28, 'Ni', 'Nickel', '58.693'],
+  [4, 11, 29, 'Cu', 'Copper', '63.546'],
+  [4, 12, 30, 'Zn', 'Zinc', '65.380'],
+  [4, 13, 31, 'Ga', 'Gallium', '69.723'],
+  [4, 14, 32, 'Ge', 'Germanium', '72.631'],
+  [4, 15, 33, 'As', 'Arsenic', '74.922'],
+  [4, 16, 34, 'Se', 'Selenium', '78.971'],
+  [4, 17, 35, 'Br', 'Bromine', '79.904'],
+  [4, 18, 36, 'Kr', 'Krypton', '83.798'],
+  [5, 1, 37, 'Rb', 'Rubidium', '85.468'],
+  [5, 2, 38, 'Sr', 'Strontium', '87.620'],
+  [5, 3, 39, 'Y', 'Yttrium', '88.906'],
+  [5, 4, 40, 'Zr', 'Zirconium', '91.224'],
+  [5, 5, 41, 'Nb', 'Niobium', '92.906'],
+  [5, 6, 42, 'Mo', 'Molybdenum', '95.950'],
+  [5, 7, 43, 'Tc', 'Technetium', '98.907'],
+  [5, 8, 44, 'Ru', 'Ruthenium', '101.07'],
+  [5, 9, 45, 'Rh', 'Rhodium', '102.906'],
+  [5, 10, 46, 'Pd', 'Palladium', '106.42'],
+  [5, 11, 47, 'Ag', 'Silver', '107.868'],
+  [5, 12, 48, 'Cd', 'Cadmium', '112.414'],
+  [5, 13, 49, 'In', 'Indium', '114.818'],
+  [5, 14, 50, 'Sn', 'Tin', '118.711'],
+  [5, 15, 51, 'Sb', 'Antimony', '121.760'],
+  [5, 16, 52, 'Te', 'Tellurium', '127.60'],
+  [5, 17, 53, 'I', 'Iodine', '126.904'],
+  [5, 18, 54, 'Xe', 'Xenon', '131.294'],
+  [6, 1, 55, 'Cs', 'Cesium', '132.905'],
+  [6, 2, 56, 'Ba', 'Barium', '137.328'],
+  [6, 4, 72, 'Hf', 'Hafnium', '178.49'],
+  [6, 5, 73, 'Ta', 'Tantalum', '180.948'],
+  [6, 6, 74, 'W', 'Tungsten', '183.84'],
+  [6, 7, 75, 'Re', 'Rhenium', '186.207'],
+  [6, 8, 76, 'Os', 'Osmium', '190.23'],
+  [6, 9, 77, 'Ir', 'Iridium', '192.217'],
+  [6, 10, 78, 'Pt', 'Platinum', '195.085'],
+  [6, 11, 79, 'Au', 'Gold', '196.967'],
+  [6, 12, 80, 'Hg', 'Mercury', '200.592'],
+  [6, 13, 81, 'Tl', 'Thallium', '204.383'],
+  [6, 14, 82, 'Pb', 'Lead', '207.20'],
+  [6, 15, 83, 'Bi', 'Bismuth', '208.980'],
+  [6, 16, 84, 'Po', 'Polonium', '208.982'],
+  [6, 17, 85, 'At', 'Astatine', '209.987'],
+  [6, 18, 86, 'Rn', 'Radon', '222.018'],
+  [7, 1, 87, 'Fr', 'Francium', '223.020'],
+  [7, 2, 88, 'Ra', 'Radium', '226.025'],
+  [7, 4, 104, 'Rf', 'Rutherfordium', '[261]'],
+  [7, 5, 105, 'Db', 'Dubnium', '[262]'],
+  [7, 6, 106, 'Sg', 'Seaborgium', '[266]'],
+  [7, 7, 107, 'Bh', 'Bohrium', '[264]'],
+  [7, 8, 108, 'Hs', 'Hassium', '[269]'],
+  [7, 9, 109, 'Mt', 'Meitnerium', '[278]'],
+  [7, 10, 110, 'Ds', 'Darmstadtium', '[281]'],
+  [7, 11, 111, 'Rg', 'Roentgenium', '[280]'],
+  [7, 12, 112, 'Cn', 'Copernicium', '[285]'],
+  [7, 13, 113, 'Nh', 'Nihonium', '[286]'],
+  [7, 14, 114, 'Fl', 'Flerovium', '[289]'],
+  [7, 15, 115, 'Mc', 'Moscovium', '[289]'],
+  [7, 16, 116, 'Lv', 'Livermorium', '[293]'],
+  [7, 17, 117, 'Ts', 'Tennessine', '[294]'],
+  [7, 18, 118, 'Og', 'Oganesson', '[294]'],
+];
+
+// 란타넘족·악티늄족 — 본표 아래 두 줄(주기 8·9 로 배치)
+const FCELLS: Cell[] = [
+  [8, 3, 57, 'La', 'Lanthanum', '138.905'],
+  [8, 4, 58, 'Ce', 'Cerium', '140.116'],
+  [8, 5, 59, 'Pr', 'Praseodymium', '140.908'],
+  [8, 6, 60, 'Nd', 'Neodymium', '144.243'],
+  [8, 7, 61, 'Pm', 'Promethium', '144.913'],
+  [8, 8, 62, 'Sm', 'Samarium', '150.36'],
+  [8, 9, 63, 'Eu', 'Europium', '151.964'],
+  [8, 10, 64, 'Gd', 'Gadolinium', '157.25'],
+  [8, 11, 65, 'Tb', 'Terbium', '158.925'],
+  [8, 12, 66, 'Dy', 'Dysprosium', '162.500'],
+  [8, 13, 67, 'Ho', 'Holmium', '164.930'],
+  [8, 14, 68, 'Er', 'Erbium', '167.259'],
+  [8, 15, 69, 'Tm', 'Thulium', '168.934'],
+  [8, 16, 70, 'Yb', 'Ytterbium', '173.055'],
+  [8, 17, 71, 'Lu', 'Lutetium', '174.967'],
+  [9, 3, 89, 'Ac', 'Actinium', '227.028'],
+  [9, 4, 90, 'Th', 'Thorium', '232.038'],
+  [9, 5, 91, 'Pa', 'Protactinium', '231.036'],
+  [9, 6, 92, 'U', 'Uranium', '238.029'],
+  [9, 7, 93, 'Np', 'Neptunium', '237.048'],
+  [9, 8, 94, 'Pu', 'Plutonium', '244.064'],
+  [9, 9, 95, 'Am', 'Americium', '243.061'],
+  [9, 10, 96, 'Cm', 'Curium', '247.070'],
+  [9, 11, 97, 'Bk', 'Berkelium', '247.070'],
+  [9, 12, 98, 'Cf', 'Californium', '251.080'],
+  [9, 13, 99, 'Es', 'Einsteinium', '[254]'],
+  [9, 14, 100, 'Fm', 'Fermium', '257.095'],
+  [9, 15, 101, 'Md', 'Mendelevium', '258.10'],
+  [9, 16, 102, 'No', 'Nobelium', '259.101'],
+  [9, 17, 103, 'Lr', 'Lawrencium', '[262]'],
+];
+
+// 본표 6·7주기 3족의 자리표시(그 자리에 f-블록이 들어간다는 표기)
+const PLACE: [number, number, string][] = [[6, 3, '57-71'], [7, 3, '89-103']];
+
+// 우리 소재군(산화물·질화물·금속)과 맞닿은 원소만 은은히 강조
+const HL = new Set(['O', 'N', 'Al', 'Si', 'Ti', 'Zr', 'Hf', 'Ta', 'W']);
+
+const S = 10.4;      // 셀 간격
+const C = 10.0;      // 셀 크기
+const GAP = 4.6;     // 본표와 f-블록 사이 여백
 const x = (g: number) => (g - 1) * S;
-const y = (p: number) => (p - 1) * S + (p >= 8 ? 5 : 0);
+const y = (p: number) => (p - 1) * S + (p >= 8 ? GAP : 0);
+// 긴 이름(Praseodymium·Rutherfordium 등)이 셀 밖으로 나가지 않도록 글자 크기를 줄인다
+const nameSize = (n: string) => (n.length > 11 ? 1.02 : n.length > 9 ? 1.16 : 1.3);
+const ALL: Cell[] = [...CELLS, ...FCELLS];
 ---
-<svg viewBox="0 0 188 104" class="h-full w-full" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
-  {cells.map((c) => <rect x={x(c.g)} y={y(c.p)} width={C} height={C} rx="1.6" fill="none" stroke="currentColor" stroke-opacity="0.8" stroke-width="0.6" />)}
-  {fcells.map((c) => <rect x={x(c.g)} y={y(c.p)} width={C} height={C} rx="1.6" fill="none" stroke="currentColor" stroke-opacity="0.6" stroke-width="0.55" />)}
-  {Object.entries(HL).map(([sym, [p, g]]) => (
-    <>
-      <rect x={x(g)} y={y(p)} width={C} height={C} rx="1.6" fill="currentColor" fill-opacity="0.18" stroke="currentColor" stroke-opacity="1" stroke-width="0.6" />
-      <text x={x(g) + C / 2} y={y(p) + C / 2 + 1.6} text-anchor="middle" font-size="4.4" font-weight="700" fill="currentColor">{sym}</text>
-    </>
+<svg viewBox="0 0 187 99" class="h-full w-full" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+  {/* 셀 배경·테두리 — 강조 원소만 옅게 채운다 */}
+  {ALL.map((c) => (
+    <rect x={x(c[1])} y={y(c[0])} width={C} height={C} rx="1.1"
+      fill="currentColor" fill-opacity={HL.has(c[3]) ? 0.16 : 0}
+      stroke="currentColor" stroke-opacity="0.85" stroke-width="0.5" />
   ))}
+  {/* 원자번호 (좌상단) */}
+  {ALL.map((c) => (
+    <text x={x(c[1]) + 0.9} y={y(c[0]) + 2.7} font-size="1.9" fill="currentColor">{c[2]}</text>
+  ))}
+  {/* 원소기호 (가운데, 크게) */}
+  {ALL.map((c) => (
+    <text x={x(c[1]) + C / 2} y={y(c[0]) + 6.4} text-anchor="middle" font-size="4.3" font-weight="700" fill="currentColor">{c[3]}</text>
+  ))}
+  {/* 원소 이름 */}
+  {ALL.map((c) => (
+    <text x={x(c[1]) + C / 2} y={y(c[0]) + 8.1} text-anchor="middle" font-size={nameSize(c[4])} fill="currentColor">{c[4]}</text>
+  ))}
+  {/* 원자량 */}
+  {ALL.map((c) => (
+    <text x={x(c[1]) + C / 2} y={y(c[0]) + 9.5} text-anchor="middle" font-size="1.3" fill="currentColor">{c[5]}</text>
+  ))}
+  {/* 6·7주기 3족 자리표시 */}
+  {PLACE.map((q) => (
+    <rect x={x(q[1])} y={y(q[0])} width={C} height={C} rx="1.1" fill="none" stroke="currentColor" stroke-opacity="0.85" stroke-width="0.5" />
+  ))}
+  {PLACE.map((q) => (
+    <text x={x(q[1]) + C / 2} y={y(q[0]) + 6.0} text-anchor="middle" font-size="2.4" font-weight="600" fill="currentColor">{q[2]}</text>
+  ))}
+  {/* f-블록 좌측 라벨 */}
+  <text x={x(3) - 1.6} y={y(8) + 5.9} text-anchor="end" font-size="2.1" font-weight="600" fill="currentColor">Lanthanides</text>
+  <text x={x(3) - 1.6} y={y(9) + 5.9} text-anchor="end" font-size="2.1" font-weight="600" fill="currentColor">Actinides</text>
 </svg>
