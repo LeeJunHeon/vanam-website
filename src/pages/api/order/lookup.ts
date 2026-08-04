@@ -66,6 +66,8 @@ export const POST: APIRoute = async ({ request }) => {
           quoted_amount: q.quoted_amount ?? null,
           quote_currency: (q.quote_currency as string) ?? 'KRW',
           quote_note: q.quote_note ?? null,
+          // 관리자가 입력한 입금 계좌(선택). 허용목록에서 빠지면 오류 없이 null 이 된다 — 지뢰 ㉟
+          quote_bank: (q as Record<string, unknown>).quote_bank ?? null,
           paid_at: (q as Record<string, unknown>).paid_at ?? null,
           created_at: q.created_at,
         },

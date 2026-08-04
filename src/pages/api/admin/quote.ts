@@ -42,6 +42,8 @@ export const POST: APIRoute = async ({ request }) => {
   const currency = body.currency === 'USD' ? 'USD' : 'KRW';
 
   const note = typeof body.note === 'string' ? body.note.slice(0, 2000) : '';
+  // 입금 계좌 — 선택 항목. 고객 조회 화면과 견적서에 그대로 노출된다.
+  const bank = typeof body.bank === 'string' ? body.bank.slice(0, 300) : '';
   // 상태는 클라이언트가 정하지 않는다. 금액 책정 여부로 서버가 판단한다.
   // (드롭다운으로 임의 변경하면 결제 버튼이 사라지는 등 사고가 난다)
   let status: string | null = null;
@@ -58,14 +60,28 @@ export const POST: APIRoute = async ({ request }) => {
   if (!status) return json({ ok: false, error: 'bad_status' }, 400);
 
   try {
-    await d
-      .prepare(
-        `UPDATE inquiries
-            SET quoted_amount = ?, quote_currency = ?, quote_note = ?, status = ?, updated_at = ?
-          WHERE id = ?`,
-      )
-      .bind(amount, currency, note || null, status, nowIso(), id)
-      .run();
+    try {
+      await d
+        .prepare(
+          `UPDATE inquiries
+              SET quoted_amount = ?, quote_currency = ?, quote_note = ?, quote_bank = ?, status = ?, updated_at = ?
+            WHERE id = ?`,
+        )
+        .bind(amount, currency, note || null, bank || null, status, nowIso(), id)
+        .run();
+    } catch (colErr) {
+      // ⚠️ quote_bank 컬럼 추가 전에 배포되면 위 UPDATE 가 실패한다.
+      //    그대로 던지면 **금액 책정 자체가 안 된다.** 계좌만 포기하고 나머지는 반드시 저장한다.
+      console.warn('[admin/quote] quote_bank 컬럼 없음 — 계좌 없이 저장합니다:', colErr);
+      await d
+        .prepare(
+          `UPDATE inquiries
+              SET quoted_amount = ?, quote_currency = ?, quote_note = ?, status = ?, updated_at = ?
+            WHERE id = ?`,
+        )
+        .bind(amount, currency, note || null, status, nowIso(), id)
+        .run();
+    }
     return json({ ok: true, id, amount, status });
   } catch (e) {
     console.error('[admin/quote] 저장 실패:', e);

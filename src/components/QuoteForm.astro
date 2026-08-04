@@ -65,6 +65,19 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
       data-sheet-notsent={q.sheetNotSent}
       data-sheet-orsubmit={q.sheetOrSubmit}
       data-sheet-mail={company.email || 'hello@vanam.co.kr'}
+      data-sheet-issued={q.sheetIssued}
+      data-sheet-supplier-label={q.sheetSupplier}
+      data-sheet-amount={q.sheetAmount}
+      data-sheet-vat={q.sheetVat}
+      data-sheet-pending={q.sheetPending}
+      data-supplier={JSON.stringify({
+        name: isKo ? company.nameKo : company.nameEn,
+        ceo: isKo ? company.ceoKo : (company.ceoEn || company.ceoKo),
+        bizNo: company.bizNo,
+        address: isKo ? company.addressKo : (company.addressEn || company.addressKo),
+        tel: company.tel,
+        email: company.email,
+      })}
       data-sheet-print={q.downloadSheet}
       data-lbl-name={c.name}
       data-lbl-company={c.company}
@@ -344,6 +357,8 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
 
 <script>
   import { initTelInput, normalizeTelInputs } from '../lib/telInput';
+  // 견적서·요청서 인쇄물은 조회 화면과 **같은 템플릿**을 쓴다 (src/lib/quote-sheet.ts)
+  import { buildQuoteSheet, openQuoteSheet } from '../lib/quote-sheet';
 
   // Turnstile 전역 API 타입
   declare global {
@@ -823,48 +838,32 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
     const built = buildQuote();
     if (!built) return;
     const d = built.data;
-    const esc2 = (v: string) => String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;");
     const today = new Date().toISOString().slice(0, 10);
 
     // 연락처는 고객이 직접 저장·발송하는 문서이므로 채워서 낸다(브라우저에 남기지 않는다).
-    const head: [string, string][] = [
+    const rows: [string, string][] = ([
       [M.lblProduct || "Product", String(d.productName ?? "")],
       [M.lblName || "Name", String(d.name ?? "")],
       [M.lblCompany || "Company", String(d.company ?? "")],
       [M.lblEmail || "Email", String(d.email ?? "")],
       [M.lblPhone || "Phone", String(d.phone ?? "")],
-    ].filter(([, v]) => v.trim()) as [string, string][];
+    ] as [string, string][]).filter(([, v]) => v.trim());
 
-    const rows = [...head, ...built.lines.map((l) => [l.l, l.v] as [string, string])]
-      .map(([k, v]) => `<tr><th>${esc2(k)}</th><td>${esc2(v)}</td></tr>`)
-      .join("");
-
-    const html = `<!doctype html><html><head><meta charset="utf-8"><title>${esc2(M.sheetTitle || "Quote Request")} ${today}</title>
-<style>
-  body{font-family:'Pretendard',-apple-system,Arial,sans-serif;color:#17202a;margin:40px auto;max-width:760px;line-height:1.6}
-  h1{font-size:20px;margin:0 0 4px}
-  .sub{color:#667;font-size:12px;margin:0 0 22px}
-  table{border-collapse:collapse;width:100%;font-size:13px}
-  th,td{border:1px solid #c9d2da;padding:9px 11px;text-align:left;vertical-align:top}
-  th{background:#eef4f8;width:150px;font-weight:600}
-  td{white-space:pre-line}
-  .note{margin-top:26px;font-size:12px;color:#445;border-top:1px solid #dde;padding-top:12px;line-height:1.9}
-  .noprint{margin:0 0 22px}
-  .noprint button{font:inherit;font-size:13px;padding:8px 14px;border:1px solid #bbb;border-radius:8px;background:#f6f6f6;cursor:pointer}
-  @media print{.noprint{display:none}}
-</style></head><body>
-  <div class="noprint"><button type="button" id="qs-print">🖨 ${esc2(M.sheetPrint || "Print")}</button></div>
-  <h1>VANAM — ${esc2(M.sheetTitle || "Quote Request")}</h1>
-  <p class="sub">VanaM Inc. — Thin Films, All Around · ${today}</p>
-  <table>${rows}</table>
-  <p class="note"><b>${esc2(M.sheetNotsent || "")}</b> ${esc2(M.sheetMail || "")}<br>${esc2(M.sheetOrsubmit || "")}<br>vanam.co.kr</p>
-</body></html>`;
-
-    const w2 = window.open("", "_blank");
-    if (!w2) return;   // 팝업 차단 시 조용히 중단 — 버튼으로 재시도 가능
-    w2.document.write(html);
-    w2.document.close();
-    // 자동 인쇄하지 않는다 — 내용을 먼저 확인하고 창 안의 버튼으로 인쇄·PDF 저장한다.
-    w2.document.getElementById("qs-print")?.addEventListener("click", () => w2.print());
+    openQuoteSheet(buildQuoteSheet({
+      title: M.sheetTitle || "Quote Request",
+      issuedLabel: M.sheetIssued || "",
+      issued: today,
+      supplierLabel: M.sheetSupplierLabel || "",
+      supplier: JSON.parse(M.supplier ?? "{}"),
+      rows,
+      // 요청 내용은 조회 화면과 같은 자리(표 아래 본문)에 둔다
+      details: built.lines.map((l) => `${l.l}: ${l.v}`).join("\n"),
+      amountLabel: M.sheetAmount || "",
+      vatLabel: M.sheetVat || "",
+      // 아직 접수 전이라 금액이 없다 — 칸은 같은 자리에 두고 '산정 중' 문구를 넣는다
+      amount: M.sheetPending || "",
+      footNote: `${M.sheetNotsent ?? ""} ${M.sheetMail ?? ""} / ${M.sheetOrsubmit ?? ""}`,
+      printLabel: M.sheetPrint || "Print",
+    }));
   });
 </script>

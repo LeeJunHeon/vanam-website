@@ -145,7 +145,8 @@ const materialsLd = {
     <div class="v-wrap py-16">
       <div class="mt-10 grid gap-6 lg:grid-cols-2">
       <div class="v-reveal v-card p-7">
-        <h3 class="text-lg font-bold text-accent">PVD — Sputter &amp; Evaporator</h3>
+        {/* h1(페이지 제목) 바로 다음 단계여야 한다. h3 이면 단계를 건너뛰어 접근성 감점(제목 순서). */}
+        <h2 class="text-lg font-bold text-accent">PVD — Sputter &amp; Evaporator</h2>
         {Object.entries(sputter).map(([group, items]) => (
           <div class="mt-5">
             <p class="text-xs font-semibold uppercase tracking-wider text-ink/55">{catLabel[group]}</p>
@@ -162,7 +163,7 @@ const materialsLd = {
       </div>
 
       <div class="v-reveal v-card p-7">
-        <h3 class="text-lg font-bold text-accent">ALD</h3>
+        <h2 class="text-lg font-bold text-accent">ALD</h2>
         {Object.entries(ald).map(([group, items]) => (
           <div class="mt-5">
             <p class="text-xs font-semibold uppercase tracking-wider text-ink/55">{catLabel[group]}</p>

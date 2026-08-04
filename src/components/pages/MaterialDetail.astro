@@ -57,9 +57,11 @@ for (const f of d.figs ?? []) {
 const targetPhoto = d.targetImg ? await resolveAsset(d.targetImg) : null;
 const hasA4 = (d.filmSpecs?.length ?? 0) + (d.band2Specs?.length ?? 0) + figImgs.length > 0;
 
-const backHref = isKo ? '/ko/technology' : '/technology';
+// 0165 에서 소재 라이브러리가 독립 메뉴가 됐는데 뒤로가기만 예전 자리(기술 소개)에 남아 있었다.
+// 소재 상세로 들어오는 경로는 소재 라이브러리이므로 그쪽으로 돌아가야 맞다.
+const backHref = isKo ? '/ko/materials' : '/materials';
 const t = {
-  back: isKo ? '← 기술 소개로' : '← Back to Technology',
+  back: isKo ? '← 소재 라이브러리로' : '← Back to Materials Library',
   system: isKo ? '증착 방식' : 'Deposition',
   category: isKo ? '분류' : 'Category',
   formula: isKo ? '화학식' : 'Formula',

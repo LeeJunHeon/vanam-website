@@ -19,7 +19,7 @@ type Row = {
   material: string | null; method: string | null; substrate: string | null;
   thickness: string | null; quantity: string | null; deadline: string | null;
   details: string | null;
-  quoted_amount: number | null; quote_currency: string | null; quote_note: string | null;
+  quoted_amount: number | null; quote_currency: string | null; quote_note: string | null; quote_bank: string | null;
   locale: string | null; created_at: string; updated_at: string | null;
 };
 
@@ -548,6 +548,11 @@ const spec = (r: Row) =>
                       <label class="block text-xs text-ink/45">견적 금액 (부가세 포함)</label>
                       <input name="amount" type="number" min="0" step="any" value={r.quoted_amount ?? ''}
                         class="mt-1 w-44 rounded-lg border border-ink/10 bg-ink/[0.03] px-3 py-2 text-sm text-ink outline-none focus:border-accent" />
+                    </div>
+                    <div class="min-w-[14rem] flex-1">
+                      <label class="block text-xs text-ink/45">입금 계좌 <span class="text-ink/30">— 선택. 입력하면 고객 조회 화면과 견적서에 표시됩니다</span></label>
+                      <input name="bank" type="text" value={r.quote_bank ?? ''} placeholder="예: 국민은행 123456-01-234567 (예금주 반암 주식회사)"
+                        class="mt-1 w-full rounded-lg border border-ink/10 bg-ink/[0.03] px-3 py-2 text-sm text-ink outline-none focus:border-accent" />
                     </div>
                     <div class="min-w-[16rem] flex-1">
                       <label class="block text-xs text-ink/45">메모</label>
