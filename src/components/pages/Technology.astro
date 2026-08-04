@@ -308,15 +308,17 @@ const techAsset = (pth: string) => techImages[`/src/assets/tech/${pth}`]?.defaul
                     </>
                   ))}
                 </div>
-                <div class="mt-3 flex flex-col items-center gap-2 rounded-xl bg-ink px-4 py-3 text-center sm:flex-row sm:justify-center sm:gap-3.5">
+                {/* Final goal — 예전엔 bg-ink(테마 반전 검은/흰 슬래브)라 이 줄만 혼자 튀었다.
+                    같은 섹션의 ↻ 사이클 칩과 동일한 accent 톤으로 맞춰 강조는 유지하되 톤을 낮춘다. */}
+                <div class="mt-3 flex flex-col items-center gap-2 rounded-xl border border-accent/30 bg-accent/[0.08] px-4 py-3 text-center sm:flex-row sm:justify-center sm:gap-3.5">
                   <span class="flex items-center gap-2">
                     {techAsset('core/value-goal.jpg') && (
                       <Image src={techAsset('core/value-goal.jpg')!} alt="" width={56} class="h-7 w-7 rounded-md object-contain" />
                     )}
-                    <span class="text-[12.5px] font-bold text-canvas">{cv.finalGoal.t}</span>
+                    <span class="text-[12.5px] font-bold text-accent">{cv.finalGoal.t}</span>
                   </span>
-                  <span class="hidden h-4 w-px bg-canvas/30 sm:block" aria-hidden="true"></span>
-                  <p class="text-[12px] font-semibold leading-relaxed text-canvas">{cv.finalGoal.lines.join(' · ')}</p>
+                  <span class="hidden h-4 w-px bg-accent/30 sm:block" aria-hidden="true"></span>
+                  <p class="text-[12px] font-semibold leading-relaxed text-ink/80">{cv.finalGoal.lines.join(' · ')}</p>
                 </div>
               </div>
             </div>

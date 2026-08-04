@@ -87,14 +87,15 @@ const quoteCatalog = [
 </BaseLayout>
 
 <script>
-  type Item = { sku: string; qty: number };
+  // 저장소 접근은 전부 lib/cart 한 곳을 통한다 (형식 정리·수량 clamp·배지 갱신이 거기 모여 있다)
+  import { readCart, writeCart, type CartItem as Item } from '../../lib/cart';
+
   // 카탈로그(CMS) 값이라 신뢰 수준은 높지만, innerHTML 에 넣는 값은 일괄 이스케이프한다
   // (RFQ 인쇄부의 esc2 와 동일한 원칙 — 표기 일관성).
   const esc = (v: unknown) =>
     String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   type Product = { sku: string; name: string; price: number; url: string; quote?: boolean };
 
-  const CART_KEY = 'vanam_cart';
   const root = document.getElementById('cart-root')!;
   import { liveRate, cachedRate } from '../../lib/fx-client';
 
@@ -108,23 +109,12 @@ const quoteCatalog = [
   const usd = (krw: number) =>
     '$' + (krw / RATE).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-  const read = (): Item[] => {
-    try { return JSON.parse(localStorage.getItem(CART_KEY) ?? '[]'); } catch { return []; }
-  };
-  const write = (items: Item[]) => {
-    localStorage.setItem(CART_KEY, JSON.stringify(items));
-    document.querySelectorAll('.cart-count').forEach((el) => {
-      el.textContent = String(items.reduce((s, i) => s + i.qty, 0));
-    });
-  };
+  const read = readCart;
+  const write = writeCart;
 
   function render() {
-    // localStorage 는 사용자가 마음대로 고칠 수 있다.
-    // 카탈로그에 없는 항목은 제거하고, 수량은 반드시 1~99 정수로 강제한다.
-    // (문자열이 그대로 innerHTML/속성에 들어가면 마크업이 깨지거나 주입될 수 있다)
-    const items = read()
-      .filter((i) => i && typeof i.sku === 'string' && byId.has(i.sku))
-      .map((i) => ({ sku: i.sku, qty: Math.max(1, Math.min(99, Math.floor(Number(i.qty)) || 1)) }));
+    // 형식·수량 정리는 lib/cart 가 한다. 여기서는 '이 사이트 카탈로그에 없는 품목'만 걷어낸다.
+    const items = read().filter((i) => byId.has(i.sku));
     write(items);
 
     if (items.length === 0) {

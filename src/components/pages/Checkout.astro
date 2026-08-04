@@ -501,15 +501,15 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
     }
   }
 
-  type Item = { sku: string; qty: number };
+  // 저장소 접근은 전부 lib/cart 한 곳을 통한다 (Item 형도 거기서 온다 — 중복 선언 금지)
+  import { readCart, readBuyNow, clearBuyNow, removeKeys, itemKey, type CartItem as Item } from '../../lib/cart';
+
   type Product = { sku: string; name: string; price: number; ship: boolean };
 
   const form = document.getElementById('checkout-form') as HTMLFormElement | null;
   if (form) {
     const M = form.dataset;
     const quoteId = M.quote || '';
-    const CART_KEY = 'vanam_cart';
-    const BUYNOW_KEY = 'vanam_buynow';
 
     // 전화번호 입력(구매자·수령인)에 국가번호 드롭다운 적용
     const lang = document.documentElement.lang || "en";
@@ -576,22 +576,14 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
     if (!quoteId) {
       if (isBuyNow) {
         // 즉시 구매: 세션 키만 읽는다. 장바구니는 읽지도, 건드리지도 않는다.
-        try {
-          const b: unknown = JSON.parse(sessionStorage.getItem(BUYNOW_KEY) ?? '[]');
-          items = Array.isArray(b) ? (b as Item[]) : [];
-        } catch { items = []; }
+        items = readBuyNow();
       } else {
         // 장바구니: 이전 즉시 구매의 잔여 키가 끼어들지 않도록 먼저 비운다.
-        try { sessionStorage.removeItem(BUYNOW_KEY); } catch (e) { /* 접근 불가 시 무시 */ }
-        try {
-          const c: unknown = JSON.parse(localStorage.getItem(CART_KEY) ?? '[]');
-          items = Array.isArray(c) ? (c as Item[]) : [];
-        } catch { items = []; }
+        clearBuyNow();
+        items = readCart();
       }
-      // localStorage 는 조작 가능하므로 수량을 1~99 정수로 강제한다 (금액은 어차피 서버가 재계산)
-      items = items
-        .filter((i) => i && typeof i.sku === 'string' && byId.has(i.sku))
-        .map((i) => ({ sku: i.sku, qty: Math.max(1, Math.min(99, Math.floor(Number(i.qty)) || 1)) }));
+      // 형식·수량 정리는 lib/cart 가 한다. 여기서는 카탈로그에 없는 품목만 걷어낸다.
+      items = items.filter((i) => byId.has(i.sku));
       for (const i of items) if (byId.get(i.sku)!.ship) needsShipping = true;
 
       render();
@@ -854,23 +846,12 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
         if (!quoteId) {
           if (isBuyNow) {
             // 즉시 구매: 세션 키만 정리한다. 장바구니는 손대지 않는다.
-            try { sessionStorage.removeItem(BUYNOW_KEY); } catch (e) { /* 무시 */ }
+            clearBuyNow();
           } else {
-            // 장바구니: '이번 주문에 포함된 품목만' 제거한다.
-            // 전체를 비우면 이번 주문에 포함되지도 않은 견적 문의 품목까지 사라진다.
+            // 장바구니: '이번 주문에 포함된 줄만' 제거한다(배지 갱신까지 removeKeys 가 한다).
+            // 전체를 비우면 이번 주문에 포함되지도 않은 견적 품목까지 사라진다.
             // 견적 품목만 남은 장바구니(합계 $0.00 + 견적 요청서 인쇄)는 설계된 정상 상태다.
-            try {
-              const ordered = new Set(items.map((i) => i.sku));
-              const raw: unknown = JSON.parse(localStorage.getItem(CART_KEY) ?? '[]');
-              const left = (Array.isArray(raw) ? (raw as Item[]) : []).filter(
-                (i) => i && typeof i.sku === 'string' && !ordered.has(i.sku),
-              );
-              localStorage.setItem(CART_KEY, JSON.stringify(left));
-              // 헤더 배지도 갱신 — 숫자가 그대로면 주문이 안 된 것처럼 보인다.
-              document.querySelectorAll('.cart-count').forEach((el) => {
-                el.textContent = String(left.reduce((s, i) => s + (Math.floor(Number(i.qty)) || 0), 0));
-              });
-            } catch (e) { /* 저장소 접근 불가 — 주문은 이미 성공했으므로 무시 */ }
+            removeKeys(items.map(itemKey));
           }
         }
         orderDone = true;

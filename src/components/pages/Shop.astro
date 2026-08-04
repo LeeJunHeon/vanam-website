@@ -392,6 +392,9 @@ const waferFromLabel = waferMinKrw
 </BaseLayout>
 
 <script>
+  // 저장소 접근은 전부 lib/cart 한 곳을 통한다 (형식·수량 clamp·배지 갱신이 여기 모여 있다)
+  import { paintCount } from '../../lib/cart';
+
   // 카테고리 필터 (클라이언트)
   const btns = document.querySelectorAll<HTMLButtonElement>('.cat-btn');
   const cards = document.querySelectorAll<HTMLElement>('.product-card');
@@ -410,12 +413,8 @@ const waferFromLabel = waferMinKrw
     cards.forEach((c) => { c.hidden = cat !== 'all' && c.dataset.cat !== cat; });
   }));
 
-  // 장바구니 개수 표시
-  try {
-    const cart = JSON.parse(localStorage.getItem('vanam_cart') ?? '[]');
-    const n = cart.reduce((sum: number, i: { qty: number }) => sum + i.qty, 0);
-    document.querySelectorAll('.cart-count').forEach((el) => { el.textContent = String(n); });
-  } catch {}
+  // 장바구니 개수 표시 — SSR 은 0 으로 박혀 있으므로 열릴 때 실제 값으로 갱신한다
+  paintCount();
 
   // 웨이퍼 카드 슬라이드쇼 (세부 제품 대표사진 순환)
   document.querySelectorAll<HTMLElement>('[data-wafer-slider]').forEach((slider) => {

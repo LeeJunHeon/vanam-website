@@ -93,11 +93,7 @@ const summary = (w) => (isKo ? (w.data.summary ?? '') : (w.data.summary_en ?? w.
   // 정적 페이지라 가격이 빌드 시점 환율로 박힌다. 현재 환율로 표시만 갱신한다.
   import '../../lib/fx-client';
 
-  // 장바구니 배지 — SSR 은 0 으로 박혀 있어, 담아둔 게 있어도 이 페이지에서만 0 으로 보였다.
-  // (Shop·ProductDetail 과 동일한 초기화. 이 페이지만 누락되어 있었다)
-  try {
-    const cart = JSON.parse(localStorage.getItem('vanam_cart') ?? '[]');
-    const n = cart.reduce((sum: number, i: { qty: number }) => sum + i.qty, 0);
-    document.querySelectorAll('.cart-count').forEach((el) => { el.textContent = String(n); });
-  } catch {}
+  // 장바구니 배지 — SSR 은 0 으로 박혀 있으므로 열릴 때 실제 값으로 갱신한다
+  import { paintCount } from '../../lib/cart';
+  paintCount();
 </script>

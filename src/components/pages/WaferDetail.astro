@@ -140,43 +140,30 @@ const img = d.image ? waferImages[d.image]?.default : undefined;
 
   </section>
 <script>
-  // 웨이퍼 즉시 구매: localStorage 'vanam_cart' 에 {sku, qty} 저장 (가격은 항상 서버·카탈로그 조회)
-  const CART_KEY = 'vanam_cart';
+  // 저장소 접근은 전부 lib/cart 한 곳을 통한다 (가격은 저장하지 않는다 — 서버·카탈로그 조회)
+  import { addToCart, clampQty, writeBuyNow } from '../../lib/cart';
+
   const addBtn = document.getElementById('add-cart');
   const buyBtn = document.getElementById('buy-now');
   const qtyEl = document.getElementById('buy-qty') as HTMLInputElement | null;
   const msgEl = document.getElementById('added-msg');
 
-  const readCart = (): { sku: string; qty: number }[] => {
-    try { return JSON.parse(localStorage.getItem(CART_KEY) ?? '[]'); } catch { return []; }
-  };
-  const clampQty = () => Math.max(1, Math.min(99, Math.floor(Number(qtyEl?.value)) || 1));
+  const qty = () => clampQty(qtyEl?.value);
 
   document.querySelectorAll<HTMLButtonElement>('[data-qty]').forEach((b) => {
     b.addEventListener('click', () => {
       if (!qtyEl) return;
-      qtyEl.value = String(Math.max(1, Math.min(99, clampQty() + Number(b.dataset.qty))));
+      qtyEl.value = String(clampQty(qty() + Number(b.dataset.qty)));
     });
   });
-
-  const addToCart = (): boolean => {
-    const sku = addBtn?.dataset.sku;
-    if (!sku) return false;
-    const qty = clampQty();
-    const items = readCart();
-    const hit = items.find((i) => i && i.sku === sku);
-    if (hit) hit.qty = Math.min(99, (Math.floor(Number(hit.qty)) || 0) + qty);
-    else items.push({ sku, qty });
-    localStorage.setItem(CART_KEY, JSON.stringify(items));
-    document.querySelectorAll('.cart-count').forEach((el) => {
-      el.textContent = String(items.reduce((s2, i) => s2 + (Math.floor(Number(i.qty)) || 0), 0));
-    });
-    return true;
-  };
 
   addBtn?.addEventListener('click', () => {
-    if (addToCart() && msgEl) msgEl.classList.remove('hidden');
+    const sku = addBtn.dataset.sku;
+    if (!sku) return;
+    addToCart(sku, qty());
+    if (msgEl) msgEl.classList.remove('hidden');
   });
+
   // 즉시 구매는 장바구니에 담지 않는다.
   // 담아버리면 결제하지 않고 나갔을 때 항목이 남아, 다음 즉시 구매 때 함께 주문된다.
   // 세션 한정 키에 이번 건만 넣고, 주문서에는 ?buynow=1 로 소스를 '선언'해 이동한다.
@@ -185,11 +172,9 @@ const img = d.image ? waferImages[d.image]?.default : undefined;
     const sku = addBtn?.dataset.sku;
     if (!sku) return;
     const url = buyBtn.dataset.checkoutUrl ?? '/checkout';
-    try {
-      sessionStorage.setItem('vanam_buynow', JSON.stringify([{ sku, qty: clampQty() }]));
-    } catch (e) {
+    if (!writeBuyNow([{ sku, qty: qty() }])) {
       // 세션 저장이 막힌 환경(강화된 시크릿 모드 등)에서는 장바구니 경로로 폴백한다.
-      addToCart();
+      addToCart(sku, qty());
       location.href = url;
       return;
     }
