@@ -67,8 +67,8 @@ const description = home.metaDescription;
 
   <section id="core" class="scroll-mt-24">
     <div class="v-reveal mx-auto max-w-6xl px-6 py-12">
-      <p class="mb-6 font-mono text-xs tracking-[0.16em] text-accent">02 / CORE TECHNOLOGIES</p>
-    <h2 class="sr-only">{locale === 'ko' ? '핵심 기술' : 'Core technologies'}</h2>
+      <p class="mb-6 font-mono text-xs tracking-[0.16em] text-accent">02 / CORE CAPABILITIES</p>
+    <h2 class="sr-only">{locale === 'ko' ? '핵심 역량' : 'Core capabilities'}</h2>
     <div class="grid gap-5 sm:grid-cols-3">
       {pillars.map((p) => (
         <div class="rounded-2xl border border-ink/10 bg-ink/[0.035] p-6 transition hover:border-accent/50">
@@ -103,8 +103,22 @@ const description = home.metaDescription;
     const MOBILE = window.matchMedia('(max-width: 768px)').matches;
     vid.src = MOBILE ? '/media/hero-loop-m.mp4' : '/media/hero-loop.mp4';
     const rm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // 모바일 자동재생은 정책(절전 모드·데이터 절약·사용자 제스처 요구)으로 조용히 거부될 수 있다.
+    // 지금까지는 play() 가 한 번 실패하면 재시도가 없어 포스터만 남았다.
+    // Technology 의 DBR 영상과 같은 '재생 킥'(진입·첫 터치·복귀 시 재시도)을 건다.
+    vid.muted = true;        // 속성뿐 아니라 프로퍼티로도 확정 — iOS 자동재생 요건
+    vid.playsInline = true;
     if (rm) { vid.autoplay = false; vid.loop = false; vid.pause(); }
-    else { const pr = vid.play(); if (pr && pr.catch) pr.catch(() => {}); }
+    else {
+      const tryPlay = () => { const pr = vid.play(); if (pr && pr.catch) pr.catch(() => {}); };
+      tryPlay();
+      vid.addEventListener('loadeddata', tryPlay, { once: true });
+      vid.addEventListener('canplay', tryPlay, { once: true });
+      new IntersectionObserver((es) => { if (es[0].isIntersecting) tryPlay(); }, { threshold: 0.15 }).observe(vid);
+      window.addEventListener('touchstart', tryPlay, { once: true, passive: true });
+      window.addEventListener('pointerdown', tryPlay, { once: true, passive: true });
+      window.addEventListener('pageshow', tryPlay);   // bfcache 복귀
+    }
     const copy = document.getElementById('vh-copy');
     const hint = document.getElementById('vh-hint');
     const onScroll = () => {

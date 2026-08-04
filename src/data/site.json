@@ -19,7 +19,7 @@
           "desc": "We design custom materials and stack structures for applications that conventional foundries do not yet support."
         },
         {
-          "title": "AI-Assisted Optimization",
+          "title": "AI-Assisted Process Optimization",
           "desc": "We combine process data, metrology, and simulation to shorten trial-and-error cycles and improve reproducibility."
         },
         {
@@ -676,6 +676,7 @@
       "certClose": "Close",
       "certPrev": "Previous",
       "certNext": "Next",
+      "certSwipe": "Swipe to see more",
       "showMore": "Show more",
       "showLess": "Show less"
     },
@@ -901,7 +902,7 @@
           "desc": "기존 파운드리가 아직 지원하지 못하는 응용 분야를 위해 맞춤형 소재와 적층 구조를 설계합니다."
         },
         {
-          "title": "AI 기반 최적화",
+          "title": "AI 기반 공정 최적화",
           "desc": "공정 데이터·계측·시뮬레이션을 결합해 시행착오를 줄이고 재현성을 높입니다."
         },
         {
@@ -1558,6 +1559,7 @@
       "certClose": "닫기",
       "certPrev": "이전",
       "certNext": "다음",
+      "certSwipe": "좌우로 넘겨보세요",
       "showMore": "더 보기",
       "showLess": "접기"
     },

@@ -59,7 +59,8 @@ const t = isKo
 
     <div id="qd-root" class="mt-10 rounded-xl border border-ink/10 bg-ink/[0.02] p-8"
       data-labels={JSON.stringify(t.labels)}
-      data-doc-title={t.docTitle}>
+      data-doc-title={t.docTitle}
+      data-print-label={t.print}>
       <div>
         <p class="text-sm text-ink/45">{t.refNo}</p>
         <div class="mt-1 flex items-center gap-3">
@@ -152,7 +153,11 @@ const t = isKo
   th,td{border:1px solid #ddd;padding:8px 10px;text-align:left;vertical-align:top}
   th{background:#f6f6f6;width:120px;font-weight:600}
   pre{white-space:pre-wrap;font-family:inherit;font-size:13px;border:1px solid #ddd;padding:12px;margin-top:16px;background:#fafafa}
+  .noprint{margin:0 0 22px}
+  .noprint button{font:inherit;font-size:13px;padding:8px 14px;border:1px solid #bbb;border-radius:8px;background:#f6f6f6;cursor:pointer}
+  @media print{.noprint{display:none}}
 </style></head><body>
+<div class="noprint"><button type="button" id="qd-doc-print">🖨 ${esc2(root.dataset.printLabel || 'Print')}</button></div>
 <h1>VANAM — ${esc2(root.dataset.docTitle!)}</h1>
 <p class="sub">${esc2(id)} · ${esc2((d.at || '').slice(0, 10))}</p>
 <table>${rows}</table>
@@ -162,7 +167,8 @@ ${det ? `<pre>${esc2(det)}</pre>` : ''}
       if (!w2) return; // 팝업 차단 시 조용히 중단 — 버튼으로 재시도 가능
       w2.document.write(html);
       w2.document.close();
-      setTimeout(() => { try { w2.print(); } catch (e) { /* 사용자가 창에서 직접 인쇄 */ } }, 400);
+      // 자동 인쇄하지 않는다 — 먼저 요청서를 눈으로 확인하고, 창 안의 버튼으로 직접 인쇄한다.
+      w2.document.getElementById('qd-doc-print')?.addEventListener('click', () => w2.print());
     });
   } else {
     (document.getElementById('qd-expired') as HTMLElement).hidden = false;
