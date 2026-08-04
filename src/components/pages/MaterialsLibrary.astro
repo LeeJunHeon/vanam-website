@@ -123,9 +123,15 @@ const materialsLd = {
 <BaseLayout title={title} description={description} zebra>
 
   <section class="relative overflow-hidden">
-    <div class="pointer-events-none absolute inset-y-0 right-0 w-full text-ink opacity-[0.10] md:w-[64%] md:opacity-[0.16]"
-      style="-webkit-mask-image: radial-gradient(ellipse 75% 70% at 70% 45%, #000 30%, transparent 78%); mask-image: radial-gradient(ellipse 75% 70% at 70% 45%, #000 30%, transparent 78%);" aria-hidden="true">
-      <PeriodicBg />
+    {/* 주기율표 배경 — 본문과 같은 컨테이너(max-w-6xl + px-6) 안에 두어 콘텐츠 라인을 벗어나지 않게 한다.
+        이전에는 섹션 기준 right-0 이라 화면 오른쪽 끝까지 삐져나갔다. 마스크·불투명도는 그대로. */}
+    <div class="pointer-events-none absolute inset-0 flex justify-center" aria-hidden="true">
+      <div class="flex w-full max-w-6xl px-6">
+        <div class="ml-auto w-full text-ink opacity-[0.10] md:w-[64%] md:opacity-[0.16]"
+          style="-webkit-mask-image: radial-gradient(ellipse 75% 70% at 70% 45%, #000 30%, transparent 78%); mask-image: radial-gradient(ellipse 75% 70% at 70% 45%, #000 30%, transparent 78%);">
+          <PeriodicBg />
+        </div>
+      </div>
     </div>
     <div class="relative mx-auto max-w-6xl px-6 pt-28 pb-12 md:pt-36">
       <div class="v-reveal">

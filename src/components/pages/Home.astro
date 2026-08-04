@@ -71,7 +71,7 @@ const description = home.metaDescription;
     <h2 class="sr-only">{locale === 'ko' ? '핵심 역량' : 'Core capabilities'}</h2>
     <div class="grid gap-5 sm:grid-cols-3">
       {pillars.map((p) => (
-        <div class="rounded-2xl border border-ink/10 bg-ink/[0.035] p-6 transition hover:border-accent/50">
+        <div class="rounded-2xl border border-ink/10 bg-ink/[0.035] p-6">
           <h3 class="text-lg font-medium text-ink">{p.title}</h3>
           <p class="mt-3 text-sm leading-relaxed text-ink/55">{p.desc}</p>
           {p.note && <p class="mt-3 text-sm leading-relaxed text-danger">{p.note}</p>}
