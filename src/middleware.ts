@@ -29,7 +29,10 @@ import { defineMiddleware } from 'astro:middleware';
 //   frame-ancestors 'none' : 클릭재킹 완전 차단.
 const CSP =
   "default-src 'self'; " +
-  "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://www.paypal.com https://www.sandbox.paypal.com https://www.paypalobjects.com; " +
+  // static.cloudflareinsights.com: Cloudflare Web Analytics 비콘(자동 주입). 막으면 방문 통계가 아예 안 쌓인다.
+  //   자동 주입본은 경로에 버전 해시가 붙으므로(/beacon.min.js/v…) 경로가 아닌 **호스트**로 허용해야 한다.
+  //   비콘 전송은 같은 도메인 /cdn-cgi/rum 이라 connect-src 'self' 로 이미 커버된다.
+  "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://www.paypal.com https://www.sandbox.paypal.com https://www.paypalobjects.com https://static.cloudflareinsights.com; " +
   "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; " +
   "font-src 'self' https://cdn.jsdelivr.net data:; " +
   "img-src 'self' data: https://www.paypalobjects.com https://www.paypal.com; " +

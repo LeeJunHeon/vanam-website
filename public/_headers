@@ -32,11 +32,16 @@
 #               cdn.jsdelivr.net — Pretendard CSS.
 #   font-src    cdn.jsdelivr.net — Pretendard woff. data: 는 폰트 폴백 대비.
 #   img-src     data: — 인라인 SVG/이미지 대비. (외부 이미지 없음 — 뉴스/소셜은 <a> 링크뿐)
+#   script-src  static.cloudflareinsights.com — Cloudflare Web Analytics 비콘(자동 주입, 호스트로 허용).
 #   connect-src 'self' + PayPal — fetch 는 /api/* 내부 + PayPal SDK 통신.
+#               cdn.jsdelivr.net — Pretendard .min.css 의 소스맵을 DevTools 가 요청한다.
+#                                  기능 영향은 0 이지만 콘솔 경고가 실제 오류를 가려서 허용한다.
+# ⚠️ 이 /* 블록의 CSP 는 src/middleware.ts 의 CSP 와 **글자 그대로 같아야** 한다.
+#    정적 페이지는 이 파일, SSR 페이지는 middleware 가 헤더를 붙이므로 어긋나면 페이지마다 정책이 달라진다.
 #   frame-ancestors 'none' — 클릭재킹 완전 차단. (사이트에 iframe·YouTube 임베드 0개라 안전)
 #   frame-src   'none' — iframe 임베드 없음.
 /*
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://www.paypal.com https://www.sandbox.paypal.com https://www.paypalobjects.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net data:; img-src 'self' data: https://www.paypalobjects.com https://www.paypal.com; connect-src 'self' https://challenges.cloudflare.com https://www.paypal.com https://www.sandbox.paypal.com; object-src 'none'; frame-src https://challenges.cloudflare.com https://www.google.com https://maps.google.com https://www.linkedin.com https://www.paypal.com https://www.sandbox.paypal.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://www.paypal.com https://www.sandbox.paypal.com https://www.paypalobjects.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net data:; img-src 'self' data: https://www.paypalobjects.com https://www.paypal.com; connect-src 'self' https://challenges.cloudflare.com https://www.paypal.com https://www.sandbox.paypal.com https://cdn.jsdelivr.net; object-src 'none'; frame-src https://challenges.cloudflare.com https://www.google.com https://maps.google.com https://www.linkedin.com https://www.paypal.com https://www.sandbox.paypal.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
