@@ -52,6 +52,9 @@ export const POST: APIRoute = async ({ request }) => {
           id: q.id,
           type: q.type,
           status: q.status,
+          // 접수 당시 언어로 굳은 product_name 대신, 화면이 보고 있는 언어로 다시 그리기 위해
+          // 상품 id 도 함께 내려준다. (허용목록에서 빠지면 오류 없이 null 이 된다 — 지뢰 ㉟)
+          product_sku: q.product_sku ?? null,
           product_name: q.product_name ?? null,
           material: q.material ?? null,
           method: q.method ?? null,

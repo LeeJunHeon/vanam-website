@@ -568,10 +568,15 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
       }
       return true;
     };
+    // 공정 시퀀스는 동적으로 추가되는 행이라 required 속성으로 잡히지 않는다.
+    // 게이트에서 직접 확인하지 않으면 "시퀀스를 안 넣었는데 버튼이 열려 있는" 상태가 된다.
+    const seqOk = () => (M.simple ? true : collectSequence().json.length > 0);
+
     const syncGate = () => {
-      submitBtn.disabled = !(fieldsOk() && tokenOk());
+      const base = fieldsOk() && seqOk();
+      submitBtn.disabled = !(base && tokenOk());
       // 다운로드는 서버로 보내지 않으므로 개인정보 동의·보안확인은 요구하지 않는다.
-      if (printBtn) printBtn.disabled = !fieldsOk(true);
+      if (printBtn) printBtn.disabled = !(fieldsOk(true) && seqOk());
     };
     form.addEventListener("input", syncGate);
     form.addEventListener("change", syncGate);
@@ -790,15 +795,12 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
   // 내용 조립은 '견적 요청'과 **같은 buildQuote()** 를 쓴다(두 벌로 나뉘면 반드시 어긋난다).
   printBtn?.addEventListener("click", () => {
     if (!form) return;
-    // 다운로드는 전송이 아니므로 개인정보 동의·봇 검증은 요구하지 않는다.
-    // (required 를 잠깐 내렸다가 원복 — 나머지 필수 항목은 그대로 검사한다)
-    const privacyEl = form.elements.namedItem("privacy") as HTMLInputElement | null;
-    const wasRequired = !!privacyEl?.required;
-    if (privacyEl) privacyEl.required = false;
-    const valid = form.reportValidity();
-    if (privacyEl) privacyEl.required = wasRequired;
-    if (!valid) return;
-
+    // ⚠️ 여기서 form.reportValidity() 를 부르지 않는다.
+    //    버튼 게이트가 이미 필수 항목(동의·보안확인 제외)과 공정 시퀀스를 확인했고,
+    //    예전 방식(개인정보 동의의 required 를 잠깐 내렸다 올리기)은
+    //    BaseLayout 의 전역 invalid 핸들러가 setCustomValidity 로 남긴 문구가
+    //    지워지지 않아 '계속하려면 동의해 주세요' 가 계속 뜨는 문제가 있었다.
+    //    (setCustomValidity 는 required 와 무관하게 요소를 계속 invalid 로 만든다)
     const built = buildQuote();
     if (!built) return;
     const d = built.data;

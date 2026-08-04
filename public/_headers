@@ -6,6 +6,14 @@
 # ⚠️ 규칙 순서: Cloudflare 는 "더 구체적인 경로"를 먼저 적용한다.
 #    /keystatic* 예외 블록을 위에, 전역(/*)을 아래에 둔다.
 
+# ── 히어로 영상·포스터 캐시 수명 ──────────────────────────────────────
+# /media/* 는 파일명에 해시가 없어 기본 캐시 수명이 짧다. PageSpeed 가
+# "효율적인 캐시 수명"으로 2.7MB 를 지적한 것이 이것(모바일 히어로 영상 2.8MB)이다.
+# 30일 캐시 + 만료 뒤에도 재검증하는 동안 기존 파일을 쓰게 해 재방문 로딩을 없앤다.
+# ⚠️ 영상을 교체할 때는 **파일명을 바꾸거나** Cloudflare 캐시를 퍼지할 것.
+/media/*
+  Cache-Control: public, max-age=2592000, stale-while-revalidate=86400
+
 # ── /keystatic (Keystatic Cloud 관리자 UI) 예외 ─────────────────────────
 # cloud 모드라 브라우저가 api.keystatic.cloud 와 GitHub 에 직접 접속한다.
 # React 관리자 UI 는 인라인 스타일·워커·blob 을 쓰므로 전역 CSP 로는 깨진다.
