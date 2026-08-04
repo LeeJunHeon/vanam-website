@@ -705,6 +705,25 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
     data.productName = M.productName!;
     data.locale = document.documentElement.lang || "en";
 
+    // ── 조회 화면에서 '보는 언어'로 다시 그리기 위한 구조화 사본 ──────────────
+    // details 는 사람이 읽는 문장이라 **작성한 언어로 굳는다**. 알림·관리자에는 그게 낫지만,
+    // 한국어로 넣은 견적을 영문 화면에서 조회하면 라벨과 선택지가 한글로 남는다.
+    // → 라벨을 붙이기 **전의 값**(공정 시퀀스·분석·전달 코드·기판 코드)을 그대로 함께 보낸다.
+    //   자유 입력(완료 희망일·요청사항)은 고객이 쓴 그대로 두고 번역하지 않는다.
+    if (!isSimple) {
+      data.detailsJson = JSON.stringify({
+        v: 1,
+        seq: seq.json,
+        measures,
+        delivery: String(data.delivery ?? ""),            // 코드값(courier·direct)
+        substrateType: String(data.substrateType ?? ""),  // 영문 또는 직접 입력
+        substrateSize: String(data.substrateSize ?? ""),  // 코드값(4inch 등) 또는 직접 입력
+        sampleCount: String(data.sampleCount ?? ""),
+        completionDate: String(data.completionDate ?? ""), // 자유 입력 — 그대로
+        notes: String(data.notes ?? ""),                   // 자유 입력 — 그대로
+      });
+    }
+
     // 요청 내용 요약 — 화면·요청서에 그대로 쓰인다. (저장하지 않고 그때그때 만든다)
     const lines = [
       { l: M.lblMaterial2 || 'Material', v: String(data.material ?? '') },

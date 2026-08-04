@@ -6,6 +6,7 @@ import { getRelativeLocaleUrl } from 'astro:i18n';
 import company from '../../data/company.json';
 
 import { getCollection } from 'astro:content';
+import { SUBSTRATE_SIZES, DELIVERY_METHODS } from '../../lib/processes';
 
 const locale = (Astro.currentLocale ?? 'en') as 'ko' | 'en';
 const isKo = locale === 'ko';
@@ -18,6 +19,11 @@ const prefill = Astro.url.searchParams.get('id') ?? '';
 // 한글로 넣은 견적을 영문 화면에서 조회하면 상품명만 한글로 남는 문제가 있었다.
 // 상품 id(product_sku)도 함께 저장하므로, 표시할 때는 **보고 있는 언어**의 카탈로그 이름으로 다시 그린다.
 // (카탈로그에 없는 옛 항목은 저장된 이름을 그대로 쓴다)
+// 견적 폼의 코드값(4inch·direct …) → 이 페이지 언어의 라벨.
+// 폼과 같은 원본(lib/processes)을 쓰므로 선택지가 늘어도 따로 손댈 곳이 없다.
+const sizeMap = Object.fromEntries(SUBSTRATE_SIZES.map((x) => [x.value, isKo ? x.ko : x.en]));
+const deliveryMap = Object.fromEntries(DELIVERY_METHODS.map((x) => [x.value, isKo ? x.ko : x.en]));
+
 const productNames: Record<string, string> = Object.fromEntries(
   (await getCollection('products')).map((p) => [
     p.id,
@@ -41,6 +47,8 @@ const t = isKo
       inq: {
         title: '견적·주문 요청', received: '접수일', product: '요청 상품',
         method: '공정', substrate: '기판', reqBody: '요청 내용 보기',
+        dSeq: '[공정 시퀀스]', dAnalysis: '[분석]', dDelivery: '기판 전달',
+        dSamples: '총 샘플 수량', dDue: '완료 희망일', dNotes: '주의사항',
         amount: '견적 금액', vat: '(부가세 포함)',
         sheetBtn: '견적서 인쇄 · PDF 저장',
         sheetTitle: '견적서',
@@ -86,6 +94,8 @@ const t = isKo
       inq: {
         title: 'Quote / order request', received: 'Received', product: 'Requested item',
         method: 'Process', substrate: 'Substrate', reqBody: 'View request details',
+        dSeq: '[Process sequence]', dAnalysis: '[Analysis]', dDelivery: 'Substrate delivery',
+        dSamples: 'Total samples', dDue: 'Target completion', dNotes: 'Notes',
         amount: 'Quoted amount', vat: '(VAT included)',
         sheetBtn: 'Print quotation (PDF)',
         sheetTitle: 'Quotation',
@@ -135,6 +145,8 @@ const inputClass =
       data-labels={JSON.stringify(t.st)}
       data-inq={JSON.stringify(t.inq)}
       data-product-names={JSON.stringify(productNames)}
+      data-map-size={JSON.stringify(sizeMap)}
+      data-map-delivery={JSON.stringify(deliveryMap)}
       data-supplier={JSON.stringify({
         name: isKo ? company.nameKo : company.nameEn,
         ceo: isKo ? company.ceoKo : (company.ceoEn || company.ceoKo),
@@ -184,6 +196,50 @@ const inputClass =
     const INQ = JSON.parse(M.inq ?? '{}');
     // 상품 id → 이 페이지 언어의 상품명. 접수 당시 언어로 굳은 이름 대신 이걸 우선 쓴다.
     const PNAMES: Record<string, string> = JSON.parse(M.productNames ?? '{}');
+    const SIZE_MAP: Record<string, string> = JSON.parse(M.mapSize ?? '{}');
+    const DELIV_MAP: Record<string, string> = JSON.parse(M.mapDelivery ?? '{}');
+
+    // 요청 내용을 **보고 있는 언어**로 다시 그린다.
+    // 접수 시 함께 저장한 구조화 사본(details_json)에는 라벨이 붙기 전의 값만 들어 있다.
+    // 자유 입력(완료 희망일·요청사항)은 고객이 쓴 그대로 — 번역하지 않는다.
+    // 구조화 사본이 없는 옛 접수 건은 저장된 문장(details)을 그대로 보여준다.
+    const renderDetails = (raw: unknown, fallback: string): string => {
+      if (!raw) return fallback;
+      let dj: Record<string, any>;
+      try { dj = JSON.parse(String(raw)); } catch { return fallback; }
+      if (!dj || typeof dj !== 'object') return fallback;
+
+      const seqLines = (Array.isArray(dj.seq) ? dj.seq : []).map((r: any, i: number) => {
+        let line = `${i + 1}. ${r.process ?? ''}`;
+        if (r.material) line += ` | ${r.material}`;
+        if (r.value) line += ` | ${r.value}${r.unit ?? ''}`;
+        if (r.etc) line += ` | ${r.etc}`;
+        return line;
+      });
+      const delivery = DELIV_MAP[String(dj.delivery ?? '')] ?? String(dj.delivery ?? '');
+      const out = [
+        seqLines.length ? String(INQ.dSeq) : '',
+        ...seqLines,
+        Array.isArray(dj.measures) && dj.measures.length ? `\n${INQ.dAnalysis} ${dj.measures.join(', ')}` : '',
+        '',
+        delivery ? `${INQ.dDelivery}: ${delivery}` : '',
+        dj.sampleCount ? `${INQ.dSamples}: ${dj.sampleCount}` : '',
+        dj.completionDate ? `${INQ.dDue}: ${dj.completionDate}` : '',
+        dj.notes ? `${INQ.dNotes}: ${dj.notes}` : '',
+      ].filter((x) => x !== '').join('\n');
+      return out || fallback;
+    };
+
+    // 기판 표기도 코드값을 이 페이지 언어로 — "Silicon oxide / 2 inch 이하 or 조각 시편" 같은 혼용 방지
+    const renderSubstrate = (raw: unknown, fallback: string): string => {
+      if (!raw) return fallback;
+      try {
+        const dj = JSON.parse(String(raw));
+        const size = SIZE_MAP[String(dj.substrateSize ?? '')] ?? String(dj.substrateSize ?? '');
+        const joined = [dj.substrateType, size].filter(Boolean).join(' / ');
+        return joined || fallback;
+      } catch { return fallback; }
+    };
 
     const btn = document.getElementById('lk-btn') as HTMLButtonElement;
     const label = document.getElementById('lk-label')!;
@@ -346,6 +402,9 @@ const inputClass =
             closed: 'border-ink/10 bg-ink/5 text-ink/40',
           };
           // KRW 견적을 USD 로 환산 표시하면 소액에서 $0.00 으로 왜곡된다 — 산정 통화 그대로 보여준다.
+          // 표시용 값은 전부 '보는 언어' 기준으로 먼저 만들어 둔다(카드·견적서가 같은 값을 쓴다)
+          const dTxt = renderDetails(q.details_json, String(q.details ?? ''));
+          const dSub = renderSubstrate(q.details_json, String(q.substrate ?? ''));
           const amt = q.quoted_amount == null ? null
             : q.quote_currency === 'USD'
               ? `$${Number(q.quoted_amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
@@ -366,14 +425,14 @@ const inputClass =
                 <p class="mt-6 border-t border-ink/10 pt-5 text-sm text-ink/60">
                   ${esc(INQ.product)}: <span class="text-ink/80">${esc(PNAMES[String(q.product_sku ?? '')] ?? q.product_name ?? q.material)}</span>
                 </p>` : ''}
-              ${q.method || q.substrate ? `
+              ${q.method || dSub ? `
                 <p class="mt-2 text-sm text-ink/60">
-                  ${q.method ? `${esc(INQ.method)}: <span class="text-ink/80">${esc(q.method)}</span>` : ''}${q.method && q.substrate ? ' · ' : ''}${q.substrate ? `${esc(INQ.substrate)}: <span class="text-ink/80">${esc(q.substrate)}</span>` : ''}
+                  ${q.method ? `${esc(INQ.method)}: <span class="text-ink/80">${esc(q.method)}</span>` : ''}${q.method && q.substrate ? ' · ' : ''}${dSub ? `${esc(INQ.substrate)}: <span class="text-ink/80">${esc(dSub)}</span>` : ''}
                 </p>` : ''}
-              ${q.details ? `
+              ${dTxt ? `
                 <details class="mt-4 rounded-lg border border-ink/10 bg-ink/[0.03]">
                   <summary class="cursor-pointer px-4 py-3 text-sm font-medium text-ink/70">${esc(INQ.reqBody)}</summary>
-                  <pre class="whitespace-pre-wrap border-t border-ink/10 px-4 py-3 font-sans text-sm leading-relaxed text-ink/65">${esc(q.details)}</pre>
+                  <pre class="whitespace-pre-wrap border-t border-ink/10 px-4 py-3 font-sans text-sm leading-relaxed text-ink/65">${esc(dTxt)}</pre>
                 </details>` : ''}
               <div class="mt-5 flex items-center justify-between border-t border-ink/10 pt-5">
                 <span class="text-sm text-ink/60">${esc(INQ.amount)} <span class="text-ink/35">${esc(INQ.vat)}</span></span>
@@ -400,7 +459,7 @@ const inputClass =
               [String(INQ.sheetStatus), String(INQ.st?.[q.status] ?? q.status)],
               [String(INQ.product), String(PNAMES[String(q.product_sku ?? '')] ?? q.product_name ?? q.material ?? '')],
               [String(INQ.method), String(q.method ?? '')],
-              [String(INQ.substrate), String(q.substrate ?? '')],
+              [String(INQ.substrate), dSub],
             ].filter((r) => r[1].trim()) as [string, string][];
 
             const html = `<!doctype html><html><head><meta charset="utf-8"><title>${esc(String(INQ.sheetTitle))} ${esc(String(q.id))}</title>
@@ -431,7 +490,7 @@ const inputClass =
     ${esc(sup.tel ?? '')} · ${esc(sup.email ?? '')}
   </div>
   <table>${rows.map(([k, v]) => `<tr><th>${esc(k)}</th><td>${esc(v)}</td></tr>`).join('')}</table>
-  ${q.details ? `<pre>${esc(String(q.details))}</pre>` : ''}
+  ${dTxt ? `<pre>${esc(dTxt)}</pre>` : ''}
   <div class="amt"><span>${esc(String(INQ.amount))} ${esc(String(INQ.vat))}</span><b>${amt ?? esc(String(INQ.pending))}</b></div>
   ${q.quote_note ? `<pre>${esc(String(q.quote_note))}</pre>` : ''}
   <p class="note">${esc(String(INQ.sheetFoot))}<br>${esc(sup.email ?? '')} · vanam.co.kr</p>

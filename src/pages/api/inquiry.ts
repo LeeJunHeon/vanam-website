@@ -84,6 +84,11 @@ export const POST: APIRoute = async ({ request }) => {
   const quantity = str(body.quantity).slice(0, MAX);
   const deadline = str(body.deadline).slice(0, MAX);
   const details = str(body.details).slice(0, MAX);
+  // 조회 화면에서 보는 언어로 다시 그리기 위한 구조화 사본(라벨 붙이기 전의 값들).
+  // ⚠️ 일반 필드 상한(2000자)을 쓰면 공정 12단계 + 분석 다수 + 긴 요청사항인 견적에서 잘려
+  //    JSON 이 깨진다. 깨지면 조용히 기존 문장으로 되돌아가 기능만 못 쓰게 된다.
+  //    이미 각 항목이 폼에서 제한된 값들을 모아 담은 것이라 상한을 따로 넉넉히 준다.
+  const detailsJson = str(body.detailsJson).slice(0, 8000);
 
   // 접수번호 — 알림과 DB, 관리자 화면에서 같은 값을 쓴다
   const id = newId('INQ');
@@ -111,22 +116,33 @@ export const POST: APIRoute = async ({ request }) => {
   try {
     const d = await db();
     if (d) {
-      await d
-        .prepare(
-          `INSERT INTO inquiries
-             (id, type, status, name, email, phone, company, message,
-              product_sku, product_name, material, method, substrate, thickness,
-              quantity, deadline, details, locale, created_at)
-           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-        )
-        .bind(
-          id, type, 'new', name, email, phone || null, company || null,
-          message || null, product || null, productName || null,
-          material || null, method || null, substrate || null, thickness || null,
-          quantity || null, deadline || null, details || null,
-          locale, nowIso(),
-        )
-        .run();
+      const base = [
+        id, type, 'new', name, email, phone || null, company || null,
+        message || null, product || null, productName || null,
+        material || null, method || null, substrate || null, thickness || null,
+        quantity || null, deadline || null, details || null,
+        locale, nowIso(),
+      ];
+      const COLS =
+        `(id, type, status, name, email, phone, company, message,
+          product_sku, product_name, material, method, substrate, thickness,
+          quantity, deadline, details, locale, created_at`;
+      const VALS = `VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?`;
+      try {
+        // details_json 컬럼이 있는 정상 경로
+        await d
+          .prepare(`INSERT INTO inquiries ${COLS}, details_json) ${VALS},?)`)
+          .bind(...base, detailsJson || null)
+          .run();
+      } catch (colErr) {
+        // ⚠️ 컬럼 추가(ALTER TABLE) 전에 배포되면 위 INSERT 가 실패한다.
+        //    그때 그냥 던지면 **고객 견적이 통째로 사라진다.** 구조화 사본만 포기하고 접수는 반드시 남긴다.
+        console.warn('[inquiry] details_json 컬럼 없음 — 구조화 사본 없이 저장합니다:', colErr);
+        await d
+          .prepare(`INSERT INTO inquiries ${COLS}) ${VALS})`)
+          .bind(...base)
+          .run();
+      }
     } else {
       console.warn('[inquiry] D1 미연결 — 알림만 발송합니다.');
     }

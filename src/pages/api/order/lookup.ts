@@ -60,6 +60,9 @@ export const POST: APIRoute = async ({ request }) => {
           method: q.method ?? null,
           substrate: q.substrate ?? null,
           details: q.details ?? null,
+          // 라벨 붙이기 전의 구조화 사본 — 조회 화면이 '보는 언어'로 다시 그린다.
+          // (허용목록에서 빠지면 오류 없이 null 이 된다 — 지뢰 ㉟)
+          details_json: (q as Record<string, unknown>).details_json ?? null,
           quoted_amount: q.quoted_amount ?? null,
           quote_currency: (q.quote_currency as string) ?? 'KRW',
           quote_note: q.quote_note ?? null,
