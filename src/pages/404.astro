@@ -19,9 +19,11 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         The page may have been moved, renamed, or no longer exists.<br />
         주소가 변경되었거나 삭제된 페이지입니다.
       </p>
+      {/* 두 버튼은 '주 동작 / 보조 동작'이 아니라 **대등한 언어 선택**이다.
+          한쪽만 채움 버튼(파란색)이면 그쪽이 권장 선택처럼 보여 어색하다 → 둘 다 보조 버튼으로. */}
       <div class="mt-10 flex flex-wrap items-center justify-center gap-3">
-        <a href="/" class="v-btn-sm">Home (English)</a>
-        <a href="/ko/" class="v-btn-ghost">홈으로 (한국어)</a>
+        <a href="/" class="v-btn-ghost-sm">Home (English)</a>
+        <a href="/ko/" class="v-btn-ghost-sm">홈으로 (한국어)</a>
       </div>
     </div>
   </section>

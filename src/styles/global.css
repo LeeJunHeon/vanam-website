@@ -240,12 +240,14 @@ body.v-zebra main > section:nth-of-type(even) {
   /* 정보 카드 */
   .v-card { @apply rounded-2xl border border-ink/10 bg-ink/[0.03]; }
 
-  /* 버튼 3종 — 주 버튼 / 작은 주 버튼 / 보조(외곽선) 버튼
-     ⚠️ 홈 히어로의 알약(rounded-full) 버튼만 예외다. 어두운 영상 위 전용 디자인이라
-        본문 버튼과 같은 형태로 만들면 오히려 어색하다. (404 등 일반 페이지는 표준형 사용) */
-  .v-btn      { @apply inline-flex items-center gap-2 rounded-lg bg-brand px-7 py-3 font-semibold text-onbrand transition hover:brightness-110; }
-  .v-btn-sm   { @apply inline-flex items-center gap-2 rounded-lg bg-brand px-5 py-2.5 text-sm font-semibold text-onbrand transition hover:brightness-110; }
-  .v-btn-ghost{ @apply inline-flex items-center gap-2 rounded-lg border border-ink/15 px-5 py-2.5 text-sm font-medium text-ink/80 transition hover:border-accent hover:text-ink; }
+  /* 버튼 — 크기는 2단계뿐이고, 채움(v-btn)과 외곽선(v-btn-ghost)이 **같은 크기끼리 짝**이다.
+     주 버튼 옆에 보조 버튼을 둘 때는 반드시 같은 단계를 쓸 것 — 크기가 어긋나면 바로 티가 난다.
+       큰 것: .v-btn      ↔ .v-btn-ghost      (px-7 py-3)
+       작은 것: .v-btn-sm ↔ .v-btn-ghost-sm   (px-5 py-2.5, text-sm) */
+  .v-btn         { @apply inline-flex items-center gap-2 rounded-lg bg-brand px-7 py-3 font-semibold text-onbrand transition hover:brightness-110; }
+  .v-btn-ghost   { @apply inline-flex items-center gap-2 rounded-lg border border-ink/15 px-7 py-3 font-medium text-ink/80 transition hover:border-accent hover:text-ink; }
+  .v-btn-sm      { @apply inline-flex items-center gap-2 rounded-lg bg-brand px-5 py-2.5 text-sm font-semibold text-onbrand transition hover:brightness-110; }
+  .v-btn-ghost-sm{ @apply inline-flex items-center gap-2 rounded-lg border border-ink/15 px-5 py-2.5 text-sm font-medium text-ink/80 transition hover:border-accent hover:text-ink; }
 
   /* 히어로 전용 알약 버튼 — 어두운 영상 위 전용 디자인이라 본문 버튼과 형태가 다르다.
      ⚠️ 이건 '예외'가 아니라 '다른 역할'이다. 그래서 클래스로 이름을 붙여 둔다.

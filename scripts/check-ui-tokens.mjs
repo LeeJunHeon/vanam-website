@@ -53,7 +53,7 @@ const RULES = [
     //    404 의 rounded-full 보조 버튼을 놓쳤다(실제로 화면에서 어긋나 보였다).
     name: '보조(외곽선) 버튼',
     re: /rounded-(?:lg|md|xl|full) border border-ink\/15 px-\d[^"]*text-ink\/(?:70|80) transition hover:/,
-    use: 'v-btn-ghost',
+    use: 'v-btn-ghost / v-btn-ghost-sm (주 버튼 옆이면 같은 크기 단계로)',
     exempt: () => false,
   },
   {
