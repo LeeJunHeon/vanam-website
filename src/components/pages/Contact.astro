@@ -129,11 +129,16 @@ const labelClass = 'block text-sm font-medium text-ink/80';
       <dl class="space-y-4 text-sm">
         <div>
           <dt class="font-medium text-ink/45">{locLabels.addr}</dt>
-          <dd translate="no" class="mt-1 text-ink/80">{compName}<br />{compAddr}</dd>
-          <a href={mapLinkUrl} target="_blank" rel="noopener noreferrer" class="mt-2 inline-flex items-center gap-1 text-accent transition hover:underline">
-            {locLabels.directions}
-            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
-          </a>
+          {/* ⚠️ 길찾기 링크는 반드시 <dd> **안**에 둔다.
+              <dl> 안의 그룹에는 <dt>·<dd> 만 올 수 있어서, 밖에 두면 접근성 검사(정의 목록 구조)에 걸리고
+              보조기기·에이전트가 주소 항목을 잘못 읽는다. */}
+          <dd translate="no" class="mt-1 text-ink/80">
+            <span class="block">{compName}<br />{compAddr}</span>
+            <a href={mapLinkUrl} target="_blank" rel="noopener noreferrer" class="mt-2 inline-flex items-center gap-1 text-accent transition hover:underline">
+              {locLabels.directions}
+              <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+            </a>
+          </dd>
         </div>
         <div>
           <dt class="font-medium text-ink/45">{locLabels.tel}</dt>
