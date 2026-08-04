@@ -66,30 +66,25 @@ eq('깨진 항목 제거', c.readCart(), [{ sku: 'ok', qty: 2 }]);
 localStorage.setItem('vanam_cart', '{{{ not json');
 eq('JSON 파손 방어', c.readCart(), []);
 
-// 4) 견적은 내용이 다르므로 같은 상품이라도 별도 줄로 쌓인다
+// 4) 장바구니에는 결제 가능한 품목만 담긴다 — 알 수 없는 필드는 저장 단계에서 떨어진다
 c.writeCart([]);
-c.addQuoteToCart('oxides', 1, { id: 'q1', title: 'A', lines: [{ l: '기판', v: 'Si 4"' }], at: '2026-08-04T00:00:00Z' });
-c.addQuoteToCart('oxides', 2, { id: 'q2', title: 'B', lines: [{ l: '기판', v: '사파이어 2"' }], at: '2026-08-04T00:01:00Z' });
-c.addToCart('oxides', 1);
-eq('견적 2건 + 일반 1건 = 3줄', c.readCart().length, 3);
-eq('줄 구분 키', c.readCart().map(c.itemKey), ['oxides#q1', 'oxides#q2', 'oxides']);
+localStorage.setItem('vanam_cart', '[{"sku":"oxides","qty":1,"q":{"id":"x"}}]');
+eq('알 수 없는 필드 제거', c.readCart(), [{ sku: 'oxides', qty: 1 }]);
 
-// 5) 저장 → 재읽기 후에도 견적 내용이 남아 있다 (예전 정리 로직은 여기서 통째로 날렸다)
-eq('견적 내용 보존', c.readCart()[0].q.lines, [{ l: '기판', v: 'Si 4"' }]);
+// 5) 결제 완료 시 '주문한 줄만' 빠진다
+c.writeCart([{ sku: 'a', qty: 1 }, { sku: 'b', qty: 2 }, { sku: 'wafer:x', qty: 1 }]);
+c.removeKeys(['a', 'wafer:x']);
+eq('주문분만 제거', c.readCart().map(c.itemKey), ['b']);
 
-// 6) 결제 완료 시 '주문한 줄만' 빠진다
-c.removeKeys(['oxides#q1', 'oxides']);
-eq('주문분만 제거', c.readCart().map(c.itemKey), ['oxides#q2']);
-
-// 7) 즉시 구매는 장바구니와 완전히 분리된 세션 저장소
+// 6) 즉시 구매는 장바구니와 완전히 분리된 세션 저장소
 c.writeBuyNow([{ sku: 'wafer:x', qty: 3 }]);
 eq('즉시구매 읽기', c.readBuyNow(), [{ sku: 'wafer:x', qty: 3 }]);
 c.clearBuyNow();
 eq('즉시구매 비우기', c.readBuyNow(), []);
-eq('장바구니는 그대로', c.readCart().map(c.itemKey), ['oxides#q2']);
+eq('장바구니는 그대로', c.readCart().map(c.itemKey), ['b']);
 
 if (fail) {
   console.error(`\n장바구니 테스트 실패 — ${fail}건.`);
   process.exit(1);
 }
-console.log(`✓ cart 테스트 통과 — 11개 항목`);
+console.log(`✓ cart 테스트 통과 — 9개 항목`);

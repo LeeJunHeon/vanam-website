@@ -31,27 +31,6 @@ const waferCatalog = (await getCollection('wafers'))
     url: `${base}/wafers/${w.id}`,
   }));
 
-// 견적 품목 — 견적 제품(고정가 아님) + 가격 미정 웨이퍼. 결제 합계에서 제외되고 견적 요청으로 안내한다.
-const quoteCatalog = [
-  ...(await getCollection('products'))
-    .filter((p) => p.data.published && !(p.data.pricingType === 'fixed' && typeof p.data.price === 'number'))
-    .map((p) => ({
-      sku: p.id,
-      name: isKo ? p.data.name : (p.data.name_en ?? p.data.name),
-      price: 0,
-      quote: true,
-      url: `${base}/product/${p.id}#quote`,
-    })),
-  ...(await getCollection('wafers'))
-    .filter((w) => w.data.published !== false && !(typeof w.data.priceKrw === 'number' && w.data.priceKrw > 0))
-    .map((w) => ({
-      sku: `wafer:${w.id}`,
-      name: isKo ? w.data.name : ((w.data as Record<string, unknown>).name_en as string ?? w.data.name),
-      price: 0,
-      quote: true,
-      url: `${base}/wafers/${w.id}#quote`,
-    })),
-];
 ---
 
 <BaseLayout title={c.metaTitle} description={c.metaDescription}>
@@ -71,19 +50,13 @@ const quoteCatalog = [
       data-checkout-url={`${base}/checkout`}
       data-continue={c.continueShopping}
       data-shop-url={`${base}/product`}
-      data-quote-badge={c.quoteBadge}
-      data-quote-details={c.quoteDetails}
-      data-quote-cta={c.quoteRowCta}
-      data-quote-note={c.quoteNote}
-      data-quote-only={c.quoteOnly}
       data-local-note={s.cartLocalNote}
       data-usd-rate={company.usdRate || 1500}
-      data-rfq-btn={c.rfqBtn}
-      data-rfq-mail={company.email || 'hello@vanam.co.kr'}>
+      data-local-note-end>
       <p class="text-ink/50">…</p>
     </div>
 
-    <script type="application/json" id="catalog" set:html={JSON.stringify([...catalog, ...waferCatalog, ...quoteCatalog])} is:inline></script>
+    <script type="application/json" id="catalog" set:html={JSON.stringify([...catalog, ...waferCatalog])} is:inline></script>
   </section>
 </BaseLayout>
 
@@ -91,11 +64,10 @@ const quoteCatalog = [
   // 저장소 접근은 전부 lib/cart 한 곳을 통한다 (형식 정리·수량 clamp·배지 갱신이 거기 모여 있다)
   import { readCart, writeCart, itemKey, type CartItem as Item } from '../../lib/cart';
 
-  // 카탈로그(CMS) 값이라 신뢰 수준은 높지만, innerHTML 에 넣는 값은 일괄 이스케이프한다
-  // (RFQ 인쇄부의 esc2 와 동일한 원칙 — 표기 일관성).
+  // 카탈로그(CMS) 값이라 신뢰 수준은 높지만, innerHTML 에 넣는 값은 일괄 이스케이프한다.
   const esc = (v: unknown) =>
     String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  type Product = { sku: string; name: string; price: number; url: string; quote?: boolean };
+  type Product = { sku: string; name: string; price: number; url: string };
 
   const root = document.getElementById('cart-root')!;
   import { liveRate, cachedRate } from '../../lib/fx-client';
@@ -125,25 +97,14 @@ const quoteCatalog = [
       return;
     }
 
-    const buyables = items.filter((i) => !byId.get(i.sku)!.quote);
-    const hasQuote = buyables.length !== items.length;
-    const total = buyables.reduce((sum, i) => sum + byId.get(i.sku)!.price * i.qty, 0);
+    const total = items.reduce((sum, i) => sum + byId.get(i.sku)!.price * i.qty, 0);
     const rows = items.map((i) => {
       const p = byId.get(i.sku)!;
       return `
         <div class="flex flex-wrap items-center gap-4 py-5" data-key="${esc(itemKey(i))}">
           <div class="min-w-0 flex-1">
             <a href="${esc(p.url)}" class="font-medium text-ink transition hover:text-accent">${esc(p.name)}</a>
-            ${p.quote
-              ? `<p class="mt-1"><span class="inline-flex rounded-full border border-accent/30 bg-accent/[0.06] px-2.5 py-0.5 text-xs font-semibold text-accent">${M.quoteBadge}</span></p>`
-              : `<p class="mt-1 text-sm text-ink/50">${usd(p.price)}</p>`}
-            ${i.q && i.q.lines.length ? `
-            <details class="mt-2">
-              <summary class="cursor-pointer text-xs font-medium text-accent">${M.quoteDetails}</summary>
-              <dl class="mt-2 space-y-1 text-xs leading-relaxed text-ink/60">
-                ${i.q.lines.map((ln) => `<div class="flex gap-2"><dt class="w-24 shrink-0 text-ink/40">${esc(ln.l)}</dt><dd class="min-w-0 flex-1 whitespace-pre-line">${esc(ln.v)}</dd></div>`).join('')}
-              </dl>
-            </details>` : ''}
+            <p class="mt-1 text-sm text-ink/50">${usd(p.price)}</p>
           </div>
           <div class="flex shrink-0 items-center gap-1 self-center">
             <button type="button" data-act="dec" aria-label="${M.qtyDec}" class="size-9 rounded-lg border border-ink/15 text-ink/70 transition hover:border-accent hover:text-ink">−</button>
@@ -151,9 +112,7 @@ const quoteCatalog = [
               class="h-9 w-14 rounded-lg border border-ink/10 bg-ink/[0.03] text-center text-ink outline-none focus:border-accent [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
             <button type="button" data-act="inc" aria-label="${M.qtyInc}" class="size-9 rounded-lg border border-ink/15 text-ink/70 transition hover:border-accent hover:text-ink">+</button>
           </div>
-          ${p.quote
-            ? `<span class="w-28 shrink-0 text-right text-sm text-ink/30">—</span>`
-            : `<p class="w-28 shrink-0 text-right font-semibold text-ink">${usd(p.price * i.qty)}</p>`}
+          <p class="w-28 shrink-0 text-right font-semibold text-ink">${usd(p.price * i.qty)}</p>
           <button type="button" data-act="del" class="shrink-0 text-sm text-ink/40 transition hover:text-danger">${M.remove}</button>
         </div>`;
     }).join('');
@@ -167,15 +126,10 @@ const quoteCatalog = [
           <p class="mt-1 text-xs text-ink/35">${M.fxNote}</p>
         </div>
       </div>
-      ${hasQuote ? `<p class="mt-3 text-sm leading-relaxed text-ink/50">${M.quoteNote}</p>
-      <button type="button" id="rfq-btn" class="mt-3 inline-flex items-center gap-2 rounded-lg border-2 border-accent px-5 py-2.5 text-sm font-semibold text-accent transition hover:bg-accent hover:text-white">🖨 ${M.rfqBtn}</button>` : ''}
       <div class="mt-8">
-        ${buyables.length > 0
-          ? `<a href="${M.checkoutUrl}"
-              class="v-btn">${M.checkout}
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-            </a>`
-          : `<p class="text-sm font-medium text-ink/50">${M.quoteOnly}</p>`}
+        <a href="${M.checkoutUrl}" class="v-btn">${M.checkout}
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
       </div>
       <a href="${M.shopUrl}" class="mt-6 inline-block text-sm text-ink/50 transition hover:text-accent">← ${M.continue}</a>
       <p class="mt-8 text-xs leading-relaxed text-ink/35">${M.localNote}</p>`;
@@ -222,53 +176,4 @@ const quoteCatalog = [
     });
   }
 
-  // ── 견적 요청서(RFQ) 인쇄·PDF 저장 — 카트의 견적 품목으로 간단한 요청서를 생성한다 ──
-  document.addEventListener('click', (e) => {
-    if (!(e.target as HTMLElement).closest('#rfq-btn')) return;
-    const its = read().filter((i) => byId.get(i.sku)?.quote);
-    if (!its.length) return;
-    const esc2 = (v: string) => v.replace(/&/g, '&amp;').replace(/</g, '&lt;');
-    const rowsHtml = its.map((i) => {
-      const p2 = byId.get(i.sku)!;
-      // 견적 폼에서 담은 항목은 작성한 요청 내용을 그 아래 줄에 그대로 싣는다.
-      // (이게 없으면 담아둔 의미가 없어지고, 받는 쪽도 품목명만 보게 된다)
-      const det = i.q && i.q.lines.length
-        ? `<tr><td colspan="3" style="font-size:12px;color:#334;white-space:pre-line;background:#fafbfc">${
-            i.q.lines.map((ln) => `${esc2(ln.l)}: ${esc2(ln.v)}`).join('\n')}</td></tr>`
-        : '';
-      return `<tr><td>${esc2(p2.name)}</td><td style="text-align:center">${i.qty}</td><td></td></tr>${det}`;
-    }).join('');
-    const today = new Date().toISOString().slice(0, 10);
-    const mail = M.rfqMail || 'hello@vanam.co.kr';
-    const html = `<!doctype html><html><head><meta charset="utf-8"><title>VanaM RFQ ${today}</title><style>
-      body{font-family:'Pretendard',-apple-system,Arial,sans-serif;color:#17202a;margin:40px auto;max-width:720px}
-      h1{font-size:20px;margin:0} .sub{color:#667;font-size:12px;margin-top:5px}
-      table{width:100%;border-collapse:collapse;margin-top:22px;font-size:13px}
-      th,td{border:1px solid #c9d2da;padding:9px 10px;text-align:left;height:18px} th{background:#eef4f8;font-size:12px}
-      .blank{display:inline-block;border-bottom:1px solid #9aa4ae;min-width:230px;height:14px;vertical-align:bottom}
-      .box{margin-top:24px;font-size:13px;line-height:2.1}
-      .note{margin-top:28px;font-size:12px;color:#445;border-top:1px solid #dde;padding-top:12px;line-height:1.8}
-      .noprint{margin:0 0 22px}
-      .noprint button{font:inherit;font-size:13px;padding:8px 14px;border:1px solid #bbb;border-radius:8px;background:#f6f6f6;cursor:pointer}
-      @media print{.noprint{display:none}}
-    </style></head><body>
-      <div class="noprint"><button type="button" id="rfq-doc-print">🖨 인쇄 · PDF 저장 / Print · Save as PDF</button></div>
-      <h1>견적 요청서 · Request for Quotation</h1>
-      <p class="sub">VanaM Inc. — Thin Films, All Around · ${today}</p>
-      <table><thead><tr><th>품목 · Item</th><th style="width:74px;text-align:center">수량 · Qty</th><th style="width:190px">비고 · Remarks</th></tr></thead><tbody>${rowsHtml}</tbody></table>
-      <div class="box">
-        회사 · Company: <span class="blank"></span><br>
-        담당자 · Name: <span class="blank"></span><br>
-        이메일 · Email: <span class="blank"></span><br>
-        연락처 · Phone: <span class="blank"></span>
-      </div>
-      <p class="note">작성 후 이 문서를 <b>${mail}</b> 로 보내주시면 견적을 회신드립니다.<br>Please complete and email this sheet to <b>${mail}</b> — we will reply with a quotation.<br>vanam.co.kr</p>
-    </body></html>`;
-    const w2 = window.open('', '_blank');
-    if (!w2) return;
-    w2.document.write(html);
-    w2.document.close();
-    // 자동 인쇄하지 않는다 — 먼저 요청서를 눈으로 확인하고, 창 안의 버튼으로 직접 인쇄한다.
-    w2.document.getElementById('rfq-doc-print')?.addEventListener('click', () => w2.print());
-  });
 </script>

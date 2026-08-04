@@ -9,29 +9,16 @@
 //   → 앞으로 localStorage/sessionStorage 를 직접 만지는 코드는 두지 않는다.
 //     저장소 접근은 전부 이 파일을 통하고, 화면은 여기서 받은 값만 그린다.
 //
-// 저장 형식(localStorage `vanam_cart`): CartItem[]
-//   { sku, qty }            — 일반 상품·웨이퍼
-//   { sku, qty, q: {...} }  — 견적 항목(작성한 요청 내용을 함께 보관)
+// 저장 형식(localStorage `vanam_cart`): CartItem[] — { sku, qty } 뿐이다.
+// ⚠️ 장바구니에는 **결제 가능한 품목만** 담는다. 견적은 장바구니를 거치지 않고
+//    견적 폼에서 바로 요청하거나 요청서를 내려받는 흐름이다(0182 에서 정리).
 //
 // ⚠️ 저장소는 사용자가 마음대로 고칠 수 있다. 읽을 때 항상 형식을 정리하고,
 //    금액은 **절대** 저장하지 않는다(가격은 카탈로그·서버에서만 조회).
 
-/** 견적 항목에 함께 보관하는 요청 내용. 화면 표시용이며 금액은 담지 않는다. */
-export type CartQuote = {
-  /** 항목 식별자 — 같은 제품이라도 견적마다 별도 줄로 쌓이게 한다 */
-  id: string;
-  /** 표시용 제목(없으면 카탈로그 상품명 사용) */
-  title?: string;
-  /** 라벨/값 쌍. l = 항목명, v = 내용 */
-  lines: { l: string; v: string }[];
-  /** 작성 시각(ISO) */
-  at: string;
-};
-
 export type CartItem = {
   sku: string;
   qty: number;
-  q?: CartQuote;
 };
 
 export const CART_KEY = 'vanam_cart';
@@ -41,34 +28,12 @@ export const BUYNOW_KEY = 'vanam_buynow';
 export const clampQty = (v: unknown): number =>
   Math.max(1, Math.min(99, Math.floor(Number(v)) || 1));
 
-/**
- * 한 줄을 구분하는 키.
- * 일반 항목은 sku 그대로, 견적 항목은 `sku#견적id` — 같은 제품의 견적 2건이 합쳐지지 않는다.
- */
-export const itemKey = (i: CartItem): string => (i.q?.id ? `${i.sku}#${i.q.id}` : i.sku);
+/** 한 줄을 구분하는 키. 지금은 sku 와 같다 — 화면 코드가 이 함수만 쓰도록 창구를 하나로 둔다. */
+export const itemKey = (i: CartItem): string => i.sku;
 
 /** 배지에 쓰는 총 수량. */
 export const countItems = (items: CartItem[]): number =>
   items.reduce((s, i) => s + clampQty(i.qty), 0);
-
-const sanitizeQuote = (raw: unknown): CartQuote | undefined => {
-  if (!raw || typeof raw !== 'object') return undefined;
-  const q = raw as Record<string, unknown>;
-  if (typeof q.id !== 'string' || !q.id) return undefined;
-  const lines = Array.isArray(q.lines)
-    ? q.lines
-        .filter((l): l is Record<string, unknown> => !!l && typeof l === 'object')
-        .map((l) => ({ l: String(l.l ?? ''), v: String(l.v ?? '') }))
-        .filter((l) => l.l || l.v)
-        .slice(0, 60)
-    : [];
-  return {
-    id: q.id.slice(0, 40),
-    title: typeof q.title === 'string' ? q.title.slice(0, 200) : undefined,
-    lines,
-    at: typeof q.at === 'string' ? q.at : new Date().toISOString(),
-  };
-};
 
 /** 알 수 없는 값을 CartItem[] 로 정리한다. 형식이 깨진 항목은 버린다. */
 export const sanitize = (raw: unknown): CartItem[] => {
@@ -78,8 +43,7 @@ export const sanitize = (raw: unknown): CartItem[] => {
     if (!r || typeof r !== 'object') continue;
     const o = r as Record<string, unknown>;
     if (typeof o.sku !== 'string' || !o.sku) continue;
-    const q = sanitizeQuote(o.q);
-    out.push(q ? { sku: o.sku, qty: clampQty(o.qty), q } : { sku: o.sku, qty: clampQty(o.qty) });
+    out.push({ sku: o.sku, qty: clampQty(o.qty) });
   }
   return out;
 };
@@ -116,25 +80,9 @@ export function writeCart(items: CartItem[]): CartItem[] {
 export function addToCart(sku: string, qty: unknown = 1): CartItem[] {
   const items = readCart();
   const add = clampQty(qty);
-  const hit = items.find((i) => i.sku === sku && !i.q);
+  const hit = items.find((i) => i.sku === sku);
   if (hit) hit.qty = Math.min(99, hit.qty + add);
   else items.push({ sku, qty: add });
-  return writeCart(items);
-}
-
-/** 견적 담기 — 내용이 다르므로 **항상 새 줄**로 쌓는다(합치지 않는다). */
-export function addQuoteToCart(sku: string, qty: unknown, quote: Omit<CartQuote, 'id' | 'at'> & Partial<Pick<CartQuote, 'id' | 'at'>>): CartItem[] {
-  const items = readCart();
-  items.push({
-    sku,
-    qty: clampQty(qty),
-    q: {
-      id: quote.id || `q${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`,
-      title: quote.title,
-      lines: quote.lines ?? [],
-      at: quote.at || new Date().toISOString(),
-    },
-  });
   return writeCart(items);
 }
 

@@ -4,8 +4,8 @@
 // 구성: ①연락처 ②기판 정보 ③공정 시퀀스 빌더(엑셀 대체) ④기타 요청.
 // 공정 시퀀스는 "공정 추가"로 행을 쌓고, 공정을 고르면 그에 맞는 물질/단위가 자동으로 바뀐다.
 // 제출 시 시퀀스를 사람이 읽을 수 있는 텍스트로 정리해 details 에, 원본은 JSON 으로 함께 보낸다.
-import { getRelativeLocaleUrl } from 'astro:i18n';
 import siteData from '../data/site.json';
+import company from '../data/company.json';
 import { PROCESSES, MEASUREMENTS, SUBSTRATES, SUBSTRATE_SIZES, DELIVERY_METHODS, PRODUCT_MAT_FILTER, type MatCat } from '../lib/processes';
 import { COUNTRIES } from '../lib/countries';
 
@@ -40,7 +40,6 @@ const deliveryOpts = DELIVERY_METHODS.map((d) => ({ value: d.value, label: isKo 
 const countryOpts = COUNTRIES.map((cn) => ({ value: cn.code, label: isKo ? cn.ko : cn.en }));
 // 증착 공정 목록(두께 nm 단위) — 대표 소재 판정용 (세정 가스가 '소재'로 잡히던 문제 방지)
 const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name);
-const cartUrl = getRelativeLocaleUrl(locale, '/cart');
 ---
 
 <section id="quote" class="mt-20 scroll-mt-24 border-t border-ink/10 pt-16">
@@ -62,7 +61,16 @@ const cartUrl = getRelativeLocaleUrl(locale, '/cart');
       data-msg-seq-material={q.msgSeqMaterial}
       data-msg-seq-value={q.msgSeqValue}
       data-label-send={simple ? q.submitOrder : q.submit}
-      data-msg-cart-added={q.addedToCart}
+      data-sheet-title={q.sheetTitle}
+      data-sheet-notsent={q.sheetNotSent}
+      data-sheet-orsubmit={q.sheetOrSubmit}
+      data-sheet-mail={company.email || 'hello@vanam.co.kr'}
+      data-sheet-print={q.downloadSheet}
+      data-lbl-name={c.name}
+      data-lbl-company={c.company}
+      data-lbl-email={c.email}
+      data-lbl-phone={c.phone}
+      data-lbl-product={q.productLabel}
       data-lbl-material2={q.lblMaterial}
       data-lbl-method2={q.lblMethod}
       data-lbl-substrate2={q.lblSubstrate}
@@ -278,13 +286,13 @@ const cartUrl = getRelativeLocaleUrl(locale, '/cart');
           data-language="auto"
         ></div>
 
-        {/* 담기 안내 — '추가'가 전송이 아니라는 점을 버튼 옆에서 분명히 한다 */}
-        {!simple && <p class="text-sm leading-relaxed text-ink/45">{q.cartHint}</p>}
+        {/* 다운로드 안내 — '견적서 다운로드'는 전송이 아니라는 점을 버튼 옆에서 분명히 한다 */}
+        {!simple && <p class="text-sm leading-relaxed text-ink/45">{q.downloadHint}</p>}
 
         <div class="flex flex-wrap items-center justify-end gap-4">
           <p id="quote-status" class="mr-auto text-sm" role="status" aria-live="polite"></p>
           {!simple && (
-            <button type="button" id="quote-cart" class="v-btn-ghost disabled:cursor-not-allowed disabled:opacity-60">{q.addToCart}</button>
+            <button type="button" id="quote-print" class="v-btn-ghost disabled:cursor-not-allowed disabled:opacity-60">{q.downloadSheet}</button>
           )}
           <button type="submit" id="quote-submit"
             class="v-btn disabled:cursor-not-allowed disabled:opacity-60">
@@ -293,12 +301,6 @@ const cartUrl = getRelativeLocaleUrl(locale, '/cart');
 
         </div>
 
-        {!simple && (
-          <p id="quote-cart-msg" class="hidden text-sm text-accent" role="status" aria-live="polite">
-            <span id="quote-cart-text"></span>
-            <a href={cartUrl} class="ml-1 underline underline-offset-2">{q.goCart}</a>
-          </p>
-        )}
       </div>
     </form>
   </div>
@@ -342,8 +344,6 @@ const cartUrl = getRelativeLocaleUrl(locale, '/cart');
 
 <script>
   import { initTelInput, normalizeTelInputs } from '../lib/telInput';
-  // 저장소 접근은 전부 lib/cart 한 곳을 통한다
-  import { addQuoteToCart } from '../lib/cart';
 
   // Turnstile 전역 API 타입
   declare global {
@@ -547,10 +547,10 @@ const cartUrl = getRelativeLocaleUrl(locale, '/cart');
 
   // ── 버튼 게이팅 ────────────────────────────────────
   // 필수 입력·동의·보안확인이 모두 끝나야 버튼이 열린다(웨이퍼 주문서와 동일한 방식).
-  // '장바구니에 추가'도 같은 게이트를 쓰되, 전송이 아니므로 개인정보 동의·보안확인은 빼고 본다.
-  // ⚠️ cartBtn 은 여기서 선언한다. 사용처(syncGate)보다 아래에서 선언하면 TDZ 로 스크립트가 통째로 죽는다(전례 있음).
+  // '견적서 다운로드'도 같은 게이트를 쓰되, 전송이 아니므로 개인정보 동의·보안확인은 빼고 본다.
+  // ⚠️ printBtn 은 여기서 선언한다. 사용처(syncGate)보다 아래에서 선언하면 TDZ 로 스크립트가 통째로 죽는다(전례 있음).
   const submitBtn = document.getElementById("quote-submit") as HTMLButtonElement | null;
-  const cartBtn = document.getElementById("quote-cart") as HTMLButtonElement | null;
+  const printBtn = document.getElementById("quote-print") as HTMLButtonElement | null;
   if (form && submitBtn) {
     // 화면에 보이지 않는 입력이 required 로 남으면 브라우저가 제출을 막으면서도
     // 경고 대상을 찾지 못해 "눌러도 반응 없음" 이 된다.
@@ -570,8 +570,8 @@ const cartUrl = getRelativeLocaleUrl(locale, '/cart');
     };
     const syncGate = () => {
       submitBtn.disabled = !(fieldsOk() && tokenOk());
-      // 담기는 서버로 보내지 않으므로 개인정보 동의·보안확인은 요구하지 않는다.
-      if (cartBtn) cartBtn.disabled = !fieldsOk(true);
+      // 다운로드는 서버로 보내지 않으므로 개인정보 동의·보안확인은 요구하지 않는다.
+      if (printBtn) printBtn.disabled = !fieldsOk(true);
     };
     form.addEventListener("input", syncGate);
     form.addEventListener("change", syncGate);
@@ -700,9 +700,7 @@ const cartUrl = getRelativeLocaleUrl(locale, '/cart');
     data.productName = M.productName!;
     data.locale = document.documentElement.lang || "en";
 
-    // 장바구니 표시용 요약 — 연락처는 **일부러 넣지 않는다.**
-    // 장바구니는 브라우저(localStorage)에 평문으로 남으므로 개인정보를 저장할 자리가 아니다.
-    // 견적 요청서(RFQ) 인쇄물에는 연락처 기입란이 따로 있다.
+    // 요청 내용 요약 — 화면·요청서에 그대로 쓰인다. (저장하지 않고 그때그때 만든다)
     const lines = [
       { l: M.lblMaterial2 || 'Material', v: String(data.material ?? '') },
       { l: M.lblMethod2 || 'Process', v: String(data.method ?? '') },
@@ -786,11 +784,13 @@ const cartUrl = getRelativeLocaleUrl(locale, '/cart');
     }
   });
 
-  // ── 장바구니에 추가 — 서버로 보내지 않고 브라우저에만 저장한다 ──────────
-  // 같은 제품이라도 요청 내용이 다르므로 addQuoteToCart 가 **항상 새 줄**로 쌓는다.
-  cartBtn?.addEventListener("click", () => {
+  // ── 견적서 다운로드 — 서버로 보내지 않는다 ──────────────────────────────
+  // 작성한 내용 그대로 인쇄용 요청서를 새 창에 띄운다. 고객이 PDF 로 저장해 두었다가
+  // 원할 때 메일로 보낼 수 있게 하는 용도다. 접수번호가 없으므로 "아직 접수되지 않음"을 명시한다.
+  // 내용 조립은 '견적 요청'과 **같은 buildQuote()** 를 쓴다(두 벌로 나뉘면 반드시 어긋난다).
+  printBtn?.addEventListener("click", () => {
     if (!form) return;
-    // 담기는 전송이 아니므로 개인정보 동의·봇 검증은 요구하지 않는다.
+    // 다운로드는 전송이 아니므로 개인정보 동의·봇 검증은 요구하지 않는다.
     // (required 를 잠깐 내렸다가 원복 — 나머지 필수 항목은 그대로 검사한다)
     const privacyEl = form.elements.namedItem("privacy") as HTMLInputElement | null;
     const wasRequired = !!privacyEl?.required;
@@ -801,14 +801,49 @@ const cartUrl = getRelativeLocaleUrl(locale, '/cart');
 
     const built = buildQuote();
     if (!built) return;
+    const d = built.data;
+    const esc2 = (v: string) => String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;");
+    const today = new Date().toISOString().slice(0, 10);
 
-    addQuoteToCart(M.product!, 1, { title: M.productName!, lines: built.lines });
+    // 연락처는 고객이 직접 저장·발송하는 문서이므로 채워서 낸다(브라우저에 남기지 않는다).
+    const head: [string, string][] = [
+      [M.lblProduct || "Product", String(d.productName ?? "")],
+      [M.lblName || "Name", String(d.name ?? "")],
+      [M.lblCompany || "Company", String(d.company ?? "")],
+      [M.lblEmail || "Email", String(d.email ?? "")],
+      [M.lblPhone || "Phone", String(d.phone ?? "")],
+    ].filter(([, v]) => v.trim()) as [string, string][];
 
-    const msg = document.getElementById("quote-cart-msg");
-    const txt = document.getElementById("quote-cart-text");
-    if (txt) txt.textContent = M.msgCartAdded ?? "";
-    msg?.classList.remove("hidden");
-    setStatus("", true);
-    try { msg?.scrollIntoView({ block: "center", behavior: "smooth" }); } catch (e2) { /* 무시 */ }
+    const rows = [...head, ...built.lines.map((l) => [l.l, l.v] as [string, string])]
+      .map(([k, v]) => `<tr><th>${esc2(k)}</th><td>${esc2(v)}</td></tr>`)
+      .join("");
+
+    const html = `<!doctype html><html><head><meta charset="utf-8"><title>${esc2(M.sheetTitle || "Quote Request")} ${today}</title>
+<style>
+  body{font-family:'Pretendard',-apple-system,Arial,sans-serif;color:#17202a;margin:40px auto;max-width:760px;line-height:1.6}
+  h1{font-size:20px;margin:0 0 4px}
+  .sub{color:#667;font-size:12px;margin:0 0 22px}
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  th,td{border:1px solid #c9d2da;padding:9px 11px;text-align:left;vertical-align:top}
+  th{background:#eef4f8;width:150px;font-weight:600}
+  td{white-space:pre-line}
+  .note{margin-top:26px;font-size:12px;color:#445;border-top:1px solid #dde;padding-top:12px;line-height:1.9}
+  .noprint{margin:0 0 22px}
+  .noprint button{font:inherit;font-size:13px;padding:8px 14px;border:1px solid #bbb;border-radius:8px;background:#f6f6f6;cursor:pointer}
+  @media print{.noprint{display:none}}
+</style></head><body>
+  <div class="noprint"><button type="button" id="qs-print">🖨 ${esc2(M.sheetPrint || "Print")}</button></div>
+  <h1>VANAM — ${esc2(M.sheetTitle || "Quote Request")}</h1>
+  <p class="sub">VanaM Inc. — Thin Films, All Around · ${today}</p>
+  <table>${rows}</table>
+  <p class="note"><b>${esc2(M.sheetNotsent || "")}</b> ${esc2(M.sheetMail || "")}<br>${esc2(M.sheetOrsubmit || "")}<br>vanam.co.kr</p>
+</body></html>`;
+
+    const w2 = window.open("", "_blank");
+    if (!w2) return;   // 팝업 차단 시 조용히 중단 — 버튼으로 재시도 가능
+    w2.document.write(html);
+    w2.document.close();
+    // 자동 인쇄하지 않는다 — 내용을 먼저 확인하고 창 안의 버튼으로 인쇄·PDF 저장한다.
+    w2.document.getElementById("qs-print")?.addEventListener("click", () => w2.print());
   });
 </script>
