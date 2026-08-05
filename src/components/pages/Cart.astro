@@ -102,7 +102,10 @@ const waferCatalog = (await getCollection('wafers'))
       const p = byId.get(i.sku)!;
       return `
         <div class="flex flex-wrap items-center gap-4 py-5" data-key="${esc(itemKey(i))}">
-          <div class="min-w-0 flex-1">
+          <!-- ⚠️ 모바일에서는 상품명이 한 줄을 통째로 쓰게 한다(basis-full).
+               가로가 좁은데 수량·금액·삭제와 같은 줄에 두면 이름 칸이 극단적으로 눌려
+               "4/인/치/실/리/콘..." 처럼 한 글자씩 세로로 쪼개진다. sm 이상은 예전처럼 한 줄. -->
+          <div class="min-w-0 basis-full sm:basis-auto sm:flex-1">
             <a href="${esc(p.url)}" class="font-medium text-ink transition hover:text-accent">${esc(p.name)}</a>
             <p class="mt-1 text-sm text-ink/50">${usd(p.price)}</p>
           </div>
@@ -112,7 +115,7 @@ const waferCatalog = (await getCollection('wafers'))
               class="h-9 w-14 rounded-lg border border-ink/10 bg-ink/[0.03] text-center text-ink outline-none focus:border-accent [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
             <button type="button" data-act="inc" aria-label="${M.qtyInc}" class="size-9 rounded-lg border border-ink/15 text-ink/70 transition hover:border-accent hover:text-ink">+</button>
           </div>
-          <p class="w-28 shrink-0 text-right font-semibold text-ink">${usd(p.price * i.qty)}</p>
+          <p class="ml-auto w-28 shrink-0 text-right font-semibold text-ink sm:ml-0">${usd(p.price * i.qty)}</p>
           <button type="button" data-act="del" class="shrink-0 text-sm text-ink/40 transition hover:text-danger">${M.remove}</button>
         </div>`;
     }).join('');

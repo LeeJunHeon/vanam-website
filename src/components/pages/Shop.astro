@@ -142,12 +142,6 @@ const waferFromLabel = waferMinKrw
                               class="absolute right-2 top-1/2 z-10 hidden md:block -translate-y-1/2 rounded-full bg-black/35 p-1.5 text-white opacity-0 backdrop-blur transition hover:bg-black/55 group-hover:opacity-100">
                               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
                             </button>
-                            <div class="absolute bottom-2.5 left-1/2 z-10 flex -translate-x-1/2 gap-1.5">
-                              {waferSlides.map((_, i) => (
-                                <button type="button" data-wafer-dot={i} aria-label={`Slide ${i + 1}`}
-                                  class:list={["h-1.5 w-1.5 rounded-full transition", i === 0 ? "bg-white" : "bg-white/45"]}></button>
-                              ))}
-                            </div>
                           </>
                         )}
                       </div>
@@ -156,6 +150,17 @@ const waferFromLabel = waferMinKrw
                     ) : (
                       <div class="flex h-full w-full items-center justify-center">
                         <span class="text-3xl font-bold text-ink/15" aria-hidden="true">VanaM</span>
+                      </div>
+                    )}
+                    {/* ⚠️ 점 인디케이터는 스크롤 영역 **밖**(이 래퍼)에 둔다.
+                        모바일에서 사진은 가로 스크롤로 넘기는데, 점이 스크롤 영역 안에 있으면
+                        사진과 함께 밀려나가 첫 장 아래에만 남는다. 밖에 두면 항상 같은 자리에 고정된다. */}
+                    {p.data.category === 'wafer' && waferSlides.length > 1 && (
+                      <div class="pointer-events-none absolute bottom-2.5 left-1/2 z-10 flex -translate-x-1/2 gap-1.5" data-wafer-dots>
+                        {waferSlides.map((_, i) => (
+                          <button type="button" data-wafer-dot={i} aria-label={`Slide ${i + 1}`}
+                            class:list={["pointer-events-auto h-1.5 w-1.5 rounded-full transition", i === 0 ? "bg-white" : "bg-white/45"]}></button>
+                        ))}
                       </div>
                     )}
                   </div>
@@ -418,10 +423,30 @@ const waferFromLabel = waferMinKrw
 
   // 웨이퍼 카드 슬라이드쇼 (세부 제품 대표사진 순환)
   document.querySelectorAll<HTMLElement>('[data-wafer-slider]').forEach((slider) => {
-    if (window.matchMedia('(max-width: 767px)').matches) return; // 모바일: 스와이프 스크롤 전용
     const slides = slider.querySelectorAll<HTMLElement>('.wafer-slide');
-    const dots = slider.querySelectorAll<HTMLElement>('[data-wafer-dot]');
+    // 점은 스크롤 영역 밖(부모 래퍼)에 있다 — 사진과 함께 밀려나지 않게 하기 위함
+    const dots = slider.parentElement?.querySelectorAll<HTMLElement>('[data-wafer-dot]') ?? ([] as unknown as NodeListOf<HTMLElement>);
     if (slides.length < 2) return;
+
+    // 카드 전체가 링크(<a>)라 화살표·점 클릭이 페이지 이동으로 새지 않게 막는다
+    const stop = (e: Event) => { e.preventDefault(); e.stopPropagation(); };
+    const paint = (idx: number) => dots.forEach((d, i) => {
+      d.classList.toggle('bg-white', i === idx);
+      d.classList.toggle('bg-white/45', i !== idx);
+    });
+
+    // 모바일은 가로 스와이프 스크롤이라 자동 넘김을 쓰지 않는다.
+    // 대신 스크롤 위치를 읽어 점을 갱신하고, 점을 누르면 해당 사진으로 이동시킨다.
+    if (window.matchMedia('(max-width: 767px)').matches) {
+      const sync = () => paint(Math.round(slider.scrollLeft / Math.max(1, slider.clientWidth)));
+      slider.addEventListener('scroll', sync, { passive: true });
+      dots.forEach((d, i) => d.addEventListener('click', (e) => {
+        stop(e);
+        slider.scrollTo({ left: i * slider.clientWidth, behavior: 'smooth' });
+      }));
+      sync();
+      return;
+    }
     let cur = 0;
     const go = (n: number) => {
       cur = (n + slides.length) % slides.length;
@@ -429,13 +454,8 @@ const waferFromLabel = waferMinKrw
         sl.classList.toggle('md:opacity-100', i === cur);
         sl.classList.toggle('md:opacity-0', i !== cur);
       });
-      dots.forEach((d, i) => {
-        d.classList.toggle('bg-white', i === cur);
-        d.classList.toggle('bg-white/45', i !== cur);
-      });
+      paint(cur);
     };
-    // 카드 전체가 링크(<a>)라 화살표·점 클릭이 페이지 이동으로 새지 않게 막는다
-    const stop = (e: Event) => { e.preventDefault(); e.stopPropagation(); };
 
     // 3초 간격 자동 넘김. 수동 조작 시 타이머를 리셋해 바로 넘어가지 않게 한다.
     let timer = window.setInterval(() => go(cur + 1), 3000);
