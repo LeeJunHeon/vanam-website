@@ -224,6 +224,11 @@ const childHref = (path) => {
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonicalURL} />
+
+    {/* 네이버 서치어드바이저 사이트 소유확인.
+        ⚠️ 지우지 말 것 — 네이버가 주기적으로 재확인하며, 사라지면 소유확인이 풀린다.
+        구글은 DNS TXT 로 확인해 두었기 때문에 여기에 없다. */}
+    <meta name="naver-site-verification" content="387e9860f9d6f05a64bbc972b86cad1582041e66" />
     <link rel="icon" href="/favicon.ico" sizes="48x48" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="alternate" hreflang="en" href={enHref} />
