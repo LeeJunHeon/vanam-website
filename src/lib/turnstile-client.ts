@@ -13,6 +13,13 @@
 //   ② 자동 재시도 — 스크립트 로드 실패 시 3초 간격 최대 2회 재시도. 위젯 오류·시간초과도 자동 초기화.
 //   ③ 안내 + 수동 재시도 — 10초 안에 뜨지 않으면 위젯 자리에 사유와 [다시 시도] 버튼을 보여준다.
 //
+// ⚠️ **위젯이 떴는지 판정하는 기준에 주의할 것.**
+//    Turnstile 은 컨테이너 안에 iframe 을 만들지 **않는다.** 실제로 렌더된 위젯의 내용물은
+//    `<div>` 하나 + 숨은 input(cf-turnstile-response) 뿐이고 iframe 은 0개다(실측 확인).
+//    예전 판정이 "iframe 이 있는가?" 였던 탓에 **정상 동작 중인 위젯을 실패로 오인해
+//    안내 문구로 덮어써 버렸다.** 고객이 체크박스를 통과해도 곧바로 다시 안내가 뜨던 원인이다.
+//    → 판정은 **render() 가 돌려준 위젯 id** 또는 **숨은 input 의 존재**로 한다.
+//
 // ⚠️ 스크립트는 페이지당 **한 번만** 붙인다(중복 로드 방지).
 
 type TS = {
@@ -31,19 +38,22 @@ const TXT = {
 const SRC = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=__vnTurnstileReady';
 const MAX_LOAD_TRIES = 3;      // 최초 1회 + 재시도 2회
 const RETRY_DELAY = 3000;      // 재시도 간격
-const SHOW_FALLBACK_AFTER = 10000;  // 이 시간 안에 안 뜨면 안내 표시
+const SHOW_FALLBACK_AFTER = 12000;  // 이 시간까지 못 뜨면 안내
 
 let loadTries = 0;
-let scriptEl: HTMLScriptElement | null = null;
+let fallbackTimer: number | undefined;
 
 const ts = (): TS | undefined => (window as unknown as { turnstile?: TS }).turnstile;
 const txt = () => (document.documentElement.lang === 'ko' ? TXT.ko : TXT.en);
 
-/** 위젯이 실제로 떴는지 — Turnstile 은 컨테이너 안에 iframe 을 만든다. */
-const isMounted = (box: HTMLElement) => !!box.querySelector('iframe');
+const boxes = () => Array.from(document.querySelectorAll<HTMLElement>('.cf-turnstile'));
+
+/** 위젯이 살아 있는가 — 위젯 id 가 있거나 숨은 응답 input 이 만들어졌으면 정상. */
+const isMounted = (box: HTMLElement) =>
+  !!box.dataset.vnWidgetId || !!box.querySelector('input[name="cf-turnstile-response"]');
 
 function showFallback(box: HTMLElement) {
-  if (isMounted(box) || box.dataset.vnFallback === '1') return;
+  if (isMounted(box) || box.dataset.vnFallback === '1') return;   // 살아 있으면 절대 건드리지 않는다
   box.dataset.vnFallback = '1';
   const t = txt();
   box.innerHTML =
@@ -51,65 +61,79 @@ function showFallback(box: HTMLElement) {
     `<span>${t.failed}</span> ` +
     `<button type="button" data-vn-ts-retry class="ml-1 font-semibold text-accent underline underline-offset-2">${t.retry}</button>` +
     `</div>`;
-  box.querySelector('[data-vn-ts-retry]')?.addEventListener('click', () => {
-    box.dataset.vnFallback = '';
-    box.dataset.vnRendered = '';
-    box.innerHTML = '';
-    loadTries = 0;
-    if (scriptEl) { scriptEl.remove(); scriptEl = null; }
-    delete (window as unknown as { turnstile?: TS }).turnstile;
-    start();
-  });
+  box.querySelector('[data-vn-ts-retry]')?.addEventListener('click', () => retry(box));
+}
+
+function retry(box: HTMLElement) {
+  box.dataset.vnFallback = '';
+  box.dataset.vnRendered = '';
+  box.dataset.vnErrors = '';
+  delete box.dataset.vnWidgetId;
+  box.innerHTML = '';
+  // 스크립트가 이미 있으면 다시 받지 않는다 — 그리기만 다시 한다.
+  if (ts()) { renderAll(); armFallback(); }
+  else { loadTries = 0; loadScript(); }
+}
+
+function armFallback() {
+  window.clearTimeout(fallbackTimer);
+  fallbackTimer = window.setTimeout(() => boxes().forEach(showFallback), SHOW_FALLBACK_AFTER);
+}
+
+function onWidgetError(box: HTMLElement) {
+  const n = Number(box.dataset.vnErrors || '0') + 1;
+  box.dataset.vnErrors = String(n);
+  if (n <= 1) { try { ts()?.reset(box.dataset.vnWidgetId); return; } catch { /* 아래로 */ } }
+  delete box.dataset.vnWidgetId;
+  box.dataset.vnRendered = '';
+  showFallback(box);
+}
+
+function loadScript() {
+  loadTries += 1;
+  const s = document.createElement('script');
+  s.src = SRC;
+  s.async = true;
+  s.defer = true;
+  s.onerror = () => {
+    s.remove();
+    if (loadTries < MAX_LOAD_TRIES) window.setTimeout(loadScript, RETRY_DELAY);
+    else boxes().forEach(showFallback);
+  };
+  document.head.appendChild(s);
 }
 
 function renderAll() {
   const api = ts();
   if (!api) return;
-  document.querySelectorAll<HTMLElement>('.cf-turnstile').forEach((box) => {
-    if (box.dataset.vnRendered === '1') return;
+  for (const box of boxes()) {
+    if (box.dataset.vnRendered === '1' || box.dataset.vnFallback === '1') continue;
     box.dataset.vnRendered = '1';
     try {
-      const id = api.render(box, {
+      box.dataset.vnWidgetId = api.render(box, {
         sitekey: box.dataset.sitekey,
         theme: box.dataset.theme || 'auto',
         language: box.dataset.language || 'auto',
-        // 위젯이 스스로 실패를 알려오면 조용히 한 번 되살린다.
-        'error-callback': () => { try { api.reset(box.dataset.vnWidgetId); } catch { showFallback(box); } },
-        'timeout-callback': () => { try { api.reset(box.dataset.vnWidgetId); } catch { showFallback(box); } },
+        // 위젯이 스스로 실패를 알려오면 한 번은 조용히 되살리고, 두 번째부터 안내를 띄운다.
+        'error-callback': () => onWidgetError(box),
+        'timeout-callback': () => onWidgetError(box),
         'expired-callback': () => { try { api.reset(box.dataset.vnWidgetId); } catch { /* 무시 */ } },
       });
-      box.dataset.vnWidgetId = id;
     } catch {
+      box.dataset.vnRendered = '';
       showFallback(box);
     }
-  });
+  }
+  // 전부 떴으면 안내 타이머를 끈다 — 살아 있는 위젯을 덮어쓰지 않기 위한 안전장치.
+  if (boxes().every(isMounted)) window.clearTimeout(fallbackTimer);
 }
 
 function start() {
-  const boxes = document.querySelectorAll<HTMLElement>('.cf-turnstile');
-  if (!boxes.length) return;
-
+  if (!boxes().length) return;
   (window as unknown as { __vnTurnstileReady?: () => void }).__vnTurnstileReady = renderAll;
-
-  const load = () => {
-    loadTries += 1;
-    const s = document.createElement('script');
-    s.src = SRC;
-    s.async = true;
-    s.defer = true;
-    s.onerror = () => {
-      s.remove();
-      scriptEl = null;
-      if (loadTries < MAX_LOAD_TRIES) setTimeout(load, RETRY_DELAY);
-      else boxes.forEach(showFallback);
-    };
-    scriptEl = s;
-    document.head.appendChild(s);
-  };
-  load();
-
-  // 로드는 됐는데 위젯이 안 그려지는 경우까지 잡는다.
-  setTimeout(() => boxes.forEach(showFallback), SHOW_FALLBACK_AFTER);
+  armFallback();
+  if (ts()) renderAll();   // 다른 폼이 이미 스크립트를 올려둔 경우
+  else loadScript();
 }
 
 /** 폼에서 호출한다. 위젯이 있는 페이지에서만 동작한다. */
@@ -128,7 +152,7 @@ export function mountTurnstile(): void {
 export function resetTurnstile(): void {
   const api = ts();
   if (!api) return;
-  document.querySelectorAll<HTMLElement>('.cf-turnstile').forEach((box) => {
+  boxes().forEach((box) => {
     try { api.reset(box.dataset.vnWidgetId); } catch { /* 무시 */ }
   });
 }
