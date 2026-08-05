@@ -148,7 +148,12 @@ function initials(name){ const p = name.replace('Dr. ','').split(' '); return (p
                     const logo = p.data.logo ? partnerLogos[p.data.logo]?.default : undefined;
                     return logo ? (
                       <div class="mr-3 flex h-16 w-44 shrink-0 items-center justify-center rounded-lg border border-ink/10 bg-plate px-3">
-                        <Image src={logo} alt={p.data.name} loading="eager" class="max-h-12 max-w-[85%] w-auto object-contain" />
+                        {/* ⚠️ loading 은 eager 를 유지한다 — 무한 스크롤 배너 안에서 lazy 를 쓰면
+                            화면 밖에서 흘러들어오는 로고가 빈칸으로 보인다.
+                            대신 fetchpriority="low" 로 **우선순위만** 낮춘다.
+                            로고 30장 341KB 가 히어로 영상·포스터·폰트와 대역폭을 다투던 것을 막는다.
+                            (홈은 즉시 로딩 이미지가 30장으로 전 페이지 중 압도적으로 많았다) */}
+                        <Image src={logo} alt={p.data.name} loading="eager" fetchpriority="low" class="max-h-12 max-w-[85%] w-auto object-contain" />
                       </div>
                     ) : (
                       <div class={`mr-3 flex h-16 w-44 shrink-0 items-center justify-center rounded-lg border px-3 text-center text-sm font-medium leading-tight ${p.data.needsCheck ? 'border-danger/40 bg-danger/[0.05] text-danger' : 'border-ink/10 bg-ink/[0.03] text-ink/60'}`}>{p.data.name}</div>
