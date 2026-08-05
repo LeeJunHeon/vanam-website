@@ -538,39 +538,47 @@ const childHref = (path) => {
     </footer>
 
     <!-- 우측 하단 플로팅: 맨 위 / 맨 아래로 이동. 항상 둘 다 고정 표시 (짧은 페이지에서만 숨김) -->
-    <div id="scroll-fab" class="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-2 transition-opacity duration-200">
+    {/* ⚠️ 컨테이너에는 반드시 pointer-events-none 을 둔다.
+        공유 아이콘 4개가 접힌 상태에서도 자리를 차지해 이 상자가 252×148px 이나 되는데,
+        휴대폰 화면 폭의 65% 다. 컨테이너가 클릭을 받으면 그 아래 입력칸·버튼이
+        **아예 눌리지 않는다**(모바일에서 견적·주문이 막히던 원인).
+        클릭은 실제 버튼·링크에만 pointer-events-auto 로 되돌려 준다. */}
+    <div id="scroll-fab" class="pointer-events-none fixed bottom-6 right-6 z-40 flex flex-col items-end gap-2 transition-opacity duration-200">
       <button type="button" data-scroll="top" aria-label={currentLocale === 'ko' ? '맨 위로' : 'Scroll to top'}
-        class="grid h-11 w-11 place-items-center rounded-full border border-ink/10 bg-canvas text-ink/70 shadow-lg shadow-ink/10 transition hover:text-ink hover:brightness-95">
+        class="pointer-events-auto grid h-11 w-11 place-items-center rounded-full border border-ink/10 bg-canvas text-ink/70 shadow-lg shadow-ink/10 transition hover:text-ink hover:brightness-95">
         <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 15-6-6-6 6"/></svg>
       </button>
       <button type="button" data-scroll="bottom" aria-label={currentLocale === 'ko' ? '맨 아래로' : 'Scroll to bottom'}
-        class="grid h-11 w-11 place-items-center rounded-full border border-ink/10 bg-canvas text-ink/70 shadow-lg shadow-ink/10 transition hover:text-ink hover:brightness-95">
+        class="pointer-events-auto grid h-11 w-11 place-items-center rounded-full border border-ink/10 bg-canvas text-ink/70 shadow-lg shadow-ink/10 transition hover:text-ink hover:brightness-95">
         <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
       </button>
       <!-- SNS: 공유 버튼을 누르면 왼쪽으로 아이콘이 펼쳐진다 (스크롤 버튼 아래 배치) -->
-      <div class="flex items-center gap-2">
+      <div class="pointer-events-none flex items-center gap-2">
         <!-- 펼쳐지는 아이콘 목록 (평소 숨김) -->
-        <div id="sns-list" class="pointer-events-none flex items-center gap-2 opacity-0 -translate-x-2 transition-all duration-200">
+        {/* ⚠️ 접힘 상태는 invisible(visibility:hidden) 로 판정한다.
+                     아이콘에 pointer-events-auto 가 붙어 있어서 pointer-events-none 만으로는
+                     자식이 클릭을 되살려 버린다 — 안 보이는데 눌리는 상태가 된다. */}
+                <div id="sns-list" class="pointer-events-none invisible flex items-center gap-2 opacity-0 -translate-x-2 transition-all duration-200">
           <a href="https://www.youtube.com/@VanaMaterials" target="_blank" rel="noopener noreferrer" aria-label="YouTube"
-            class="grid h-11 w-11 place-items-center rounded-full border border-ink/10 bg-canvas shadow-lg shadow-ink/10 transition hover:brightness-95" style="color:#FF0000">
+            class="pointer-events-auto grid h-11 w-11 place-items-center rounded-full border border-ink/10 bg-canvas shadow-lg shadow-ink/10 transition hover:brightness-95" style="color:#FF0000">
             <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
           </a>
           <a href="https://www.linkedin.com/company/vanaminc/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"
-            class="grid h-11 w-11 place-items-center rounded-full border border-ink/10 bg-canvas shadow-lg shadow-ink/10 transition hover:brightness-95" style="color:#0A66C2">
+            class="pointer-events-auto grid h-11 w-11 place-items-center rounded-full border border-ink/10 bg-canvas shadow-lg shadow-ink/10 transition hover:brightness-95" style="color:#0A66C2">
             <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
           </a>
           <a href="https://smartstore.naver.com/ybjstore" target="_blank" rel="noopener noreferrer" aria-label={currentLocale === 'ko' ? '네이버 스토어' : 'Naver Store'}
-            class="grid h-11 w-11 place-items-center rounded-full border border-ink/10 bg-canvas shadow-lg shadow-ink/10 transition hover:brightness-95" style="color:#03C75A">
+            class="pointer-events-auto grid h-11 w-11 place-items-center rounded-full border border-ink/10 bg-canvas shadow-lg shadow-ink/10 transition hover:brightness-95" style="color:#03C75A">
             <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.273 12.845 7.376 0H0v24h7.726V11.156L16.624 24H24V0h-7.727v12.845z"/></svg>
           </a>
           <a href="https://linktr.ee/vanaminc" target="_blank" rel="noopener noreferrer" aria-label="Linktree"
-            class="grid h-11 w-11 place-items-center rounded-full border border-ink/10 bg-canvas shadow-lg shadow-ink/10 transition hover:brightness-95" style="color:#43E55E">
+            class="pointer-events-auto grid h-11 w-11 place-items-center rounded-full border border-ink/10 bg-canvas shadow-lg shadow-ink/10 transition hover:brightness-95" style="color:#43E55E">
             <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m13.73635 5.85251 4.00467-4.11665 2.3248 2.3808-4.20064 4.00466h5.9085v3.30473h-5.9365l4.22865 4.10062-2.3248 2.3338L12.0005 12.099l-5.74052 5.76852-2.3248-2.325 4.22864-4.10063h-5.9365V8.12132h5.9085L3.90557 4.11666l2.3248-2.3808 4.00468 4.11665V0h3.5015zm-3.4995 11.14926h3.5015V24h-3.5015z"/></svg>
           </a>
         </div>
         <!-- 공유 토글 버튼 -->
         <button type="button" id="sns-toggle" aria-expanded="false" aria-label={currentLocale === 'ko' ? '채널 열기' : 'Open channels'}
-          class="grid h-11 w-11 place-items-center rounded-full border border-ink/10 bg-canvas text-ink/70 shadow-lg shadow-ink/10 transition hover:text-ink hover:brightness-95">
+          class="pointer-events-auto grid h-11 w-11 place-items-center rounded-full border border-ink/10 bg-canvas text-ink/70 shadow-lg shadow-ink/10 transition hover:text-ink hover:brightness-95">
           <!-- 공유 아이콘 (열리면 X로 전환) -->
           <svg data-icon="share" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.59 13.51 6.83 3.98M15.41 6.51l-6.82 3.98"/></svg>
           <svg data-icon="close" class="hidden h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
@@ -781,6 +789,7 @@ const childHref = (path) => {
             list.classList.toggle('opacity-0', !v);
             list.classList.toggle('-translate-x-2', !v);
             list.classList.toggle('pointer-events-none', !v);
+            list.classList.toggle('invisible', !v);   // 접힘 상태에서 눌리지 않도록(위 주석 참고)
             shareIcon.classList.toggle('hidden', v);
             closeIcon.classList.toggle('hidden', !v);
           }

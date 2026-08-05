@@ -487,10 +487,14 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
   </section>
 </BaseLayout>
 
-<script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+{/* 보안 확인 스크립트는 src/lib/turnstile-client.ts 가 붙인다 —
+    실패 감지·자동 재시도·안내가 거기 모여 있다. 여기서 직접 부르지 말 것. */}
 
 <script>
   import { initTelInput, normalizeTelInputs } from '../../lib/telInput';
+  // 보안 확인 위젯 — 로드 실패 시 자동 재시도·안내까지 여기서 처리한다
+  import { mountTurnstile, resetTurnstile } from '../../lib/turnstile-client';
+  mountTurnstile();
 
   import { liveRate, cachedRate } from '../../lib/fx-client';
 
@@ -874,9 +878,9 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
           bad_items: '장바구니 상품을 다시 확인해 주세요 · Check the cart items.',
           captcha_failed: '자동입력 방지 확인에 실패했습니다. 잠시 후 다시 시도해 주세요 · Captcha failed, please retry.',
         };
-        if (MAP[code]) { setStatus(MAP[code], false); gateBusy = false; btn.disabled = false; label.textContent = M.labelSend!; window.turnstile?.reset(); return; }
+        if (MAP[code]) { setStatus(MAP[code], false); gateBusy = false; btn.disabled = false; label.textContent = M.labelSend!; resetTurnstile(); return; }
         // 토큰은 1회용 — 실패 시 리셋해 재시도를 준비한다. (성공 시엔 페이지가 이동하므로 불필요)
-        window.turnstile?.reset();
+        resetTurnstile();
         setStatus(M.msgFail!, false);
         gateBusy = false;
         btn.disabled = false;
