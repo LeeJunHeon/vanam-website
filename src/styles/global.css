@@ -130,11 +130,23 @@
   [data-theme='light'] .text-ink\/20 { color: color-mix(in oklab, var(--color-ink) 32%, transparent); }
   [data-theme='light'] .text-ink\/25 { color: color-mix(in oklab, var(--color-ink) 38%, transparent); }
   [data-theme='light'] .text-ink\/30 { color: color-mix(in oklab, var(--color-ink) 44%, transparent); }
-  [data-theme='light'] .text-ink\/35 { color: color-mix(in oklab, var(--color-ink) 50%, transparent); }
-  [data-theme='light'] .text-ink\/40 { color: color-mix(in oklab, var(--color-ink) 55%, transparent); }
-  [data-theme='light'] .text-ink\/45 { color: color-mix(in oklab, var(--color-ink) 58%, transparent); }
-  [data-theme='light'] .text-ink\/50 { color: color-mix(in oklab, var(--color-ink) 62%, transparent); }
-  [data-theme='light'] .text-ink\/55 { color: color-mix(in oklab, var(--color-ink) 66%, transparent); }
+  /* ⚠️ 아래 5단계는 **실제 글자**에 쓰이는 구간이라 WCAG AA(4.5:1)를 넘겨야 한다.
+     예전 값(50·55·58·62·66%)은 흰 배경만 겨우 넘고 지브라 밴드·카드 위에서는 미달이었고,
+     Lighthouse 가 `/product/oxides` 등에서 text-ink/35·40 을 정확히 집어냈다.
+     실측 최소 알파는 어느 배경에서든 58% 이므로 여유를 둬 60% 부터 시작한다.
+     (text-ink/20·25·30 은 아이콘·구분자 전용이라 그대로 둔다 — 전 페이지 확인함) */
+  [data-theme='light'] .text-ink\/35 { color: color-mix(in oklab, var(--color-ink) 60%, transparent); }
+  [data-theme='light'] .text-ink\/40 { color: color-mix(in oklab, var(--color-ink) 62%, transparent); }
+  [data-theme='light'] .text-ink\/45 { color: color-mix(in oklab, var(--color-ink) 64%, transparent); }
+  [data-theme='light'] .text-ink\/50 { color: color-mix(in oklab, var(--color-ink) 66%, transparent); }
+  [data-theme='light'] .text-ink\/55 { color: color-mix(in oklab, var(--color-ink) 70%, transparent); }
+
+  /* 다크 테마도 같은 구간에서 미달이다(흰 글자 35% = 3.17:1).
+     Lighthouse 는 라이트만 측정했지만 실제 방문자는 양쪽을 본다 — 같이 올린다.
+     실측 최소 알파 46% 기준, 여유를 둬 47% 부터. */
+  [data-theme='dark'] .text-ink\/35 { color: color-mix(in oklab, var(--color-ink) 47%, transparent); }
+  [data-theme='dark'] .text-ink\/40 { color: color-mix(in oklab, var(--color-ink) 48%, transparent); }
+  [data-theme='dark'] .text-ink\/45 { color: color-mix(in oklab, var(--color-ink) 49%, transparent); }
 
   [data-theme='light'] .placeholder-ink\/25::placeholder { color: color-mix(in oklab, var(--color-ink) 42%, transparent); }
   [data-theme='light'] .placeholder-ink\/30::placeholder { color: color-mix(in oklab, var(--color-ink) 46%, transparent); }
