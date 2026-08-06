@@ -3,6 +3,16 @@
   // workers.dev 공개 주소 비활성. 대시보드에서 꺼도 다음 배포가 이 파일 기준으로 되살리므로
   // 소스에 false 를 못 박아야 유지된다. 정식 접속은 커스텀 도메인(vanam.co.kr)만.
   "workers_dev": false,
+  // 워커 실행 로그. 대시보드에서 켜도 **다음 배포가 이 파일 기준으로 덮어쓴다**
+  // (workers_dev 와 똑같은 함정 — 소스에 못 박아야 유지된다).
+  // 무료 플랜: 하루 20만 이벤트 · 3일 보관. 우리는 하루 2천 요청이라 한도의 1% 수준.
+  // invocation_logs 를 켜야 요청·응답·상태코드가 함께 남아 결제 웹훅 실패 같은 사고를 추적할 수 있다.
+  "observability": {
+    "logs": {
+      "enabled": true,
+      "invocation_logs": true
+    }
+  },
   "d1_databases": [
     { "binding": "DB", "database_name": "vanam-orders" }
   ]
