@@ -108,9 +108,7 @@ const spec = (r: Row) =>
     r.material && `소재 ${r.material}`,
     r.method && `방식 ${r.method}`,
     r.substrate && `기판 ${r.substrate}`,
-    r.thickness && `두께 ${r.thickness}`,
-    r.quantity && `수량 ${r.quantity}`,
-    r.deadline && `납기 ${r.deadline}`,
+    // 두께·수량·납기는 지금 견적 폼에 없는 항목이라 뺐다(항상 비어 있었다)
   ].filter(Boolean).join(' · ');
 ---
 

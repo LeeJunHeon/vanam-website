@@ -80,9 +80,6 @@ export const POST: APIRoute = async ({ request }) => {
   const locale = str(body.locale) === 'ko' ? 'ko' : 'en';
   const method = str(body.method).slice(0, MAX);
   const substrate = str(body.substrate).slice(0, MAX);
-  const thickness = str(body.thickness).slice(0, MAX);
-  const quantity = str(body.quantity).slice(0, MAX);
-  const deadline = str(body.deadline).slice(0, MAX);
   const details = str(body.details).slice(0, MAX);
   // 조회 화면에서 보는 언어로 다시 그리기 위한 구조화 사본(라벨 붙이기 전의 값들).
   // ⚠️ 일반 필드 상한(2000자)을 쓰면 공정 12단계 + 분석 다수 + 긴 요청사항인 견적에서 잘려
@@ -94,7 +91,10 @@ export const POST: APIRoute = async ({ request }) => {
   const id = newId('INQ');
   const dash = '—';
   const who = `담당: ${name}${company ? ` (${company})` : ''} · ${email}${phone ? ` · ${phone}` : ''}`;
-  const meta = `접수번호 ${id} · ${locale} · ${new Date().toISOString()}`;
+  // ⚠️ 알림을 읽는 사람은 한국에 있다. UTC 로 찍으면 실제 접수 시각과 최대 9시간 어긋나 보인다.
+  const kst = new Date(Date.now() + 9 * 60 * 60 * 1000)
+    .toISOString().replace('T', ' ').slice(0, 16);
+  const meta = `접수번호 ${id} · ${locale} · ${kst} (KST)`;
 
   let text: string;
   if (type === 'quote') {
@@ -103,7 +103,9 @@ export const POST: APIRoute = async ({ request }) => {
       `상품: ${productName} (${product})`,
       who,
       `소재: ${material} | 방식: ${method || dash} | 기판: ${substrate || dash}`,
-      `두께: ${thickness || dash} | 수량: ${quantity || dash} | 납기: ${deadline || dash}`,
+      // ⚠️ 예전 견적 폼의 '두께·수량·납기' 줄은 뺐다. 지금 폼에는 그 항목이 없어서
+      //    **항상 `두께: — | 수량: — | 납기: —`** 로만 찍혔다(실제 입력값이 아니다).
+      //    같은 정보는 아래 요청 본문에 '총 샘플 수량'·'완료 희망일'로 이미 들어 있다.
       `요청: ${details || dash}`,
       meta,
     ].join('\n');
@@ -119,15 +121,16 @@ export const POST: APIRoute = async ({ request }) => {
       const base = [
         id, type, 'new', name, email, phone || null, company || null,
         message || null, product || null, productName || null,
-        material || null, method || null, substrate || null, thickness || null,
-        quantity || null, deadline || null, details || null,
+        material || null, method || null, substrate || null, details || null,
         locale, nowIso(),
       ];
+      // thickness·quantity·deadline 컬럼은 지금 폼에 없는 항목이라 더 이상 쓰지 않는다.
+      // (컬럼 자체는 옛 데이터를 위해 남겨둔다 — 값은 NULL 이 된다)
       const COLS =
         `(id, type, status, name, email, phone, company, message,
-          product_sku, product_name, material, method, substrate, thickness,
-          quantity, deadline, details, locale, created_at`;
-      const VALS = `VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?`;
+          product_sku, product_name, material, method, substrate,
+          details, locale, created_at`;
+      const VALS = `VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?`;
       try {
         // details_json 컬럼이 있는 정상 경로
         await d
