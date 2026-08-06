@@ -6,7 +6,7 @@
 import type { APIRoute } from 'astro';
 import { getCollection } from 'astro:content';
 import { env as cfEnv } from 'cloudflare:workers';
-import { db, newId, nowIso } from '../../lib/db';
+import { db, newId, nowIso, nowKst } from '../../lib/db';
 import { isKnownCountry } from '../../lib/countries';
 import { rateLimit, tooMany } from '../../lib/rate-limit';
 import { verifyTurnstile } from '../../lib/turnstile';
@@ -313,7 +313,10 @@ async function handleOrder({ request, locals }: { request: Request; locals: unkn
     shipCourierAcct ? `택배사 계정(착불): ${shipCourierAcct}` : '',
     taxInvoice ? `📄 세금계산서 요청 — ${taxBizName} (${taxBizNo}) → ${taxEmail}` : '세금계산서: 미요청',
     inquiryId ? `견적: ${inquiryId}` : '',
-    `(${locale} · ${created})`,
+    // ⚠️ created 는 DB 저장용 UTC 다. 알림에는 한국 시간으로 보여준다.
+    //    이 본문은 결제 완료 알림에도 그대로 재사용되므로 '접수' 라고 못 박아
+    //    결제 시각으로 오해하지 않게 한다.
+    `(${locale} · 접수 ${nowKst()} KST)`,
   ].filter(Boolean).join('\n');
 
   // 결제 완료 시 같은 내용을 보낼 수 있도록 주문에 저장해 둔다.

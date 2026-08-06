@@ -3,7 +3,7 @@ import type { APIRoute } from 'astro';
 // Cloudflare 런타임 환경변수는 이 모듈에서 직접 읽는다.
 // dev(순수 Node)에서는 astro.config.mjs의 shim이 빈 객체를 돌려주고, .env 로 폴백한다.
 import { env as cfEnv } from 'cloudflare:workers';
-import { db, newId, nowIso } from '../../lib/db';
+import { db, newId, nowIso, nowKst } from '../../lib/db';
 import { rateLimit, tooMany } from '../../lib/rate-limit';
 import { verifyTurnstile } from '../../lib/turnstile';
 
@@ -91,10 +91,7 @@ export const POST: APIRoute = async ({ request }) => {
   const id = newId('INQ');
   const dash = '—';
   const who = `담당: ${name}${company ? ` (${company})` : ''} · ${email}${phone ? ` · ${phone}` : ''}`;
-  // ⚠️ 알림을 읽는 사람은 한국에 있다. UTC 로 찍으면 실제 접수 시각과 최대 9시간 어긋나 보인다.
-  const kst = new Date(Date.now() + 9 * 60 * 60 * 1000)
-    .toISOString().replace('T', ' ').slice(0, 16);
-  const meta = `접수번호 ${id} · ${locale} · ${kst} (KST)`;
+  const meta = `접수번호 ${id} · ${locale} · ${nowKst()} (KST)`;
 
   let text: string;
   if (type === 'quote') {

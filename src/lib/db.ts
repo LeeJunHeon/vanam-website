@@ -145,3 +145,13 @@ export function newId(prefix: 'INQ' | 'ORD'): string {
 }
 
 export const nowIso = () => new Date().toISOString();
+
+/**
+ * 알림 문구에 쓰는 한국 시간 표기 (`2026-08-06 03:19`).
+ * ⚠️ **저장에는 쓰지 말 것** — DB 에는 반드시 nowIso()(UTC)를 넣는다.
+ *    저장을 KST 로 바꾸면 기존 데이터와 뒤섞여 정렬·비교가 전부 어긋난다.
+ *    이건 **사람이 읽는 알림 전용**이다. 알림을 보는 사람은 한국에 있는데
+ *    UTC 로 찍으면 실제 시각과 9시간, 날짜는 하루까지 어긋나 보인다.
+ */
+export const nowKst = () =>
+  new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().replace('T', ' ').slice(0, 16);
