@@ -46,8 +46,9 @@
 #                                  기능 영향은 0 이지만 콘솔 경고가 실제 오류를 가려서 허용한다.
 # ⚠️ 이 /* 블록의 CSP 는 src/middleware.ts 의 CSP 와 **글자 그대로 같아야** 한다.
 #    정적 페이지는 이 파일, SSR 페이지는 middleware 가 헤더를 붙이므로 어긋나면 페이지마다 정책이 달라진다.
-#   frame-ancestors 'none' — 클릭재킹 완전 차단. (사이트에 iframe·YouTube 임베드 0개라 안전)
-#   frame-src   'none' — iframe 임베드 없음.
+#   frame-ancestors 'none' — 클릭재킹 완전 차단. (우리가 남에게 프레임되는 것을 막는 것으로, 우리가 남을 임베드하는 frame-src 와는 별개다)
+#   frame-src   www.linkedin.com — 퍼감(repost) 블로그 글의 LinkedIn 임베드(0209 에서 사용 시작).
+#                                  나머지는 Turnstile·Google 지도·PayPal.
 /*
   Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://www.paypal.com https://www.sandbox.paypal.com https://www.paypalobjects.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net data:; img-src 'self' data: https://www.paypalobjects.com https://www.paypal.com; connect-src 'self' https://challenges.cloudflare.com https://www.paypal.com https://www.sandbox.paypal.com https://cdn.jsdelivr.net; object-src 'none'; frame-src https://challenges.cloudflare.com https://www.google.com https://maps.google.com https://www.linkedin.com https://www.paypal.com https://www.sandbox.paypal.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'
   X-Frame-Options: DENY

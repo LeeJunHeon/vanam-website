@@ -28,6 +28,17 @@ const bodyHtml = bodyMd ? marked.parse(bodyMd) : '';
 const hero = d.thumbnail ? thumbs[d.thumbnail]?.default : undefined;
 const gallery = (d.images ?? []).map((p: string) => thumbs[p]?.default).filter(Boolean) as ImageMetadata[];
 
+// 퍼감(repost) 글용 LinkedIn 임베드 — linkedinUrl 이 있을 때만 iframe 을 렌더한다.
+//   URL 의 activity ID 를 뽑아 공식 임베드 경로로 바꾼다. 퍼감 URN 을 그대로 쓰면
+//   원본 글과 "…님이 퍼감" 헤더까지 함께 렌더된다(2026-08 실측 확인).
+//   ⚠ 공개 게시물만 렌더되며, 원본이 삭제되면 빈 iframe 이 남는다.
+const toLinkedInEmbed = (u?: string) => {
+  if (!u) return undefined;
+  const m = u.match(/urn:li:(?:activity|ugcPost|share):(\d+)/) ?? u.match(/activity[-:](\d+)/);
+  return m ? `https://www.linkedin.com/embed/feed/update/urn:li:activity:${m[1]}` : undefined;
+};
+const embedSrc = toLinkedInEmbed(d.linkedinUrl);
+
 const CAT_LABEL: Record<string, string> = { linkedin: 'LinkedIn', agent: 'Agent' };
 const cat = d.category ?? 'linkedin';
 const fmtDate = (dt: Date) =>
@@ -70,6 +81,21 @@ const t = {
     {hero && (
       <Image src={hero} alt={title} width={1280}
         class="mt-8 w-full v-card" />
+    )}
+
+    {embedSrc && (
+      <div class="mt-10 overflow-hidden rounded-2xl border border-ink/10 bg-ink/[0.02]">
+        <iframe
+          src={embedSrc}
+          height="560"
+          width="100%"
+          frameborder="0"
+          allowfullscreen
+          loading="lazy"
+          title={title}
+          class="block w-full"
+        ></iframe>
+      </div>
     )}
 
     {bodyHtml && <div class="post-body mt-10" set:html={bodyHtml} />}
