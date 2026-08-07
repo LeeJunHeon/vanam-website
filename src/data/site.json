@@ -669,8 +669,8 @@
       "heroTitle": "In the press",
       "heroSubtitleHtml": "Coverage of VanaM's thin-film materials, products, and milestones.",
       "eyebrow": "News",
-      "metaTitle": "News | VanaM",
-      "metaDescription": "News and press coverage of VanaM (반암) — semiconductor thin-film materials, VM1, investment, and exhibitions."
+      "metaTitle": "News & Blog | VanaM",
+      "metaDescription": "News, press coverage and blog posts from VanaM (반암) — semiconductor thin-film materials, products, exhibitions and milestones."
     },
     "contact": {
       "metaTitle": "Contact | VanaM",
@@ -795,8 +795,8 @@
       }
     },
     "shop": {
-      "metaTitle": "Product | VanaM",
-      "metaDescription": "Buy VanaM thin-film samples, coating and analysis services online.",
+      "metaTitle": "Product & Solution | VanaM",
+      "metaDescription": "VanaM thin-film samples, wafers, coating and analysis services, plus equipment solutions — order online or request a quote.",
       "eyebrow": "Products",
       "heroTitle": {
         "line1": "Thin films,",
@@ -933,7 +933,7 @@
       "keyAdvantages": "핵심 강점",
       "coreTechHeading": "AI 기반 진공 증착 플랫폼",
       "materialsHeading": "소재 라이브러리",
-      "metaTitle": "기술·솔루션 | VanaM",
+      "metaTitle": "기술 | VanaM",
       "metaDescription": "반암의 박막 기술: 에너지 감응형 박막, PVD/ALD 증착, 산화물·질화물·금속 소재 라이브러리, R&D·분석·파운드리 서비스.",
       "processHeading": "증착 의뢰는 이렇게 진행됩니다",
       "processSub": "원하시는 사양에서 완성된 박막까지.",
@@ -1526,8 +1526,8 @@
       "eyebrow": "뉴스",
       "heroTitle": "언론 속 반암",
       "heroSubtitleHtml": "반암의 박막 소재, 제품, 주요 성과에 대한 보도입니다.",
-      "metaTitle": "뉴스 | VanaM",
-      "metaDescription": "반암(VanaM) 관련 보도 — 반도체 박막 소재, VM1, 투자 유치, 전시회 소식."
+      "metaTitle": "뉴스 · 블로그 | VanaM",
+      "metaDescription": "반암(VanaM)의 보도자료와 블로그 — 반도체 박막 소재, 제품, 전시회 및 주요 성과 소식."
     },
     "contact": {
       "metaTitle": "문의 | VanaM",
@@ -1652,8 +1652,8 @@
       }
     },
     "shop": {
-      "metaTitle": "제품 | VanaM",
-      "metaDescription": "반암(VanaM)의 박막 시편·코팅·분석 서비스를 온라인으로 주문하세요.",
+      "metaTitle": "제품 · 솔루션 | VanaM",
+      "metaDescription": "반암(VanaM)의 박막 시편·웨이퍼·코팅·분석 서비스와 장비 솔루션 — 온라인 주문 또는 견적 요청.",
       "eyebrow": "제품",
       "heroTitle": {
         "line1": "박막을",
