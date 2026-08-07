@@ -106,6 +106,8 @@ const t = {
         class="mt-8 w-full v-card" />
     )}
 
+    {bodyHtml && <div class="post-body mt-10" set:html={bodyHtml} />}
+
     {embedSrc && (
       <div class="mt-10 overflow-hidden rounded-2xl border border-ink/10 bg-ink/[0.02]">
         <iframe
@@ -120,8 +122,6 @@ const t = {
         ></iframe>
       </div>
     )}
-
-    {bodyHtml && <div class="post-body mt-10" set:html={bodyHtml} />}
 
     {gallery.length > 0 && (
       <div class="mt-12">
