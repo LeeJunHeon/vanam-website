@@ -217,6 +217,12 @@ const childHref = (path) => {
             // (그래야 다시 나타나는 배너가 화면에 보인다.)
             if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
             window.scrollTo(0, 0);
+            // ⚠️ manual 은 이 document 에 계속 남는다. 그대로 두면 이후 '뒤로가기'에서도
+            //    브라우저가 스크롤을 복원하지 않아 항상 맨 위로 튄다(블로그 → 목록 복귀 등).
+            //    맨 위로 올린 뒤 auto 로 되돌려 뒤로가기 복원은 정상 동작하게 한다.
+            addEventListener('load', function () {
+              if ('scrollRestoration' in history) history.scrollRestoration = 'auto';
+            }, { once: true });
           }
         } catch (e) {}
       })();

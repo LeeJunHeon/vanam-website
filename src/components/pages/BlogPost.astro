@@ -39,6 +39,29 @@ const toLinkedInEmbed = (u?: string) => {
 };
 const embedSrc = toLinkedInEmbed(d.linkedinUrl);
 
+// 요약(excerpt)은 ①목록 카드 미리보기 ②메타 설명 용도다.
+// 상세 페이지에서는 본문 전문이 바로 아래에 나오므로, 요약이 본문 첫머리와
+// 겹치면 같은 문장이 두 번 보인다(짧은 글은 통째로 중복). 겹칠 때는 렌더하지 않는다.
+// ⚠ description={excerpt || title} 은 그대로 둔다 — 메타 설명은 계속 필요하다.
+//   비교 기준: 마크다운 강조 마커(**, _, `)와 끝 문장부호·말줄임표를 걷어내고
+//   소문자로 맞춘다. 요약은 본문 첫 문장을 잘라 만든 것이라 이 차이만 보정하면 겹침이 잡힌다.
+const cmpKey = (v?: string) =>
+  (v ?? '')
+    .replace(/[*_`~]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/[…."'’”),\]!?]+$/g, '')
+    .trim()
+    .toLowerCase();
+const bodyLead = cmpKey(
+  (bodyMd ?? '')
+    .split('\n')
+    .filter((l) => !l.trim().startsWith('#'))
+    .join(' '),
+);
+const excerptKey = cmpKey(excerpt);
+const showExcerpt = excerptKey.length > 0 && !bodyLead.startsWith(excerptKey);
+
 const CAT_LABEL: Record<string, string> = { linkedin: 'LinkedIn', agent: 'Agent' };
 const cat = d.category ?? 'linkedin';
 const fmtDate = (dt: Date) =>
@@ -66,7 +89,7 @@ const t = {
 
 <BaseLayout title={`${title} | VanaM Blog`} description={excerpt || title}>
   <article class="mx-auto max-w-3xl px-6 pt-28 pb-24 md:pt-32">
-    <a href={`${base}/blog`} class="text-sm text-ink/45 transition hover:text-accent">{t.back}</a>
+    <a href={`${base}/news#blog`} class="text-sm text-ink/45 transition hover:text-accent">{t.back}</a>
 
     <div class="mt-8 flex flex-wrap items-center gap-3 text-xs">
       <span class={`rounded-full border border-ink/10 bg-ink/[0.03] px-2.5 py-1 font-semibold ${cat === 'linkedin' ? 'text-[#0A66C2]' : 'text-accent'}`}>
@@ -76,7 +99,7 @@ const t = {
     </div>
 
     <h1 class="mt-4 text-3xl font-bold leading-tight text-ink md:text-4xl">{title}</h1>
-    {excerpt && <p class="mt-4 text-lg leading-relaxed text-ink/55">{excerpt}</p>}
+    {showExcerpt && <p class="mt-4 text-lg leading-relaxed text-ink/55">{excerpt}</p>}
 
     {hero && (
       <Image src={hero} alt={title} width={1280}
