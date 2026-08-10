@@ -36,6 +36,8 @@ const measurementData = JSON.stringify(MEASUREMENTS);
 // 기판 크기·전달 방식은 언어별 라벨을 미리 고른다
 const sizeOpts = SUBSTRATE_SIZES.map((s) => ({ value: s.value, label: isKo ? s.ko : s.en }));
 const deliveryOpts = DELIVERY_METHODS.map((d) => ({ value: d.value, label: isKo ? d.ko : d.en }));
+// 배송형 전달값(택배/배송) — 이 값 선택 시에만 배송지 블록 노출
+const shipValues = DELIVERY_METHODS.filter((d) => /courier|parcel|delivery|ship|배송|택배/i.test(`${d.value} ${d.ko} ${d.en}`)).map((d) => d.value);
 // 배송 국가 (simple=고정가 주문 폼 전용)
 const countryOpts = COUNTRIES.map((cn) => ({ value: cn.code, label: isKo ? cn.ko : cn.en }));
 // 증착 공정 목록(두께 nm 단위) — 대표 소재 판정용 (세정 가스가 '소재'로 잡히던 문제 방지)
@@ -228,6 +230,41 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
 
       {!simple && (
       <>
+      <!-- ②-1 배송지 — 기판 전달 방식이 '배송/택배'일 때만 표시 (0214). 웨이퍼 주문(Checkout) 포맷과 동일 -->
+      <div id="q-ship" hidden data-ship-values={JSON.stringify(shipValues)} class="mt-6 space-y-6 rounded-2xl border border-ink/10 bg-ink/[0.02] p-5">
+        <p class="text-sm font-semibold text-ink/70">{isKo ? '배송지' : 'Shipping address'}</p>
+        <div class="grid gap-6 sm:grid-cols-3">
+          <div>
+            <label for="q-ship-zip" class={labelClass}>{isKo ? '우편번호' : 'Postal code'} <span class="text-danger">*</span></label>
+            <input id="q-ship-zip" name="shipZip" type="text" autocomplete="postal-code" class={inputClass} />
+          </div>
+          <div class="sm:col-span-2">
+            <label for="q-ship-addr1" class={labelClass}>{isKo ? '주소' : 'Address'} <span class="text-danger">*</span></label>
+            <input id="q-ship-addr1" name="shipAddr1" type="text" autocomplete="street-address" class={inputClass} />
+          </div>
+        </div>
+        <div>
+          <label for="q-ship-addr2" class={labelClass}>{isKo ? '상세 주소' : 'Address line 2'}</label>
+          <input id="q-ship-addr2" name="shipAddr2" type="text" class={inputClass} />
+        </div>
+      </div>
+
+      <script is:inline>
+        (() => {
+          const sel = document.getElementById('q-delivery');
+          const box = document.getElementById('q-ship');
+          if (!sel || !box) return;
+          const shipVals = JSON.parse(box.dataset.shipValues || '[]');
+          const req = ['q-ship-zip', 'q-ship-addr1'].map((i) => document.getElementById(i));
+          const sync = () => {
+            const on = shipVals.includes(sel.value);
+            box.hidden = !on;
+            req.forEach((el) => { if (el) { el.required = on; if (!on) el.value = el.value; } });
+          };
+          sel.addEventListener('change', sync); sync();
+        })();
+      </script>
+
       <!-- ③ 공정 시퀀스 빌더 (엑셀 대체) — 필수 -->
       <fieldset>
         <legend class={legendClass}>{q.sectionProcess} <span class="text-danger">*</span></legend>
