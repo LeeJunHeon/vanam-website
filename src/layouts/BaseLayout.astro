@@ -111,9 +111,9 @@ const popupHref = popup.linkUrl
   : null;
 const popupAlt = popup.alt || (isKo ? 'VanaM 공지' : 'VanaM notice');
 const fl = isKo
-  ? { ceo: '대표', bizNo: '사업자등록번호', mailOrder: '통신판매업 신고번호',
+  ? { ceo: '대표', bizNo: '사업자등록번호', mailOrder: '통신판매업 신고번호', hosting: '호스팅 제공자',
       privacy: '개인정보처리방침', terms: '이용약관', refund: '환불·교환 정책' }
-  : { ceo: 'CEO', bizNo: 'Business Reg. No.', mailOrder: 'E-Commerce Reg. No.',
+  : { ceo: 'CEO', bizNo: 'Business Reg. No.', mailOrder: 'E-Commerce Reg. No.', hosting: 'Hosting',
       privacy: 'Privacy Policy', terms: 'Terms of Service', refund: 'Refund & Exchange' };
 
 const nav = [
@@ -523,6 +523,7 @@ const childHref = (path) => {
         <div translate="no" class="mt-5 space-y-1 text-[13px] leading-relaxed text-ink/60">
           <p>{fl.ceo}: {biz.ceo} &nbsp;·&nbsp; {fl.bizNo}: {company.bizNo}</p>
           <p>{fl.mailOrder}: {company.mailOrderNo}</p>
+          <p>{fl.hosting}: Cloudflare, Inc.</p>
           <p>({company.zip}) {biz.address}</p>
           <p>{company.email} &nbsp;·&nbsp; {company.tel}</p>
         </div>

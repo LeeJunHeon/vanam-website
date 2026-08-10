@@ -3,7 +3,7 @@
   "lang": "en",
   "order": 2,
   "title": "Terms of Service",
-  "updated": "2026-07-13",
+  "updated": "2026-08-10",
   "intro": "These Terms govern the use of the online store operated by VanaM Inc. (the \"Company\"), including the rights, obligations and responsibilities of the Company and users.",
   "sections": [
     {
@@ -61,6 +61,14 @@
     {
       "heading": "Article 14 (Dispute Resolution)",
       "body": "Disputes shall in principle be resolved by mutual agreement. If agreement is not reached, mediation may be sought from the Consumer Dispute Mediation Committee.\n\nThese Terms are governed by the laws of the Republic of Korea, and jurisdiction is determined under the Civil Procedure Act."
+    },
+    {
+      "heading": "Article 15 (Export Control)",
+      "body": "(1) Films, materials and process deliverables supplied by the Company may be subject to export control laws, including the Foreign Trade Act of Korea and the U.S. Export Administration Regulations (EAR).\n(2) Users shall truthfully state the end use and end user of the goods and, upon the Company's request, cooperate in providing end-user statements or similar documents.\n(3) Where a strategic-item classification, export license or similar procedure is required, the Company may withhold delivery until it is completed; such delay is not attributable to the Company. If a license is denied, the relevant contract is terminated and any payment received will be refunded.\n(4) Users are solely responsible for compliance with applicable laws when re-exporting the goods to third countries."
+    },
+    {
+      "heading": "Article 16 (Research Use and Limitation of Warranty)",
+      "body": "(1) Unless otherwise agreed in writing, specimens, wafers, films and process deliverables are supplied for research and development use only, and the Company does not warrant fitness for particular purposes such as medical or human application or safety-critical systems.\n(2) The Company warrants the goods to the extent of the specifications stated in the quotation, order or datasheet, and, to the extent permitted by law, disclaims all other express or implied warranties, including merchantability and fitness for a particular purpose.\n(3) This Article applies to the extent permitted by mandatory law; liability arising from the Company's willful misconduct or gross negligence is not limited."
     }
   ]
 }

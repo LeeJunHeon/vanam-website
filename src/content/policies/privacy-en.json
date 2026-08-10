@@ -3,7 +3,7 @@
   "lang": "en",
   "order": 1,
   "title": "Privacy Policy",
-  "updated": "2026-07-13",
+  "updated": "2026-08-10",
   "intro": "VanaM Inc. (the \"Company\") complies with the Personal Information Protection Act of the Republic of Korea and establishes this Privacy Policy to protect users' personal information.",
   "sections": [
     {
@@ -24,7 +24,7 @@
     },
     {
       "heading": "5. Outsourcing of Processing",
-      "body": "The Company outsources the following processing tasks.\n\n· Payment processing: Toss Payments Co., Ltd.\n· Website hosting and infrastructure: Cloudflare, Inc.\n· Delivery: contracted courier\n\nData protection obligations are specified in each contract and compliance is supervised."
+      "body": "The Company outsources the following processing tasks. Some processors are located overseas; pursuant to Article 28-8 of the Personal Information Protection Act, the cross-border transfers are disclosed below. You may refuse such transfer by discontinuing use of the service or contacting us, in which case payment, notification and related features may be limited.\n\n· Website hosting & security infrastructure: Cloudflare, Inc. (USA) — Items: access logs and transit of information entered on the site / When & how: continuous transmission over the network while using the service / Retention: until the outsourcing contract ends\n· International payment processing: PayPal Pte. Ltd. and its affiliates (USA, Singapore, etc.) — Items: name, email, payment details / When & how: transmitted when PayPal checkout is selected / Retention: per PayPal's privacy policy\n· Intake notifications: Google LLC (USA, Google Chat) — Items: name, email, phone, company, request details, shipping address / When & how: transmitted upon order, quote or inquiry submission / Retention: destroyed without delay after internal confirmation\n· Delivery: contracted courier (Korea) — recipient name, phone, address\n\nData protection obligations are specified in each contract and compliance is supervised."
     },
     {
       "heading": "6. Rights of Data Subjects",
@@ -49,6 +49,10 @@
     {
       "heading": "11. Changes to This Policy",
       "body": "This policy takes effect on the stated date. Any additions, deletions or amendments will be announced on the website at least 7 days before taking effect."
+    },
+    {
+      "heading": "12. Children Under 14",
+      "body": "The Company does not collect or use personal information of children under 14. The service is intended for businesses and adult researchers. If such information is found to have been collected, it will be destroyed without delay."
     }
   ]
 }
