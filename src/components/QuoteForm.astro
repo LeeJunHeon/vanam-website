@@ -230,9 +230,42 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
 
       {!simple && (
       <>
-      <!-- ②-1 배송지 — 기판 전달 방식이 '배송/택배'일 때만 표시 (0214). 웨이퍼 주문(Checkout) 포맷과 동일 -->
+      <!-- ②-1 배송지 — 기판 전달 방식이 '배송/택배'일 때만 표시 (0216: 웨이퍼 주문과 동일 구성) -->
       <div id="q-ship" hidden data-ship-values={JSON.stringify(shipValues)} class="mt-6 space-y-6 rounded-2xl border border-ink/10 bg-ink/[0.02] p-5">
         <p class="text-sm font-semibold text-ink/70">{isKo ? '배송지' : 'Shipping address'}</p>
+
+        <label class="flex items-center gap-2 text-sm text-ink/70">
+          <input id="q-ship-same" type="checkbox" checked class="h-4 w-4 rounded border-ink/30" />
+          {isKo ? '주문자와 동일' : 'Same as contact above'}
+        </label>
+
+        <div id="q-ship-rec" hidden class="grid gap-6 sm:grid-cols-2">
+          <div>
+            <label for="q-ship-name" class={labelClass}>{isKo ? '수령인' : 'Recipient'} <span class="text-danger">*</span></label>
+            <input id="q-ship-name" name="shipName" type="text" class={inputClass} />
+          </div>
+          <div>
+            <label for="q-ship-phone" class={labelClass}>{isKo ? '수령인 연락처' : 'Recipient phone'} <span class="text-danger">*</span></label>
+            <input id="q-ship-phone" name="shipPhone" type="tel" placeholder="+82 10-1234-5678"
+              pattern={String.raw`\+[0-9][0-9 \(\)\.\-]{6,}`} title={isKo ? '국가번호 포함 (+82 …)' : 'Include country code (+82 …)'} class={inputClass} />
+          </div>
+        </div>
+
+        <div class="grid gap-6 sm:grid-cols-2">
+          <div>
+            <label for="q-ship-country" class={labelClass}>{isKo ? '국가' : 'Country'} <span class="text-danger">*</span></label>
+            <select id="q-ship-country" name="shipCountry" class={selectClass}>
+              {countryOpts.map((cn) => <option value={cn.value} selected={cn.value === 'KR'}>{cn.label}</option>)}
+              <option value="OTHER">{isKo ? '기타 (직접 입력)' : 'Other (type below)'}</option>
+            </select>
+            <input type="hidden" id="q-ship-clabel" name="shipCountryLabel" />
+          </div>
+          <div id="q-ship-other-wrap" hidden>
+            <label for="q-ship-other" class={labelClass}>{isKo ? '국가명 직접 입력' : 'Country name'} <span class="text-danger">*</span></label>
+            <input id="q-ship-other" name="shipCountryOther" type="text" class={inputClass} />
+          </div>
+        </div>
+
         <div class="grid gap-6 sm:grid-cols-3">
           <div>
             <label for="q-ship-zip" class={labelClass}>{isKo ? '우편번호' : 'Postal code'} <span class="text-danger">*</span></label>
@@ -247,21 +280,39 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
           <label for="q-ship-addr2" class={labelClass}>{isKo ? '상세 주소' : 'Address line 2'}</label>
           <input id="q-ship-addr2" name="shipAddr2" type="text" class={inputClass} />
         </div>
+        <div>
+          <label for="q-ship-memo" class={labelClass}>{isKo ? '배송 요청사항' : 'Delivery notes'}</label>
+          <textarea id="q-ship-memo" name="shipMemo" rows="2" class={inputClass}></textarea>
+        </div>
       </div>
 
       <script is:inline>
         (() => {
-          const sel = document.getElementById('q-delivery');
-          const box = document.getElementById('q-ship');
+          const $ = (i) => document.getElementById(i);
+          const sel = $('q-delivery'), box = $('q-ship');
           if (!sel || !box) return;
           const shipVals = JSON.parse(box.dataset.shipValues || '[]');
-          const req = ['q-ship-zip', 'q-ship-addr1'].map((i) => document.getElementById(i));
+          const same = $('q-ship-same'), rec = $('q-ship-rec');
+          const country = $('q-ship-country'), otherWrap = $('q-ship-other-wrap');
+          const clabel = $('q-ship-clabel');
+          const setReq = (id, on) => { const el = $(id); if (el) el.required = on; };
           const sync = () => {
             const on = shipVals.includes(sel.value);
             box.hidden = !on;
-            req.forEach((el) => { if (el) { el.required = on; if (!on) el.value = el.value; } });
+            rec.hidden = same.checked;
+            const other = country.value === 'OTHER';
+            otherWrap.hidden = !other;
+            clabel.value = other ? ($('q-ship-other').value || 'OTHER')
+                                 : (country.selectedOptions[0]?.textContent || country.value);
+            ['q-ship-zip', 'q-ship-addr1'].forEach((i) => setReq(i, on));
+            ['q-ship-name', 'q-ship-phone'].forEach((i) => setReq(i, on && !same.checked));
+            setReq('q-ship-other', on && other);
           };
-          sel.addEventListener('change', sync); sync();
+          sel.addEventListener('change', sync);
+          same.addEventListener('change', sync);
+          country.addEventListener('change', sync);
+          $('q-ship-other').addEventListener('input', sync);
+          sync();
         })();
       </script>
 

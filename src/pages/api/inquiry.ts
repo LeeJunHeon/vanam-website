@@ -84,7 +84,20 @@ export const POST: APIRoute = async ({ request }) => {
   const shipZip = str(body.shipZip).slice(0, 20);
   const shipAddr1 = str(body.shipAddr1).slice(0, 200);
   const shipAddr2 = str(body.shipAddr2).slice(0, 200);
-  const shipLine = shipAddr1 ? `[배송지] (${shipZip || '-'}) ${shipAddr1}${shipAddr2 ? ' ' + shipAddr2 : ''}` : '';
+  const shipCountryLabel = str(body.shipCountryLabel).slice(0, 60);
+  const shipName = str(body.shipName).slice(0, 80);
+  const shipPhone = str(body.shipPhone).slice(0, 40);
+  const shipMemo = str(body.shipMemo).slice(0, 300);
+  const fbName = str(body.name).slice(0, 80);
+  const fbPhone = str(body.phone).slice(0, 40);
+  const shipLine = shipAddr1
+    ? [
+        `[배송지] ${shipCountryLabel || '-'}`,
+        `수령인: ${shipName || fbName || '-'} · ${shipPhone || fbPhone || '-'}`,
+        `(${shipZip || '-'}) ${shipAddr1}${shipAddr2 ? ' ' + shipAddr2 : ''}`,
+        shipMemo ? `배송 요청: ${shipMemo}` : '',
+      ].filter(Boolean).join('\n')
+    : '';
   const details = str(body.details).slice(0, MAX);
   // 조회 화면에서 보는 언어로 다시 그리기 위한 구조화 사본(라벨 붙이기 전의 값들).
   // ⚠️ 일반 필드 상한(2000자)을 쓰면 공정 12단계 + 분석 다수 + 긴 요청사항인 견적에서 잘려
