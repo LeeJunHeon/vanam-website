@@ -24,7 +24,7 @@
     },
     {
       "heading": "5. Outsourcing of Processing",
-      "body": "The Company outsources the following processing tasks. Some processors are located overseas; pursuant to Article 28-8 of the Personal Information Protection Act, the cross-border transfers are disclosed below. You may refuse such transfer by discontinuing use of the service or contacting us, in which case payment, notification and related features may be limited.\n\n· Website hosting & security infrastructure: Cloudflare, Inc. (USA) — Items: access logs and transit of information entered on the site / When & how: continuous transmission over the network while using the service / Retention: until the outsourcing contract ends\n· International payment processing: PayPal Pte. Ltd. and its affiliates (USA, Singapore, etc.) — Items: name, email, payment details / When & how: transmitted when PayPal checkout is selected / Retention: per PayPal's privacy policy\n· Intake notifications: Google LLC (USA, Google Chat) — Items: name, email, phone, company, request details, shipping address / When & how: transmitted upon order, quote or inquiry submission / Retention: destroyed without delay after internal confirmation\n· Delivery: contracted courier (Korea) — recipient name, phone, address\n\nData protection obligations are specified in each contract and compliance is supervised."
+      "body": "The Company outsources the following processing tasks. Some processors are located overseas; pursuant to Article 28-8 of the Personal Information Protection Act, the cross-border transfers are disclosed below. You may refuse such transfer by discontinuing use of the service or contacting us, in which case payment, notification and related features may be limited.\n\n· Website hosting & security infrastructure: Cloudflare, Inc. (USA) — Items: access logs and transit of information entered on the site / When & how: continuous transmission over the network while using the service / Retention: until the outsourcing contract ends\n· International payment processing: PayPal Pte. Ltd. and its affiliates (USA, Singapore, etc.) — Items: name, email, payment details / When & how: transmitted when PayPal checkout is selected / Retention: per PayPal's privacy policy\n· Intake notifications: Google LLC (USA, Google Chat) — Items: name, email, phone, company, request details, shipping address / When & how: transmitted upon order, quote or inquiry submission / Retention: until the notification purpose is fulfilled (subject to Google Chat retention settings)\n· Delivery: contracted courier (Korea) — recipient name, phone, address\n\nData protection obligations are specified in each contract and compliance is supervised."
     },
     {
       "heading": "6. Rights of Data Subjects",
@@ -36,7 +36,7 @@
     },
     {
       "heading": "8. Security Measures",
-      "body": "· Minimising and training staff who handle personal information\n· Managing access rights to personal information\n· Encryption in transit (HTTPS)\n· Retention of access logs and prevention of tampering\n· Payment data is handled by the payment gateway and is not stored by the Company"
+      "body": "· Minimising staff who handle personal information\n· Managing access rights to the admin console\n· Encryption in transit (HTTPS)\n· Retention of access logs\n· Payment data is handled by the payment gateway and is not stored by the Company"
     },
     {
       "heading": "9. Data Protection Officer",
