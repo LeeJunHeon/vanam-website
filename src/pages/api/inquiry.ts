@@ -81,23 +81,6 @@ export const POST: APIRoute = async ({ request }) => {
   const method = str(body.method).slice(0, MAX);
   const substrate = str(body.substrate).slice(0, MAX);
   // 배송지(0214) — 전달 방식이 배송/택배일 때 폼에서 온다. details 에 합류시켜 챗·admin·D1 에 함께 남긴다.
-  const shipZip = str(body.shipZip).slice(0, 20);
-  const shipAddr1 = str(body.shipAddr1).slice(0, 200);
-  const shipAddr2 = str(body.shipAddr2).slice(0, 200);
-  const shipCountryLabel = str(body.shipCountryLabel).slice(0, 60);
-  const shipName = str(body.shipName).slice(0, 80);
-  const shipPhone = str(body.shipPhone).slice(0, 40);
-  const shipMemo = str(body.shipMemo).slice(0, 300);
-  const fbName = str(body.name).slice(0, 80);
-  const fbPhone = str(body.phone).slice(0, 40);
-  const shipLine = shipAddr1
-    ? [
-        `[배송지] ${shipCountryLabel || '-'}`,
-        `수령인: ${shipName || fbName || '-'} · ${shipPhone || fbPhone || '-'}`,
-        `(${shipZip || '-'}) ${shipAddr1}${shipAddr2 ? ' ' + shipAddr2 : ''}`,
-        shipMemo ? `배송 요청: ${shipMemo}` : '',
-      ].filter(Boolean).join('\n')
-    : '';
   const details = str(body.details).slice(0, MAX);
   // 조회 화면에서 보는 언어로 다시 그리기 위한 구조화 사본(라벨 붙이기 전의 값들).
   // ⚠️ 일반 필드 상한(2000자)을 쓰면 공정 12단계 + 분석 다수 + 긴 요청사항인 견적에서 잘려
@@ -121,7 +104,6 @@ export const POST: APIRoute = async ({ request }) => {
       // ⚠️ 예전 견적 폼의 '두께·수량·납기' 줄은 뺐다. 지금 폼에는 그 항목이 없어서
       //    **항상 `두께: — | 수량: — | 납기: —`** 로만 찍혔다(실제 입력값이 아니다).
       //    같은 정보는 아래 요청 본문에 '총 샘플 수량'·'완료 희망일'로 이미 들어 있다.
-      shipLine,
       `요청: ${details || dash}`,
       meta,
     ].filter(Boolean).join('\n');
@@ -137,7 +119,7 @@ export const POST: APIRoute = async ({ request }) => {
       const base = [
         id, type, 'new', name, email, phone || null, company || null,
         message || null, product || null, productName || null,
-        material || null, method || null, substrate || null, (shipLine ? shipLine + '\n' + (details || '') : details) || null,
+        material || null, method || null, substrate || null, details || null,
         locale, nowIso(),
       ];
       // thickness·quantity·deadline 컬럼은 지금 폼에 없는 항목이라 더 이상 쓰지 않는다.

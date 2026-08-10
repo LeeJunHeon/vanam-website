@@ -708,10 +708,10 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
     const DL = isKoDoc
       ? { qty: "수량", shipHdr: "[배송 주소]", country: "국가", addr: "주소", cityState: "도시/주", postal: "우편번호",
           notes: "요청사항", seqHdr: "[공정 시퀀스]", analysis: "[분석]", delivery: "기판 전달",
-          samples: "총 샘플 수량", due: "완료 희망일", caution: "주의사항" }
+          samples: "총 샘플 수량", due: "완료 희망일", caution: "주의사항", recip: "수령인", shipMemo: "배송 요청" }
       : { qty: "Quantity", shipHdr: "[Shipping address]", country: "Country", addr: "Address", cityState: "City/State", postal: "Postal code",
           notes: "Notes", seqHdr: "[Process sequence]", analysis: "[Analysis]", delivery: "Substrate delivery",
-          samples: "Total samples", due: "Target completion", caution: "Notes" };
+          samples: "Total samples", due: "Target completion", caution: "Notes", recip: "Recipient", shipMemo: "Delivery notes" };
 
     const isSimple = !!M.simple;
 
@@ -761,6 +761,12 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
     // 분석 항목(체크박스 다중) 수집
     const measures = Array.from(form.querySelectorAll<HTMLInputElement>('input[name="measurements"]:checked')).map((el) => el.value);
 
+    // 배송지(0217) — details 뿐 아니라 아래 detailsJson·요약 lines 에서도 쓴다.
+    // 분기 안에서 const 로 잡으면 블록 밖(요약 lines)에서 ReferenceError 라 여기서 선언한다.
+    let shipBlock: string[] = [];
+    let shipAddrQ = "", shipRecip = "", shipRecPh = "";
+    let shipKeep = { zip: "", country: "", memo: "" };
+
     if (isSimple) {
       // 단일 상품(고정가 주문): 수량 + 배송 주소 + 메모를 details 로 정리
       const countryMap: Record<string, string> = JSON.parse(M.mapCountry || "{}");
@@ -795,16 +801,35 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
         || "Process request";
       data.method = uniq(depRows.map((s) => s.process)).join(", ");
       data.substrate = [data.substrateType, sizeLabel].filter(Boolean).join(" / ");
+      // 배송지(0217) — 전달 방식이 배송형일 때만. '주문자와 동일'이면 상단 연락처로 폴백.
+      const shipOn = !(document.getElementById("q-ship") as HTMLElement | null)?.hidden;
+      const shipSame = (document.getElementById("q-ship-same") as HTMLInputElement | null)?.checked ?? true;
+      shipAddrQ = [data.shipAddr1, data.shipAddr2].filter(Boolean).join(", ");
+      shipRecip = shipOn ? String((shipSame ? data.name : data.shipName) ?? "") : "";
+      shipRecPh = shipOn ? String((shipSame ? data.phone : data.shipPhone) ?? "") : "";
+      shipKeep = { zip: String(data.shipZip ?? ""), country: String(data.shipCountryLabel ?? ""), memo: String(data.shipMemo ?? "") };
+      shipBlock = shipOn && data.shipAddr1 ? [
+        DL.shipHdr,
+        shipKeep.country ? `${DL.country}: ${shipKeep.country}` : "",
+        `${DL.recip}: ${shipRecip}${shipRecPh ? ` \u00b7 ${shipRecPh}` : ""}`,
+        `${DL.addr}: ${shipAddrQ}`,
+        shipKeep.zip ? `${DL.postal}: ${shipKeep.zip}` : "",
+        shipKeep.memo ? `${DL.shipMemo}: ${shipKeep.memo}` : "",
+      ].filter(Boolean) : [];
       data.details = [
+        deliveryLabel ? `${DL.delivery}: ${deliveryLabel}` : "",
+        ...shipBlock,
+        data.sampleCount ? `${DL.samples}: ${data.sampleCount}` : "",
+        data.completionDate ? `${DL.due}: ${data.completionDate}` : "",
+        "",
         DL.seqHdr,
         seq.text,
         measures.length ? `\n${DL.analysis} ${measures.join(", ")}` : "",
-        "",
-        deliveryLabel ? `${DL.delivery}: ${deliveryLabel}` : "",
-        data.sampleCount ? `${DL.samples}: ${data.sampleCount}` : "",
-        data.completionDate ? `${DL.due}: ${data.completionDate}` : "",
         data.notes ? `${DL.caution}: ${data.notes}` : "",
       ].filter(Boolean).join("\n");
+      delete data.shipZip; delete data.shipAddr1; delete data.shipAddr2;
+      delete data.shipCountry; delete data.shipCountryOther; delete data.shipCountryLabel;
+      delete data.shipName; delete data.shipPhone; delete data.shipMemo;
     }
 
     data.type = "quote";
@@ -828,6 +853,10 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
         sampleCount: String(data.sampleCount ?? ""),
         completionDate: String(data.completionDate ?? ""), // 자유 입력 — 그대로
         notes: String(data.notes ?? ""),                   // 자유 입력 — 그대로
+        ship: shipBlock.length ? {                          // 배송지(0217) — 조회 화면 언어 재구성용
+          country: shipKeep.country, name: shipRecip, phone: shipRecPh,
+          zip: shipKeep.zip, addr: shipAddrQ, memo: shipKeep.memo,
+        } : null,
       });
     }
 
@@ -840,6 +869,7 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
       { l: DL.seqHdr.replace(/[[\]]/g, ''), v: seq.text },
       { l: DL.analysis.replace(/[[\]]/g, ''), v: measures.join(', ') },
       { l: DL.delivery, v: deliveryLabel },
+      { l: DL.shipHdr.replace(/[[\]]/g, ''), v: shipBlock.slice(1).join('\n') },
       { l: DL.due, v: String(data.completionDate ?? '') },
       { l: DL.caution, v: String(data.notes ?? '') },
     ].filter((x) => x.v.trim());
