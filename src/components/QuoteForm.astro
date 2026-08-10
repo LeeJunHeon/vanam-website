@@ -50,7 +50,7 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
     <h2 class="mt-4 text-3xl font-bold leading-tight text-ink">{productName}</h2>
     <p class="mt-4 text-base leading-relaxed text-ink/60">{simple ? q.introOrder : q.intro}</p>
 
-    <form id="quote-form" class="mt-12 space-y-12"
+    <form id="quote-form" novalidate class="mt-12 space-y-12"
       data-product={product.id}
       data-product-name={productName}
       data-simple={simple ? '1' : ''}
@@ -246,8 +246,7 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
           </div>
           <div>
             <label for="q-ship-phone" class={labelClass}>{isKo ? '수령인 연락처' : 'Recipient phone'} <span class="text-danger">*</span></label>
-            <input id="q-ship-phone" name="shipPhone" type="tel" placeholder="+82 10-1234-5678"
-              pattern={String.raw`\+[0-9][0-9 \(\)\.\-]{6,}`} title={isKo ? '국가번호 포함 (+82 …)' : 'Include country code (+82 …)'} class={inputClass} />
+            <input id="q-ship-phone" name="shipPhone" type="tel" placeholder="+82 10-1234-5678" class={inputClass} />
           </div>
         </div>
 
@@ -256,7 +255,6 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
             <label for="q-ship-country" class={labelClass}>{isKo ? '국가' : 'Country'} <span class="text-danger">*</span></label>
             <select id="q-ship-country" name="shipCountry" class={selectClass}>
               {countryOpts.map((cn) => <option value={cn.value} selected={cn.value === 'KR'}>{cn.label}</option>)}
-              <option value="OTHER">{isKo ? '기타 (직접 입력)' : 'Other (type below)'}</option>
             </select>
             <input type="hidden" id="q-ship-clabel" name="shipCountryLabel" />
           </div>
@@ -446,6 +444,7 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
 
 <script>
   import { initTelInput, normalizeTelInputs } from '../lib/telInput';
+  import { showHint, hideHint } from '../lib/formHint';
   // 보안 확인 위젯 — 로드 실패 시 자동 재시도·안내까지 여기서 처리한다
   import { mountTurnstile, resetTurnstile } from '../lib/turnstile-client';
   mountTurnstile();
@@ -499,6 +498,8 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
   // 전화번호 입력에 국가번호 드롭다운 적용
   const qPhoneEl = document.getElementById("q-phone") as HTMLInputElement | null;
   if (qPhoneEl) initTelInput(qPhoneEl, document.documentElement.lang || "en");
+  const qShipPhoneEl = document.getElementById("q-ship-phone") as HTMLInputElement | null;
+  if (qShipPhoneEl) initTelInput(qShipPhoneEl, document.documentElement.lang || "en");
 
   function setStatus(msg: string, ok: boolean) {
     statusEl.textContent = msg;
@@ -658,12 +659,67 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
   // ⚠️ printBtn 은 여기서 선언한다. 사용처(syncGate)보다 아래에서 선언하면 TDZ 로 스크립트가 통째로 죽는다(전례 있음).
   const submitBtn = document.getElementById("quote-submit") as HTMLButtonElement | null;
   const printBtn = document.getElementById("quote-print") as HTMLButtonElement | null;
+
+  const tokenOk = () =>
+    Boolean((form.querySelector('[name="cf-turnstile-response"]') as HTMLInputElement | null)?.value);
+
+  // 0222: 검증 단일화 — 폼 위→아래 "첫 문제 지점" 하나만 골라, 그 자리에서 말풍선으로 알린다.
+  //   네이티브 검증(빈 필드·동의)과 커스텀 검증(공정 없음·봇 확인)을 DOM 순서로 합쳐 정렬한다.
+  type Issue = { el: HTMLElement | null; msg?: string };
+  function collectIssues(forSubmit: boolean): Issue | null {
+    const cands: Issue[] = [];
+    if (form) {
+      for (const raw of Array.from(form.elements)) {
+        const el = raw as HTMLInputElement;
+        if (!el.willValidate) continue;
+        if (!forSubmit && el.name === "privacy") continue; // 다운로드는 동의 불필요
+        if (!el.checkValidity()) cands.push({ el });
+      }
+    }
+    if (!M.simple && listEl) {
+      const rows = Array.from(listEl.querySelectorAll(".q-process-row")) as HTMLElement[];
+      if (rows.length === 0) {
+        cands.push({ el: listEl as HTMLElement, msg: M.msgNoprocess });
+      } else {
+        // 행 단위 미입력도 같은 게이트에서 — 요청·다운로드 동작을 일치시킨다
+        rows.forEach((row, i) => {
+          const proc = row.querySelector(".q-row-process") as HTMLSelectElement | null;
+          if (proc && !proc.value) { cands.push({ el: proc, msg: `${i + 1}${M.msgSeqProcess}` }); return; }
+          const matWrap = row.querySelector(".q-material-wrap") as HTMLElement | null;
+          const matSel = row.querySelector(".q-row-material") as HTMLSelectElement | null;
+          if (matWrap && !matWrap.hidden && matSel && !matSel.value) { cands.push({ el: matSel, msg: `${i + 1}${M.msgSeqMaterial}` }); return; }
+          const valWrap = row.querySelector(".q-value-wrap") as HTMLElement | null;
+          const valInput = row.querySelector(".q-row-value") as HTMLInputElement | null;
+          if (valWrap && !valWrap.hidden && valInput && !valInput.value.trim()) cands.push({ el: valInput, msg: `${i + 1}${M.msgSeqValue}` });
+        });
+      }
+    }
+    if (forSubmit && !tokenOk())
+      cands.push({ el: form?.querySelector(".cf-turnstile") as HTMLElement | null, msg: M.msgCaptcha });
+    const live = cands.filter((c) => c.el) as { el: HTMLElement; msg?: string }[];
+    live.sort((a, b) => (a.el.compareDocumentPosition(b.el) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1));
+    return live[0] ?? null;
+  }
+  // 0224: 안내는 자체 팁 "하나"로만 — 크롬 네이티브 말풍선은 스크롤 중 닫히고(첫 클릭에
+  //   안 보이던 원인), BaseLayout 전역 invalid 핸들러의 setCustomValidity 와도 얽혀
+  //   깜빡임을 만든다. reportValidity 는 더 이상 쓰지 않는다.
+  // 0225: 안내는 공통 모듈(formHint)로 — 레이아웃에 영향 없는 고정 오버레이 1개.
+  function flagInvalid(issue: Issue) {
+    const el = issue.el;
+    if (!el) return;
+    const ctl = el as HTMLInputElement;
+    let msg = issue.msg ?? "";
+    if (!msg && typeof ctl.checkValidity === "function" && ctl.willValidate) {
+      ctl.checkValidity(); // 전역 invalid 핸들러가 한글 문구를 채운다 (UI 없음)
+      msg = ctl.validationMessage || M.msgRequired || "";
+    }
+    const anchor = (el.closest("label") as HTMLElement | null) ?? el;
+    showHint(anchor, msg, ctl.willValidate ? ctl : null);
+  }
   if (form && submitBtn) {
     // 화면에 보이지 않는 입력이 required 로 남으면 브라우저가 제출을 막으면서도
     // 경고 대상을 찾지 못해 "눌러도 반응 없음" 이 된다.
     const isHidden = (el: HTMLElement) => !el.offsetParent && getComputedStyle(el).position !== "fixed";
-    const tokenOk = () =>
-      Boolean((form.querySelector('[name="cf-turnstile-response"]') as HTMLInputElement | null)?.value);
     const fieldsOk = (skipPrivacy = false) => {
       for (const el of Array.from(form.elements) as HTMLElement[]) {
         const f = el as HTMLInputElement;
@@ -681,9 +737,9 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
 
     const syncGate = () => {
       const base = fieldsOk() && seqOk();
-      submitBtn.disabled = !(base && tokenOk());
+      void base; submitBtn.disabled = false; // 0221: 상시 활성 — 사유는 클릭 시 안내
       // 다운로드는 서버로 보내지 않으므로 개인정보 동의·보안확인은 요구하지 않는다.
-      if (printBtn) printBtn.disabled = !(fieldsOk(true) && seqOk());
+      if (printBtn) printBtn.disabled = false;
     };
     form.addEventListener("input", syncGate);
     form.addEventListener("change", syncGate);
@@ -708,17 +764,18 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
     const DL = isKoDoc
       ? { qty: "수량", shipHdr: "[배송 주소]", country: "국가", addr: "주소", cityState: "도시/주", postal: "우편번호",
           notes: "요청사항", seqHdr: "[공정 시퀀스]", analysis: "[분석]", delivery: "기판 전달",
-          samples: "총 샘플 수량", due: "완료 희망일", caution: "주의사항", recip: "수령인", shipMemo: "배송 요청" }
+          samples: "총 샘플 수량", due: "완료 희망일", caution: "주의사항", recip: "수령인", shipMemo: "배송 요청", secSub: "[기판 정보]", subLbl: "기판" }
       : { qty: "Quantity", shipHdr: "[Shipping address]", country: "Country", addr: "Address", cityState: "City/State", postal: "Postal code",
           notes: "Notes", seqHdr: "[Process sequence]", analysis: "[Analysis]", delivery: "Substrate delivery",
-          samples: "Total samples", due: "Target completion", caution: "Notes", recip: "Recipient", shipMemo: "Delivery notes" };
+          samples: "Total samples", due: "Target completion", caution: "Notes", recip: "Recipient", shipMemo: "Delivery notes", secSub: "[Substrate info]", subLbl: "Substrate" };
 
     const isSimple = !!M.simple;
+    { const bad = collectIssues(false); if (bad) { flagInvalid(bad); return null; } }
 
     // 공정 시퀀스 (최소 1개) — 단일 상품(simple)은 공정이 없으므로 건너뛴다
     const seq = collectSequence();
     if (!isSimple && seq.json.length === 0) {
-      setStatus(M.msgNoprocess!, false);
+      flagInvalid({ el: listEl as HTMLElement | null, msg: M.msgNoprocess });
       return null;
     }
     // 행을 추가만 하고 내용을 비워두는 경우가 많다.
@@ -728,16 +785,16 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
         const proc = (row.querySelector('.q-row-process') as HTMLSelectElement)?.value ?? '';
-        if (!proc) { setStatus(`${i + 1}${M.msgSeqProcess}`, false); return null; }
+        if (!proc) { flagInvalid({ el: row.querySelector('.q-row-process') as HTMLElement | null, msg: `${i + 1}${M.msgSeqProcess}` }); return null; }
         const matWrap = row.querySelector('.q-material-wrap') as HTMLElement | null;
         const matSel = row.querySelector('.q-row-material') as HTMLSelectElement | null;
         if (matWrap && !matWrap.hidden && matSel && !matSel.value) {
-          setStatus(`${i + 1}${M.msgSeqMaterial}`, false); return null;
+          flagInvalid({ el: matSel as unknown as HTMLElement, msg: `${i + 1}${M.msgSeqMaterial}` }); return null;
         }
         const valWrap = row.querySelector('.q-value-wrap') as HTMLElement | null;
         const valInput = row.querySelector('.q-row-value') as HTMLInputElement | null;
         if (valWrap && !valWrap.hidden && valInput && !valInput.value.trim()) {
-          setStatus(`${i + 1}${M.msgSeqValue}`, false); return null;
+          flagInvalid({ el: valInput as unknown as HTMLElement, msg: `${i + 1}${M.msgSeqValue}` }); return null;
         }
       }
     }
@@ -779,12 +836,12 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
       data.substrate = "";
       data.details = [
         data.sampleCount ? `${DL.qty}: ${data.sampleCount}` : "",
-        DL.shipHdr,
+        "\n" + DL.shipHdr,
         shipCountry ? `${DL.country}: ${shipCountry}` : "",
         shipAddr ? `${DL.addr}: ${shipAddr}` : "",
         shipCityLine ? `${DL.cityState}: ${shipCityLine}` : "",
         data.shipPostal ? `${DL.postal}: ${data.shipPostal}` : "",
-        data.notes ? `${DL.notes}: ${data.notes}` : "",
+        data.notes ? `\n${DL.notes}: ${data.notes}` : "",
       ].filter(Boolean).join("\n");
       delete data.shipCountry; delete data.shipCountryOther;
       delete data.shipAddr1; delete data.shipAddr2;
@@ -816,16 +873,19 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
         shipKeep.zip ? `${DL.postal}: ${shipKeep.zip}` : "",
         shipKeep.memo ? `${DL.shipMemo}: ${shipKeep.memo}` : "",
       ].filter(Boolean) : [];
+      // 0221: 폼 입력 순서 그대로, [섹션] 헤더 + 섹션 사이 빈 줄. 산출 로직(material/method 등)은 불변.
+      const shipSec = shipBlock.length ? ["\n" + shipBlock[0], ...shipBlock.slice(1)] : [];
       data.details = [
+        DL.secSub,
+        data.substrate ? `${DL.subLbl}: ${data.substrate}` : "",
         deliveryLabel ? `${DL.delivery}: ${deliveryLabel}` : "",
-        ...shipBlock,
         data.sampleCount ? `${DL.samples}: ${data.sampleCount}` : "",
         data.completionDate ? `${DL.due}: ${data.completionDate}` : "",
-        "",
-        DL.seqHdr,
+        ...shipSec,
+        "\n" + DL.seqHdr,
         seq.text,
         measures.length ? `\n${DL.analysis} ${measures.join(", ")}` : "",
-        data.notes ? `${DL.caution}: ${data.notes}` : "",
+        data.notes ? `\n${DL.caution}: ${data.notes}` : "",
       ].filter(Boolean).join("\n");
       delete data.shipZip; delete data.shipAddr1; delete data.shipAddr2;
       delete data.shipCountry; delete data.shipCountryOther; delete data.shipCountryLabel;
@@ -879,12 +939,15 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
 
   form?.addEventListener("submit", async (e) => {
     e.preventDefault();
+    setStatus("", true);
+    hideHint();
+    { const bad = collectIssues(true); if (bad) { flagInvalid(bad); return; } }
     const built = buildQuote();
     if (!built) return;
     const data = built.data;
 
     if (!data["cf-turnstile-response"]) {
-      setStatus(M.msgCaptcha!, false);
+      flagInvalid({ el: form?.querySelector(".cf-turnstile") as HTMLElement | null, msg: M.msgCaptcha });
       return;
     }
 
@@ -957,6 +1020,7 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
     //    BaseLayout 의 전역 invalid 핸들러가 setCustomValidity 로 남긴 문구가
     //    지워지지 않아 '계속하려면 동의해 주세요' 가 계속 뜨는 문제가 있었다.
     //    (setCustomValidity 는 required 와 무관하게 요소를 계속 invalid 로 만든다)
+    { const bad = collectIssues(false); if (bad) { flagInvalid(bad); return; } }
     const built = buildQuote();
     if (!built) return;
     const d = built.data;

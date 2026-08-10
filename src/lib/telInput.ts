@@ -24,6 +24,8 @@ export function initTelInput(input: HTMLInputElement, locale: string): Iti {
     separateDialCode: true,
     // 제출값은 항상 국제표준(E.164, 예: +821012345678)으로 관리
     numberDisplayFormat: 'NATIONAL',
+    // 입력 중 국가 형식으로 자동 포맷(하이픈·공백). 제출값은 normalizeTelInputs 가 E.164 로 정규화하므로 표시 전용.
+    formatAsYouType: true,
     // 국가 선택 UI 언어(영/한)
     i18n: locale === 'ko' ? koLocale : undefined,
   });

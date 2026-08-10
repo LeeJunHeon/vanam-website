@@ -49,7 +49,7 @@ const t = isKo
         method: '공정', substrate: '기판', reqBody: '요청 내용 보기',
         dSeq: '[공정 시퀀스]', dAnalysis: '[분석]', dDelivery: '기판 전달',
         dSamples: '총 샘플 수량', dDue: '완료 희망일', dNotes: '주의사항',
-        dShip: '[배송 주소]', dCountry: '국가', dRecip: '수령인', dAddr: '주소', dPostal: '우편번호', dShipMemo: '배송 요청',
+        dShip: '[배송 주소]', dCountry: '국가', dSecSub: '[기판 정보]', dRecip: '수령인', dAddr: '주소', dPostal: '우편번호', dShipMemo: '배송 요청',
         amount: '견적 금액', vat: '(부가세 포함)',
         sheetBtn: '견적서 인쇄 · PDF 저장',
         sheetTitle: '견적서',
@@ -98,7 +98,7 @@ const t = isKo
         method: 'Process', substrate: 'Substrate', reqBody: 'View request details',
         dSeq: '[Process sequence]', dAnalysis: '[Analysis]', dDelivery: 'Substrate delivery',
         dSamples: 'Total samples', dDue: 'Target completion', dNotes: 'Notes',
-        dShip: '[Shipping address]', dCountry: 'Country', dRecip: 'Recipient', dAddr: 'Address', dPostal: 'Postal code', dShipMemo: 'Delivery notes',
+        dShip: '[Shipping address]', dCountry: 'Country', dSecSub: '[Substrate info]', dRecip: 'Recipient', dAddr: 'Address', dPostal: 'Postal code', dShipMemo: 'Delivery notes',
         amount: 'Quoted amount', vat: '(VAT included)',
         sheetBtn: 'Print quotation (PDF)',
         sheetTitle: 'Quotation',
@@ -224,22 +224,23 @@ const inputClass =
       });
       const delivery = DELIV_MAP[String(dj.delivery ?? '')] ?? String(dj.delivery ?? '');
       const out = [
-        seqLines.length ? String(INQ.dSeq) : '',
-        ...seqLines,
-        Array.isArray(dj.measures) && dj.measures.length ? `\n${INQ.dAnalysis} ${dj.measures.join(', ')}` : '',
-        '',
+        INQ.dSecSub,
+        [dj.substrateType, dj.substrateSize].filter(Boolean).length ? `${INQ.substrate}: ${[dj.substrateType, SIZE_MAP[String(dj.substrateSize ?? '')] ?? dj.substrateSize].filter(Boolean).join(' / ')}` : '',
         delivery ? `${INQ.dDelivery}: ${delivery}` : '',
+        dj.sampleCount ? `${INQ.dSamples}: ${dj.sampleCount}` : '',
+        dj.completionDate ? `${INQ.dDue}: ${dj.completionDate}` : '',
         ...(dj.ship ? [
-          INQ.dShip,
+          '\n' + INQ.dShip,
           dj.ship.country ? `${INQ.dCountry}: ${dj.ship.country}` : '',
           `${INQ.dRecip}: ${dj.ship.name ?? ''}${dj.ship.phone ? ' \u00b7 ' + dj.ship.phone : ''}`,
           `${INQ.dAddr}: ${dj.ship.addr ?? ''}`,
           dj.ship.zip ? `${INQ.dPostal}: ${dj.ship.zip}` : '',
           dj.ship.memo ? `${INQ.dShipMemo}: ${dj.ship.memo}` : '',
         ].filter(Boolean) : []),
-        dj.sampleCount ? `${INQ.dSamples}: ${dj.sampleCount}` : '',
-        dj.completionDate ? `${INQ.dDue}: ${dj.completionDate}` : '',
-        dj.notes ? `${INQ.dNotes}: ${dj.notes}` : '',
+        seqLines.length ? '\n' + String(INQ.dSeq) : '',
+        ...seqLines,
+        Array.isArray(dj.measures) && dj.measures.length ? `\n${INQ.dAnalysis} ${dj.measures.join(', ')}` : '',
+        dj.notes ? `\n${INQ.dNotes}: ${dj.notes}` : '',
       ].filter((x) => x !== '').join('\n');
       return out || fallback;
     };

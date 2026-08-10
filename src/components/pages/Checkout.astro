@@ -201,7 +201,7 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
       </div>
     ) : (
       <div class="mt-12 grid gap-12 lg:grid-cols-[1fr_20rem]">
-        <form id="checkout-form" class="space-y-12"
+        <form id="checkout-form" novalidate class="space-y-12"
           data-quote={quote?.id ?? ''}
           data-quote-ship={quote ? String(quoteNeedsShipping) : ''}
           data-msg-biz={t.errBiz}
@@ -492,6 +492,7 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
 
 <script>
   import { initTelInput, normalizeTelInputs } from '../../lib/telInput';
+  import { showHint, hideHint } from '../../lib/formHint';
   // 보안 확인 위젯 — 로드 실패 시 자동 재시도·안내까지 여기서 처리한다
   import { mountTurnstile, resetTurnstile } from '../../lib/turnstile-client';
   mountTurnstile();
@@ -750,7 +751,7 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
     const syncGate = () => {
       if (gateBusy) return;
       const okAll = gateOk();
-      btn.disabled = !okAll;
+      btn.disabled = false; // 0221: 상시 활성 — 사유는 제출 시 안내
       // 입력은 다 됐는데 보안 확인만 안 끝난 경우 — 왜 못 누르는지 알려준다
       // 보안 확인 대기 상태는 '오류'가 아니다.
       // 1초마다 오류 문구를 다시 띄우고 화면을 스크롤하면 무한 반복처럼 보인다.
@@ -783,6 +784,20 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
       syncHiddenRequired();
       e.preventDefault();
 
+      // 0225: 견적 폼과 동일한 안내 — 첫 미입력 지점으로 이동 + 공통 힌트(레이아웃 불변)
+      hideHint();
+      {
+        const bad = (Array.from(form.elements) as HTMLInputElement[]).find(
+          (el) => el.willValidate && !el.checkValidity(),
+        );
+        if (bad) {
+          bad.checkValidity(); // 전역 invalid 핸들러가 문구를 채운다
+          const anchor = (bad.closest('label') as HTMLElement | null) ?? (bad as HTMLElement);
+          showHint(anchor, bad.validationMessage, bad);
+          return;
+        }
+      }
+
       // 미끼칸이 차 있어도 조용히 되돌리지 않는다.
       // 브라우저 자동완성이 채우는 오탐이 흔한데, 예전 방식(form.reset() 후 무반응)은
       // "버튼을 눌러도 아무 일도 안 일어나는" 증상으로 나타났다. 값만 비우고 진행한다.
@@ -799,7 +814,7 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
 
       // Turnstile 토큰 확인 (FormData 가 cf-turnstile-response 를 자동 수집한다)
       if (!data['cf-turnstile-response']) {
-        setStatus(M.msgCaptcha!, false);
+        setStatus('', true); showHint(form.querySelector('.cf-turnstile') as HTMLElement | null, M.msgCaptcha!);
         return;
       }
 

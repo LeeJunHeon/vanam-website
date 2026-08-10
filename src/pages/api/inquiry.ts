@@ -80,6 +80,7 @@ export const POST: APIRoute = async ({ request }) => {
   const locale = str(body.locale) === 'ko' ? 'ko' : 'en';
   const method = str(body.method).slice(0, MAX);
   const substrate = str(body.substrate).slice(0, MAX);
+  const sampleCount = str(body.sampleCount).slice(0, 20);
   // 배송지(0214) — 전달 방식이 배송/택배일 때 폼에서 온다. details 에 합류시켜 챗·admin·D1 에 함께 남긴다.
   const details = str(body.details).slice(0, MAX);
   // 조회 화면에서 보는 언어로 다시 그리기 위한 구조화 사본(라벨 붙이기 전의 값들).
@@ -100,11 +101,11 @@ export const POST: APIRoute = async ({ request }) => {
       '📩 *새 견적 요청*',
       `상품: ${productName} (${product})`,
       who,
-      `소재: ${material} | 방식: ${method || dash} | 기판: ${substrate || dash}`,
+      `기판: ${substrate || dash} | 총 샘플: ${sampleCount || dash}`,
       // ⚠️ 예전 견적 폼의 '두께·수량·납기' 줄은 뺐다. 지금 폼에는 그 항목이 없어서
       //    **항상 `두께: — | 수량: — | 납기: —`** 로만 찍혔다(실제 입력값이 아니다).
       //    같은 정보는 아래 요청 본문에 '총 샘플 수량'·'완료 희망일'로 이미 들어 있다.
-      `요청: ${details || dash}`,
+      `\n${details || dash}`,
       meta,
     ].filter(Boolean).join('\n');
   } else {
