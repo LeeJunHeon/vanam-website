@@ -74,7 +74,7 @@
       "ctaBodyHtml": "Tell us your target material or process — we'll help you get there faster.",
       "ctaButton": "Talk to us",
       "keyAdvantages": "Key advantages",
-      "coreTechHeading": "AI-assisted vacuum deposition platform",
+      "coreTechHeading": "AI-assisted vacuum deposition process",
       "materialsHeading": "Materials Library",
       "metaTitle": "Technology | VanaM",
       "metaDescription": "VanaM's thin-film technology: energy-responsive films, PVD/ALD deposition, an oxide-nitride-metal library, plus R&D, analysis and foundry services.",
@@ -668,8 +668,8 @@
     "news": {
       "heroTitle": "In the press",
       "heroSubtitleHtml": "Coverage of VanaM's thin-film materials, products, and milestones.",
-      "eyebrow": "News",
-      "metaTitle": "News & Blog | VanaM",
+      "eyebrow": "Insight",
+      "metaTitle": "Insight | VanaM",
       "metaDescription": "News, press coverage and blog posts from VanaM (반암) — semiconductor thin-film materials, products, exhibitions and milestones."
     },
     "contact": {
@@ -681,6 +681,8 @@
         "line2": "we'll build together"
       },
       "intro": "Technical collaboration, supply, partnerships — anything is welcome. We reply within 1–2 business days. Looking for a price? Head to the Product page and request a quote.",
+      "introCta": "For process requests, click here",
+      "introCtaHref": "/product",
       "form": {
         "name": "Name",
         "namePlaceholder": "John Doe",
@@ -931,7 +933,7 @@
       "ctaBodyHtml": "목표 소재나 공정을 알려주세요 — 더 빠르게 도달하도록 돕겠습니다.",
       "ctaButton": "문의하기",
       "keyAdvantages": "핵심 강점",
-      "coreTechHeading": "AI 기반 진공 증착 플랫폼",
+      "coreTechHeading": "AI 기반 진공 증착 공정",
       "materialsHeading": "소재 라이브러리",
       "metaTitle": "기술 | VanaM",
       "metaDescription": "반암의 박막 기술: 에너지 감응형 박막, PVD/ALD 증착, 산화물·질화물·금속 소재 라이브러리, R&D·분석·파운드리 서비스.",
@@ -1523,10 +1525,10 @@
       "showLess": "접기"
     },
     "news": {
-      "eyebrow": "뉴스",
+      "eyebrow": "인사이트",
       "heroTitle": "언론 속 반암",
       "heroSubtitleHtml": "반암의 박막 소재, 제품, 주요 성과에 대한 보도입니다.",
-      "metaTitle": "뉴스 · 블로그 | VanaM",
+      "metaTitle": "인사이트 | VanaM",
       "metaDescription": "반암(VanaM)의 보도자료와 블로그 — 반도체 박막 소재, 제품, 전시회 및 주요 성과 소식."
     },
     "contact": {
@@ -1538,6 +1540,8 @@
         "line2": "이야기를 들려주세요"
       },
       "intro": "기술 협력, 소재 공급, 파트너십 등 무엇이든 문의해 주세요. 1~2 영업일 내에 회신드립니다. 가격이 궁금하시면 제품 페이지에서 견적을 요청하실 수 있습니다.",
+      "introCta": "공정 의뢰는 여기를 클릭하세요",
+      "introCtaHref": "/ko/product",
       "form": {
         "name": "이름",
         "namePlaceholder": "홍길동",
