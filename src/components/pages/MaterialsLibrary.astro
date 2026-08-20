@@ -13,7 +13,7 @@ const locale = Astro.currentLocale ?? 'en';
 const lhref = (p) => getRelativeLocaleUrl(locale, p);
 const site = siteData[locale] ?? siteData.en;
 const tech = site.technology;
-const title = `${tech.materialsHeading} | VanaM`;
+const title = `${tech.materialsHeading} | ${locale === 'ko' ? '반암(VanaM)' : 'VanaM'}`;
 const description = tech.materialsLibraryDesc;
 const about = site.about; // CTA 문구는 구 About 원문 사용 (0172 — tech 와 중복 회피)
 

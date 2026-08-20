@@ -87,7 +87,7 @@ const t = {
 };
 ---
 
-<BaseLayout title={`${title} | VanaM Blog`} description={excerpt || title}>
+<BaseLayout title={`${title} | ${isKo ? '반암(VanaM) 인사이트' : 'VanaM Insight'}`} description={excerpt || title}>
   <article class="v-wrap pt-28 pb-24 md:pt-32">
     <a href={`${base}/news#blog`} class="text-sm text-ink/45 transition hover:text-accent">{t.back}</a>
 

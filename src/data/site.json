@@ -896,7 +896,7 @@
       "ctaHeading": "함께 만들 박막 솔루션",
       "ctaBodyHtml": "맞춤형 박막 R&D · 분석/측정 · 파운드리 서비스에 대해 문의해 주세요.",
       "ctaButton": "문의하기 →",
-      "metaTitle": "VanaM INC. — 차세대 반도체 박막 소재",
+      "metaTitle": "반암(VanaM) — 차세대 반도체 박막 소재",
       "metaDescription": "반암(VanaM)은 친환경 진공 증착으로 차세대 반도체 박막을 개발합니다. 맞춤형 R&D, 분석·측정, 도심형 마이크로 파운드리를 제공합니다."
     },
     "technology": {
@@ -943,7 +943,7 @@
       "keyAdvantages": "핵심 강점",
       "coreTechHeading": "AI 기반 진공 증착 공정",
       "materialsHeading": "소재 라이브러리",
-      "metaTitle": "기술 | VanaM",
+      "metaTitle": "기술 | 반암(VanaM)",
       "metaDescription": "반암의 박막 기술: 에너지 감응형 박막, PVD/ALD 증착, 산화물·질화물·금속 소재 라이브러리, R&D·분석·파운드리 서비스.",
       "processHeading": "증착 의뢰는 이렇게 진행됩니다",
       "processSub": "원하시는 사양에서 완성된 박막까지.",
@@ -1509,7 +1509,7 @@
       ]
     },
     "about": {
-      "metaTitle": "회사 소개 | VanaM",
+      "metaTitle": "회사 소개 | 반암(VanaM)",
       "metaDescription": "반암(VanaM)은 친환경 진공 증착으로 차세대 반도체 박막을 개발하는 딥테크 스타트업입니다. 비전, 팀, 연혁을 소개합니다.",
       "heroTitle": {
         "line1": "Thin Films,",
@@ -1544,11 +1544,11 @@
       "eyebrow": "인사이트",
       "heroTitle": "언론 속 반암",
       "heroSubtitleHtml": "반암의 박막 소재, 제품, 주요 성과에 대한 보도입니다.",
-      "metaTitle": "인사이트 | VanaM",
+      "metaTitle": "인사이트 | 반암(VanaM)",
       "metaDescription": "반암(VanaM)의 보도자료와 블로그 — 반도체 박막 소재, 제품, 전시회 및 주요 성과 소식."
     },
     "contact": {
-      "metaTitle": "문의 | VanaM",
+      "metaTitle": "문의 | 반암(VanaM)",
       "metaDescription": "반암(VanaM)에 기술 협력·소재 공급·파트너십을 문의하세요.",
       "eyebrow": "문의",
       "heroTitle": {
@@ -1672,7 +1672,7 @@
       }
     },
     "shop": {
-      "metaTitle": "제품 · 솔루션 | VanaM",
+      "metaTitle": "제품 · 솔루션 | 반암(VanaM)",
       "metaDescription": "반암(VanaM)의 박막 시편·웨이퍼·코팅·분석 서비스와 장비 솔루션 — 온라인 주문 또는 견적 요청.",
       "eyebrow": "제품",
       "heroTitle": {
@@ -1721,7 +1721,7 @@
       "refundLabel": "환불 규정"
     },
     "cartPage": {
-      "metaTitle": "장바구니 | VanaM",
+      "metaTitle": "장바구니 | 반암(VanaM)",
       "metaDescription": "VanaM 장바구니.",
       "eyebrow": "장바구니",
       "heading": "장바구니",

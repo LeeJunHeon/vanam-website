@@ -30,7 +30,7 @@ const isFixed = d.pricingType === 'fixed' && typeof d.price === 'number';
 const usdRate = company.usdRate || 1500;
 ---
 
-<BaseLayout title={`${name} | VanaM`} description={summary}>
+<BaseLayout title={`${name} | ${locale === 'ko' ? '반암(VanaM)' : 'VanaM'}`} description={summary}>
   <section class="relative v-wrap py-28 md:py-32">
     <a href={`${base}/product`} class="text-sm text-ink/50 transition hover:text-accent">← {s.backToShop}</a>
 
