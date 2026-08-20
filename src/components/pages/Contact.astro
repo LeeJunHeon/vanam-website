@@ -1,4 +1,6 @@
 ---
+import { Image } from 'astro:assets';
+import teamPhoto from '../../assets/team/team-photo.jpg';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import SnsChannels from '../SnsChannels.astro';
 import { getCollection } from 'astro:content';
@@ -37,7 +39,21 @@ const labelClass = 'block text-sm font-medium text-ink/80';
 ---
 
 <BaseLayout title={title} description={description}>
-  <section id="inquiry" class="scroll-mt-24 relative mx-auto max-w-3xl px-6 py-28 md:py-36">
+  <section id="inquiry" class="scroll-mt-24 relative overflow-hidden">
+    {/* 팀 사진 배경 (0234) — 본문과 같은 컨테이너(v-wrap) 안에 가둬 좌우 라인을 맞춘다.
+        주기율표(MaterialsLibrary)와 동일한 방식: 화면 전체로 퍼지지 않게 한다.
+        사진 평균 밝기 116/255 라 오버레이 없이는 글자가 묻히므로 캔버스 그라데이션을 덮는다. */}
+    <div class="pointer-events-none absolute inset-0 flex justify-center" aria-hidden="true">
+      <div class="flex w-full max-w-6xl px-6">
+        <div class="relative ml-auto h-[22rem] w-full overflow-hidden md:h-[26rem] md:w-[76%]">
+        <Image src={teamPhoto} alt="" widths={[960, 1440, 1920]} sizes="(max-width: 768px) 100vw, 880px"
+          class="h-full w-full object-cover object-[65%_50%] opacity-[0.32] dark:opacity-[0.40]"
+          style="-webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 45%, transparent 94%), linear-gradient(to right, transparent 0%, #000 18%, #000 95%, transparent 100%); -webkit-mask-composite: source-in; mask-image: linear-gradient(to bottom, #000 0%, #000 45%, transparent 94%), linear-gradient(to right, transparent 0%, #000 18%, #000 95%, transparent 100%); mask-composite: intersect;" />
+          <div class="absolute inset-0 bg-gradient-to-b from-canvas/55 via-canvas/35 to-canvas"></div>
+        </div>
+      </div>
+    </div>
+    <div class="relative v-wrap py-28 md:py-36">
     <div class="v-reveal">
       <p class="text-sm font-medium uppercase tracking-widest text-accent">{c.eyebrow}</p>
       <h1 class="mt-4 text-4xl font-bold leading-tight text-ink md:text-5xl">{c.heroTitle.line1}<br />{c.heroTitle.line2}</h1>
@@ -111,10 +127,11 @@ const labelClass = 'block text-sm font-medium text-ink/80';
         </div>
       </div>
     </form>
+  </div>
   </section>
 
   <!-- 오시는 길: 지도 + 회사 정보 + 채널 -->
-  <section id="location" class="scroll-mt-24 mx-auto max-w-3xl px-6 pb-24">
+  <section id="location" class="scroll-mt-24 v-wrap pb-24">
     <div class="v-reveal">
       <p class="text-sm font-medium uppercase tracking-widest text-accent">{locLabels.eyebrow}</p>
       <h2 class="mt-4 v-h2">{locLabels.heading}</h2>
@@ -163,7 +180,7 @@ const labelClass = 'block text-sm font-medium text-ink/80';
   </section>
 
   {faqs.length > 0 && (
-    <section id="faq" class="scroll-mt-24 mx-auto max-w-3xl px-6 pb-28">
+    <section id="faq" class="scroll-mt-24 v-wrap pb-28">
       <div class="v-reveal">
         <p class="text-sm font-medium uppercase tracking-widest text-accent">{c.faqEyebrow}</p>
         <h2 class="mt-4 v-h2">{c.faqHeading}</h2>

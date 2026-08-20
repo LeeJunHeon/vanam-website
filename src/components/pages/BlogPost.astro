@@ -88,7 +88,7 @@ const t = {
 ---
 
 <BaseLayout title={`${title} | VanaM Blog`} description={excerpt || title}>
-  <article class="mx-auto max-w-3xl px-6 pt-28 pb-24 md:pt-32">
+  <article class="v-wrap pt-28 pb-24 md:pt-32">
     <a href={`${base}/news#blog`} class="text-sm text-ink/45 transition hover:text-accent">{t.back}</a>
 
     <div class="mt-8 flex flex-wrap items-center gap-3 text-xs">
@@ -106,7 +106,7 @@ const t = {
         class="mt-8 w-full v-card" />
     )}
 
-    {bodyHtml && <div class="post-body mt-10" set:html={bodyHtml} />}
+    {bodyHtml && <div class="post-body mt-10 max-w-3xl" set:html={bodyHtml} />}
 
     {embedSrc && (
       <div class="mt-10 overflow-hidden rounded-2xl border border-ink/10 bg-ink/[0.02]">

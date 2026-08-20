@@ -25,8 +25,25 @@ const techAsset = (pth: string) => techImages[`/src/assets/tech/${pth}`]?.defaul
 ---
 <BaseLayout title={title} description={description} zebra>
 
-  <section>
-  <div class="v-wrap pt-28 pb-16 md:pt-36">
+  <section class="relative overflow-hidden">
+    {/* 히어로 배경 영상 (0236) — Contact 팀 사진과 같은 방식: 콘텐츠 컨테이너 안에 가두고
+        4방향 페이드 + 캔버스 그라데이션으로 글자 대비를 지킨다. 영상은 3.3:1 초와이드.
+        motion-reduce 사용자에게는 정지 이미지(poster)만 보여준다. */}
+    <div class="pointer-events-none absolute inset-0 flex justify-center" aria-hidden="true">
+      <div class="relative h-full w-full max-w-6xl overflow-hidden">
+        <video data-autoplay-kick autoplay muted loop playsinline preload="metadata"
+          poster="/media/robot-hero-poster.jpg"
+          class="h-full w-full object-cover opacity-[0.32] motion-reduce:hidden dark:opacity-[0.40]"
+          style="-webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 62%, transparent 99%), linear-gradient(to right, transparent 0%, #000 18%, #000 82%, transparent 100%); -webkit-mask-composite: source-in; mask-image: linear-gradient(to bottom, #000 0%, #000 62%, transparent 99%), linear-gradient(to right, transparent 0%, #000 18%, #000 82%, transparent 100%); mask-composite: intersect;">
+          <source src="/media/robot-hero.mp4" type="video/mp4" />
+        </video>
+        <img src="/media/robot-hero-poster.jpg" alt="" width="1200" height="363"
+          class="hidden h-full w-full object-cover opacity-[0.32] motion-reduce:block dark:opacity-[0.40]"
+          style="-webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 62%, transparent 99%), linear-gradient(to right, transparent 0%, #000 18%, #000 82%, transparent 100%); -webkit-mask-composite: source-in; mask-image: linear-gradient(to bottom, #000 0%, #000 62%, transparent 99%), linear-gradient(to right, transparent 0%, #000 18%, #000 82%, transparent 100%); mask-composite: intersect;" />
+        <div class="absolute inset-0 bg-gradient-to-b from-canvas/45 via-canvas/30 to-canvas"></div>
+      </div>
+    </div>
+  <div class="relative v-wrap pt-28 pb-16 md:pt-36">
     <div class="v-reveal">
       <p class="text-sm font-medium uppercase tracking-[0.2em] text-accent">Technology</p>
       <h1 class="mt-5 text-4xl font-bold leading-tight text-ink md:text-6xl">{tech.heroTitle.line1}<br/>{tech.heroTitle.line2}</h1>
@@ -536,6 +553,31 @@ const techAsset = (pth: string) => techImages[`/src/assets/tech/${pth}`]?.defaul
     </div>
   </section>
 
+  {/* 자동 공정 (0236) — zebra 페이지이므로 섹션에 배경/구분선을 직접 주지 않는다. */}
+  <section id="automation" class="scroll-mt-24">
+    <div class="v-wrap py-20">
+      <div class="v-reveal max-w-3xl">
+        <p class="text-sm font-medium uppercase tracking-[0.2em] text-accent">{tech.autoEyebrow}</p>
+        <h2 class="mt-5 v-h2 leading-snug">{tech.autoHeading}</h2>
+        <p class="mt-5 text-base leading-relaxed text-ink/65">{tech.autoBody}</p>
+      </div>
+
+      {/* 영상 3개. 뷰포트 안에서만 재생되도록 스크립트가 제어한다. */}
+      <div class="v-reveal mt-10 grid gap-4 sm:grid-cols-3">
+        {tech.autoClips.map((c) => (
+          <figure class="v-card overflow-hidden p-0">
+            <video data-autoplay-kick autoplay muted loop playsinline preload="none"
+              poster={`/media/${c.src}-poster.jpg`} class="block aspect-[16/10] w-full object-cover motion-reduce:hidden">
+              <source src={`/media/${c.src}.mp4`} type="video/mp4" />
+            </video>
+            <img src={`/media/${c.src}-poster.jpg`} alt={c.caption} width="1200" height="363"
+              class="hidden aspect-[16/10] w-full object-cover motion-reduce:block" />
+          </figure>
+        ))}
+      </div>
+    </div>
+  </section>
+
 
 
   <section>
@@ -552,12 +594,22 @@ const techAsset = (pth: string) => techImages[`/src/assets/tech/${pth}`]?.defaul
   <script>
     // 모바일(저전력·데이터 절약 모드)에서 autoplay가 무시되는 경우 대비:
     // 화면 진입 시 + 첫 터치 시 play()를 다시 시도한다.
-    const kick = document.querySelector<HTMLVideoElement>('video[data-autoplay-kick]');
-    if (kick) {
-      const tryPlay = () => { kick.play().catch(() => {}); };
-      new IntersectionObserver((es) => { if (es[0].isIntersecting) tryPlay(); }, { threshold: 0.2 }).observe(kick);
-      window.addEventListener('touchstart', tryPlay, { once: true, passive: true });
-      document.addEventListener('visibilitychange', () => { if (!document.hidden) tryPlay(); });
+    // 0237: 자동재생 영상이 여러 개다. 화면에 보일 때만 재생하고 벗어나면 멈춰
+    //   모바일에서 동시에 여러 영상이 디코딩되는 것을 막는다.
+    const vids = Array.from(document.querySelectorAll<HTMLVideoElement>('video[data-autoplay-kick]'));
+    if (vids.length) {
+      const play = (v: HTMLVideoElement) => { v.play().catch(() => {}); };
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach((e) => {
+          const v = e.target as HTMLVideoElement;
+          if (e.isIntersecting) play(v);
+          else if (!v.paused) v.pause();
+        });
+      }, { threshold: 0.15 });
+      vids.forEach((v) => io.observe(v));
+      const kickAll = () => vids.forEach(play);
+      window.addEventListener('touchstart', kickAll, { once: true, passive: true });
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) kickAll(); });
     }
   </script>
 </BaseLayout>

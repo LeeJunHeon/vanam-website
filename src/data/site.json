@@ -601,6 +601,14 @@
         "laser/LiDAR",
         "silicon photonics"
       ],
+      "autoEyebrow": "PROCESS AUTOMATION",
+      "autoHeading": "A deposition line that runs without hands on it",
+      "autoBody": "Robots take over from wafer loading through chamber transfer and process changeover. The line keeps running at night and on weekends, so the same equipment handles more samples — and with fewer points of human contact, contamination and run-to-run variation drop as well.",
+      "autoClips": [
+        { "src": "auto-line", "caption": "Mobile manipulator based automation line" },
+        { "src": "auto-arm", "caption": "Sample transfer between chambers" },
+        { "src": "auto-wafer", "caption": "Transfer robot loading and unloading wafers" }
+      ],
       "p2Eyebrow": "THE MULTIFUNCTIONAL ENERGY-RESPONSIVE SEMICONDUCTOR PROJECT",
       "p2Heading": "Multifunctional VO₂ thin films that sense, respond, and protect.",
       "p2Body": "VanaM developed the world's first multifunctional semiconductor thin-film that responds to changes in thermal and electrical energy, enabling sensing, switching, protection, and energy-management functions to be integrated into compact devices and surfaces.",
@@ -1459,6 +1467,14 @@
         "양자 센싱",
         "레이저/라이다",
         "실리콘 포토닉스"
+      ],
+      "autoEyebrow": "공정 자동화",
+      "autoHeading": "사람의 손을 거치지 않는 증착 라인",
+      "autoBody": "웨이퍼 로딩부터 챔버 간 이송, 공정 조건 전환까지 로봇이 이어받습니다. 야간과 주말에도 라인이 멈추지 않으므로 같은 장비에서 더 많은 시편을 처리할 수 있고, 사람이 개입하는 지점이 줄어드는 만큼 오염과 편차도 함께 줄어듭니다.",
+      "autoClips": [
+        { "src": "auto-line", "caption": "모바일 매니퓰레이터 기반 자동화 라인" },
+        { "src": "auto-arm", "caption": "챔버 간 시편 이송" },
+        { "src": "auto-wafer", "caption": "웨이퍼를 로딩·언로딩하는 이송 로봇" }
       ],
       "p2Eyebrow": "다기능 에너지 반응형 반도체 프로젝트",
       "p2Heading": "감지하고, 반응하고, 보호하는 다기능 VO₂ 박막",

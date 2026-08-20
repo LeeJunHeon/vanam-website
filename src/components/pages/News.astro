@@ -83,7 +83,7 @@ const fmtDate = (d) =>
 ---
 <BaseLayout title={title} description={description}>
 
-  <section class="mx-auto max-w-5xl px-6 pt-28 pb-12 md:pt-36">
+  <section class="v-wrap pt-28 pb-12 md:pt-36">
     <div class="v-reveal">
       <p class="text-sm font-medium uppercase tracking-[0.2em] text-accent">{copy.eyebrow}</p>
       <h1 class="mt-5 text-4xl font-bold leading-tight text-ink md:text-6xl">{locale === 'ko' ? '인사이트' : 'Insight'}</h1>
@@ -91,7 +91,7 @@ const fmtDate = (d) =>
     </div>
   </section>
 
-  <section id="press" class="mx-auto max-w-5xl scroll-mt-24 px-6 pb-20">
+  <section id="press" class="v-wrap scroll-mt-24 pb-20">
     <h2 class="v-reveal v-h2">{bt.pressHeading}</h2>
     <div class="mt-8 space-y-4">
       {news.map((n) => (
@@ -115,7 +115,7 @@ const fmtDate = (d) =>
     </div>
   </section>
 
-  <section id="blog" class="mx-auto max-w-5xl scroll-mt-24 px-6 pb-24">
+  <section id="blog" class="v-wrap scroll-mt-24 pb-24">
     <h2 class="v-reveal v-h2">{bt.heading}</h2>
     <p class="v-reveal mt-3 max-w-2xl text-base text-ink/55">{bt.sub}</p>
     <div class="mt-8">
