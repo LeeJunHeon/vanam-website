@@ -101,7 +101,12 @@ const description = home.metaDescription;
     const vid = document.getElementById('vn-vid') as HTMLVideoElement | null;
     if (!sec || !vid) return;
     const MOBILE = window.matchMedia('(max-width: 768px)').matches;
-    vid.src = MOBILE ? '/media/hero-loop-m.mp4' : '/media/hero-loop.mp4';
+    // 소스 지정을 첫 페인트 이후로 미룬다(0246). 포스터(preload+fetchpriority=high)가 LCP 로 먼저
+    // 그려지고 영상은 그 뒤 스트리밍되므로, 느린 회선에서 히어로 텍스트가 영상에 밀리지 않는다.
+    // 재생·루프·모바일 소스 선택 등 동작은 종전과 동일하다.
+    const setSrc = () => { vid.src = MOBILE ? '/media/hero-loop-m.mp4' : '/media/hero-loop.mp4'; };
+    if (document.readyState === 'complete') setSrc();
+    else window.addEventListener('load', () => requestAnimationFrame(setSrc), { once: true });
     const rm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     // 모바일 자동재생은 정책(절전 모드·데이터 절약·사용자 제스처 요구)으로 조용히 거부될 수 있다.
     // 지금까지는 play() 가 한 번 실패하면 재시도가 없어 포스터만 남았다.
@@ -112,6 +117,7 @@ const description = home.metaDescription;
     else {
       const tryPlay = () => { const pr = vid.play(); if (pr && pr.catch) pr.catch(() => {}); };
       tryPlay();
+      vid.addEventListener('loadedmetadata', tryPlay, { once: true });
       vid.addEventListener('loadeddata', tryPlay, { once: true });
       vid.addEventListener('canplay', tryPlay, { once: true });
       new IntersectionObserver((es) => { if (es[0].isIntersecting) tryPlay(); }, { threshold: 0.15 }).observe(vid);

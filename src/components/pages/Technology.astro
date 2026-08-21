@@ -33,12 +33,12 @@ const techAsset = (pth: string) => techImages[`/src/assets/tech/${pth}`]?.defaul
       <div class="relative h-full w-full max-w-6xl overflow-hidden">
         <video data-autoplay-kick muted loop playsinline preload="none"
           poster="/media/robot-hero-poster.webp"
-          class="h-full w-full object-cover opacity-[0.32] max-md:hidden motion-reduce:hidden dark:opacity-[0.40]"
+          class="h-full w-full object-cover opacity-[0.32] motion-reduce:hidden dark:opacity-[0.40]"
           style="-webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 62%, transparent 99%), linear-gradient(to right, transparent 0%, #000 18%, #000 82%, transparent 100%); -webkit-mask-composite: source-in; mask-image: linear-gradient(to bottom, #000 0%, #000 62%, transparent 99%), linear-gradient(to right, transparent 0%, #000 18%, #000 82%, transparent 100%); mask-composite: intersect;">
           <source src="/media/robot-hero.mp4" type="video/mp4" />
         </video>
-        <img src="/media/robot-hero-poster.webp" alt="" width="1200" height="363" fetchpriority="high" decoding="async"
-          class="hidden h-full w-full object-cover opacity-[0.32] max-md:block motion-reduce:block dark:opacity-[0.40]"
+        <img src="/media/robot-hero-poster.webp" alt="" width="1200" height="363" decoding="async"
+          class="hidden h-full w-full object-cover opacity-[0.32] motion-reduce:block dark:opacity-[0.40]"
           style="-webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 62%, transparent 99%), linear-gradient(to right, transparent 0%, #000 18%, #000 82%, transparent 100%); -webkit-mask-composite: source-in; mask-image: linear-gradient(to bottom, #000 0%, #000 62%, transparent 99%), linear-gradient(to right, transparent 0%, #000 18%, #000 82%, transparent 100%); mask-composite: intersect;" />
         <div class="absolute inset-0 bg-gradient-to-b from-canvas/45 via-canvas/30 to-canvas"></div>
       </div>

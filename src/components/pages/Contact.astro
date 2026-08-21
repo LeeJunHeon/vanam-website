@@ -45,8 +45,9 @@ const labelClass = 'block text-sm font-medium text-ink/80';
         사진 평균 밝기 116/255 라 오버레이 없이는 글자가 묻히므로 캔버스 그라데이션을 덮는다. */}
     <div class="pointer-events-none absolute inset-0 flex justify-center" aria-hidden="true">
       <div class="flex w-full max-w-6xl px-6">
-        <div class="relative ml-auto h-[22rem] w-full overflow-hidden md:h-[26rem] md:w-[76%]">
+        <div class="relative ml-auto h-40 w-full overflow-hidden md:h-[26rem] md:w-[76%]">
         <Image src={teamPhoto} alt="" widths={[960, 1440, 1920]} sizes="(max-width: 768px) 100vw, 880px"
+          loading="eager" fetchpriority="high" decoding="async"
           class="h-full w-full object-cover object-[65%_50%] opacity-[0.32] dark:opacity-[0.40]"
           style="-webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 45%, transparent 94%), linear-gradient(to right, transparent 0%, #000 18%, #000 95%, transparent 100%); -webkit-mask-composite: source-in; mask-image: linear-gradient(to bottom, #000 0%, #000 45%, transparent 94%), linear-gradient(to right, transparent 0%, #000 18%, #000 95%, transparent 100%); mask-composite: intersect;" />
           <div class="absolute inset-0 bg-gradient-to-b from-canvas/55 via-canvas/35 to-canvas"></div>
@@ -210,7 +211,10 @@ const labelClass = 'block text-sm font-medium text-ink/80';
   import { initTelInput, normalizeTelInputs } from '../../lib/telInput';
   // 보안 확인 위젯 — 로드 실패 시 자동 재시도·안내까지 여기서 처리한다
   import { mountTurnstile, resetTurnstile } from '../../lib/turnstile-client';
-  mountTurnstile();
+  // 0246: 보안 위젯은 폼을 실제로 쓸 때 필요하다. 유휴 시간에 올려 LCP 경로를 비운다.
+  //   (기능·검증 방식은 동일 — 사용자가 폼에 닿기 전에 이미 준비된다)
+  const idle = (window as any).requestIdleCallback ?? ((fn: () => void) => setTimeout(fn, 200));
+  idle(() => mountTurnstile(), { timeout: 2000 });
 
   // Turnstile 전역 API 타입 (api.js 가 window.turnstile 을 주입한다)
   declare global {
