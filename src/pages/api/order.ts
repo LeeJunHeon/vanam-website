@@ -241,9 +241,18 @@ async function handleOrder({ request, locals }: { request: Request; locals: unkn
     fx = await getRate(d, pickWaitUntil(locals));
     amountUsd = Math.round((amount / fx.rate) * 100) / 100;
 
-    await d
-      .prepare(
-        `INSERT INTO orders
+    // 주문 본문 + 품목 + (있다면) 견적 상태를 하나의 원자 트랜잭션으로 저장한다 (0251).
+    //   기존 순차 .run() 은 품목 INSERT 중간에 실패하면 품목 없는 '반쪽 주문'이 남았다.
+    //   D1 batch() 는 배열 전체를 단일 암묵 트랜잭션으로 실행한다 — 하나라도 실패하면
+    //   전부 롤백되고 아래 catch 로 떨어져 응답(db_error 500)은 종전과 동일하다.
+    //   부수 효과로 DB 왕복도 (2 + 품목 수) → 1 로 줄어든다.
+    const itemStmt = d.prepare(
+      `INSERT INTO order_items (order_id, sku, name, unit_price, qty, subtotal) VALUES (?,?,?,?,?,?)`,
+    );
+    const stmts = [
+      d
+        .prepare(
+            `INSERT INTO orders
            (id, status, amount, currency,
             buyer_name, buyer_email, buyer_phone, buyer_company,
             needs_shipping, ship_name, ship_phone, ship_country, ship_zip,
@@ -252,9 +261,9 @@ async function handleOrder({ request, locals }: { request: Request; locals: unkn
             desired_date, order_note, amount_usd, pay_method,
             inquiry_id, agreed_terms, locale, created_at)
          VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-      )
-      .bind(
-        orderId, 'pending', amount, 'KRW',
+        )
+        .bind(
+            orderId, 'pending', amount, 'KRW',
         buyerName, buyerEmail, buyerPhone, buyerCompany || null,
         needsShipping ? 1 : 0,
         shipName || null, shipPhone || null, needsShipping ? shipCountry : null, shipZip || null,
@@ -268,25 +277,16 @@ async function handleOrder({ request, locals }: { request: Request; locals: unkn
         amountUsd,
         payMethod,
         inquiryId || null, 1, locale, created,
-      )
-      .run();
-
-    for (const l of lines) {
-      await d
-        .prepare(
-          `INSERT INTO order_items (order_id, sku, name, unit_price, qty, subtotal) VALUES (?,?,?,?,?,?)`,
-        )
-        .bind(orderId, l.sku, l.name, l.unit, l.qty, l.subtotal)
-        .run();
-    }
-
-    // 견적에서 이어진 주문이면 견적 상태를 갱신
+        ),
+      ...lines.map((l) => itemStmt.bind(orderId, l.sku, l.name, l.unit, l.qty, l.subtotal)),
+    ];
+    // 견적에서 이어진 주문이면 견적 상태 갱신도 같은 트랜잭션에 포함한다
     if (inquiryId) {
-      await d
-        .prepare(`UPDATE inquiries SET status = 'replied', updated_at = ? WHERE id = ?`)
-        .bind(created, inquiryId)
-        .run();
+      stmts.push(
+        d.prepare(`UPDATE inquiries SET status = 'replied', updated_at = ? WHERE id = ?`).bind(created, inquiryId),
+      );
     }
+    await d.batch(stmts);
   } catch (e) {
     console.error('[order] 저장 실패:', e);
     return json({ ok: false, error: 'db_error' }, 500);

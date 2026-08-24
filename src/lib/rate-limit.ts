@@ -38,6 +38,9 @@ export const RATE_RULES = {
   paypalCapture: { limit: 10, windowSec: 10 * 60 },
 } satisfies Record<string, RateRule>;
 
+// 청소 기준: 가장 긴 창(현재 order = 1시간)의 2배를 지난 행은 어떤 규칙 판정에도 관여할 수 없다.
+const MAX_WINDOW_MS = Math.max(...Object.values(RATE_RULES).map((r) => r.windowSec)) * 1000;
+
 export type RateBucket = keyof typeof RATE_RULES;
 
 export type RateResult = {
@@ -83,6 +86,14 @@ export async function rateLimit(
   const key = `${bucket}:${ip}`;
   const now = Date.now();
   const windowMs = rule.windowSec * 1000;
+
+  // 오래된 버킷 청소 (0251): rate_limits 는 지금까지 삭제 로직이 없어 배포 이래 계속 쌓였다.
+  // 요청 1% 확률로만 수행해 비용을 상수화하고, 실패해도 본 판정에는 영향을 주지 않는다(가용성 우선).
+  if (Math.random() < 0.01) {
+    try {
+      await db.prepare(`DELETE FROM rate_limits WHERE window_start < ?`).bind(now - MAX_WINDOW_MS * 2).run();
+    } catch { /* 청소 실패는 무시 — 다음 1% 요청이 다시 시도한다 */ }
+  }
 
   try {
     // 한 문장 원자 UPSERT.
