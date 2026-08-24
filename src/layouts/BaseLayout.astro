@@ -8,9 +8,12 @@ import type { ImageMetadata } from 'astro';
 import logo from '../assets/brand/logo.png';
 import logoLight from '../assets/brand/logo-light.png';
 import company from '../data/company.json';
+import { isNoindexPath } from '../lib/seo-noindex';
 import banner from '../data/banner.json';
 import popup from '../data/popup.json';
 const { title = 'VANAM — 차세대 반도체 박막 소재', description = 'VANA Materials LAB. 친환경 진공 증착 기반 차세대 반도체 박막 소재·공정 기술 기업.', zebra = false } = Astro.props;
+// 검색 비노출 대상 여부 — 목록은 seo-noindex.ts 한 곳(사이트맵 filter 와 동일 출처)
+const noindex = isNoindexPath(Astro.url.pathname);
 // 각 페이지의 실제 경로를 절대 URL로 (canonical / og:url)
 const canonicalURL = new URL(Astro.url.pathname, Astro.site).href;
 // i18n: 현재 locale + 같은 페이지의 양쪽 언어 URL (locale 접두사 제거한 경로 기준)
@@ -230,6 +233,8 @@ const childHref = (path) => {
     </script>
     <title>{title}</title>
     <meta name="description" content={description} />
+    {/* 장바구니·결제·완료·조회: 검색 색인 금지 (링크 추적은 기본값 follow 유지) */}
+    {noindex && <meta name="robots" content="noindex" />}
     <link rel="canonical" href={canonicalURL} />
 
     {/* 네이버 서치어드바이저 사이트 소유확인.

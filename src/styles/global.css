@@ -1,4 +1,11 @@
 @import "tailwindcss";
+/* ⚠️ Tailwind v4 는 gitignore 되지 않은 모든 파일에서 클래스 후보를 자동 수집한다.
+   astro.config.mjs 의 sitemap `filter:` 옵션명이 유틸리티 .filter 로 오인되어
+   아무도 안 쓰는 194B 규칙이 주입되고 CSS 해시가 바뀐다(→ 250개 페이지 링크 전부 갱신).
+   화면에서 bare `filter` 클래스는 사용처가 없으므로 후보 단어 자체를 제외한다 (0248).
+   훗날 정말 class="filter" 를 쓰게 되면 이 줄을 지울 것. blur-3xl, hover:brightness-110
+   같은 파생 유틸리티는 별개 후보라 영향 없다. (주석 안에 별표+슬래시 나열 금지 — 주석이 닫힌다) */
+@source not inline("filter");
 
 /* ═══════════════════════════════════════════════════════════════════════
    테마 토큰 (다크 / 라이트)

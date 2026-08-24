@@ -9,6 +9,8 @@ import react from '@astrojs/react';
 import keystatic from '@keystatic/astro';
 import cloudflare from '@astrojs/cloudflare';
 
+import { isNoindexPath } from './src/lib/seo-noindex';
+
 // dev 서버는 순수 Node로 돌리고, Cloudflare 어댑터는 빌드(astro build)에만 적용한다.
 // (dev 에서 workerd 를 쓰면 React 가 CJS 로 로드되며 깨진다)
 const isBuild = process.argv.includes('build');
@@ -83,6 +85,9 @@ export default defineConfig({
     react(),      // Keystatic 관리자 UI가 React 기반
     keystatic(),  // /keystatic 관리자 + /api/keystatic 라우트 주입
     sitemap({
+      // 장바구니·결제·완료·조회·관리자처럼 검색에 나올 이유가 없는 페이지는 사이트맵에서 뺀다.
+      // 목록·판별은 src/lib/seo-noindex.ts 한 곳에서 관리 (BaseLayout 의 noindex 메타와 동일 출처).
+      filter: (page) => !isNoindexPath(new URL(page).pathname),
       i18n: {
         defaultLocale: 'en',
         locales: { en: 'en', ko: 'ko' },
