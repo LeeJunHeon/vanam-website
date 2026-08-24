@@ -8,10 +8,8 @@ mkdir -p build-logs
 
 echo "▶ VANAM build $TS" | tee "$LOG"
 
-# 빌드 전 스냅샷(깃 저장소일 때만)
-if [ -d .git ]; then
-  git add -A && git commit -m "snapshot before build $TS" >/dev/null 2>&1 || true
-fi
+# (0252) 자동 스냅샷 커밋 제거 — 무단 커밋이 이후 `git add -A && push` 절차에
+# 딸려 올라가 검증 안 된 상태가 원격에 실릴 위험이 있었다. 빌드+알림만 수행한다.
 
 npm run build 2>&1 | tee -a "$LOG"
 STATUS=${PIPESTATUS[0]}
