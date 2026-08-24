@@ -1,5 +1,9 @@
 -- VANAM 주문·견적 데이터베이스 (Cloudflare D1 / SQLite)
 -- 금액은 모두 원(KRW) 정수. 부가세 포함가.
+--
+-- ⚠️ 정합 규칙(0249): 이 파일의 테이블·컬럼 집합은 src/lib/db.ts 의
+--    SCHEMA ∪ MIGRATIONS(런타임 스키마)와 항상 완전히 일치해야 한다.
+--    scripts/check-schema.mjs 가 npm run verify 에서 이를 강제한다.
 
 -- ── 문의 · 견적 ────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS inquiries (
@@ -20,8 +24,16 @@ CREATE TABLE IF NOT EXISTS inquiries (
   quantity      TEXT,
   deadline      TEXT,
   details       TEXT,
+  details_json     TEXT,           -- 폼 원본 구조(JSON) — 완료/조회/견적서 재구성용 (0249)
   quoted_amount INTEGER,                       -- 관리자가 책정한 견적 금액
   quote_note    TEXT,                          -- 견적 메모 (고객에게 보낼 설명)
+  quote_bank    TEXT,                          -- 회신용 입금 계좌 (0249)
+  -- 결제 연동 (런타임 MIGRATIONS 와 동일 집합 — 0249 정합화)
+  quote_currency    TEXT,
+  paypal_order_id   TEXT,
+  paypal_capture_id TEXT,
+  paid_at       TEXT,
+  paid_usd      REAL,
   locale        TEXT,
   created_at    TEXT NOT NULL,
   updated_at    TEXT
@@ -67,8 +79,35 @@ CREATE TABLE IF NOT EXISTS orders (
   paid_at       TEXT,
 
   locale        TEXT,
+  -- 운영·결제 확장 (런타임 MIGRATIONS 와 동일 집합 — 0249 정합화)
+  desired_date  TEXT,
+  order_note    TEXT,
+  tracking_no   TEXT,
+  tracking_courier TEXT,
+  admin_memo    TEXT,
+  pay_method    TEXT,
+  amount_usd    REAL,
+  paid_usd      REAL,
+  paypal_order_id   TEXT,
+  paypal_capture_id TEXT,
+  chat_detail   TEXT,
   created_at    TEXT NOT NULL,
   updated_at    TEXT
+);
+
+-- ── 설정·캐시 (환율 등) ────────────────────────────────
+CREATE TABLE IF NOT EXISTS settings (
+  key           TEXT PRIMARY KEY,
+  value         REAL NOT NULL,
+  updated_at    TEXT NOT NULL,
+  source        TEXT
+);
+
+-- ── 레이트리밋 (버킷:IP 별 시도 횟수 — rate-limit.ts 가 UPSERT 로 원자 관리) ──
+CREATE TABLE IF NOT EXISTS rate_limits (
+  key           TEXT PRIMARY KEY,
+  hits          INTEGER NOT NULL,
+  window_start  INTEGER NOT NULL
 );
 
 -- ── 주문 항목 ──────────────────────────────────────────

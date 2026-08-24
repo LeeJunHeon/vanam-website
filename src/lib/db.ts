@@ -44,8 +44,8 @@ const SCHEMA = [
     id TEXT PRIMARY KEY, type TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'new',
     name TEXT NOT NULL, email TEXT NOT NULL, phone TEXT, company TEXT, message TEXT,
     product_sku TEXT, product_name TEXT, material TEXT, method TEXT, substrate TEXT,
-    thickness TEXT, quantity TEXT, deadline TEXT, details TEXT,
-    quoted_amount INTEGER, quote_note TEXT, locale TEXT,
+    thickness TEXT, quantity TEXT, deadline TEXT, details TEXT, details_json TEXT,
+    quoted_amount INTEGER, quote_note TEXT, quote_bank TEXT, locale TEXT,
     created_at TEXT NOT NULL, updated_at TEXT)`,
   `CREATE TABLE IF NOT EXISTS orders (
     id TEXT PRIMARY KEY, status TEXT NOT NULL DEFAULT 'pending',
@@ -98,6 +98,11 @@ const MIGRATIONS = [
   `ALTER TABLE inquiries ADD COLUMN paid_at TEXT`,
   `ALTER TABLE inquiries ADD COLUMN paid_usd REAL`,
   `ALTER TABLE inquiries ADD COLUMN paypal_order_id TEXT`,
+  // 0249: 코드(inquiry.ts·admin/quote.ts)가 항상 쓰는데 세 스키마 어디에도 없던 컬럼.
+  //   운영 DB엔 수동으로 넣어둬 살아 있었지만, DB 재생성 시 폴백이
+  //   "구조화 사본 없이 / 계좌 없이" 조용히 데이터를 버리던 재현 불가 지뢰.
+  `ALTER TABLE inquiries ADD COLUMN details_json TEXT`,
+  `ALTER TABLE inquiries ADD COLUMN quote_bank TEXT`,
 ];
 
 export async function ensureSchema(db: D1): Promise<void> {
@@ -107,8 +112,13 @@ export async function ensureSchema(db: D1): Promise<void> {
       for (const sql of MIGRATIONS) {
         try {
           await db.prepare(sql).run();
-        } catch {
-          /* 컬럼이 이미 있으면 무시 */
+        } catch (e) {
+          // 컬럼이 이미 있으면(duplicate column) 정상 경로 — 그 외 실패는 조용히 삼키지 않는다.
+          // (0249: ALTER 오타가 소리 없이 무시되어 스키마가 어긋나는 것을 로그로 드러낸다.
+          //  가용성 원칙은 유지 — 경고만 남기고 서비스는 계속 간다)
+          if (!/duplicate column/i.test(String(e))) {
+            console.warn('[ensureSchema] 마이그레이션 실패(무시하지 않음):', sql, e);
+          }
         }
       }
     })().catch((e) => {

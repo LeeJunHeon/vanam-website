@@ -10,7 +10,7 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "verify": "node scripts/test-cart.mjs && node scripts/check-ui-tokens.mjs && node scripts/verify-design.mjs"
+    "verify": "node scripts/check-schema.mjs && node scripts/test-cart.mjs && node scripts/check-ui-tokens.mjs && node scripts/verify-design.mjs"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^13.7.0",
