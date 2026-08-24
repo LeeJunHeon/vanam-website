@@ -11,7 +11,9 @@ import company from '../data/company.json';
 import { isNoindexPath } from '../lib/seo-noindex';
 import banner from '../data/banner.json';
 import popup from '../data/popup.json';
-const { title = 'VANAM — 차세대 반도체 박막 소재', description = 'VANA Materials LAB. 친환경 진공 증착 기반 차세대 반도체 박막 소재·공정 기술 기업.', zebra = false } = Astro.props;
+const { title = 'VANAM — 차세대 반도체 박막 소재', description = 'VANA Materials LAB. 친환경 진공 증착 기반 차세대 반도체 박막 소재·공정 기술 기업.', zebra = false, ogType = 'website', ogImage } = Astro.props;
+// 공유 카드 이미지 — 지정 없으면 종전과 동일한 사이트 기본(og.png 1200×630)
+const ogImg = ogImage ?? { url: new URL('/og.png', Astro.site).href, width: 1200, height: 630, alt: 'VanaM INC. — Thin Films, All Around' };
 // 검색 비노출 대상 여부 — 목록은 seo-noindex.ts 한 곳(사이트맵 filter 와 동일 출처)
 const noindex = isNoindexPath(Astro.url.pathname);
 // 각 페이지의 실제 경로를 절대 URL로 (canonical / og:url)
@@ -246,16 +248,17 @@ const childHref = (path) => {
     <link rel="alternate" hreflang="en" href={enHref} />
     <link rel="alternate" hreflang="ko" href={koHref} />
     <link rel="alternate" hreflang="x-default" href={enHref} />
-    <meta property="og:type" content="website" />
+    {/* 블로그 글은 article — 공유 카드 품질용 (0253). 기본값은 종전과 동일한 website */}
+    <meta property="og:type" content={ogType} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonicalURL} />
     <meta property="og:site_name" content="VanaM INC." />
     <meta property="og:locale" content={ogLocale} />
-    <meta property="og:image" content={new URL('/og.png', Astro.site).href} />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="VanaM INC. — Thin Films, All Around" />
+    <meta property="og:image" content={ogImg.url} />
+    <meta property="og:image:width" content={String(ogImg.width)} />
+    <meta property="og:image:height" content={String(ogImg.height)} />
+    <meta property="og:image:alt" content={ogImg.alt} />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:image" content={new URL('/og.png', Astro.site).href} />
     <link rel="preconnect" href="https://cdn.jsdelivr.net" />

@@ -1,16 +1,16 @@
 ---
 // Organization JSON-LD.
-// NOTE: logo 필드는 일시 제거됨. 기존 https://vanam.co.kr/logo.png 는 실제로
-// 존재하지 않아(404) 검색엔진에 깨진 로고를 알리는 문제가 있었음. logo 는
-// 선택 필드라 없어도 유효한 스키마가 됨. 실제 로고 파일이 확보되면 적정 크기
-// 래스터(PNG/JPG, 권장 ≥112×112)를 public/ 에 올린 뒤 아래에 다시 추가할 것:
-//   "logo": "https://vanam.co.kr/<로고파일>",
+// logo (0253 복원): 과거 /logo.png 가 404 라 일시 제거했었다.
+// 실제 로고(src/assets/brand/logo.png, 640×155 — 양변 ≥112px 충족)를 public/logo.png 로
+// 배포해 고정 URL 로 복원한다. 해시 URL 을 안 쓰는 이유: 스키마 로고가 빌드마다 바뀌면
+// 검색엔진 캐시가 매번 무효화되기 때문.
 const schema = {
   "@context": "https://schema.org",
   "@type": "Organization",
   "name": "VanaM Inc.",
   "alternateName": ["VANAM", "반암"],
   "url": "https://vanam.co.kr",
+  "logo": "https://vanam.co.kr/logo.png",
   "slogan": "Thin Films, All Around",
   "description": "Developer and manufacturer of next-generation semiconductor thin films based on an eco-friendly vacuum deposition process.",
   "foundingDate": "2022",

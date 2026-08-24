@@ -28,6 +28,18 @@ const bodyHtml = bodyMd ? marked.parse(bodyMd) : '';
 const hero = d.thumbnail ? thumbs[d.thumbnail]?.default : undefined;
 const gallery = (d.images ?? []).map((p: string) => thumbs[p]?.default).filter(Boolean) as ImageMetadata[];
 
+// 검색 결과 제목 65자 가드 (0253): 접미사 포함 65자 초과 시 접미사를 생략한다.
+//   감사에서 EN 10건 초과 — 콘텐츠 원문·H1 불변, <title>/og:title 만 짧아진다.
+//   ⚠ 이 블록은 title·hero 선언 '뒤'에 있어야 한다. 앞이면 TDZ ReferenceError 로
+//     해당 페이지가 '빈 HTML + build Complete!' 가 된다(0253 개발 중 실측 — verify 가 잡음).
+const titleSuffix = isKo ? '반암(VanaM) 인사이트' : 'VanaM Insight';
+const withSuffix = `${title} | ${titleSuffix}`;
+const pageTitle = withSuffix.length <= 65 ? withSuffix : title;
+// 공유 카드 이미지 (0253): 썸네일이 있는 글만 개별 og:image — 없으면 사이트 기본(og.png)
+const ogImage = hero
+  ? { url: new URL(hero.src, Astro.site).href, width: hero.width, height: hero.height, alt: title }
+  : undefined;
+
 // 퍼감(repost) 글용 LinkedIn 임베드 — linkedinUrl 이 있을 때만 iframe 을 렌더한다.
 //   URL 의 activity ID 를 뽑아 공식 임베드 경로로 바꾼다. 퍼감 URN 을 그대로 쓰면
 //   원본 글과 "…님이 퍼감" 헤더까지 함께 렌더된다(2026-08 실측 확인).
@@ -87,7 +99,7 @@ const t = {
 };
 ---
 
-<BaseLayout title={`${title} | ${isKo ? '반암(VanaM) 인사이트' : 'VanaM Insight'}`} description={excerpt || title}>
+<BaseLayout title={pageTitle} description={excerpt || title} ogType="article" ogImage={ogImage}>
   <article class="v-wrap pt-28 pb-24 md:pt-32">
     <a href={`${base}/news#blog`} class="text-sm text-ink/45 transition hover:text-accent">{t.back}</a>
 
