@@ -53,7 +53,9 @@ const matImages = import.meta.glob<{ default: ImageMetadata }>(
 // 패널은 실제 HTML 로 렌더되어 hidden 토글만 하므로 /technology 자체가 SEO 대상이 된다.
 type MatPanel = {
   id: string; formula: string; name: string; system: string; category: string;
-  quoteHref: string; desc: string; figs: string[]; targetSrc: string;
+  quoteHref: string; desc: string; figs: string[];
+  // 타깃 사진은 1장이 기본이지만 AlScN(m11) 처럼 코스퍼터링 소재는 2장 이상이다.
+  targets: { src: string; label: string; alt: string }[];
   filmSpecs: string[]; band2Title: string; band2Specs: string[]; hasA4: boolean;
 };
 const matPanels: MatPanel[] = [];
@@ -67,13 +69,18 @@ for (const m of allMaterials) {
       figs.push((await getImage({ src: mod.default, width: 900, format: 'webp', quality: 88 })).src);
     }
   }
-  let targetSrc = '';
-  if (d.targetImg) {
-    const key = `/src/assets/materials/${m.id}/${d.targetImg}`;
-    if (matImages[key]) {
-      const mod = await matImages[key]();
-      targetSrc = (await getImage({ src: mod.default, width: 520, format: 'webp', quality: 88 })).src;
-    }
+  // targetImgs(복수)가 있으면 그걸 쓰고, 없으면 기존 targetImg 1장을 같은 형태로 감싼다.
+  const targetList = (d.targetImgs?.length ? d.targetImgs : (d.targetImg ? [{ file: d.targetImg, label: 'Target' }] : []));
+  const targets: { src: string; label: string; alt: string }[] = [];
+  for (const t of targetList) {
+    const key = `/src/assets/materials/${m.id}/${t.file}`;
+    if (!matImages[key]) continue;
+    const mod = await matImages[key]();
+    targets.push({
+      src: (await getImage({ src: mod.default, width: 520, format: 'webp', quality: 88 })).src,
+      label: t.label,
+      alt: t.label === 'Target' ? 'sputtering target' : `${t.label.replace(/\s*Target$/i, '')} sputtering target`,
+    });
   }
   const filmSpecs = d.filmSpecs ?? [];
   const band2Specs = d.band2Specs ?? [];
@@ -86,7 +93,7 @@ for (const m of allMaterials) {
     quoteHref: lhref(matToProduct[d.category] ? `/product/${matToProduct[d.category]}` : '/contact'),
     desc: (locale === 'ko' ? (d.description_ko ?? d.description) : d.description) ?? '',
     figs,
-    targetSrc,
+    targets,
     filmSpecs,
     band2Title: d.band2Title ?? 'Target Specifications',
     band2Specs,
@@ -270,7 +277,7 @@ const materialsLd = {
                 </ul>
               )}
 
-              {(p.band2Specs.length > 0 || p.targetSrc) && (
+              {(p.band2Specs.length > 0 || p.targets.length > 0) && (
                 <>
                   <p class="mt-6 inline-flex items-center gap-2 rounded-md border border-accent/30 bg-accent/[0.08] px-3 py-1 text-[13px] font-bold text-accent">{p.band2Title}</p>
                   <div class="mt-3.5 flex flex-wrap items-start gap-6">
@@ -294,12 +301,12 @@ const materialsLd = {
                         })}
                       </ul>
                     )}
-                    {p.targetSrc && (
+                    {p.targets.map((tg) => (
                       <div class="w-36 shrink-0 text-center sm:w-40">
-                        <img src={p.targetSrc} alt={`${p.name} sputtering target`} class="mx-auto w-full rounded-lg drop-shadow-md" loading="lazy" />
-                        <span class="mt-2 inline-block rounded bg-ink/80 px-3 py-0.5 text-[11px] font-bold tracking-wide text-canvas">Target</span>
+                        <img src={tg.src} alt={`${p.name} ${tg.alt}`} class="mx-auto w-full rounded-lg drop-shadow-md" loading="lazy" />
+                        <span class="mt-2 inline-block rounded bg-ink/80 px-3 py-0.5 text-[11px] font-bold tracking-wide text-canvas">{tg.label}</span>
                       </div>
-                    )}
+                    ))}
                   </div>
                 </>
               )}

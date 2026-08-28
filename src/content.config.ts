@@ -99,7 +99,9 @@ const materials = defineCollection({
     band2Title: opt(z.string()),           // 'Target Specifications' | 'Process Specifications'
     band2Specs: opt(z.array(z.string())),
     figs: opt(z.array(z.string())),        // 차트·SEM 파일명 (materials/<id>/ 하위)
-    targetImg: opt(z.string()),            // 타깃 원판 사진 파일명
+    targetImg: opt(z.string()),            // 타깃 원판 사진 파일명 (1장)
+    // 타깃이 2장 이상인 소재(예: AlScN = AlN + Sc 코스퍼터링)용. 있으면 targetImg 대신 이쪽을 쓴다.
+    targetImgs: opt(z.array(z.object({ file: z.string(), label: z.string() }))),
   }),
 });
 

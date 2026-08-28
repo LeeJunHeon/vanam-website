@@ -54,7 +54,18 @@ for (const f of d.figs ?? []) {
   const g = await resolveAsset(f);
   if (g) figImgs.push(g);
 }
-const targetPhoto = d.targetImg ? await resolveAsset(d.targetImg) : null;
+// 타깃 사진: targetImgs(복수)가 있으면 우선, 없으면 기존 targetImg 1장을 같은 형태로 감싼다.
+const targetList = (d.targetImgs?.length ? d.targetImgs : (d.targetImg ? [{ file: d.targetImg, label: 'Target' }] : []));
+const targetPhotos: { src: string; label: string; alt: string }[] = [];
+for (const t of targetList) {
+  const g = await resolveAsset(t.file);
+  if (!g) continue;
+  targetPhotos.push({
+    src: g.src,
+    label: t.label,
+    alt: t.label === 'Target' ? 'sputtering target' : `${t.label.replace(/\s*Target$/i, '')} sputtering target`,
+  });
+}
 const hasA4 = (d.filmSpecs?.length ?? 0) + (d.band2Specs?.length ?? 0) + figImgs.length > 0;
 
 // 0165 에서 소재 라이브러리가 독립 메뉴가 됐는데 뒤로가기만 예전 자리(기술 소개)에 남아 있었다.
@@ -137,7 +148,7 @@ const quoteHref = productId
           )}
         </div>
 
-        {((d.band2Specs?.length ?? 0) > 0 || targetPhoto) && (
+        {((d.band2Specs?.length ?? 0) > 0 || targetPhotos.length > 0) && (
           <div class="mt-8">
             <p class="v-badge">{d.band2Title ?? 'Target Specifications'}</p>
             <div class="mt-4 flex flex-wrap items-start gap-6">
@@ -159,12 +170,12 @@ const quoteHref = productId
                   );
                 })}
               </ul>
-              {targetPhoto && (
+              {targetPhotos.map((tg) => (
                 <div class="w-44 shrink-0 rounded-xl border border-ink/10 bg-plate p-3 text-center">
-                  <img src={targetPhoto.src} alt={`${displayName} sputtering target`} class="mx-auto w-full" loading="lazy" />
-                  <span class="mt-2 inline-block rounded bg-ink/80 px-2.5 py-0.5 text-[11px] font-bold tracking-wide text-canvas">Target</span>
+                  <img src={tg.src} alt={`${displayName} ${tg.alt}`} class="mx-auto w-full" loading="lazy" />
+                  <span class="mt-2 inline-block rounded bg-ink/80 px-2.5 py-0.5 text-[11px] font-bold tracking-wide text-canvas">{tg.label}</span>
                 </div>
-              )}
+              ))}
             </div>
           </div>
         )}

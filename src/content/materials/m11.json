@@ -22,8 +22,10 @@
   "figs": [
     "fig-1.webp",
     "fig-2.webp",
-    "fig-3.webp",
-    "fig-4.webp"
+    "fig-3.webp"
   ],
-  "targetImg": "target.webp"
+  "targetImgs": [
+    { "file": "target.webp", "label": "Sc Target" },
+    { "file": "target-aln.webp", "label": "AlN Target" }
+  ]
 }
