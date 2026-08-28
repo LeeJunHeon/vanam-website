@@ -20,12 +20,29 @@ const about = site.about; // CTA 문구는 구 About 원문 사용 (0172 — tec
 // materials 컬렉션에서 system 별로 category→formula[] 그룹을 재구성.
 // order 순으로 정렬해 기존 객체의 키/배열 순서를 그대로 보존한다.
 const allMaterials = (await getCollection('materials')).sort((a, b) => a.data.order - b.data.order);
+// 0828 — 인덱스 칩 정렬: 카테고리 구분(PVD/ALD × 산화물·질화물·금속·반도체)은 그대로 두고
+//   카테고리 '안에서만' 알파벳순으로 세운다. 전체를 합쳐 정렬하는 것이 아니다.
+//   비교 키는 화학식의 유니코드 아래첨자를 보통 문자로 되돌린 소문자 (Al₂O₃ → al2o3, SiNₓ → sinx).
+//   ⚠️ 데이터(m*.json)의 order 는 건드리지 않는다 → 소재가 추가돼도 렌더 시 자동으로 제자리에 들어간다.
+const SUBSCRIPTS = { '₀': '0', '₁': '1', '₂': '2', '₃': '3', '₄': '4', '₅': '5', '₆': '6', '₇': '7', '₈': '8', '₉': '9', 'ₓ': 'x' };
+const chipSortKey = (formula) => formula.replace(/[₀-₉ₓ]/g, (c) => SUBSCRIPTS[c] ?? c).toLowerCase();
+// 예외 한 건: PVD 산화물의 VO₂(m01)는 대표 소재라 늘 맨 앞. 나머지는 순수 알파벳순.
+const CHIP_PINNED = { sputter: { Oxide: 'm01' } };
 function groupBySystem(system) {
   const groups = {};
   for (const m of allMaterials) {
     if (m.data.system !== system) continue;
     // 물질 상세 팝업을 위해 formula 와 id(파일명=slug)를 함께 보관
     (groups[m.data.category] ??= []).push({ formula: m.data.formula, id: m.id });
+  }
+  // 카테고리(키) 순서는 order 기준 첫 등장 순서 그대로 두고, 각 배열 내부만 정렬한다.
+  for (const [category, items] of Object.entries(groups)) {
+    const pinned = CHIP_PINNED[system]?.[category];
+    items.sort((a, b) => {
+      if (a.id === pinned) return -1;
+      if (b.id === pinned) return 1;
+      return chipSortKey(a.formula).localeCompare(chipSortKey(b.formula), 'en');
+    });
   }
   return groups;
 }
