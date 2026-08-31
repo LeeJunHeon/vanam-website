@@ -329,7 +329,7 @@ async function handleOrder({ request, locals }: { request: Request; locals: unkn
       const dice = !l.sku.startsWith('wafer:')
         ? ''
         : l.dicing
-          ? ` · 다이싱: 예(+₩${l.dicingFee.toLocaleString('ko-KR')}×${l.qty})`
+          ? ` · 다이싱: 예 (+₩${l.dicingFee.toLocaleString('ko-KR')}/박스 × ${l.qty})`
           : ' · 다이싱: 아니오';
       return `· ${l.name} × ${l.qty} = ₩${l.subtotal.toLocaleString('ko-KR')} (≈ $${(l.subtotal / fx.rate).toFixed(2)})${dice}`;
     }),

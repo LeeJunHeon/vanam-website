@@ -85,7 +85,7 @@ const countries = COUNTRIES.map((c) => ({ code: c.code, label: isKo ? c.ko : c.e
 // 배송비 정책 (Keystatic '사업자 정보'에서 국내/해외 각각 설정)
 // 표시 환율은 서버가 저장한 라이브 값을 쓴다.
 // 빌드 시점 company.usdRate 를 박아두면 환율이 바뀌어도 화면만 옛 금액에 머문다.
-let liveRate = company.usdRate || 1500;
+let liveRate = company.usdRate || 1380;
 try {
   liveRate = (await getRate(await db(), pickWaitUntil(Astro.locals))).rate || liveRate;
 } catch (e) {
@@ -548,7 +548,7 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
     const feeEl = $('ship-fee');
 
     // 캐시된 환율을 먼저 써서 첫 렌더부터 최신 금액이 나오게 한다(깜빡임 방지).
-    let RATE = cachedRate() || Number((totalEl as HTMLElement | null)?.dataset.usdRate) || 1500;
+    let RATE = cachedRate() || Number((totalEl as HTMLElement | null)?.dataset.usdRate) || 1380;
     const usd = (krw: number) =>
       '$' + (krw / RATE).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 

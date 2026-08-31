@@ -73,7 +73,7 @@ const BD_POINTS = [
 const bdAsset = (pth: string) => equipImages[`/src/assets/equipment/bigdata/${pth}`]?.default;
 
 // 웨이퍼 카드 가격: 등록된 웨이퍼 최저가를 "From $X"/"$X 부터" 로 표시 (환율=사업자 정보 usdRate)
-const usdRate = company.usdRate || 1500;
+const usdRate = company.usdRate || 1380;
 const waferKrws = allWafers
   .filter((w) => w.data.published && typeof w.data.priceKrw === 'number' && w.data.priceKrw > 0)
   .map((w) => w.data.priceKrw as number);

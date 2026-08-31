@@ -10,7 +10,7 @@ import company from '../data/company.json';
 import { notifyChat } from './paypal';
 
 /** 최종 폴백. D1·설정 모두 실패했을 때만 쓰인다. */
-const HARD_FALLBACK = 1500;
+const HARD_FALLBACK = 1380;
 /** 이 시간이 지나면 갱신을 시도한다(ECB 는 하루 1회 발행이므로 20시간이면 충분). */
 const STALE_MS = 20 * 60 * 60 * 1000;
 /** 직전 값 대비 이 비율을 넘게 변하면 적용하지 않는다(API 오류·소수점 실수 방어). */

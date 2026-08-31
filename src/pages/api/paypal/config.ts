@@ -5,7 +5,7 @@ import { db } from '../../../lib/db';
 import { getRate, pickWaitUntil } from '../../../lib/fx';
 import company from '../../../data/company.json';
 
-const FALLBACK_RATE = Number(company.usdRate) || 1500;
+const FALLBACK_RATE = Number(company.usdRate) || 1380;
 
 export const prerender = false;
 

@@ -109,7 +109,7 @@ export const POST: APIRoute = async ({ request }) => {
       waferQty = String(qty);
       waferLine =
         `상품: ${nameKo} (${product}) × ${qty}박스` +
-        ` · 다이싱: ${dicing ? `예(+₩${fee.toLocaleString('ko-KR')}/박스)` : '아니오'}`;
+        ` · 다이싱: ${dicing ? `예 (+₩${fee.toLocaleString('ko-KR')}/박스 × ${qty})` : '아니오'}`;
       // 조회·관리자 화면이 '보는 언어'로 다시 그릴 수 있게 구조화 사본을 남긴다.
       // 폼이 보낸 detailsJson 이 이미 있으면(견적 폼) 그쪽을 덮지 않는다.
       if (!detailsJson) {

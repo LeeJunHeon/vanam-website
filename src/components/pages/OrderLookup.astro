@@ -48,6 +48,10 @@ const t = isKo
       status: '진행 상태', amount: '결제 금액', ordered: '주문일',
       items: '주문 내역', shipTo: '배송지', taxYes: '세금계산서 요청됨',
       dicing: '다이싱', dicingYes: '예', dicingNo: '아니오', boxUnit: '박스',
+      orderNo: '주문번호', vat: '(부가세 포함)',
+      ordSheetBtn: '주문서 인쇄 · PDF 저장',
+      ordSheetTitle: '주문서',
+      ordSheetFoot: '본 주문서는 웹사이트 주문 조회 화면에서 출력된 문서로 별도 직인이 없습니다. 표시 금액은 주문 시점 환율로 확정된 값입니다. 문의는 아래 연락처로 부탁드립니다.',
       noShip: '실물 배송 없음 (결과는 이메일로 안내)',
       help: '주문번호를 잊으셨나요? 아래로 연락 주시면 확인해 드립니다.',
       inq: {
@@ -99,6 +103,10 @@ const t = isKo
       status: 'Status', amount: 'Amount', ordered: 'Ordered',
       items: 'Items', shipTo: 'Ship to', taxYes: 'Tax invoice requested',
       dicing: 'Dicing', dicingYes: 'Yes', dicingNo: 'No', boxUnit: 'box',
+      orderNo: 'Order no.', vat: '(VAT included)',
+      ordSheetBtn: 'Print order sheet (PDF)',
+      ordSheetTitle: 'Order sheet',
+      ordSheetFoot: 'This order sheet was generated from the online order lookup page and carries no company seal. The amount shown was fixed at the exchange rate applied when the order was placed. Please use the contact below for any questions.',
       noShip: 'No physical delivery (results sent by email)',
       help: 'Lost your order number? Contact us and we will look it up for you.',
       inq: {
@@ -173,6 +181,9 @@ const inputClass =
         status: t.status, amount: t.amount, ordered: t.ordered,
         items: t.items, shipTo: t.shipTo, taxYes: t.taxYes, noShip: t.noShip,
         dicing: t.dicing, dicingYes: t.dicingYes, dicingNo: t.dicingNo, boxUnit: t.boxUnit,
+        orderNo: t.orderNo, vat: t.vat,
+        ordSheetBtn: t.ordSheetBtn, ordSheetTitle: t.ordSheetTitle, ordSheetFoot: t.ordSheetFoot,
+        sheetIssued: t.inq.sheetIssued, sheetSupplier: t.inq.sheetSupplier, sheetStatus: t.inq.sheetStatus,
       })}>
       <div>
         <label for="lk-id" class="block text-sm font-medium text-ink/80">{t.orderNo} *</label>
@@ -233,7 +244,7 @@ const inputClass =
         return [
           `${INQ.product}: ${PNAMES[String(w.sku ?? '')] ?? w.sku ?? ''}`,
           `${INQ.wQty}: ${Number(w.qty) || 1}${INQ.wBox}`,
-          `${INQ.wDicing}: ${w.dicing ? `${INQ.wYes} (+₩${fee.toLocaleString('ko-KR')}${INQ.wPerBox})` : INQ.wNo}`,
+          `${INQ.wDicing}: ${w.dicing ? `${INQ.wYes} (+₩${fee.toLocaleString('ko-KR')}${INQ.wPerBox} × ${Number(w.qty) || 1})` : INQ.wNo}`,
         ].join('\n');
       }
 
@@ -286,7 +297,7 @@ const inputClass =
     // 표시는 전부 USD (PayPal 이 KRW 결제를 지원하지 않으므로 원화 병기는 혼선만 준다)
     const usdOf = (v: unknown, cur?: unknown) => {
       const n = Number(v) || 0;
-      const u = String(cur ?? 'KRW') === 'USD' ? n : n / (usdRateClient || 1500);
+      const u = String(cur ?? 'KRW') === 'USD' ? n : n / (usdRateClient || 1380);
       return `$${u.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     };
     // 견적 금액 환산용 환율 — PayPal config 에서 받아 캐시(없으면 기본값)
@@ -311,13 +322,17 @@ const inputClass =
     // 주문 항목의 다이싱 표기. 웨이퍼 줄에만 붙인다 —
     // 다이싱이 존재하지 않는 상품에 '아니오'를 적으면 정보가 아니라 잡음이 된다.
     // 옛 주문은 dicing 값이 없어(0) 자동으로 '아니오'가 된다.
+    const wonOf = (v: unknown) => '₩' + (Number(v) || 0).toLocaleString('ko-KR');
+
     const dicingNote = (i: any): string => {
       if (!String(i.sku ?? '').startsWith('wafer:')) return '';
       const on = Number(i.dicing) === 1;
       const fee = Number(i.dicing_fee) || 0;
-      // 이 화면은 전부 USD 로 보여준다(위 usdOf 주석 참고) — 다이싱 비용도 같은 기준으로 맞춘다.
+      // 금액 표시는 USD 지만, 다이싱 비용만은 **원화 확정 금액**으로 적는다.
+      // 박스당 단가라 환산하면 "얼마짜리 옵션을 골랐는지"가 흐려진다
+      // (환산이 필요한 결제 총액은 아래 '결제 금액'에 이미 반영돼 있다).
       const txt = on
-        ? `${C.dicing}: ${C.dicingYes} (+${usdOf(fee, 'KRW')}/${C.boxUnit} × ${i.qty})`
+        ? `${C.dicing}: ${C.dicingYes} (+${wonOf(fee)}/${C.boxUnit} × ${i.qty})`
         : `${C.dicing}: ${C.dicingNo}`;
       return `<span class="mt-0.5 block text-xs ${on ? 'text-accent' : 'text-ink/35'}">${esc(txt)}</span>`;
     };
@@ -518,7 +533,9 @@ const inputClass =
               ...(wf
                 ? ([
                     [String(INQ.wQty), `${Number(wf.qty) || 1}${INQ.wBox}`],
-                    [String(INQ.wDicing), wf.dicing ? `${INQ.wYes} (+₩${wFee.toLocaleString('ko-KR')}${INQ.wPerBox})` : String(INQ.wNo)],
+                    [String(INQ.wDicing), wf.dicing
+                      ? `${INQ.wYes} (+₩${wFee.toLocaleString('ko-KR')}${INQ.wPerBox} × ${Number(wf.qty) || 1})`
+                      : String(INQ.wNo)],
                   ] as [string, string][])
                 : []),
             ] as [string, string][]).filter(([, v]) => v.trim());
@@ -607,8 +624,58 @@ const inputClass =
                 : `<p class="mt-3 text-ink/50">${C.noShip}</p>`}
               ${o.tax_invoice ? `<p class="mt-4 text-ink/50">📄 ${C.taxYes}</p>` : ''}
             </div>
+
+            <div class="mt-7 border-t border-ink/10 pt-6">
+              <button type="button" id="ord-sheet" class="v-btn-ghost-sm">🖨 ${esc(C.ordSheetBtn)}</button>
+            </div>
           </div>`;
         resEl.hidden = false;
+
+        // 주문서 인쇄 — 견적서와 **같은 템플릿**(src/lib/quote-sheet.ts)을 쓴다.
+        // 구매팀에 넘길 서류이므로 항목마다 다이싱 여부를 원화 확정 금액으로 적는다.
+        // 자동 인쇄하지 않는다 — 창 안의 버튼을 눌러야 인쇄창이 뜬다.
+        document.getElementById('ord-sheet')?.addEventListener('click', () => {
+          const body = [
+            String(C.items),
+            ...items.map((i: any) => {
+              const head = `· ${i.name} × ${i.qty} — ${wonOf(i.subtotal)}`;
+              if (!String(i.sku ?? '').startsWith('wafer:')) return head;
+              const on = Number(i.dicing) === 1;
+              const fee = Number(i.dicing_fee) || 0;
+              return `${head}\n    ${C.dicing}: ${on ? `${C.dicingYes} (+${wonOf(fee)}/${C.boxUnit} × ${i.qty})` : C.dicingNo}`;
+            }),
+          ].join('\n');
+
+          const addrLine = o.needs_shipping
+            ? [`[${o.ship_country}] ${[o.ship_name, o.ship_phone].filter(Boolean).join(' · ')}`,
+               [o.ship_zip ? `(${o.ship_zip})` : '', addr].filter(Boolean).join(' ')].filter(Boolean).join('\n')
+            : String(C.noShip);
+          // 결제는 USD 로 이뤄지지만 서류에는 원화 총액도 함께 적는다(세금·회계 대조용).
+          const usdTotal = Number(o.amount_usd) > 0
+            ? `$${Number(o.amount_usd).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+            : usdOf(o.amount, o.currency);
+
+          openQuoteSheet(buildQuoteSheet({
+            title: String(C.ordSheetTitle),
+            issuedLabel: String(C.sheetIssued),
+            issued: new Date().toISOString().slice(0, 10),
+            supplierLabel: String(C.sheetSupplier),
+            supplier: JSON.parse(M.supplier ?? '{}'),
+            rows: ([
+              [String(C.orderNo), String(o.id)],
+              [String(C.ordered), when(o.created_at)],
+              [String(C.sheetStatus), String(ST[o.status] ?? o.status)],
+              [String(C.shipTo), addrLine],
+            ] as [string, string][]).filter(([, v]) => v.trim()),
+            details: body,
+            amountLabel: String(C.amount),
+            vatLabel: String(C.vat),
+            amount: `${usdTotal} (${wonOf(o.amount)})`,
+            footNote: String(C.ordSheetFoot),
+            printLabel: String(C.ordSheetBtn),
+          }));
+        });
+
         initPP(data.email as string);
       } catch (err) {
         console.error(err);

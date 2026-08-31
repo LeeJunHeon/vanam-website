@@ -39,7 +39,7 @@ export function expectedUsdStr(
   const amount = Number(row.amount ?? 0);
   if (!(amount > 0)) return null;
   // 환율은 호출부가 라이브 값을 넘긴다. 없으면 설정값으로 폴백(주문 시점 확정값이 있으면 위에서 이미 반환됨).
-  const r = Number(rate) > 0 ? Number(rate) : company.usdRate || 1500;
+  const r = Number(rate) > 0 ? Number(rate) : company.usdRate || 1380;
   const usd = String(row.currency ?? 'KRW') === 'USD' ? amount : amount / r;
   if (!isFinite(usd) || usd <= 0) return null;
   return usd.toFixed(2);

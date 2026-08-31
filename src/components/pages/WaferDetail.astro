@@ -15,7 +15,7 @@ const site = siteData[locale] ?? siteData.en;
 const s = site.shop;
 const isKo = locale === 'ko';
 const base = isKo ? '/ko' : '';
-const usdRate = company.usdRate || 1500;   // 달러 환산 환율 (Keystatic '사업자 정보')
+const usdRate = company.usdRate || 1380;   // 달러 환산 환율 (Keystatic '사업자 정보')
 
 const waferImages = import.meta.glob<{ default: ImageMetadata }>(
   '/src/assets/wafers/**/*.{png,jpg,jpeg,webp,avif}',
@@ -237,7 +237,7 @@ const metaDesc = summary?.trim()
 
   // 정적 페이지라 첫 렌더 환율은 빌드 시점 값이다. 현재 환율을 받아 예상 합계를 맞춘다.
   // (data-krw 표기는 fx-client 가 알아서 갱신한다 — 여기서는 계산식이 있는 합계만 다시 그린다)
-  void liveRate(RATE || 1500).then((r) => { if (r > 0) { RATE = r; paint(); } });
+  void liveRate(RATE || 1380).then((r) => { if (r > 0) { RATE = r; paint(); } });
   paint();
 
   addBtn?.addEventListener('click', () => {

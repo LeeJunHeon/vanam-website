@@ -27,7 +27,7 @@ const leadTime = isKo ? d.leadTime : (d.leadTime_en ?? d.leadTime);
 const shipping = isKo ? d.shipping : (d.shipping_en ?? d.shipping);
 const img = d.image ? productImages[d.image]?.default : undefined;
 const isFixed = d.pricingType === 'fixed' && typeof d.price === 'number';
-const usdRate = company.usdRate || 1500;
+const usdRate = company.usdRate || 1380;
 ---
 
 <BaseLayout title={`${name} | ${locale === 'ko' ? '반암(VanaM)' : 'VanaM'}`} description={summary}>
