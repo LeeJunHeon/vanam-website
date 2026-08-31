@@ -24,12 +24,17 @@ const prefill = Astro.url.searchParams.get('id') ?? '';
 const sizeMap = Object.fromEntries(SUBSTRATE_SIZES.map((x) => [x.value, isKo ? x.ko : x.en]));
 const deliveryMap = Object.fromEntries(DELIVERY_METHODS.map((x) => [x.value, isKo ? x.ko : x.en]));
 
-const productNames: Record<string, string> = Object.fromEntries(
-  (await getCollection('products')).map((p) => [
+const productNames: Record<string, string> = Object.fromEntries([
+  ...(await getCollection('products')).map((p) => [
     p.id,
     isKo ? p.data.name : (p.data.name_en ?? p.data.name),
   ]),
-);
+  // 웨이퍼 문의(0829)도 product_sku 로 저장되므로 같은 지도에 넣어 언어를 맞춘다.
+  ...(await getCollection('wafers')).map((w) => [
+    w.id,
+    isKo ? w.data.name : ((w.data as Record<string, unknown>).name_en as string ?? w.data.name),
+  ]),
+]);
 
 const t = isKo
   ? {
@@ -42,6 +47,7 @@ const t = isKo
       fail: '조회에 실패했습니다. 잠시 후 다시 시도해 주세요.',
       status: '진행 상태', amount: '결제 금액', ordered: '주문일',
       items: '주문 내역', shipTo: '배송지', taxYes: '세금계산서 요청됨',
+      dicing: '다이싱', dicingYes: '예', dicingNo: '아니오', boxUnit: '박스',
       noShip: '실물 배송 없음 (결과는 이메일로 안내)',
       help: '주문번호를 잊으셨나요? 아래로 연락 주시면 확인해 드립니다.',
       inq: {
@@ -51,6 +57,7 @@ const t = isKo
         dSamples: '총 샘플 수량', dDue: '완료 희망일', dNotes: '주의사항',
         dShip: '[배송 주소]', dCountry: '국가', dSecSub: '[기판 정보]', dRecip: '수령인', dAddr: '주소', dPostal: '우편번호', dShipMemo: '배송 요청',
         amount: '견적 금액', vat: '(부가세 포함)',
+        wQty: '수량', wBox: '박스', wDicing: '다이싱', wYes: '예', wNo: '아니오', wPerBox: '/박스',
         sheetBtn: '견적서 인쇄 · PDF 저장',
         sheetTitle: '견적서',
         sheetSupplier: '공급자',
@@ -91,6 +98,7 @@ const t = isKo
       fail: 'Lookup failed. Please try again shortly.',
       status: 'Status', amount: 'Amount', ordered: 'Ordered',
       items: 'Items', shipTo: 'Ship to', taxYes: 'Tax invoice requested',
+      dicing: 'Dicing', dicingYes: 'Yes', dicingNo: 'No', boxUnit: 'box',
       noShip: 'No physical delivery (results sent by email)',
       help: 'Lost your order number? Contact us and we will look it up for you.',
       inq: {
@@ -100,6 +108,7 @@ const t = isKo
         dSamples: 'Total samples', dDue: 'Target completion', dNotes: 'Notes',
         dShip: '[Shipping address]', dCountry: 'Country', dSecSub: '[Substrate info]', dRecip: 'Recipient', dAddr: 'Address', dPostal: 'Postal code', dShipMemo: 'Delivery notes',
         amount: 'Quoted amount', vat: '(VAT included)',
+        wQty: 'Quantity', wBox: 'boxes', wDicing: 'Dicing', wYes: 'Yes', wNo: 'No', wPerBox: '/box',
         sheetBtn: 'Print quotation (PDF)',
         sheetTitle: 'Quotation',
         sheetSupplier: 'Supplier',
@@ -163,6 +172,7 @@ const inputClass =
       data-copy={JSON.stringify({
         status: t.status, amount: t.amount, ordered: t.ordered,
         items: t.items, shipTo: t.shipTo, taxYes: t.taxYes, noShip: t.noShip,
+        dicing: t.dicing, dicingYes: t.dicingYes, dicingNo: t.dicingNo, boxUnit: t.boxUnit,
       })}>
       <div>
         <label for="lk-id" class="block text-sm font-medium text-ink/80">{t.orderNo} *</label>
@@ -214,6 +224,18 @@ const inputClass =
       let dj: Record<string, any>;
       try { dj = JSON.parse(String(raw)); } catch { return fallback; }
       if (!dj || typeof dj !== 'object') return fallback;
+
+      // 웨이퍼 문의(0829)는 공정 견적과 형태가 완전히 다르다 — 먼저 갈라 처리한다.
+      // (아래 공정 견적용 조립을 그대로 태우면 '[기판 정보]' 머리글만 남는다)
+      if (dj.wafer) {
+        const w = dj.wafer;
+        const fee = Number(w.dicingFeeKrw) || 0;
+        return [
+          `${INQ.product}: ${PNAMES[String(w.sku ?? '')] ?? w.sku ?? ''}`,
+          `${INQ.wQty}: ${Number(w.qty) || 1}${INQ.wBox}`,
+          `${INQ.wDicing}: ${w.dicing ? `${INQ.wYes} (+₩${fee.toLocaleString('ko-KR')}${INQ.wPerBox})` : INQ.wNo}`,
+        ].join('\n');
+      }
 
       const seqLines = (Array.isArray(dj.seq) ? dj.seq : []).map((r: any, i: number) => {
         let line = `${i + 1}. ${r.process ?? ''}`;
@@ -284,6 +306,20 @@ const inputClass =
     const when = (s: string) => {
       const d = new Date(s);
       return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
+    };
+
+    // 주문 항목의 다이싱 표기. 웨이퍼 줄에만 붙인다 —
+    // 다이싱이 존재하지 않는 상품에 '아니오'를 적으면 정보가 아니라 잡음이 된다.
+    // 옛 주문은 dicing 값이 없어(0) 자동으로 '아니오'가 된다.
+    const dicingNote = (i: any): string => {
+      if (!String(i.sku ?? '').startsWith('wafer:')) return '';
+      const on = Number(i.dicing) === 1;
+      const fee = Number(i.dicing_fee) || 0;
+      // 이 화면은 전부 USD 로 보여준다(위 usdOf 주석 참고) — 다이싱 비용도 같은 기준으로 맞춘다.
+      const txt = on
+        ? `${C.dicing}: ${C.dicingYes} (+${usdOf(fee, 'KRW')}/${C.boxUnit} × ${i.qty})`
+        : `${C.dicing}: ${C.dicingNo}`;
+      return `<span class="mt-0.5 block text-xs ${on ? 'text-accent' : 'text-ink/35'}">${esc(txt)}</span>`;
     };
 
     const COLOR: Record<string, string> = {
@@ -468,6 +504,10 @@ const inputClass =
           // 조회 화면에서 바로 견적서를 뽑을 수 있어야 한다(구매팀에 넘길 서류가 된다).
           // 자동 인쇄하지 않는다 — 창 안의 버튼을 눌러야 인쇄창이 뜬다.
           document.getElementById('inq-sheet')?.addEventListener('click', () => {
+            // 웨이퍼 문의면 수량·다이싱을 인쇄물에도 별도 행으로 싣는다(구매팀에 그대로 넘어가는 서류다).
+            let wf: Record<string, any> | null = null;
+            try { wf = JSON.parse(String(q.details_json ?? '{}'))?.wafer ?? null; } catch { wf = null; }
+            const wFee = Number(wf?.dicingFeeKrw) || 0;
             const rows: [string, string][] = ([
               [String(INQ.title), String(q.id)],
               [String(INQ.received), String(when(q.created_at))],
@@ -475,6 +515,12 @@ const inputClass =
               [String(INQ.product), String(PNAMES[String(q.product_sku ?? '')] ?? q.product_name ?? q.material ?? '')],
               [String(INQ.method), String(q.method ?? '')],
               [String(INQ.substrate), dSub],
+              ...(wf
+                ? ([
+                    [String(INQ.wQty), `${Number(wf.qty) || 1}${INQ.wBox}`],
+                    [String(INQ.wDicing), wf.dicing ? `${INQ.wYes} (+₩${wFee.toLocaleString('ko-KR')}${INQ.wPerBox})` : String(INQ.wNo)],
+                  ] as [string, string][])
+                : []),
             ] as [string, string][]).filter(([, v]) => v.trim());
 
             openQuoteSheet(buildQuoteSheet({
@@ -522,7 +568,7 @@ const inputClass =
               <ul class="mt-4 space-y-3 text-sm">
                 ${items.map((i: any) => `
                   <li class="flex justify-between gap-4">
-                    <span class="text-ink/70">${esc(i.name)} <span class="text-ink/35">× ${esc(i.qty)}</span></span>
+                    <span class="text-ink/70">${esc(i.name)} <span class="text-ink/35">× ${esc(i.qty)}</span>${dicingNote(i)}</span>
                     <span class="shrink-0 text-ink/80">${usdOf(i.subtotal, o.currency)}</span>
                   </li>`).join('')}
               </ul>

@@ -91,8 +91,9 @@ export const POST: APIRoute = async ({ request }) => {
       return json({ ok: false, error: 'not_found' }, 404);
     }
 
+    // dicing·dicing_fee 는 옛 주문에 값이 없다 → DEFAULT 0 으로 '다이싱 아니오'가 된다.
     const { results: items } = await d
-      .prepare(`SELECT sku, name, unit_price, qty, subtotal FROM order_items WHERE order_id = ?`)
+      .prepare(`SELECT sku, name, unit_price, qty, subtotal, dicing, dicing_fee FROM order_items WHERE order_id = ?`)
       .bind(id)
       .all();
 

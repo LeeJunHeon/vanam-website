@@ -21,6 +21,23 @@ const faqs = (await getCollection('faq'))
 const faqQ = (x) => locale === 'en' ? (x.data.question_en ?? x.data.question) : x.data.question;
 const faqA = (x) => locale === 'en' ? (x.data.answer_en ?? x.data.answer) : x.data.answer;
 
+// 웨이퍼 상세의 '대량 주문·국내 구매' 링크에서 넘어온 경우(?product=&qty=&dicing=)
+// 문의 내용을 미리 채워 준다. 상품명·다이싱 비용은 **여기(웨이퍼 컬렉션)에서만** 읽는다 —
+// 주소창 값을 그대로 화면에 쓰면 아무 문장이나 심을 수 있다.
+// 파라미터가 없으면 아무것도 하지 않는다(기존 문의 페이지와 완전히 동일).
+const waferCatalog = Object.fromEntries(
+  (await getCollection('wafers'))
+    .filter((w) => w.data.published !== false)
+    .map((w) => [
+      w.id,
+      {
+        name: locale === 'ko' ? w.data.name : ((w.data as Record<string, unknown>).name_en as string ?? w.data.name),
+        dicingFeeKrw:
+          typeof w.data.dicingFeeKrw === 'number' && w.data.dicingFeeKrw > 0 ? w.data.dicingFeeKrw : 0,
+      },
+    ]),
+);
+
 // 회사 위치 (지도 + 정보 블록)
 const isKo = locale === 'ko';
 const compName = isKo ? company.nameKo : company.nameEn;
@@ -71,7 +88,18 @@ const labelClass = 'block text-sm font-medium text-ink/80';
       data-msg-error={f.msgError}
       data-msg-captcha={f.msgCaptcha}
       data-label-send={f.submit}
-      data-label-sending={f.sending}>
+      data-label-sending={f.sending}
+      data-wafers={JSON.stringify(waferCatalog)}
+      data-wafer-t={JSON.stringify({
+        tag: f.waferPrefillTag, qty: f.waferPrefillQty, perBox: f.waferPrefillPerBox,
+        dicing: f.waferPrefillDicing, yes: f.waferPrefillYes, no: f.waferPrefillNo,
+      })}>
+      {/* 웨이퍼 상세에서 넘어온 문의의 구조화 값. 파라미터가 없으면 빈 값 그대로 전송된다
+          (서버는 빈 값을 무시하므로 기존 문의와 완전히 동일하게 처리된다). */}
+      <input type="hidden" name="product" id="wf-product" value="" />
+      <input type="hidden" name="productName" id="wf-product-name" value="" />
+      <input type="hidden" name="qty" id="wf-qty" value="" />
+      <input type="hidden" name="dicing" id="wf-dicing" value="" />
       <!-- Honeypot: hidden from humans (spam trap) -->
       <div class="absolute left-[-9999px]" aria-hidden="true">
         <label>{f.honeypot}
@@ -236,6 +264,50 @@ const labelClass = 'block text-sm font-medium text-ink/80';
   // 전화번호 입력에 국가번호 드롭다운 적용
   const phoneEl = document.getElementById("phone") as HTMLInputElement | null;
   if (phoneEl) initTelInput(phoneEl, document.documentElement.lang || "en");
+
+  // ── 웨이퍼 문의 프리필 (0829) ────────────────────────────
+  // 웨이퍼 상세의 "대량 주문·국내 구매(세금계산서)는 문의하기 →" 링크가
+  // ?product=wafer-si-4inch&qty=2&dicing=1 형태로 상태를 넘긴다.
+  // 파라미터가 없거나 모르는 상품이면 아무것도 하지 않는다 — 기존 동작 그대로.
+  (function prefillWafer() {
+    if (!form) return;
+    const q = new URLSearchParams(location.search);
+    const id = (q.get('product') ?? '').trim();
+    if (!id) return;
+
+    type W = { name: string; dicingFeeKrw: number };
+    let cat: Record<string, W> = {};
+    let L: Record<string, string> = {};
+    try {
+      cat = JSON.parse(M.wafers ?? '{}');
+      L = JSON.parse(M.waferT ?? '{}');
+    } catch { return; }
+
+    const w = cat[id];
+    if (!w) return;   // 카탈로그에 없는 id 는 무시한다(주소창으로 임의 문구를 심지 못하게)
+
+    const qty = Math.max(1, Math.min(99, parseInt(q.get('qty') ?? '1', 10) || 1));
+    const dicing = q.get('dicing') === '1' && w.dicingFeeKrw > 0;
+
+    // 비용은 원화로 적는다 — 담당자가 그대로 확인·회신할 수 있는 확정 금액이기 때문.
+    const dTxt = dicing
+      ? `${L.dicing}: ${L.yes}(+₩${w.dicingFeeKrw.toLocaleString('ko-KR')}${L.perBox})`
+      : `${L.dicing}: ${L.no}`;
+    const line = `${L.tag} ${w.name} ${(L.qty ?? '× {n}').replace('{n}', String(qty))} · ${dTxt}`;
+
+    const msg = document.getElementById('message') as HTMLTextAreaElement | null;
+    // 이미 사용자가 쓰기 시작했다면 덮어쓰지 않는다.
+    if (msg && !msg.value.trim()) msg.value = `${line}\n\n`;
+
+    const set = (elId: string, v: string) => {
+      const el = document.getElementById(elId) as HTMLInputElement | null;
+      if (el) el.value = v;
+    };
+    set('wf-product', id);
+    set('wf-product-name', w.name);
+    set('wf-qty', String(qty));
+    set('wf-dicing', dicing ? '1' : '0');
+  })();
 
   function setStatus(msg: string, ok: boolean) {
     statusEl.textContent = msg;

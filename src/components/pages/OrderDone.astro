@@ -16,6 +16,9 @@ const lhref = (p: string) => getRelativeLocaleUrl(locale, p);
 
 const orderId = Astro.url.searchParams.get('id') ?? '';
 let order: { id: string; amount: number; currency?: string; status: string; buyer_email: string; tax_invoice: number; paid_at?: string | null; amount_usd?: number | null; paid_usd?: number | null; pay_method?: string | null } | null = null;
+// 주문 항목 — 무엇을 얼마에 주문했는지(다이싱 포함) 완료 화면에서 바로 확인할 수 있어야 한다.
+type DoneItem = { sku: string; name: string; qty: number; subtotal: number; dicing: number; dicing_fee: number };
+let items: DoneItem[] = [];
 
 if (/^ORD-\d{8}-[A-Z0-9]{4}$/.test(orderId)) {
   const d = await db();
@@ -24,6 +27,14 @@ if (/^ORD-\d{8}-[A-Z0-9]{4}$/.test(orderId)) {
       .prepare(`SELECT id, amount, currency, status, buyer_email, tax_invoice, paid_at, amount_usd, paid_usd, pay_method FROM orders WHERE id = ?`)
       .bind(orderId)
       .first();
+    if (order) {
+      // dicing·dicing_fee 는 옛 주문에 값이 없다 → DEFAULT 0 으로 '다이싱 아니오'가 된다.
+      const r = await d
+        .prepare(`SELECT sku, name, qty, subtotal, dicing, dicing_fee FROM order_items WHERE order_id = ?`)
+        .bind(orderId)
+        .all<DoneItem>();
+      items = r.results ?? [];
+    }
   }
 }
 
@@ -48,6 +59,13 @@ const usdValue = order
         ? order.amount
         : order.amount / usdRate
   : 0;
+
+// 항목별 USD 표기 — 위 usdValue 와 같은 기준(주문 시점 확정 환율 우선)을 쓴다.
+const lineRate = order && Number(order.amount_usd) > 0 && order.amount > 0
+  ? order.amount / Number(order.amount_usd)
+  : usdRate;
+const usdOf = (krw: number) =>
+  '$' + (krw / lineRate).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 const t = isKo
   ? {
@@ -75,6 +93,8 @@ const t = isKo
       copy: '복사',
       copied: '복사됨',
       amountLabel: '결제 금액',
+      items: '주문 내역',
+      dicing: '다이싱', dicingYes: '예', dicingNo: '아니오', boxUnit: '박스',
       mCreate: '결제 생성에 실패했습니다.',
       mHeld: '결제는 접수되었으나 자동 확인에 실패했습니다. 중복 결제를 피해 다시 시도하지 마시고 hello@vanam.co.kr 로 문의해 주세요.',
       mError: '결제 처리 중 오류가 발생했습니다.',
@@ -107,6 +127,8 @@ const t = isKo
       copy: 'Copy',
       copied: 'Copied',
       amountLabel: 'Amount',
+      items: 'Items',
+      dicing: 'Dicing', dicingYes: 'Yes', dicingNo: 'No', boxUnit: 'box',
       mCreate: 'Could not start payment.',
       mHeld: 'Payment received but needs manual verification — please do not retry; contact hello@vanam.co.kr.',
       mError: 'Payment error.',
@@ -140,6 +162,31 @@ const t = isKo
               <p class="mt-1 text-2xl font-bold text-ink">${usdValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span class="text-sm font-normal text-ink/40">USD</span></p>
             </div>
           </div>
+
+          {items.length > 0 && (
+            <div class="mt-8 border-t border-ink/10 pt-6">
+              <p class="text-xs font-medium uppercase tracking-widest text-accent">{t.items}</p>
+              <ul class="mt-4 space-y-3 text-sm">
+                {items.map((i) => (
+                  <li class="flex justify-between gap-4">
+                    <span class="text-ink/70">
+                      {i.name} <span class="text-ink/35">× {i.qty}</span>
+                      {/* 다이싱 표기는 웨이퍼 줄에만 붙인다 — 옵션이 없는 상품의 '아니오'는 잡음이다.
+                          옛 주문은 dicing 값이 없어(0) 자동으로 '아니오'가 된다. */}
+                      {String(i.sku ?? '').startsWith('wafer:') && (
+                        <span class={`mt-0.5 block text-xs ${i.dicing === 1 ? 'text-accent' : 'text-ink/35'}`}>
+                          {i.dicing === 1
+                            ? `${t.dicing}: ${t.dicingYes} (+${usdOf(Number(i.dicing_fee) || 0)}/${t.boxUnit} × ${i.qty})`
+                            : `${t.dicing}: ${t.dicingNo}`}
+                        </span>
+                      )}
+                    </span>
+                    <span class="shrink-0 text-ink/80">{usdOf(Number(i.subtotal) || 0)}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {isBank && !order.paid_at ? (
             <div class="mt-8 rounded-lg border border-info/25 bg-info/10 p-4 text-sm leading-relaxed text-ink/70">
