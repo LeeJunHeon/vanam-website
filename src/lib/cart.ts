@@ -9,16 +9,23 @@
 //   → 앞으로 localStorage/sessionStorage 를 직접 만지는 코드는 두지 않는다.
 //     저장소 접근은 전부 이 파일을 통하고, 화면은 여기서 받은 값만 그린다.
 //
-// 저장 형식(localStorage `vanam_cart`): CartItem[] — { sku, qty } 뿐이다.
+// 저장 형식(localStorage `vanam_cart`): CartItem[] — { sku, qty, dicing } 뿐이다.
 // ⚠️ 장바구니에는 **결제 가능한 품목만** 담는다. 견적은 장바구니를 거치지 않고
 //    견적 폼에서 바로 요청하거나 요청서를 내려받는 흐름이다(0182 에서 정리).
 //
 // ⚠️ 저장소는 사용자가 마음대로 고칠 수 있다. 읽을 때 항상 형식을 정리하고,
 //    금액은 **절대** 저장하지 않는다(가격은 카탈로그·서버에서만 조회).
+//    dicing 도 '했다/안 했다'는 사실만 담는다 — 비용은 웨이퍼 컬렉션(dicingFeeKrw)에서만 온다.
 
 export type CartItem = {
   sku: string;
   qty: number;
+  /**
+   * 웨이퍼 다이싱 옵션(0829). 같은 웨이퍼라도 다이싱 유·무는 **다른 줄**로 다룬다
+   * (수량을 합치면 어느 쪽에 다이싱이 붙는지 표현할 수 없다 — itemKey 참고).
+   * 옛 저장분에는 이 필드가 없다 → 읽을 때 false 로 채워진다.
+   */
+  dicing: boolean;
 };
 
 export const CART_KEY = 'vanam_cart';
@@ -28,8 +35,11 @@ export const BUYNOW_KEY = 'vanam_buynow';
 export const clampQty = (v: unknown): number =>
   Math.max(1, Math.min(99, Math.floor(Number(v)) || 1));
 
-/** 한 줄을 구분하는 키. 지금은 sku 와 같다 — 화면 코드가 이 함수만 쓰도록 창구를 하나로 둔다. */
-export const itemKey = (i: CartItem): string => i.sku;
+/**
+ * 한 줄을 구분하는 키. sku + 다이싱 여부다 — 같은 웨이퍼라도 다이싱 유·무는 별도 줄이 된다.
+ * 화면 코드는 반드시 이 함수만 쓴다(줄 식별 규칙이 여러 곳에 흩어지면 조용히 어긋난다).
+ */
+export const itemKey = (i: CartItem): string => (i.dicing ? `${i.sku}#dicing` : i.sku);
 
 /** 배지에 쓰는 총 수량. */
 export const countItems = (items: CartItem[]): number =>
@@ -43,7 +53,8 @@ export const sanitize = (raw: unknown): CartItem[] => {
     if (!r || typeof r !== 'object') continue;
     const o = r as Record<string, unknown>;
     if (typeof o.sku !== 'string' || !o.sku) continue;
-    out.push({ sku: o.sku, qty: clampQty(o.qty) });
+    // 옛 저장분(dicing 필드 없음)·조작된 값 모두 여기서 boolean 으로 굳는다.
+    out.push({ sku: o.sku, qty: clampQty(o.qty), dicing: o.dicing === true });
   }
   return out;
 };
@@ -76,13 +87,17 @@ export function writeCart(items: CartItem[]): CartItem[] {
   return clean;
 }
 
-/** 일반 상품 담기 — 같은 sku 가 있으면 수량을 더한다(최대 99). */
-export function addToCart(sku: string, qty: unknown = 1): CartItem[] {
+/**
+ * 담기 — 같은 줄(sku + 다이싱 여부)이 있으면 수량을 더한다(최대 99).
+ * 다이싱만 다르면 합치지 않고 새 줄을 만든다.
+ */
+export function addToCart(sku: string, qty: unknown = 1, dicing = false): CartItem[] {
   const items = readCart();
   const add = clampQty(qty);
-  const hit = items.find((i) => i.sku === sku);
+  const on = dicing === true;
+  const hit = items.find((i) => i.sku === sku && i.dicing === on);
   if (hit) hit.qty = Math.min(99, hit.qty + add);
-  else items.push({ sku, qty: add });
+  else items.push({ sku, qty: add, dicing: on });
   return writeCart(items);
 }
 

@@ -140,7 +140,12 @@ async function handleOrder({ request, locals }: { request: Request; locals: unkn
 
   // ── 5) ⭐ 금액 계산 — 서버가 카탈로그에서 단가를 읽는다 ──
   const inquiryId = str(body.inquiryId).slice(0, 40);
-  type Line = { sku: string; name: string; unit: number; qty: number; subtotal: number };
+  // unit = 상품 단가(박스당) · dicingFee = 박스당 다이싱 비용(고르지 않았으면 0)
+  // subtotal = (unit + dicingFee) × qty  ← 청구 근거는 언제나 이 식 하나다
+  type Line = {
+    sku: string; name: string; unit: number; qty: number; subtotal: number;
+    dicing: boolean; dicingFee: number;
+  };
   const lines: Line[] = [];
   let amount = 0;
 
@@ -167,6 +172,8 @@ async function handleOrder({ request, locals }: { request: Request; locals: unkn
       unit: amount,
       qty: 1,
       subtotal: amount,
+      dicing: false,      // 견적 금액에는 관리자가 책정한 값이 이미 전부 들어 있다
+      dicingFee: 0,
     });
   } else {
     // ── 일반 주문: {sku, qty} 만 받고 단가는 서버 카탈로그에서
@@ -191,13 +198,22 @@ async function handleOrder({ request, locals }: { request: Request; locals: unkn
           return json({ ok: false, error: 'unknown_sku', sku }, 400);
         }
         const unit = Math.round(w.data.priceKrw);
-        const subtotal = unit * qty;
+        // ⭐ 다이싱: 브라우저는 '골랐다/안 골랐다'만 보낸다. **금액은 여기서 컬렉션을 읽어 정한다.**
+        //   컬렉션에 dicingFeeKrw 가 없는 웨이퍼(예: 사파이어)는 화면에 선택칸 자체가 없다 —
+        //   그런 sku 로 dicing=true 가 들어오면 조작이므로 값을 무시하고 '불필요'로 처리한다.
+        const feeKrw = (w.data as Record<string, unknown>).dicingFeeKrw;
+        const dicingFee =
+          typeof feeKrw === 'number' && feeKrw > 0 ? Math.round(feeKrw) : 0;
+        const dicing = (it as Record<string, unknown>)?.dicing === true && dicingFee > 0;
+        const subtotal = (unit + (dicing ? dicingFee : 0)) * qty;
         lines.push({
           sku,
           name: locale === 'en' ? ((w.data as Record<string, unknown>).name_en as string ?? w.data.name) : w.data.name,
           unit,
           qty,
           subtotal,
+          dicing,
+          dicingFee: dicing ? dicingFee : 0,
         });
         amount += subtotal;
         continue;
@@ -215,6 +231,8 @@ async function handleOrder({ request, locals }: { request: Request; locals: unkn
         unit,
         qty,
         subtotal,
+        dicing: false,      // 다이싱은 웨이퍼 전용 옵션이다
+        dicingFee: 0,
       });
       amount += subtotal;
     }
@@ -247,7 +265,8 @@ async function handleOrder({ request, locals }: { request: Request; locals: unkn
     //   전부 롤백되고 아래 catch 로 떨어져 응답(db_error 500)은 종전과 동일하다.
     //   부수 효과로 DB 왕복도 (2 + 품목 수) → 1 로 줄어든다.
     const itemStmt = d.prepare(
-      `INSERT INTO order_items (order_id, sku, name, unit_price, qty, subtotal) VALUES (?,?,?,?,?,?)`,
+      `INSERT INTO order_items (order_id, sku, name, unit_price, qty, subtotal, dicing, dicing_fee)
+       VALUES (?,?,?,?,?,?,?,?)`,
     );
     const stmts = [
       d
@@ -278,7 +297,9 @@ async function handleOrder({ request, locals }: { request: Request; locals: unkn
         payMethod,
         inquiryId || null, 1, locale, created,
         ),
-      ...lines.map((l) => itemStmt.bind(orderId, l.sku, l.name, l.unit, l.qty, l.subtotal)),
+      ...lines.map((l) =>
+        itemStmt.bind(orderId, l.sku, l.name, l.unit, l.qty, l.subtotal, l.dicing ? 1 : 0, l.dicingFee),
+      ),
     ];
     // 견적에서 이어진 주문이면 견적 상태 갱신도 같은 트랜잭션에 포함한다
     if (inquiryId) {
@@ -303,7 +324,15 @@ async function handleOrder({ request, locals }: { request: Request; locals: unkn
   const detail = [
     `주문번호: ${orderId}`,
     `금액: ₩${amount.toLocaleString('ko-KR')} (≈ $${amountUsd.toFixed(2)} USD · 환율 ${Math.round(fx.rate).toLocaleString('ko-KR')})`,
-    ...lines.map((l) => `· ${l.name} × ${l.qty} = ₩${l.subtotal.toLocaleString('ko-KR')} (≈ $${(l.subtotal / fx.rate).toFixed(2)})`),
+    // 다이싱 표기는 웨이퍼 줄에만 붙인다 (다른 상품에는 존재하지 않는 옵션이라 '불필요'가 정보를 주지 않는다).
+    ...lines.map((l) => {
+      const dice = !l.sku.startsWith('wafer:')
+        ? ''
+        : l.dicing
+          ? ` · 다이싱: 필요 (+₩${l.dicingFee.toLocaleString('ko-KR')}/박스 × ${l.qty})`
+          : ' · 다이싱: 불필요';
+      return `· ${l.name} × ${l.qty} = ₩${l.subtotal.toLocaleString('ko-KR')} (≈ $${(l.subtotal / fx.rate).toFixed(2)})${dice}`;
+    }),
     `주문자: ${buyerName}${buyerCompany ? ` (${buyerCompany})` : ''} · ${buyerEmail}${buyerPhone ? ` · ${buyerPhone}` : ''}`,
     desiredDate ? `희망 완료: ${desiredDate}` : '',
     orderNote ? `요청사항: ${orderNote}` : '',

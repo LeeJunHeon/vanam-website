@@ -14,7 +14,7 @@ const site = siteData[locale] ?? siteData.en;
 const s = site.shop;
 const isKo = locale === 'ko';
 const base = isKo ? '/ko' : '';
-const usdRate = company.usdRate || 1500;   // 달러 환산 환율 (Keystatic '사업자 정보')
+const usdRate = company.usdRate || 1380;   // 달러 환산 환율 (Keystatic '사업자 정보')
 
 // 웨이퍼 이미지 에셋 매핑: wafers/*.json 의 image 경로 → ImageMetadata
 const waferImages = import.meta.glob<{ default: ImageMetadata }>(

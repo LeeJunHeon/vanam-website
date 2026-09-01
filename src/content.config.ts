@@ -194,6 +194,10 @@ const wafers = defineCollection({
     refundPolicy: opt(z.string()),                      // 환불 규정 (스펙과 별도로 하단 표시)
     refundPolicy_en: opt(z.string()),
     priceKrw: opt(z.number()),                          // 판매가(원) — 사이트에는 달러($) 환산 표시. 비우면 '가격 문의'
+    // 다이싱(칩 단위 절단) 옵션 비용 — **박스(25장)당** 원화. 주문 수량(박스 수)에 곱해 청구한다.
+    // ⚠️ 금액의 유일한 정의처. 화면·서버·알림 모두 이 값만 읽고, 브라우저가 보낸 금액은 절대 믿지 않는다.
+    //    비우면(=undefined) 그 웨이퍼는 다이싱을 제공하지 않는다 — 체크박스 자체를 렌더하지 않는다.
+    dicingFeeKrw: opt(z.number()),
     published: z.boolean().default(true),
     order: z.number().default(0),
   }),

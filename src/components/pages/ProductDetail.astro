@@ -27,7 +27,7 @@ const leadTime = isKo ? d.leadTime : (d.leadTime_en ?? d.leadTime);
 const shipping = isKo ? d.shipping : (d.shipping_en ?? d.shipping);
 const img = d.image ? productImages[d.image]?.default : undefined;
 const isFixed = d.pricingType === 'fixed' && typeof d.price === 'number';
-const usdRate = company.usdRate || 1500;
+const usdRate = company.usdRate || 1380;
 ---
 
 <BaseLayout title={`${name} | ${locale === 'ko' ? '반암(VanaM)' : 'VanaM'}`} description={summary}>
@@ -35,8 +35,13 @@ const usdRate = company.usdRate || 1500;
     <a href={`${base}/product`} class="text-sm text-ink/50 transition hover:text-accent">← {s.backToShop}</a>
 
     <div class="mt-8 grid gap-12 lg:grid-cols-2">
-      <!-- 이미지 -->
-      <div class="overflow-hidden rounded-xl border border-ink/10 bg-gradient-to-br from-panel2 to-canvas">
+      {/* 이미지.
+          ⚠️ self-start 가 없으면 grid 기본 정렬(stretch)이 이 박스를 오른쪽 컬럼 높이까지 늘여
+             4:3 사진 아래에 빈 테두리 공간이 남는다(lg 이상에서만 보였다).
+             self-start 로 박스 높이를 사진 높이에 묶고, 오른쪽 내용이 길 때는 sticky 로 따라오게 한다.
+             top-28(112px)은 고정 헤더(로고 40 + py-4 32 + 보더 1 = 73px)보다 넉넉히 아래다.
+             1열이 되는 lg 미만에서는 두 클래스 모두 적용되지 않아 기존 그대로다. */}
+      <div class="self-start overflow-hidden rounded-xl border border-ink/10 bg-gradient-to-br from-panel2 to-canvas lg:sticky lg:top-28">
         <div class="aspect-[4/3]">
           {img ? (
             <Image src={img} alt={name} width={900} height={675} class="h-full w-full object-cover" />

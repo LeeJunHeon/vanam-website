@@ -1,4 +1,5 @@
 import type { APIRoute } from 'astro';
+import { getCollection } from 'astro:content';
 // Astro 6부터 Astro.locals.runtime.env 가 제거되어(접근 시 예외를 던짐)
 // Cloudflare 런타임 환경변수는 이 모듈에서 직접 읽는다.
 // dev(순수 Node)에서는 astro.config.mjs의 shim이 빈 객체를 돌려주고, .env 로 폴백한다.
@@ -6,6 +7,7 @@ import { env as cfEnv } from 'cloudflare:workers';
 import { db, newId, nowIso, nowKst } from '../../lib/db';
 import { rateLimit, tooMany } from '../../lib/rate-limit';
 import { verifyTurnstile } from '../../lib/turnstile';
+import { getRate, pickWaitUntil } from '../../lib/fx';
 
 // 서버에서 온디맨드 실행 (정적 생성 금지)
 export const prerender = false;
@@ -21,7 +23,7 @@ const json = (body: object, status = 200) =>
     headers: { 'Content-Type': 'application/json' },
   });
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
   let body: Payload;
   try {
     body = (await request.json()) as Payload;
@@ -87,7 +89,60 @@ export const POST: APIRoute = async ({ request }) => {
   // ⚠️ 일반 필드 상한(2000자)을 쓰면 공정 12단계 + 분석 다수 + 긴 요청사항인 견적에서 잘려
   //    JSON 이 깨진다. 깨지면 조용히 기존 문장으로 되돌아가 기능만 못 쓰게 된다.
   //    이미 각 항목이 폼에서 제한된 값들을 모아 담은 것이라 상한을 따로 넉넉히 준다.
-  const detailsJson = str(body.detailsJson).slice(0, 8000);
+  let detailsJson = str(body.detailsJson).slice(0, 8000);
+
+  // ── 웨이퍼 문의(0829) ────────────────────────────────────
+  // 웨이퍼 상세의 '대량 주문·국내 구매' 링크에서 넘어오면 product/qty/dicing 이 함께 온다.
+  // ⚠️ 다이싱 **비용은 브라우저가 보낸 값을 쓰지 않는다** — 여기서 웨이퍼 컬렉션을 읽어 정한다.
+  //    (주문 금액과 같은 원칙. 문의는 결제가 아니지만 담당자가 이 숫자로 회신한다)
+  let waferLine = '';
+  let waferQty = '';
+  if (product) {
+    const w = (await getCollection('wafers')).find(
+      (x) => x.id === product && x.data.published !== false,
+    );
+    if (w) {
+      const feeRaw = (w.data as Record<string, unknown>).dicingFeeKrw;
+      const fee = typeof feeRaw === 'number' && feeRaw > 0 ? Math.round(feeRaw) : 0;
+      const unit = typeof w.data.priceKrw === 'number' && w.data.priceKrw > 0 ? Math.round(w.data.priceKrw) : 0;
+      const qty = Math.max(1, Math.min(99, parseInt(str(body.qty) || '1', 10) || 1));
+      const dicing = (body.dicing === true || str(body.dicing) === '1') && fee > 0;
+      // 예상 합계도 서버가 다시 계산한다 — 화면이 보낸 금액은 어디서도 쓰지 않는다.
+      //   (박스 단가 + 다이싱을 골랐다면 박스당 다이싱 비용) × 박스 수
+      const totalKrw = (unit + (dicing ? fee : 0)) * qty;
+      const nameKo = w.data.name;
+      waferQty = String(qty);
+
+      // 환율은 주문 알림과 같은 출처(저장된 라이브 환율)를 쓴다. 실패하면 ≈ 부분만 뺀다.
+      let usdNote = '';
+      if (totalKrw > 0) {
+        try {
+          const fx = await getRate(await db(), pickWaitUntil(locals));
+          if (fx.rate > 0) {
+            const usd = Math.round((totalKrw / fx.rate) * 100) / 100;
+            usdNote = ` (≈ $${usd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} · 환율 ${Math.round(fx.rate).toLocaleString('ko-KR')})`;
+          }
+        } catch (e) {
+          console.error('[inquiry] 환율 조회 실패 — 예상 합계의 달러 환산을 생략합니다:', e);
+        }
+      }
+
+      waferLine =
+        `상품: ${nameKo} (${product}) × ${qty}박스` +
+        ` · 다이싱: ${dicing ? `필요 (+₩${fee.toLocaleString('ko-KR')}/박스 × ${qty})` : '불필요'}` +
+        (totalKrw > 0 ? ` · 예상 합계 ₩${totalKrw.toLocaleString('ko-KR')}${usdNote}` : '');
+
+      // 조회·관리자 화면이 '보는 언어'로 다시 그릴 수 있게 구조화 사본을 남긴다.
+      // 금액(unitKrw·totalKrw)도 함께 굳혀 두어야 나중에 단가표가 바뀌어도
+      // 고객이 문의 시점에 본 숫자가 그대로 남는다.
+      // 폼이 보낸 detailsJson 이 이미 있으면(견적 폼) 그쪽을 덮지 않는다.
+      if (!detailsJson) {
+        detailsJson = JSON.stringify({
+          wafer: { sku: product, qty, dicing, dicingFeeKrw: fee, unitKrw: unit, totalKrw },
+        });
+      }
+    }
+  }
 
   // 접수번호 — 알림과 DB, 관리자 화면에서 같은 값을 쓴다
   const id = newId('INQ');
@@ -109,7 +164,9 @@ export const POST: APIRoute = async ({ request }) => {
       meta,
     ].filter(Boolean).join('\n');
   } else {
-    text = ['✉️ *새 문의*', who, `내용: ${message}`, meta].join('\n');
+    // 웨이퍼 문의면 상품·수량·다이싱을 별도 줄로 먼저 보여준다(본문에도 같은 내용이 들어 있지만
+    // 담당자가 목록에서 한눈에 구분할 수 있어야 한다).
+    text = ['✉️ *새 문의*', who, waferLine, `내용: ${message}`, meta].filter(Boolean).join('\n');
   }
 
   // 5) D1에 저장 — 알림을 놓쳐도 요청이 사라지지 않도록 남긴다.
@@ -121,15 +178,17 @@ export const POST: APIRoute = async ({ request }) => {
         id, type, 'new', name, email, phone || null, company || null,
         message || null, product || null, productName || null,
         material || null, method || null, substrate || null, details || null,
+        // quantity 는 웨이퍼 문의의 박스 수. 견적 폼에는 없는 항목이라 그때는 NULL 이다.
+        waferQty || null,
         locale, nowIso(),
       ];
-      // thickness·quantity·deadline 컬럼은 지금 폼에 없는 항목이라 더 이상 쓰지 않는다.
+      // thickness·deadline 컬럼은 지금 폼에 없는 항목이라 더 이상 쓰지 않는다.
       // (컬럼 자체는 옛 데이터를 위해 남겨둔다 — 값은 NULL 이 된다)
       const COLS =
         `(id, type, status, name, email, phone, company, message,
           product_sku, product_name, material, method, substrate,
-          details, locale, created_at`;
-      const VALS = `VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?`;
+          details, quantity, locale, created_at`;
+      const VALS = `VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?`;
       try {
         // details_json 컬럼이 있는 정상 경로
         await d

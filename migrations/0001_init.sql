@@ -118,7 +118,10 @@ CREATE TABLE IF NOT EXISTS order_items (
   name        TEXT NOT NULL,
   unit_price  INTEGER NOT NULL,                -- 주문 시점 단가 (스냅샷)
   qty         INTEGER NOT NULL,
-  subtotal    INTEGER NOT NULL,
+  subtotal    INTEGER NOT NULL,               -- (단가 + 다이싱 비용) × 수량
+  -- 웨이퍼 다이싱 옵션 (런타임 MIGRATIONS 와 동일 집합 — 0829)
+  dicing      INTEGER NOT NULL DEFAULT 0,     -- 다이싱을 골랐는가 (0/1)
+  dicing_fee  INTEGER NOT NULL DEFAULT 0,     -- 주문 시점 박스당 다이싱 비용 (스냅샷)
   FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
 );
 

@@ -59,6 +59,7 @@ const products = all
     sku: p.id,
     name: locale === 'en' ? (p.data.name_en ?? p.data.name) : p.data.name,
     price: p.data.price as number,
+    dicingFee: 0,            // 다이싱은 웨이퍼 전용 옵션이다
     ship: p.data.requiresShipping !== false,
   }));
 
@@ -69,6 +70,8 @@ const waferProducts = (await getCollection('wafers'))
     sku: `wafer:${w.id}`,
     name: locale === 'en' ? ((w.data as Record<string, unknown>).name_en as string ?? w.data.name) : w.data.name,
     price: w.data.priceKrw as number,
+    // 박스당 다이싱 비용 — 요약 표시용. 실제 청구액은 서버(/api/order)가 같은 값으로 다시 계산한다.
+    dicingFee: typeof w.data.dicingFeeKrw === 'number' && w.data.dicingFeeKrw > 0 ? w.data.dicingFeeKrw : 0,
     ship: true,
   }));
 
@@ -82,7 +85,7 @@ const countries = COUNTRIES.map((c) => ({ code: c.code, label: isKo ? c.ko : c.e
 // 배송비 정책 (Keystatic '사업자 정보'에서 국내/해외 각각 설정)
 // 표시 환율은 서버가 저장한 라이브 값을 쓴다.
 // 빌드 시점 company.usdRate 를 박아두면 환율이 바뀌어도 화면만 옛 금액에 머문다.
-let liveRate = company.usdRate || 1500;
+let liveRate = company.usdRate || 1380;
 try {
   liveRate = (await getRate(await db(), pickWaitUntil(Astro.locals))).rate || liveRate;
 } catch (e) {
@@ -124,6 +127,7 @@ const t = isKo
       agreeTerms: '주문 제작품(맞춤 코팅·주문 시편)과 착수된 분석 용역은 청약철회가 제한됨을 확인했으며, 이에 동의합니다.',
       agreeDetail: '이용자의 주문에 따라 개별 생산되는 재화는 「전자상거래법」 제17조 제2항 제5호에 따라 청약철회가 제한됩니다. 다만 하자·오배송의 경우에는 교환·환불이 가능합니다.',
       seePolicy: '환불·교환 정책 보기',
+      dicingOption: '옵션: 다이싱', dicingPerBox: '/박스',
       shipping: '배송비', total: '총 결제 금액', vat: '부가세 포함',
       fxNote: '환율에 따라 가격이 변동될 수 있습니다.',
       submit: '결제하기', sending: '주문 생성 중…',
@@ -167,6 +171,7 @@ const t = isKo
       agreeTerms: 'I understand and agree that made-to-order items (custom coating, made-to-order samples) and commenced analysis services are not eligible for withdrawal.',
       agreeDetail: 'Goods produced individually to your order are excluded from withdrawal under the Act on Consumer Protection in Electronic Commerce. Defects and incorrect deliveries remain eligible for exchange or refund.',
       seePolicy: 'View refund policy',
+      dicingOption: 'Option: Dicing', dicingPerBox: '/box',
       shipping: 'Shipping', total: 'Total', vat: 'VAT included',
       fxNote: 'Prices may vary with the exchange rate.',
       submit: 'Proceed to payment', sending: 'Creating order…',
@@ -210,6 +215,8 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
           data-label-send={t.submit}
           data-label-send-bank={t.submitBank}
           data-label-sending={t.sending}
+          data-dicing-option={t.dicingOption}
+          data-dicing-per-box={t.dicingPerBox}
           data-buynow-expired={t.buynowExpired}>
           <div class="absolute left-[-9999px]" aria-hidden="true">
             {/* 스팸 방지 미끼칸. 이름에 email 이 들어가면 크롬 자동완성이 채워버려 정상 주문이 막힌다 → 중립적 이름 사용 */}
@@ -509,7 +516,7 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
   // 저장소 접근은 전부 lib/cart 한 곳을 통한다 (Item 형도 거기서 온다 — 중복 선언 금지)
   import { readCart, readBuyNow, clearBuyNow, removeKeys, itemKey, type CartItem as Item } from '../../lib/cart';
 
-  type Product = { sku: string; name: string; price: number; ship: boolean };
+  type Product = { sku: string; name: string; price: number; dicingFee: number; ship: boolean };
 
   const form = document.getElementById('checkout-form') as HTMLFormElement | null;
   if (form) {
@@ -541,7 +548,7 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
     const feeEl = $('ship-fee');
 
     // 캐시된 환율을 먼저 써서 첫 렌더부터 최신 금액이 나오게 한다(깜빡임 방지).
-    let RATE = cachedRate() || Number((totalEl as HTMLElement | null)?.dataset.usdRate) || 1500;
+    let RATE = cachedRate() || Number((totalEl as HTMLElement | null)?.dataset.usdRate) || 1380;
     const usd = (krw: number) =>
       '$' + (krw / RATE).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -566,12 +573,18 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
       linesEl!.innerHTML = '';
       for (const i of items) {
         const p = byId.get(i.sku)!;
-        const sub = p.price * i.qty;
+        // 다이싱을 고른 줄은 박스당 (상품가 + 다이싱 비용) 으로 계산한다.
+        const fee = i.dicing ? p.dicingFee || 0 : 0;
+        const sub = (p.price + fee) * i.qty;
         total += sub;
         const li = document.createElement('li');
         li.className = 'flex justify-between gap-3';
         li.innerHTML =
-          `<span class="text-ink/70">${p.name} <span class="text-ink/35">× ${i.qty}</span></span>` +
+          `<span class="text-ink/70">${p.name} <span class="text-ink/35">× ${i.qty}</span>` +
+          (fee > 0
+            ? `<span class="mt-0.5 block text-xs text-accent">${M.dicingOption} +${usd(fee)}${M.dicingPerBox}</span>`
+            : '') +
+          `</span>` +
           `<span class="shrink-0 text-ink/80">${usd(sub)}</span>`;
         linesEl!.appendChild(li);
       }

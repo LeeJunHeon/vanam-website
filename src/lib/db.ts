@@ -103,6 +103,11 @@ const MIGRATIONS = [
   //   "구조화 사본 없이 / 계좌 없이" 조용히 데이터를 버리던 재현 불가 지뢰.
   `ALTER TABLE inquiries ADD COLUMN details_json TEXT`,
   `ALTER TABLE inquiries ADD COLUMN quote_bank TEXT`,
+  // 0829: 웨이퍼 다이싱 옵션. 주문 항목별로 '골랐는가'와 '그때의 박스당 금액'을 함께 굳힌다.
+  //   금액을 같이 저장해야 나중에 단가표가 바뀌어도 그 주문의 청구 근거가 그대로 남는다.
+  //   옛 주문에는 값이 없다 → DEFAULT 0 으로 '다이싱 아니오'가 된다.
+  `ALTER TABLE order_items ADD COLUMN dicing INTEGER NOT NULL DEFAULT 0`,
+  `ALTER TABLE order_items ADD COLUMN dicing_fee INTEGER NOT NULL DEFAULT 0`,
 ];
 
 export async function ensureSchema(db: D1): Promise<void> {

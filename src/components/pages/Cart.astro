@@ -18,16 +18,19 @@ const catalog = (await getCollection('products'))
     sku: p.id,
     name: isKo ? p.data.name : (p.data.name_en ?? p.data.name),
     price: p.data.price,
+    dicingFee: 0,
     url: `${base}/product/${p.id}`,
   }));
 
 // 웨이퍼(공정가) — sku 'wafer:{id}' (서버 /api/order 와 동일 규칙)
+// dicingFee: 박스당 다이싱 비용. 저장소에는 '했다/안 했다'만 있고 금액은 여기(카탈로그)서만 온다.
 const waferCatalog = (await getCollection('wafers'))
   .filter((w) => w.data.published !== false && typeof w.data.priceKrw === 'number' && w.data.priceKrw > 0)
   .map((w) => ({
     sku: `wafer:${w.id}`,
     name: isKo ? w.data.name : ((w.data as Record<string, unknown>).name_en as string ?? w.data.name),
     price: w.data.priceKrw as number,
+    dicingFee: typeof w.data.dicingFeeKrw === 'number' && w.data.dicingFeeKrw > 0 ? w.data.dicingFeeKrw : 0,
     url: `${base}/wafers/${w.id}`,
   }));
 
@@ -51,7 +54,9 @@ const waferCatalog = (await getCollection('wafers'))
       data-continue={c.continueShopping}
       data-shop-url={`${base}/product`}
       data-local-note={s.cartLocalNote}
-      data-usd-rate={company.usdRate || 1500}
+      data-dicing-option={s.dicingOption}
+      data-dicing-per-box={s.dicingPerBoxShort}
+      data-usd-rate={company.usdRate || 1380}
       data-local-note-end>
       <p class="text-ink/50">…</p>
     </div>
@@ -67,7 +72,7 @@ const waferCatalog = (await getCollection('wafers'))
   // 카탈로그(CMS) 값이라 신뢰 수준은 높지만, innerHTML 에 넣는 값은 일괄 이스케이프한다.
   const esc = (v: unknown) =>
     String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  type Product = { sku: string; name: string; price: number; url: string };
+  type Product = { sku: string; name: string; price: number; dicingFee: number; url: string };
 
   const root = document.getElementById('cart-root')!;
   import { liveRate, cachedRate } from '../../lib/fx-client';
@@ -77,7 +82,7 @@ const waferCatalog = (await getCollection('wafers'))
   const byId = new Map(catalog.map((p) => [p.sku, p]));
   // 첫 렌더 전에 직전 방문의 환율을 먼저 적용한다.
   // 이 장치가 없으면 빌드 시점 환율로 한 번 그려진 뒤 교체되어 가격이 깜빡인다.
-  let RATE = cachedRate() || Number(M.usdRate) || 1500;
+  let RATE = cachedRate() || Number(M.usdRate) || 1380;
   let rateSynced = false;
   const usd = (krw: number) =>
     '$' + (krw / RATE).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -97,9 +102,14 @@ const waferCatalog = (await getCollection('wafers'))
       return;
     }
 
-    const total = items.reduce((sum, i) => sum + byId.get(i.sku)!.price * i.qty, 0);
+    // 한 박스당 청구액 = 상품가 + (다이싱을 골랐다면) 박스당 다이싱 비용.
+    // 카탈로그에서 다이싱이 사라진 웨이퍼는 금액을 0 으로 계산한다(옛 장바구니 줄이 유령 금액을 만들지 않게).
+    const feeOf = (i: Item) => (i.dicing ? byId.get(i.sku)!.dicingFee || 0 : 0);
+    const unitOf = (i: Item) => byId.get(i.sku)!.price + feeOf(i);
+    const total = items.reduce((sum, i) => sum + unitOf(i) * i.qty, 0);
     const rows = items.map((i) => {
       const p = byId.get(i.sku)!;
+      const fee = feeOf(i);
       return `
         <div class="flex flex-wrap items-center gap-4 py-5" data-key="${esc(itemKey(i))}">
           <!-- ⚠️ 모바일에서는 상품명이 한 줄을 통째로 쓰게 한다(basis-full).
@@ -108,6 +118,7 @@ const waferCatalog = (await getCollection('wafers'))
           <div class="min-w-0 basis-full sm:basis-auto sm:flex-1">
             <a href="${esc(p.url)}" class="font-medium text-ink transition hover:text-accent">${esc(p.name)}</a>
             <p class="mt-1 text-sm text-ink/50">${usd(p.price)}</p>
+            ${fee > 0 ? `<p class="mt-0.5 text-xs text-accent">${M.dicingOption} +${usd(fee)}${M.dicingPerBox}</p>` : ''}
           </div>
           <div class="flex shrink-0 items-center gap-1 self-center">
             <button type="button" data-act="dec" aria-label="${M.qtyDec}" class="size-9 rounded-lg border border-ink/15 text-ink/70 transition hover:border-accent hover:text-ink">−</button>
@@ -115,7 +126,7 @@ const waferCatalog = (await getCollection('wafers'))
               class="h-9 w-14 rounded-lg border border-ink/10 bg-ink/[0.03] text-center text-ink outline-none focus:border-accent [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
             <button type="button" data-act="inc" aria-label="${M.qtyInc}" class="size-9 rounded-lg border border-ink/15 text-ink/70 transition hover:border-accent hover:text-ink">+</button>
           </div>
-          <p class="ml-auto w-28 shrink-0 text-right font-semibold text-ink sm:ml-0">${usd(p.price * i.qty)}</p>
+          <p class="ml-auto w-28 shrink-0 text-right font-semibold text-ink sm:ml-0">${usd(unitOf(i) * i.qty)}</p>
           <button type="button" data-act="del" class="shrink-0 text-sm text-ink/40 transition hover:text-danger">${M.remove}</button>
         </div>`;
     }).join('');

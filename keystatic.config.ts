@@ -337,6 +337,10 @@ export default config({
           label: '판매가 (원)',
           description: '원화 숫자만 입력 (예: 429000). 사이트에는 달러($)로 환산 표시됩니다 — 환율은 [관리자 페이지 → 환율]에서 관리. 비우면 "가격 문의"로 표시.',
         }),
+        dicingFeeKrw: fields.integer({
+          label: '다이싱 비용 (원 / 1박스)',
+          description: '판매 단위는 25장 1박스입니다. 여기에 넣은 금액이 **박스 1개당** 다이싱 비용이며 주문 수량만큼 곱해집니다 (예: 500000). 비워두면 이 웨이퍼에는 다이싱 선택칸 자체가 표시되지 않습니다.',
+        }),
         published: fields.checkbox({ label: '사이트에 공개', defaultValue: true }),
         order: fields.integer({ label: '표시 순서', defaultValue: 99, validation: { isRequired: true } }),
       },
