@@ -95,7 +95,7 @@ const t = isKo
       copied: '복사됨',
       amountLabel: '결제 금액',
       items: '주문 내역',
-      dicing: '다이싱', dicingYes: '예', dicingNo: '아니오', boxUnit: '박스',
+      dicing: '다이싱', dicingYes: '필요', dicingNo: '불필요', boxUnit: '박스',
       mCreate: '결제 생성에 실패했습니다.',
       mHeld: '결제는 접수되었으나 자동 확인에 실패했습니다. 중복 결제를 피해 다시 시도하지 마시고 hello@vanam.co.kr 로 문의해 주세요.',
       mError: '결제 처리 중 오류가 발생했습니다.',
@@ -129,7 +129,7 @@ const t = isKo
       copied: 'Copied',
       amountLabel: 'Amount',
       items: 'Items',
-      dicing: 'Dicing', dicingYes: 'Yes', dicingNo: 'No', boxUnit: 'box',
+      dicing: 'Dicing', dicingYes: 'Required', dicingNo: 'Not required', boxUnit: 'box',
       mCreate: 'Could not start payment.',
       mHeld: 'Payment received but needs manual verification — please do not retry; contact hello@vanam.co.kr.',
       mError: 'Payment error.',
@@ -172,8 +172,8 @@ const t = isKo
                   <li class="flex justify-between gap-4">
                     <span class="text-ink/70">
                       {i.name} <span class="text-ink/35">× {i.qty}</span>
-                      {/* 다이싱 표기는 웨이퍼 줄에만 붙인다 — 옵션이 없는 상품의 '아니오'는 잡음이다.
-                          옛 주문은 dicing 값이 없어(0) 자동으로 '아니오'가 된다. */}
+                      {/* 다이싱 표기는 웨이퍼 줄에만 붙인다 — 옵션이 없는 상품의 '불필요'는 잡음이다.
+                          옛 주문은 dicing 값이 없어(0) 자동으로 '불필요'가 된다. */}
                       {String(i.sku ?? '').startsWith('wafer:') && (
                         <span class={`mt-0.5 block text-xs ${i.dicing === 1 ? 'text-accent' : 'text-ink/35'}`}>
                           {/* 다이싱 비용은 원화 확정 금액으로 적는다 — 박스당 단가라 환산하면

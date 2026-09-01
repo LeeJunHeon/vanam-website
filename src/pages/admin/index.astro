@@ -127,7 +127,7 @@ const waferInq = (r: Row): WaferInq | null => {
 };
 /** 검색 인덱스·요약용 한 줄. */
 const waferInqLine = (w: WaferInq) =>
-  `${w.name} × ${w.qty}박스 · 다이싱: ${w.dicing ? `예 (+₩${w.fee.toLocaleString('ko-KR')}/박스 × ${w.qty})` : '아니오'}`;
+  `${w.name} × ${w.qty}박스 · 다이싱: ${w.dicing ? `필요 (+₩${w.fee.toLocaleString('ko-KR')}/박스 × ${w.qty})` : '불필요'}`;
 
 const spec = (r: Row) =>
   [
@@ -383,12 +383,12 @@ const spec = (r: Row) =>
                           <li class="text-ink/70">{i.name} <span class="text-ink/35">× {i.qty}</span>
                             <span class="ml-1 text-ink/50">{won(i.subtotal)}</span>
                             {/* 다이싱은 웨이퍼 줄에만 표기한다(다른 상품엔 없는 옵션).
-                                옛 주문은 값이 없어(0) '아니오'로 나온다.
+                                옛 주문은 값이 없어(0) '불필요'로 나온다.
                                 ⚠️ 같은 줄에 이어 붙이면 좁은 좌측 칸(16rem)에서 "· 다 / 이싱:" 처럼
                                    라벨 한가운데가 잘려 읽히지 않는다 → 별도 줄로 내린다. */}
                             {String(i.sku ?? '').startsWith('wafer:') && (
                               <span class={`mt-0.5 block text-xs ${i.dicing === 1 ? 'font-medium text-accent' : 'text-ink/35'}`}>
-                                다이싱: {i.dicing === 1 ? `예 (+₩${(Number(i.dicing_fee) || 0).toLocaleString('ko-KR')}/박스 × ${i.qty})` : '아니오'}
+                                다이싱: {i.dicing === 1 ? `필요 (+₩${(Number(i.dicing_fee) || 0).toLocaleString('ko-KR')}/박스 × ${i.qty})` : '불필요'}
                               </span>
                             )}
                           </li>
@@ -655,7 +655,7 @@ const spec = (r: Row) =>
                           <div class="flex gap-3">
                             <dt class="w-14 shrink-0 text-xs text-ink/40">다이싱</dt>
                             <dd class={w.dicing ? 'font-medium text-accent' : 'text-ink/50'}>
-                              {w.dicing ? `예 (+₩${w.fee.toLocaleString('ko-KR')}/박스 × ${w.qty})` : '아니오'}
+                              {w.dicing ? `필요 (+₩${w.fee.toLocaleString('ko-KR')}/박스 × ${w.qty})` : '불필요'}
                             </dd>
                           </div>
                         </dl>

@@ -47,7 +47,7 @@ const t = isKo
       fail: '조회에 실패했습니다. 잠시 후 다시 시도해 주세요.',
       status: '진행 상태', amount: '결제 금액', ordered: '주문일',
       items: '주문 내역', shipTo: '배송지', taxYes: '세금계산서 요청됨',
-      dicing: '다이싱', dicingYes: '예', dicingNo: '아니오', boxUnit: '박스',
+      dicing: '다이싱', dicingYes: '필요', dicingNo: '불필요', boxUnit: '박스',
       orderNo: '주문번호', vat: '(부가세 포함)',
       ordSheetBtn: '주문서 인쇄 · PDF 저장',
       ordSheetTitle: '주문서',
@@ -61,7 +61,8 @@ const t = isKo
         dSamples: '총 샘플 수량', dDue: '완료 희망일', dNotes: '주의사항',
         dShip: '[배송 주소]', dCountry: '국가', dSecSub: '[기판 정보]', dRecip: '수령인', dAddr: '주소', dPostal: '우편번호', dShipMemo: '배송 요청',
         amount: '견적 금액', vat: '(부가세 포함)',
-        wQty: '수량', wBox: '박스', wDicing: '다이싱', wYes: '예', wNo: '아니오', wPerBox: '/박스',
+        wQty: '수량', wQtyOne: '{n}박스', wQtyMany: '{n}박스',
+        wDicing: '다이싱', wYes: '필요', wNo: '불필요', wPerBox: '/박스',
         sheetBtn: '견적서 인쇄 · PDF 저장',
         sheetTitle: '견적서',
         sheetSupplier: '공급자',
@@ -102,7 +103,7 @@ const t = isKo
       fail: 'Lookup failed. Please try again shortly.',
       status: 'Status', amount: 'Amount', ordered: 'Ordered',
       items: 'Items', shipTo: 'Ship to', taxYes: 'Tax invoice requested',
-      dicing: 'Dicing', dicingYes: 'Yes', dicingNo: 'No', boxUnit: 'box',
+      dicing: 'Dicing', dicingYes: 'Required', dicingNo: 'Not required', boxUnit: 'box',
       orderNo: 'Order no.', vat: '(VAT included)',
       ordSheetBtn: 'Print order sheet (PDF)',
       ordSheetTitle: 'Order sheet',
@@ -116,7 +117,8 @@ const t = isKo
         dSamples: 'Total samples', dDue: 'Target completion', dNotes: 'Notes',
         dShip: '[Shipping address]', dCountry: 'Country', dSecSub: '[Substrate info]', dRecip: 'Recipient', dAddr: 'Address', dPostal: 'Postal code', dShipMemo: 'Delivery notes',
         amount: 'Quoted amount', vat: '(VAT included)',
-        wQty: 'Quantity', wBox: 'boxes', wDicing: 'Dicing', wYes: 'Yes', wNo: 'No', wPerBox: '/box',
+        wQty: 'Quantity', wQtyOne: '{n} box', wQtyMany: '{n} boxes',
+        wDicing: 'Dicing', wYes: 'Required', wNo: 'Not required', wPerBox: '/box',
         sheetBtn: 'Print quotation (PDF)',
         sheetTitle: 'Quotation',
         sheetSupplier: 'Supplier',
@@ -226,6 +228,13 @@ const inputClass =
     const SIZE_MAP: Record<string, string> = JSON.parse(M.mapSize ?? '{}');
     const DELIV_MAP: Record<string, string> = JSON.parse(M.mapDelivery ?? '{}');
 
+    // 박스 수량 표기. 영문만 1개일 때 단수(box), 그 외 복수(boxes)로 갈린다 —
+    // 한글은 두 문구가 같아 자연히 무시된다.
+    const qtyBox = (n: unknown): string => {
+      const q = Number(n) || 1;
+      return String((q === 1 ? INQ.wQtyOne : INQ.wQtyMany) ?? '{n}').replace('{n}', String(q));
+    };
+
     // 요청 내용을 **보고 있는 언어**로 다시 그린다.
     // 접수 시 함께 저장한 구조화 사본(details_json)에는 라벨이 붙기 전의 값만 들어 있다.
     // 자유 입력(완료 희망일·요청사항)은 고객이 쓴 그대로 — 번역하지 않는다.
@@ -243,7 +252,7 @@ const inputClass =
         const fee = Number(w.dicingFeeKrw) || 0;
         return [
           `${INQ.product}: ${PNAMES[String(w.sku ?? '')] ?? w.sku ?? ''}`,
-          `${INQ.wQty}: ${Number(w.qty) || 1}${INQ.wBox}`,
+          `${INQ.wQty}: ${qtyBox(w.qty)}`,
           `${INQ.wDicing}: ${w.dicing ? `${INQ.wYes} (+₩${fee.toLocaleString('ko-KR')}${INQ.wPerBox} × ${Number(w.qty) || 1})` : INQ.wNo}`,
         ].join('\n');
       }
@@ -320,8 +329,8 @@ const inputClass =
     };
 
     // 주문 항목의 다이싱 표기. 웨이퍼 줄에만 붙인다 —
-    // 다이싱이 존재하지 않는 상품에 '아니오'를 적으면 정보가 아니라 잡음이 된다.
-    // 옛 주문은 dicing 값이 없어(0) 자동으로 '아니오'가 된다.
+    // 다이싱이 존재하지 않는 상품에 '불필요'를 적으면 정보가 아니라 잡음이 된다.
+    // 옛 주문은 dicing 값이 없어(0) 자동으로 '불필요'가 된다.
     const wonOf = (v: unknown) => '₩' + (Number(v) || 0).toLocaleString('ko-KR');
 
     const dicingNote = (i: any): string => {
@@ -532,7 +541,7 @@ const inputClass =
               [String(INQ.substrate), dSub],
               ...(wf
                 ? ([
-                    [String(INQ.wQty), `${Number(wf.qty) || 1}${INQ.wBox}`],
+                    [String(INQ.wQty), qtyBox(wf.qty)],
                     [String(INQ.wDicing), wf.dicing
                       ? `${INQ.wYes} (+₩${wFee.toLocaleString('ko-KR')}${INQ.wPerBox} × ${Number(wf.qty) || 1})`
                       : String(INQ.wNo)],

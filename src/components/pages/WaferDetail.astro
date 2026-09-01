@@ -106,35 +106,53 @@ const metaDesc = summary?.trim()
                   {s.buyNow}
                 </button>
               </div>
+              {/* 다이싱 옵션 카드.
+                  ⚠️ 배경은 bg-plate 가 아니라 bg-panel 이다 — plate 는 '테마와 무관한 흰 판'(외부 로고·스캔 전용)이라
+                     다크 테마에서 흰 카드 위에 흰 글자가 되어 통째로 안 보인다(global.css 의 고정색 주석 참고).
+                     panel 은 캔버스보다 한 단 뜬 면이라 두 테마 모두에서 카드로 읽힌다. */}
               {dicingFee > 0 && (
-                <div class="mt-5">
-                  <label class="flex cursor-pointer items-start gap-3 text-sm text-ink/75">
+                <div class="mt-6 rounded-xl border border-ink/10 bg-panel p-4 sm:p-5">
+                  <label class="flex cursor-pointer items-start gap-3">
                     <input type="checkbox" id="opt-dicing" data-fee={dicingFee}
-                      class="mt-0.5 size-4 shrink-0 rounded border-ink/20 bg-ink/[0.03] accent-brand" />
-                    <span>
-                      {s.dicingAdd}
-                      <span class="text-ink/50"> (+<span data-krw={dicingFee}>{formatUsd(dicingFee, usdRate)}</span> USD / {s.dicingPerBox})</span>
+                      class="mt-0.5 size-5 shrink-0 rounded border-ink/20 bg-ink/[0.03] accent-brand" />
+                    <span class="min-w-0">
+                      <span class="block text-base font-semibold text-ink">{s.dicingAdd}</span>
+                      {/* ⚠️ 시안 글자는 text-accent 를 쓴다. text-brand(#1EBBF0)는 버튼 채움 전용이라
+                             흰 배경에서 대비 2.23:1 로 WCAG AA 에 못 미친다(global.css 주석 참고). */}
+                      <span class="mt-1 block text-base font-medium text-accent">
+                        +<span data-krw={dicingFee}>{formatUsd(dicingFee, usdRate)}</span> USD
+                        <span class="text-ink/70"> / {s.dicingPerBox}</span>
+                      </span>
                     </span>
                   </label>
+
                   {/* 체크·수량 변경이 즉시 반영되는 예상 합계.
                       금액은 여기서 '보여주기만' 한다 — 실제 청구액은 서버(/api/order)가 다시 계산한다. */}
-                  <p class="mt-3 text-sm text-ink/60">
-                    {s.estTotal}
-                    <span id="est-total" data-unit-krw={d.priceKrw} data-usd-rate={usdRate}
-                      class="ml-2 font-semibold text-ink">{formatUsd(d.priceKrw as number, usdRate)}</span>
-                    <span class="ml-1 text-xs font-normal text-ink/40">USD</span>
-                  </p>
-                  <p class="mt-1 text-xs text-ink/35">{s.fxNote}</p>
+                  <div class="mt-4 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-t border-ink/10 pt-4">
+                    <p class="text-sm text-ink/60">{s.estTotal}</p>
+                    <p class="text-2xl font-bold text-ink">
+                      <span id="est-total" data-unit-krw={d.priceKrw} data-usd-rate={usdRate}>{formatUsd(d.priceKrw as number, usdRate)}</span>
+                      <span class="ml-1 text-sm font-normal text-ink/50">USD</span>
+                    </p>
+                  </div>
+                  <p class="mt-1.5 text-xs text-ink/45 sm:text-right">{s.fxNote}</p>
                 </div>
               )}
               <p id="added-msg" class="mt-3 hidden text-sm font-medium text-ok">
                 {s.addedToCart} <a href={`${base}/cart`} class="underline">{s.goCart}</a>
               </p>
-              <p class="mt-5 text-sm text-ink/45">
-                {/* 문의 링크는 클릭 시점의 상품·수량·다이싱 상태를 쿼리로 넘긴다(아래 스크립트가 href 를 갱신).
-                    JS 가 죽어도 파라미터 없는 문의 페이지로 가므로 기존 동작이 유지된다. */}
+              {/* 문의 링크는 클릭 시점의 상품·수량·다이싱 상태를 쿼리로 넘긴다(아래 스크립트가 href 를 갱신).
+                  JS 가 죽어도 파라미터 없는 문의 페이지로 가므로 기존 동작이 유지된다.
+                  버튼 3개로 보이지 않도록 링크 형태는 지키되, 크기·굵기·색으로 눈에 걸리게 한다. */}
+              <p class="mt-7">
+                {/* ⚠️ inline-flex 로 두면 문구가 두 줄로 접히는 좁은 화면(390px EN)에서
+                       화살표만 첫 줄 오른쪽 끝으로 떨어져 나간다. 인라인 흐름에 그대로 실어
+                       마지막 낱말 뒤를 따라가게 한다. */}
                 <a id="bulk-link" href={`${base}/contact`} data-contact-url={`${base}/contact`} data-product={wafer.id}
-                  class="underline underline-offset-2 transition hover:text-accent">{s.bulkQuoteLink}</a>
+                  class="text-base font-semibold text-accent underline-offset-4 transition hover:underline">
+                  {s.bulkQuoteLink}
+                  <svg class="ml-1 inline align-[-0.08em]" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </a>
               </p>
             </div>
           ) : (

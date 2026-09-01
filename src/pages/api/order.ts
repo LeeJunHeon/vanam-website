@@ -200,7 +200,7 @@ async function handleOrder({ request, locals }: { request: Request; locals: unkn
         const unit = Math.round(w.data.priceKrw);
         // ⭐ 다이싱: 브라우저는 '골랐다/안 골랐다'만 보낸다. **금액은 여기서 컬렉션을 읽어 정한다.**
         //   컬렉션에 dicingFeeKrw 가 없는 웨이퍼(예: 사파이어)는 화면에 선택칸 자체가 없다 —
-        //   그런 sku 로 dicing=true 가 들어오면 조작이므로 값을 무시하고 '아니오'로 처리한다.
+        //   그런 sku 로 dicing=true 가 들어오면 조작이므로 값을 무시하고 '불필요'로 처리한다.
         const feeKrw = (w.data as Record<string, unknown>).dicingFeeKrw;
         const dicingFee =
           typeof feeKrw === 'number' && feeKrw > 0 ? Math.round(feeKrw) : 0;
@@ -324,13 +324,13 @@ async function handleOrder({ request, locals }: { request: Request; locals: unkn
   const detail = [
     `주문번호: ${orderId}`,
     `금액: ₩${amount.toLocaleString('ko-KR')} (≈ $${amountUsd.toFixed(2)} USD · 환율 ${Math.round(fx.rate).toLocaleString('ko-KR')})`,
-    // 다이싱 표기는 웨이퍼 줄에만 붙인다 (다른 상품에는 존재하지 않는 옵션이라 '아니오'가 정보를 주지 않는다).
+    // 다이싱 표기는 웨이퍼 줄에만 붙인다 (다른 상품에는 존재하지 않는 옵션이라 '불필요'가 정보를 주지 않는다).
     ...lines.map((l) => {
       const dice = !l.sku.startsWith('wafer:')
         ? ''
         : l.dicing
-          ? ` · 다이싱: 예 (+₩${l.dicingFee.toLocaleString('ko-KR')}/박스 × ${l.qty})`
-          : ' · 다이싱: 아니오';
+          ? ` · 다이싱: 필요 (+₩${l.dicingFee.toLocaleString('ko-KR')}/박스 × ${l.qty})`
+          : ' · 다이싱: 불필요';
       return `· ${l.name} × ${l.qty} = ₩${l.subtotal.toLocaleString('ko-KR')} (≈ $${(l.subtotal / fx.rate).toFixed(2)})${dice}`;
     }),
     `주문자: ${buyerName}${buyerCompany ? ` (${buyerCompany})` : ''} · ${buyerEmail}${buyerPhone ? ` · ${buyerPhone}` : ''}`,
