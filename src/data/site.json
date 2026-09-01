@@ -716,7 +716,8 @@
         "waferPrefillDicing": "Dicing",
         "waferPrefillYes": "Required",
         "waferPrefillNo": "Not required",
-        "waferPrefillPerBox": "/box"
+        "waferPrefillPerBox": "/box",
+        "waferPrefillTotal": "Estimated total"
       },
       "faqEyebrow": "FAQ",
       "faqHeading": "Frequently asked questions"
@@ -1595,7 +1596,8 @@
         "waferPrefillDicing": "다이싱",
         "waferPrefillYes": "필요",
         "waferPrefillNo": "불필요",
-        "waferPrefillPerBox": "/박스"
+        "waferPrefillPerBox": "/박스",
+        "waferPrefillTotal": "예상 합계"
       },
       "faqEyebrow": "FAQ",
       "faqHeading": "자주 묻는 질문"

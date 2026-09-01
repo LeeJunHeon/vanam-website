@@ -87,8 +87,14 @@ const metaDesc = summary?.trim()
         <div class="mt-8">
           {typeof d.priceKrw === 'number' && d.priceKrw > 0 ? (
             <div>
-              <div class="flex flex-wrap items-center gap-3">
-                <div class="flex items-center rounded-lg border border-ink/15">
+              {/* 컨트롤 행 — 아래 다이싱 카드와 **같은 폭**으로 맞춘다.
+                    · sm 이상: 한 줄. 스테퍼는 제 크기(shrink-0)를 지키고 두 버튼이 flex-1 로
+                      남는 폭을 균등 분할해 행의 오른쪽 끝이 카드 오른쪽 끝과 정확히 맞는다.
+                    · sm 미만(390px): 2열 그리드. 스테퍼가 한 줄을 차지하고(w-fit 이라 늘어나진 않는다)
+                      버튼 두 개가 각 50% 를 갖는다 — 한 줄에 셋을 우겨넣으면 버튼 폭이
+                      91px 까지 좁아져 '카트에 담기' 가 잘린다. */}
+              <div class="grid grid-cols-2 items-center gap-3 sm:flex">
+                <div class="col-span-2 flex w-fit items-center rounded-lg border border-ink/15 sm:col-span-1 sm:w-auto sm:shrink-0">
                   <button type="button" data-qty="-1" class="grid h-12 w-10 place-items-center text-lg text-ink/60 transition hover:text-accent" aria-label={s.qtyDec}>−</button>
                   {/* ⚠️ 보이는 라벨이 없는 입력칸이라 aria-label 이 필수다.
                       ± 버튼과 달리 이 칸만 이름이 없어서, 스크린리더와 AI 에이전트가
@@ -98,11 +104,11 @@ const metaDesc = summary?.trim()
                   <button type="button" data-qty="1" class="grid h-12 w-10 place-items-center text-lg text-ink/60 transition hover:text-accent" aria-label={s.qtyInc}>＋</button>
                 </div>
                 <button type="button" id="add-cart" data-sku={`wafer:${wafer.id}`} data-cart-url={`${base}/cart`}
-                  class="v-btn">
+                  class="v-btn min-w-0 justify-center sm:flex-1">
                   {s.addToCart}
                 </button>
                 <button type="button" id="buy-now" data-checkout-url={`${base}/checkout`}
-                  class="inline-flex items-center gap-2 rounded-lg border-2 border-accent px-6 py-3 font-semibold text-accent transition hover:bg-accent hover:text-white">
+                  class="inline-flex min-w-0 items-center justify-center gap-2 rounded-lg border-2 border-accent px-6 py-3 font-semibold text-accent transition hover:bg-accent hover:text-white sm:flex-1">
                   {s.buyNow}
                 </button>
               </div>

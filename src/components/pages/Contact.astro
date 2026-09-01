@@ -34,6 +34,8 @@ const waferCatalog = Object.fromEntries(
         name: locale === 'ko' ? w.data.name : ((w.data as Record<string, unknown>).name_en as string ?? w.data.name),
         dicingFeeKrw:
           typeof w.data.dicingFeeKrw === 'number' && w.data.dicingFeeKrw > 0 ? w.data.dicingFeeKrw : 0,
+        // 박스 단가 — 예상 합계 표시용. 서버(/api/inquiry)가 같은 값으로 다시 계산한다.
+        priceKrw: typeof w.data.priceKrw === 'number' && w.data.priceKrw > 0 ? w.data.priceKrw : 0,
       },
     ]),
 );
@@ -92,7 +94,7 @@ const labelClass = 'block text-sm font-medium text-ink/80';
       data-wafers={JSON.stringify(waferCatalog)}
       data-wafer-t={JSON.stringify({
         tag: f.waferPrefillTag, qty: f.waferPrefillQty, qtyOne: f.waferPrefillQtyOne,
-        perBox: f.waferPrefillPerBox,
+        perBox: f.waferPrefillPerBox, total: f.waferPrefillTotal,
         dicing: f.waferPrefillDicing, yes: f.waferPrefillYes, no: f.waferPrefillNo,
       })}>
       {/* 웨이퍼 상세에서 넘어온 문의의 구조화 값. 파라미터가 없으면 빈 값 그대로 전송된다
@@ -238,6 +240,8 @@ const labelClass = 'block text-sm font-medium text-ink/80';
 
 <script>
   import { initTelInput, normalizeTelInputs } from '../../lib/telInput';
+  // 예상 합계의 달러 환산은 사이트 다른 화면과 같은 환율을 쓴다
+  import { liveRate, cachedRate } from '../../lib/fx-client';
   // 보안 확인 위젯 — 로드 실패 시 자동 재시도·안내까지 여기서 처리한다
   import { mountTurnstile, resetTurnstile } from '../../lib/turnstile-client';
   // 0246: 보안 위젯은 폼을 실제로 쓸 때 필요하다. 유휴 시간에 올려 LCP 경로를 비운다.
@@ -276,7 +280,7 @@ const labelClass = 'block text-sm font-medium text-ink/80';
     const id = (q.get('product') ?? '').trim();
     if (!id) return;
 
-    type W = { name: string; dicingFeeKrw: number };
+    type W = { name: string; dicingFeeKrw: number; priceKrw: number };
     let cat: Record<string, W> = {};
     let L: Record<string, string> = {};
     try {
@@ -296,11 +300,37 @@ const labelClass = 'block text-sm font-medium text-ink/80';
       : `${L.dicing}: ${L.no}`;
     // 영문은 1박스일 때만 단수형(box)을 쓴다 — 한글은 두 문구가 같아 자연히 무시된다.
     const qtyTxt = ((qty === 1 ? L.qtyOne : L.qty) ?? '× {n}').replace('{n}', String(qty));
-    const line = `${L.tag} ${w.name} ${qtyTxt} · ${dTxt}`;
+
+    // 예상 합계 = (박스 단가 + 다이싱을 골랐다면 박스당 다이싱 비용) × 박스 수.
+    // 원화가 기준이고 달러는 참고값이다. 서버(/api/inquiry)가 같은 식으로 다시 계산하므로
+    // 여기 숫자가 조작돼도 담당자에게 가는 값은 바뀌지 않는다.
+    const totalKrw = ((w.priceKrw || 0) + (dicing ? w.dicingFeeKrw : 0)) * qty;
+    const compose = (rate: number) => {
+      let t = '';
+      if (totalKrw > 0) {
+        t = ` · ${L.total} ₩${totalKrw.toLocaleString('ko-KR')}`;
+        // 환율을 못 구하면 ≈ 부분만 뺀다 — 원화 총액은 그대로 남는다.
+        if (rate > 0) {
+          const usd = (totalKrw / rate).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+          t += ` (≈ $${usd})`;
+        }
+      }
+      return `${L.tag} ${w.name} ${qtyTxt} · ${dTxt}${t}\n\n`;
+    };
 
     const msg = document.getElementById('message') as HTMLTextAreaElement | null;
     // 이미 사용자가 쓰기 시작했다면 덮어쓰지 않는다.
-    if (msg && !msg.value.trim()) msg.value = `${line}\n\n`;
+    if (msg && !msg.value.trim()) {
+      // ① 직전 방문에서 받아둔 환율로 먼저 채운다(빈 칸이 잠깐 보였다 바뀌는 깜빡임 방지).
+      let filled = compose(cachedRate() || 0);
+      msg.value = filled;
+      // ② 현재 환율을 받아 값이 달라지면 다시 쓴다. 단, 사용자가 손대지 않은 경우만.
+      void liveRate(0).then((r) => {
+        if (!(r > 0)) return;
+        const next = compose(r);
+        if (msg.value === filled && next !== filled) { msg.value = next; filled = next; }
+      });
+    }
 
     const set = (elId: string, v: string) => {
       const el = document.getElementById(elId) as HTMLInputElement | null;

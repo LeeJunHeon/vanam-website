@@ -108,7 +108,8 @@ const STATUS_COLOR: Record<string, string> = {
 // 메시지 본문에도 같은 내용이 프리필돼 있지만, 그건 고객이 지우거나 고칠 수 있는 자유 텍스트다.
 // 담당자가 믿고 볼 값은 이쪽(구조화 사본 + 컬렉션에서 서버가 정한 다이싱 비용)이다.
 // 옛 문의·웨이퍼와 무관한 문의에는 사본이 없다 → null 이라 블록 자체를 그리지 않는다.
-type WaferInq = { sku: string; name: string; qty: number; dicing: boolean; fee: number };
+// total 은 접수 시점에 서버가 굳힌 예상 합계다. 옛 문의에는 없어 0 이 되고, 그때는 행을 그리지 않는다.
+type WaferInq = { sku: string; name: string; qty: number; dicing: boolean; fee: number; unit: number; total: number };
 const waferInq = (r: Row): WaferInq | null => {
   if (!r.details_json) return null;
   try {
@@ -120,6 +121,8 @@ const waferInq = (r: Row): WaferInq | null => {
       qty: Number(w.qty) || 1,
       dicing: w.dicing === true,
       fee: Number(w.dicingFeeKrw) || 0,
+      unit: Number(w.unitKrw) || 0,
+      total: Number(w.totalKrw) || 0,
     };
   } catch {
     return null;
@@ -127,7 +130,8 @@ const waferInq = (r: Row): WaferInq | null => {
 };
 /** 검색 인덱스·요약용 한 줄. */
 const waferInqLine = (w: WaferInq) =>
-  `${w.name} × ${w.qty}박스 · 다이싱: ${w.dicing ? `필요 (+₩${w.fee.toLocaleString('ko-KR')}/박스 × ${w.qty})` : '불필요'}`;
+  `${w.name} × ${w.qty}박스 · 다이싱: ${w.dicing ? `필요 (+₩${w.fee.toLocaleString('ko-KR')}/박스 × ${w.qty})` : '불필요'}` +
+  (w.total > 0 ? ` · 예상 합계 ₩${w.total.toLocaleString('ko-KR')}` : '');
 
 const spec = (r: Row) =>
   [
@@ -645,19 +649,37 @@ const spec = (r: Row) =>
                         <p class="text-xs font-medium uppercase tracking-widest text-accent">웨이퍼 문의</p>
                         <dl class="mt-2 space-y-1 text-sm">
                           <div class="flex gap-3">
-                            <dt class="w-14 shrink-0 text-xs text-ink/40">상품</dt>
+                            <dt class="w-16 shrink-0 whitespace-nowrap text-xs text-ink/40">상품</dt>
                             <dd class="min-w-0 text-ink/80">{w.name} <span class="font-mono text-xs text-ink/35">({w.sku})</span></dd>
                           </div>
                           <div class="flex gap-3">
-                            <dt class="w-14 shrink-0 text-xs text-ink/40">수량</dt>
+                            <dt class="w-16 shrink-0 whitespace-nowrap text-xs text-ink/40">수량</dt>
                             <dd class="text-ink/80">{w.qty}박스 <span class="text-xs text-ink/35">(1박스 25장)</span></dd>
                           </div>
                           <div class="flex gap-3">
-                            <dt class="w-14 shrink-0 text-xs text-ink/40">다이싱</dt>
+                            <dt class="w-16 shrink-0 whitespace-nowrap text-xs text-ink/40">다이싱</dt>
                             <dd class={w.dicing ? 'font-medium text-accent' : 'text-ink/50'}>
                               {w.dicing ? `필요 (+₩${w.fee.toLocaleString('ko-KR')}/박스 × ${w.qty})` : '불필요'}
                             </dd>
                           </div>
+                          {/* 접수 시점에 서버가 굳힌 예상 합계. 옛 문의에는 없어 행이 빠진다. */}
+                          {w.total > 0 && (
+                            <div class="flex gap-3">
+                              <dt class="w-16 shrink-0 whitespace-nowrap text-xs text-ink/40">예상 합계</dt>
+                              <dd class="font-semibold text-ink">
+                                {won(w.total)}
+                                {/* 산식은 괄호를 분명히 둔다 — "(₩900,000 + ₩700,000 × 2)" 로 쓰면
+                                    단가 + (비용×수량) 으로 읽혀 실제 값과 어긋나 보인다. */}
+                                {w.unit > 0 && (
+                                  <span class="ml-1.5 text-xs font-normal text-ink/40">
+                                    {w.dicing
+                                      ? `(${won(w.unit)} + ₩${w.fee.toLocaleString('ko-KR')}) × ${w.qty}`
+                                      : `${won(w.unit)} × ${w.qty}`}
+                                  </span>
+                                )}
+                              </dd>
+                            </div>
+                          )}
                         </dl>
                       </div>
                     );

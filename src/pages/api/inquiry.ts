@@ -7,6 +7,7 @@ import { env as cfEnv } from 'cloudflare:workers';
 import { db, newId, nowIso, nowKst } from '../../lib/db';
 import { rateLimit, tooMany } from '../../lib/rate-limit';
 import { verifyTurnstile } from '../../lib/turnstile';
+import { getRate, pickWaitUntil } from '../../lib/fx';
 
 // 서버에서 온디맨드 실행 (정적 생성 금지)
 export const prerender = false;
@@ -22,7 +23,7 @@ const json = (body: object, status = 200) =>
     headers: { 'Content-Type': 'application/json' },
   });
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
   let body: Payload;
   try {
     body = (await request.json()) as Payload;
@@ -103,17 +104,42 @@ export const POST: APIRoute = async ({ request }) => {
     if (w) {
       const feeRaw = (w.data as Record<string, unknown>).dicingFeeKrw;
       const fee = typeof feeRaw === 'number' && feeRaw > 0 ? Math.round(feeRaw) : 0;
+      const unit = typeof w.data.priceKrw === 'number' && w.data.priceKrw > 0 ? Math.round(w.data.priceKrw) : 0;
       const qty = Math.max(1, Math.min(99, parseInt(str(body.qty) || '1', 10) || 1));
       const dicing = (body.dicing === true || str(body.dicing) === '1') && fee > 0;
+      // 예상 합계도 서버가 다시 계산한다 — 화면이 보낸 금액은 어디서도 쓰지 않는다.
+      //   (박스 단가 + 다이싱을 골랐다면 박스당 다이싱 비용) × 박스 수
+      const totalKrw = (unit + (dicing ? fee : 0)) * qty;
       const nameKo = w.data.name;
       waferQty = String(qty);
+
+      // 환율은 주문 알림과 같은 출처(저장된 라이브 환율)를 쓴다. 실패하면 ≈ 부분만 뺀다.
+      let usdNote = '';
+      if (totalKrw > 0) {
+        try {
+          const fx = await getRate(await db(), pickWaitUntil(locals));
+          if (fx.rate > 0) {
+            const usd = Math.round((totalKrw / fx.rate) * 100) / 100;
+            usdNote = ` (≈ $${usd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} · 환율 ${Math.round(fx.rate).toLocaleString('ko-KR')})`;
+          }
+        } catch (e) {
+          console.error('[inquiry] 환율 조회 실패 — 예상 합계의 달러 환산을 생략합니다:', e);
+        }
+      }
+
       waferLine =
         `상품: ${nameKo} (${product}) × ${qty}박스` +
-        ` · 다이싱: ${dicing ? `필요 (+₩${fee.toLocaleString('ko-KR')}/박스 × ${qty})` : '불필요'}`;
+        ` · 다이싱: ${dicing ? `필요 (+₩${fee.toLocaleString('ko-KR')}/박스 × ${qty})` : '불필요'}` +
+        (totalKrw > 0 ? ` · 예상 합계 ₩${totalKrw.toLocaleString('ko-KR')}${usdNote}` : '');
+
       // 조회·관리자 화면이 '보는 언어'로 다시 그릴 수 있게 구조화 사본을 남긴다.
+      // 금액(unitKrw·totalKrw)도 함께 굳혀 두어야 나중에 단가표가 바뀌어도
+      // 고객이 문의 시점에 본 숫자가 그대로 남는다.
       // 폼이 보낸 detailsJson 이 이미 있으면(견적 폼) 그쪽을 덮지 않는다.
       if (!detailsJson) {
-        detailsJson = JSON.stringify({ wafer: { sku: product, qty, dicing, dicingFeeKrw: fee } });
+        detailsJson = JSON.stringify({
+          wafer: { sku: product, qty, dicing, dicingFeeKrw: fee, unitKrw: unit, totalKrw },
+        });
       }
     }
   }
