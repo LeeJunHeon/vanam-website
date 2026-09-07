@@ -6,7 +6,7 @@
 // 제출 시 시퀀스를 사람이 읽을 수 있는 텍스트로 정리해 details 에, 원본은 JSON 으로 함께 보낸다.
 import siteData from '../data/site.json';
 import company from '../data/company.json';
-import { PROCESSES, MEASUREMENTS, SUBSTRATES, SUBSTRATE_SIZES, DELIVERY_METHODS, PRODUCT_MAT_FILTER, type MatCat } from '../lib/processes';
+import { PROCESSES, MEASUREMENTS, SUBSTRATES, SUBSTRATE_SIZES, DELIVERY_METHODS, PRODUCT_MAT_FILTER, SYSTEM_TO_PROCESS, type MatCat } from '../lib/processes';
 import { COUNTRIES } from '../lib/countries';
 
 const { product, productName, simple = false } = Astro.props;
@@ -102,7 +102,8 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
       data-map-size={JSON.stringify(Object.fromEntries(sizeOpts.map((s) => [s.value, s.label])))}
       data-map-delivery={JSON.stringify(Object.fromEntries(deliveryOpts.map((d) => [d.value, d.label])))}
       data-map-country={JSON.stringify(Object.fromEntries(countryOpts.map((cn) => [cn.value, cn.label])))}
-      data-dep-processes={JSON.stringify(DEP_PROCESSES)}>
+      data-dep-processes={JSON.stringify(DEP_PROCESSES)}
+      data-sys-proc={JSON.stringify(SYSTEM_TO_PROCESS)}>
       <!-- Honeypot: 사람에겐 안 보임 (스팸 트랩) -->
       <div class="absolute left-[-9999px]" aria-hidden="true">
         <label>{c.honeypot}
@@ -444,6 +445,8 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
 
 <script>
   import { initTelInput, normalizeTelInputs } from '../lib/telInput';
+  // 소재 value 문자열을 만드는 함수는 한 곳뿐이다 — 옵션 파생·CTA 링크·여기(프리필)가 같은 걸 쓴다.
+  import { materialValue } from '../lib/material-value.js';
   import { showHint, hideHint } from '../lib/formHint';
   // 보안 확인 위젯 — 로드 실패 시 자동 재시도·안내까지 여기서 처리한다
   import { mountTurnstile, resetTurnstile } from '../lib/turnstile-client';
@@ -467,8 +470,10 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
     Nitride: { en: 'Nitrides', ko: '질화물' },
     Metal: { en: 'Metals', ko: '금속' },
     gas: { en: 'Gases', ko: '가스' },
+    // 0907b — 소재 라이브러리에서 파생하며 새로 들어온 분류(Si). 기존 그룹 순서는 건드리지 않고 뒤에 붙인다.
+    Semiconductor: { en: 'Semiconductors', ko: '반도체' },
   };
-  const CAT_ORDER = ['Oxide', 'Nitride', 'Metal', 'gas'];
+  const CAT_ORDER = ['Oxide', 'Nitride', 'Metal', 'gas', 'Semiconductor'];
   const isKoDoc = () => (document.documentElement.lang || 'en') === 'ko';
 
   const form = document.getElementById("quote-form") as HTMLFormElement | null;
@@ -625,6 +630,43 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
   }
 
   addBtn?.addEventListener("click", addRow);
+
+  // ── 소재 라이브러리 → 견적 폼 프리필 (0907b) ──────────────────
+  // 소재 라이브러리·상세의 "이 물질로 견적 문의" 링크가
+  // ?material=BaTiO3&system=sputter#quote 형태로 넘어온다.
+  // 채우는 것은 Step 1 의 공정·소재 두 칸뿐 — 두께·시간은 사람이 정할 값이라 비워 둔다.
+  // 파라미터가 없거나, 이 페이지의 선택지에 없는 값이면 아무 일도 하지 않는다
+  // (주소창으로 임의 문구를 심지 못하게. 행도 남기지 않아 진입 상태가 빈 폼 그대로다).
+  (function prefillMaterial() {
+    if (!form || !listEl || !tmpl) return;   // 단일 상품(simple) 폼에는 시퀀스 빌더가 없다
+    const q = new URLSearchParams(location.search);
+    const rawMat = (q.get('material') ?? '').trim();
+    if (!rawMat) return;
+    const sys = (q.get('system') ?? '').trim().toLowerCase();
+    // 라이브러리 system → 폼 공정 이름. 매핑의 출처는 processes.ts 하나이고 data 속성으로 넘어온다
+    // (processes.ts 를 클라이언트에서 import 하면 소재 JSON 52개가 번들에 딸려 온다).
+    let sysToProc: Record<string, string> = {};
+    try { sysToProc = JSON.parse(M.sysProc ?? '{}'); } catch { return; }
+    const procName = sysToProc[sys] ?? '';
+    const want = materialValue(rawMat);
+
+    addRow();
+    const rows = listEl.querySelectorAll<HTMLElement>('.q-process-row');
+    const row = rows[rows.length - 1];
+    if (!row) return;
+    const drop = () => { row.remove(); refreshStepLabels(); };
+
+    const procSel = row.querySelector('.q-row-process') as HTMLSelectElement;
+    // 이 제품 페이지에 그 공정이 없으면(필터로 빠졌거나 system 이 이상하면) 되돌린다
+    if (!procName || !Array.from(procSel.options).some((o) => o.value === procName)) return drop();
+    procSel.value = procName;
+    applyProcess(row);
+
+    const matSel = row.querySelector('.q-row-material') as HTMLSelectElement;
+    // 옵션에 실제로 있을 때만 대입한다. 없으면 행째로 걷어낸다(행 0개 = 진입 전 상태).
+    if (!Array.from(matSel.options).some((o) => o.value === want)) return drop();
+    matSel.value = want;
+  })();
 
   // 제출 시: 시퀀스를 사람이 읽을 텍스트 + 구조화 JSON 으로
   function collectSequence(): { text: string; json: any[] } {

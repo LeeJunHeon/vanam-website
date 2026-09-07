@@ -6,6 +6,8 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getImage } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
+// 견적 폼으로 넘길 ?material= 문자열은 이 함수 하나로만 만든다 (폼 옵션 파생과 같은 규칙)
+import { quoteParams, CATEGORY_TO_PRODUCT } from '../../lib/material-value.js';
 
 const { material } = Astro.props;
 const d = material.data;
@@ -81,10 +83,11 @@ const t = {
   cta: isKo ? '이 물질로 견적 문의' : 'Request a quote for this material',
 };
 // 물질 분류 → 해당 제품 페이지. 견적 CTA 를 그 제품(견적 폼)으로 보낸다.
-const catToProduct: Record<string, string> = { Oxide: 'oxides', Nitride: 'nitrides', Metal: 'metals' };
-const productId = catToProduct[d.category] ?? null;
+const productId = CATEGORY_TO_PRODUCT[d.category] ?? null;
+// 제품 페이지로 가는 경우에만 소재를 넘겨 폼 Step 1 을 채운다(?material=&system=#quote).
+// 매핑에 없는 분류(앞으로 생길 수 있다)는 /contact 로 폴백하며 파라미터를 붙이지 않는다.
 const quoteHref = productId
-  ? (isKo ? `/ko/product/${productId}` : `/product/${productId}`)
+  ? (isKo ? `/ko/product/${productId}/` : `/product/${productId}/`) + quoteParams(d.system, d.formula)
   : (isKo ? '/ko/contact' : '/contact');
 ---
 
