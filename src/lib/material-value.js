@@ -57,3 +57,35 @@ export function materialSortKey(value) {
 export function quoteParams(system, formula) {
   return `?material=${encodeURIComponent(materialValue(formula))}&system=${encodeURIComponent(system)}#quote`;
 }
+
+// ── 소재 분류 ↔ 제품 페이지 ↔ 폼 필터 ────────────────────────────
+// 두 표가 서로 맞물려야 CTA 가 살아 있다:
+//   CATEGORY_TO_PRODUCT 가 소재를 어떤 제품 페이지로 보내고,
+//   그 페이지의 PRODUCT_MAT_FILTER 가 그 분류를 통과시켜야 소재가 드롭다운에 남는다.
+// 어긋나면 링크는 열리는데 프리필만 조용히 실패한다(0907b 의 Si 가 정확히 그랬다).
+// → 두 표를 한 파일에 두고, scripts/check-material-values.mjs 가 정합을 강제한다.
+
+/**
+ * 소재 분류 → 견적 폼이 있는 제품 페이지 ID.
+ * 여기 없는 분류는 /contact 로 폴백한다(새 분류가 생겼는데 갈 제품이 없을 때의 안전망).
+ * Semiconductor(Si)는 전용 제품이 없어 금속 페이지에서 함께 받는다.
+ */
+export const CATEGORY_TO_PRODUCT = /** @type {Record<string, string>} */ ({
+  Oxide: 'oxides',
+  Nitride: 'nitrides',
+  Metal: 'metals',
+  Semiconductor: 'metals',
+});
+
+/**
+ * 제품 ID(products/*.json 파일명) → 그 페이지의 물질 드롭다운에 보일 분류.
+ * 목록에 없는 제품(wafers 등)은 전체 노출(null).
+ * 'gas' 는 플라즈마·열처리 공정용이라 증착 제품 페이지에는 항상 함께 둔다.
+ */
+export const PRODUCT_MAT_FILTER = /** @type {Record<string, string[] | null>} */ ({
+  oxides: ['Oxide', 'gas'],
+  nitrides: ['Nitride', 'gas'],
+  // Semiconductor(Si)는 금속 페이지에서 받는다 — CATEGORY_TO_PRODUCT 와 짝이다.
+  metals: ['Metal', 'Semiconductor', 'gas'],
+  multilayers: null, // 다층은 전체 물질 조합
+});

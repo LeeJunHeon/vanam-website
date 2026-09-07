@@ -6,7 +6,7 @@
 // (src/content/materials/*.json)가 단일 소스이고, Sputter/ALD 의 선택지는 거기서 파생한다.
 // 라이브러리에 소재를 추가하면 견적 폼 드롭다운에 자동으로 나타난다(수기 동기화 지점 제거).
 // 라이브러리에 대응 항목이 없는 선택지(플라즈마·열처리 가스, Evaporator 물질)만 EXTRAS 로 남긴다.
-import { materialValue, materialSortKey } from './material-value.js';
+import { materialValue, materialSortKey, PRODUCT_MAT_FILTER as PRODUCT_MAT_FILTER_RAW } from './material-value.js';
 
 // 물질의 소재 분류. 제품(Oxides/Nitrides/Metals)에 맞는 물질만 보여주는 데 쓴다.
 // 'gas' 는 플라즈마 공정의 가스라 분류와 무관하게 항상 노출.
@@ -101,13 +101,9 @@ export const MEASUREMENTS: ProcessDef[] = [
 
 // 제품 ID(products/*.json 파일명) → 물질 소재 분류 매핑.
 // 이 제품의 공정 물질 드롭다운에 어떤 분류를 보여줄지 결정한다.
-// 목록에 없는 제품(multilayers·wafers 등)은 전체 노출(null).
-export const PRODUCT_MAT_FILTER: Record<string, MatCat[] | null> = {
-  oxides: ['Oxide', 'gas'],
-  nitrides: ['Nitride', 'gas'],
-  metals: ['Metal', 'gas'],
-  multilayers: null, // 다층은 전체 물질 조합
-};
+// 실체는 material-value.js 에 있다 — CTA 가 보내는 제품 페이지(CATEGORY_TO_PRODUCT)와
+// 짝을 이뤄야 하고, 그 정합을 node 검증 스크립트가 확인해야 하기 때문. 여기서는 타입만 입힌다.
+export const PRODUCT_MAT_FILTER = PRODUCT_MAT_FILTER_RAW as Record<string, MatCat[] | null>;
 
 // 기판 종류/크기/전달 — [값(영문 고정), 한글 라벨]. 값은 데이터로 저장, 라벨만 언어별 표시.
 export const SUBSTRATES: [string, string][] = [

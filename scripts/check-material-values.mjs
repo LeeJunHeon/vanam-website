@@ -14,12 +14,13 @@
 //   ② 라이브러리 소재 중 옵션에 못 들어간 것 0
 //   ③ 파생 value 중복 없음 (같은 방식 안에서)
 //   ④ VALUE_EXCEPTIONS 에 죽은 항목 없음 (정규화만으로 충분한데 예외로 적어둔 것)
+//   ⑤ CTA↔필터 정합: 소재의 CTA 가 향하는 제품 페이지의 필터가 그 소재의 분류를 통과시킨다
 // 사용: node scripts/check-material-values.mjs [--dump]   (--dump = 파생 옵션 전수 표 출력)
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 // 파생에 쓰는 함수 그대로 가져온다 — 검증이 별도 규칙을 다시 구현하면 게이트가 아니라 사본이 된다.
-import { materialValue, materialSortKey, VALUE_EXCEPTIONS } from '../src/lib/material-value.js';
+import { materialValue, materialSortKey, VALUE_EXCEPTIONS, CATEGORY_TO_PRODUCT, PRODUCT_MAT_FILTER } from '../src/lib/material-value.js';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const MAT_DIR = join(ROOT, 'src/content/materials');
@@ -103,6 +104,26 @@ const deadExceptions = Object.keys(VALUE_EXCEPTIONS).filter((k) => !normalized.h
 for (const key of deadExceptions) fail(`쓰이지 않는 예외: VALUE_EXCEPTIONS['${key}'] — 대응 소재가 라이브러리에 없다`);
 if (!deadExceptions.length) console.log(`  ✓ 예외표 ${Object.keys(VALUE_EXCEPTIONS).length}건 전부 실제 사용`);
 
+// ⑤ CTA↔필터 정합 — "링크는 열리는데 프리필만 안 되는" 조합을 막는다.
+// 0907b 의 Si 가 그랬다: 분류가 Semiconductor 인데 금속 페이지 필터가 Metal 만 통과시켜
+// CTA 는 살아 있고 소재만 드롭다운에서 사라졌다. 분류가 새로 생길 때마다 여기서 걸린다.
+const ctaMismatch = [];
+for (const m of library) {
+  const product = CATEGORY_TO_PRODUCT[m.category];
+  if (!product) continue;   // 매핑 없는 분류는 /contact 폴백 — 프리필 대상이 아니다
+  const filter = PRODUCT_MAT_FILTER[product];
+  if (filter === null || filter === undefined) continue;  // null = 전체 노출
+  if (!filter.includes(m.category)) ctaMismatch.push(`${m.id}/${m.formula}(${m.category}) → /product/${product}`);
+}
+if (ctaMismatch.length) {
+  fail(`CTA 가 향하는 제품 페이지의 필터가 그 분류를 막는다 ${ctaMismatch.length}건: ${ctaMismatch.join(', ')}`
+    + ` (material-value.js 의 CATEGORY_TO_PRODUCT / PRODUCT_MAT_FILTER 를 맞출 것)`);
+} else {
+  const linked = library.filter((m) => CATEGORY_TO_PRODUCT[m.category]).length;
+  console.log(`  ✓ CTA↔필터 정합: 프리필 링크 ${linked}종 전부 해당 페이지 드롭다운에 존재`
+    + (linked < library.length ? ` (/contact 폴백 ${library.length - linked}종)` : ''));
+}
+
 // ── --dump: 파생 옵션 전수 표 ────────────────────────────────────
 if (process.argv.includes('--dump')) {
   for (const [proc, list] of Object.entries(derived)) {
@@ -121,7 +142,7 @@ if (process.argv.includes('--dump')) {
 }
 
 if (bad) {
-  console.error(`\n소재 value 게이트 실패: ${bad}건 — 파생 규칙이 기존 value 를 바꾸고 있다. 멈춘다.`);
+  console.error(`\n소재 value 게이트 실패: ${bad}건 — 파생 규칙이 기존 value 를 바꾸거나 프리필 링크를 끊고 있다. 멈춘다.`);
   process.exit(1);
 }
 console.log('· 소재 value 게이트 통과');
