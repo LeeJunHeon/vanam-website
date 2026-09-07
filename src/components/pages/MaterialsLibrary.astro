@@ -9,6 +9,8 @@ import { getRelativeLocaleUrl } from 'astro:i18n';
 import type { ImageMetadata } from 'astro';
 import siteData from '../../data/site.json';
 import PeriodicBg from '../materials/PeriodicBg.astro';
+// 견적 폼으로 넘길 ?material= 문자열은 이 함수 하나로만 만든다 (폼 옵션 파생과 같은 규칙)
+import { quoteParams } from '../../lib/material-value.js';
 const locale = Astro.currentLocale ?? 'en';
 const lhref = (p) => getRelativeLocaleUrl(locale, p);
 const site = siteData[locale] ?? siteData.en;
@@ -107,7 +109,11 @@ for (const m of allMaterials) {
     name: locale === 'ko' ? (d.name_ko ?? d.name ?? d.formula) : (d.name ?? d.formula),
     system: d.system === 'ald' ? 'ALD' : 'PVD — Sputter & Evaporator',
     category: catLabel[d.category],
-    quoteHref: lhref(matToProduct[d.category] ? `/product/${matToProduct[d.category]}` : '/contact'),
+    // 견적 CTA. 제품 페이지로 가는 경우에만 소재를 넘겨 폼 Step 1 을 채운다.
+    // 대응 제품이 없는 분류(Semiconductor/Si)는 /contact 로 가므로 파라미터를 붙이지 않는다.
+    quoteHref: matToProduct[d.category]
+      ? lhref(`/product/${matToProduct[d.category]}`) + quoteParams(d.system, d.formula)
+      : lhref('/contact'),
     desc: (locale === 'ko' ? (d.description_ko ?? d.description) : d.description) ?? '',
     figs,
     targets,
