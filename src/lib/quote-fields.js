@@ -77,3 +77,22 @@ export function validateQuoteDetails(detailsJson) {
 
   return { ok: true };
 }
+
+/**
+ * 박막 증착 여부의 **저장값** 정규화.
+ *
+ * 화면은 '있음 → 없음'으로 되돌려도 입력값을 지우지 않는다(잘못 눌렀다 되돌릴 때 복구가 안 됐다).
+ * 그래서 "없음이면 메모를 비운다"는 규칙은 화면이 아니라 제출 조립 시점에 여기서 한 번만 적용한다.
+ * 문장(details)·구조화 사본(details_json)·요약(lines) 세 곳이 전부 이 결과를 본다.
+ *
+ * @param {unknown} raw   라디오 값 — '1'(있음) / '0'(없음)
+ * @param {unknown} note  자유 입력
+ * @returns {{ preFilm: boolean, preFilmNote: string }}
+ */
+export function preFilmFields(raw, note) {
+  const preFilm = String(raw ?? '') === '1';
+  return {
+    preFilm,
+    preFilmNote: preFilm ? String(note ?? '').trim() : '',
+  };
+}

@@ -166,26 +166,29 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
             </div>
           </div>
           <!-- 박막 증착 여부 — 기판 종류·크기 바로 아래 전체 폭 한 줄.
-               '있음'이면 아래 textarea 가 펼쳐지고 그때만 필수가 된다. -->
+               선택 순서는 '있음 → 없음', 기본 선택은 '없음'이다. -->
           <div>
             <span class={labelClass}>{q.preFilm} <span class="text-danger">*</span></span>
             <div id="q-prefilm-group" class="mt-2 flex flex-wrap gap-x-6 gap-y-2">
-              <label for="q-prefilm-no" class="flex items-center gap-2 text-sm text-ink/70">
-                <input id="q-prefilm-no" type="radio" name="preFilm" value="0" checked
-                  class="h-4 w-4 border-ink/30 text-accent" />
-                {q.preFilmNone}
-              </label>
               <label for="q-prefilm-yes" class="flex items-center gap-2 text-sm text-ink/70">
                 <input id="q-prefilm-yes" type="radio" name="preFilm" value="1"
                   class="h-4 w-4 border-ink/30 text-accent" />
                 {q.preFilmYes}
               </label>
+              <label for="q-prefilm-no" class="flex items-center gap-2 text-sm text-ink/70">
+                <input id="q-prefilm-no" type="radio" name="preFilm" value="0" checked
+                  class="h-4 w-4 border-ink/30 text-accent" />
+                {q.preFilmNone}
+              </label>
             </div>
-            <div id="q-prefilm-wrap" hidden class="mt-3">
-              <label for="q-prefilm-note" class={labelClass}>{q.preFilmNote} <span class="text-danger">*</span></label>
-              <textarea id="q-prefilm-note" name="preFilmNote" rows="3"
-                class={`${inputClass} mt-2`} placeholder={q.preFilmNotePlaceholder}></textarea>
-            </div>
+          </div>
+          <!-- '있음'일 때만 펼쳐지는 자유 입력. 라디오 묶음의 자식이 아니라 기판 정보 섹션의
+               **독립 필드 그룹**이라, 위 space-y-6 이 다른 필드 그룹과 같은 간격을 준다.
+               hidden 이면 display:none 이라 그 간격도 함께 사라진다(빈 여백이 남지 않는다). -->
+          <div id="q-prefilm-wrap" hidden>
+            <label for="q-prefilm-note" class={labelClass}>{q.preFilmNote} <span class="text-danger">*</span></label>
+            <textarea id="q-prefilm-note" name="preFilmNote" rows="3"
+              class={inputClass} placeholder={q.preFilmNotePlaceholder}></textarea>
           </div>
           <div>
             <label for="q-delivery" class={labelClass}>{q.delivery} <span class="text-danger">*</span></label>
@@ -348,10 +351,9 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
               // ⚠️ textarea 에 required 를 걸지 않는다. collectIssues 는 숨은 요소도 검사하므로
               //    '없음'으로 되돌렸을 때 보이지도 않는 칸 때문에 제출이 막힌다.
               //    필수 판정은 collectIssues 의 명시적 검사 한 곳에서만 한다(문구도 그쪽이 낸다).
-              if (pfNote) {
-                pfNote.setAttribute('aria-required', yes ? 'true' : 'false');
-                if (!yes) pfNote.value = '';   // '없음'이면 값도 비운다
-              }
+              // '없음'으로 되돌려도 입력값은 지우지 않는다(잘못 눌렀다 되돌릴 때 복구가 안 됐다).
+              // 저장으로 나가는 값은 제출 조립(preFilmFields)에서 preFilm=false 면 빈 문자열이 된다.
+              if (pfNote) pfNote.setAttribute('aria-required', yes ? 'true' : 'false');
             }
           };
           sel.addEventListener('change', sync);
@@ -499,6 +501,8 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
   import { initTelInput, normalizeTelInputs } from '../lib/telInput';
   // 소재 value 문자열을 만드는 함수는 한 곳뿐이다 — 옵션 파생·CTA 링크·여기(프리필)가 같은 걸 쓴다.
   import { materialValue } from '../lib/material-value.js';
+  // 박막 증착 여부의 저장값 정규화 — 서버 검증·검증 스크립트와 같은 파일을 쓴다.
+  import { preFilmFields } from '../lib/quote-fields.js';
   import { showHint, hideHint } from '../lib/formHint';
   // 보안 확인 위젯 — 로드 실패 시 자동 재시도·안내까지 여기서 처리한다
   import { mountTurnstile, resetTurnstile } from '../lib/turnstile-client';
@@ -871,7 +875,7 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
       : { qty: "Quantity", shipHdr: "[Shipping address]", country: "Country", addr: "Address", cityState: "City/State", postal: "Postal code",
           notes: "Notes", seqHdr: "[Process sequence]", analysis: "[Analysis]", delivery: "Substrate delivery",
           samples: "Total samples", due: "Target completion", caution: "Notes", recip: "Recipient", shipMemo: "Delivery notes", secSub: "[Substrate info]", subLbl: "Substrate",
-          preFilm: "Existing thin film on sample", preFilmNone: "None", preFilmYes: "Yes" };
+          preFilm: "Existing thin film on sample", preFilmNone: "No", preFilmYes: "Yes" };
 
     const isSimple = !!M.simple;
     { const bad = collectIssues(false); if (bad) { flagInvalid(bad); return null; } }
@@ -919,10 +923,10 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
     const sizeLabel = sizeMap[data.substrateSize] || data.substrateSize || "";
     const deliveryLabel = deliveryMap[data.delivery] || data.delivery || "";
 
-    // 박막 증착 여부 — 라디오 값('1'/'0')을 boolean 으로 굳히고, '없음'이면 메모를 비운다.
-    // FormData 에는 문자열로 들어오므로 여기서 한 번만 정규화해 아래 세 곳(문장·JSON·요약)이 같은 값을 본다.
-    const preFilm = String(data.preFilm ?? "") === "1";
-    const preFilmNote = preFilm ? String(data.preFilmNote ?? "").trim() : "";
+    // 박막 증착 여부 — 라디오 값('1'/'0') → boolean, '없음'이면 메모는 빈 문자열.
+    // 화면에서는 값을 지우지 않으므로(되돌려도 입력 보존) **여기가 저장값을 정하는 유일한 지점**이다.
+    // 규칙은 quote-fields.js 에 두어 서버 검증·게이트가 같은 함수를 본다.
+    const { preFilm, preFilmNote } = preFilmFields(data.preFilm, data.preFilmNote);
     const preFilmLabel = preFilm ? DL.preFilmYes : DL.preFilmNone;
     delete data.preFilm;
     delete data.preFilmNote;

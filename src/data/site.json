@@ -752,7 +752,7 @@
         "deliveryPlaceholder": "Select method",
         "deliveryHelpPurchase": "VanaM sources the substrate; type and size follow the fields above.",
         "preFilm": "Existing thin film on sample",
-        "preFilmNone": "None",
+        "preFilmNone": "No",
         "preFilmYes": "Yes",
         "preFilmNote": "Describe any film already deposited on the sample and any pre-treatment",
         "preFilmNotePlaceholder": "e.g., Pt electrode pattern, 100 nm",

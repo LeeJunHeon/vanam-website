@@ -14,6 +14,7 @@ import {
   DELIVERY_VALUES,
   DELIVERY_NEEDS_SHIPPING,
   validateQuoteDetails,
+  preFilmFields,
 } from '../src/lib/quote-fields.js';
 
 let bad = 0;
@@ -76,6 +77,33 @@ for (const [label, input, expected] of CASES) {
   }
 }
 if (!caseBad) ok(`서버 검증 ${CASES.length}종 통과·차단 의도대로`);
+
+// ── ⑤ 박막 증착 여부 저장값 정규화 ──────────────────────
+// 화면은 '없음'으로 되돌려도 입력을 지우지 않는다 → 저장값을 비우는 책임은 이 함수 하나뿐이다.
+const PF = [
+  ['있음 + 내용', '1', 'ex) Pt 전극 Pattern 100nm', true, 'ex) Pt 전극 Pattern 100nm'],
+  ['있음 + 앞뒤 공백', '1', '  Pt 100nm  ', true, 'Pt 100nm'],
+  ['없음 + 내용 남아 있음 → 저장값은 빈 문자열', '0', '되돌리기 전에 적어둔 내용', false, ''],
+  ['없음 + 내용 없음', '0', '', false, ''],
+  ['값 자체가 없음(옛 폼)', undefined, undefined, false, ''],
+];
+let pfBad = 0;
+for (const [label, raw, note, wantFlag, wantNote] of PF) {
+  const r = preFilmFields(raw, note);
+  if (r.preFilm !== wantFlag || r.preFilmNote !== wantNote) {
+    fail(`preFilmFields — ${label}: 기대 {${wantFlag}, ${JSON.stringify(wantNote)}} · 실제 {${r.preFilm}, ${JSON.stringify(r.preFilmNote)}}`);
+    pfBad++;
+  }
+}
+if (!pfBad) ok(`박막 증착 여부 저장값 정규화 ${PF.length}종 (되돌림 시 note 비움 포함)`);
+
+// 정규화 결과를 그대로 서버 검증에 넣어도 통과해야 한다(두 규칙이 어긋나면 제출이 막힌다)
+{
+  const { preFilm, preFilmNote } = preFilmFields('0', '되돌리기 전에 적어둔 내용');
+  const r = validateQuoteDetails(JSON.stringify({ v: 1, delivery: 'purchase', preFilm, preFilmNote }));
+  if (!r.ok) fail(`정규화 결과가 서버 검증에 막혔다: ${r.error}`);
+  else ok('정규화 결과 ↔ 서버 검증 정합');
+}
 
 if (bad) {
   console.error(`\n✗ 견적 폼 필드 게이트 실패 — ${bad}건`);
