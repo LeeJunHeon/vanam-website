@@ -49,3 +49,40 @@
 /blog/                      /news         301
 /ko/blog                    /ko/news      301
 /ko/blog/                   /ko/news      301
+
+# ── 구 워드프레스 잔여 슬러그 (0910) ─────────────────
+#    Bing 색인에 아직 남아 실제 요청이 들어오는 구 사이트 주소들.
+#    대상은 전부 **슬래시 포함**으로 적는다. 슬래시를 빼면 Astro 가 307 을 한 번 더 붙여
+#    301→307→200 2단 체인이 된다(기존 /feed→/news 가 그 상태다).
+/about-2/              /            301
+/about-2               /            301
+/ko/about-2/           /ko/         301
+/ko/about-2            /ko/         301
+/about_be/             /            301
+/about_be              /            301
+/home_be/              /            301
+/home_be               /            301
+/contact_be/           /contact/    301
+/contact_be            /contact/    301
+/product_be/           /product/    301
+/product_be            /product/    301
+/service_be/           /product/    301
+/service_be            /product/    301
+/company/              /            301
+/company               /            301
+# 이 사이트에는 RSS/Atom 피드가 없다(@astrojs/rss 미사용, /rss.xml·/feed.xml 전부 404).
+# 그래서 구독자용 /rss 는 피드가 아니라 뉴스 목록으로 보낸다 — 기존 /feed 규칙과 같은 방침.
+/rss/                  /news/       301
+/rss                   /news/       301
+# 구 사이트의 영문 접두사. 현재는 prefixDefaultLocale:false 라 영문이 접두사 없는 루트다.
+# ⚠️ /en/* 와일드카드는 일부러 넣지 않는다 — 하위 경로가 실제로 쓰인 근거가 없다.
+/en/                   /            301
+/en                    /            301
+
+# ── 사이트맵 별칭 (0910) ─────────────────────────────
+#    실제 사이트맵은 /sitemap-index.xml 하나뿐이고 robots.txt 도 그것만 고지한다.
+#    워드프레스·Yoast 관례 주소로 들어오는 크롤러를 그쪽으로 넘긴다.
+#    ⚠️ /author-sitemap.xml 은 넣지 않는다 — 작성자 개념이 없는 사이트라 대응물이 없다.
+/sitemap.xml           /sitemap-index.xml   301
+/sitemap_index.xml     /sitemap-index.xml   301
+/wp-sitemap.xml        /sitemap-index.xml   301
