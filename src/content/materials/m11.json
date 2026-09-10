@@ -24,8 +24,28 @@
     "fig-2.webp",
     "fig-3.webp"
   ],
+  "figCaptions": {
+    "fig-1.webp": {
+      "en": "I–V",
+      "ko": "I–V"
+    },
+    "fig-2.webp": {
+      "en": "C–V",
+      "ko": "C–V"
+    },
+    "fig-3.webp": {
+      "en": "P–E",
+      "ko": "P–E"
+    }
+  },
   "targetImgs": [
-    { "file": "target.webp", "label": "Sc Target" },
-    { "file": "target-aln.webp", "label": "AlN Target" }
+    {
+      "file": "target.webp",
+      "label": "Sc Target"
+    },
+    {
+      "file": "target-aln.webp",
+      "label": "AlN Target"
+    }
   ]
 }

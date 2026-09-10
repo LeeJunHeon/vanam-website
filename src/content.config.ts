@@ -99,9 +99,18 @@ const materials = defineCollection({
     band2Title: opt(z.string()),           // 'Target Specifications' | 'Process Specifications'
     band2Specs: opt(z.array(z.string())),
     figs: opt(z.array(z.string())),        // 차트·SEM 파일명 (materials/<id>/ 하위)
+    // 도판 캡션 — 파일명을 키로 하는 맵. figs 를 문자열 배열 그대로 두는 이유:
+    //   객체 배열로 바꾸면 캡션이 없는 나머지 48개 소재의 JSON 과 조립 코드를 전부 손대야 한다.
+    //   맵이면 캡션이 있는 소재만 이 필드를 갖고, 없는 소재는 조회가 undefined → 지금과 동일 동작.
+    //   PPT 원본에 도판 라벨이 있는 소재는 m25·m26·m30·m11 넷뿐이다.
+    figCaptions: opt(z.record(z.string(), z.object({ en: z.string(), ko: z.string() }))),
     targetImg: opt(z.string()),            // 타깃 원판 사진 파일명 (1장)
     // 타깃이 2장 이상인 소재(예: AlScN = AlN + Sc 코스퍼터링)용. 있으면 targetImg 대신 이쪽을 쓴다.
     targetImgs: opt(z.array(z.object({ file: z.string(), label: z.string() }))),
+    // ALD 전구체 구조식. 스퍼터의 targetImgs 와 같은 자리(band2 블록 옆)에 같은 카드·배지로 그린다.
+    //   ⚠️ targetImgs 를 재사용하지 않는 이유: alt 생성이 label 을 'sputtering target' 으로 붙이는데,
+    //      전구체는 타깃이 아니라 "TMA sputtering target" 같은 사실과 다른 대체 텍스트가 만들어진다.
+    precursorImgs: opt(z.array(z.object({ file: z.string(), label: z.string() }))),
   }),
 });
 
