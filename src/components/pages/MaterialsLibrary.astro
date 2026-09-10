@@ -80,11 +80,9 @@ type MatPanel = {
 const matPanels: MatPanel[] = [];
 for (const m of allMaterials) {
   const d = m.data;
-  // 도판 캡션: figCaptions 맵(파일명 → {en,ko}). 없는 소재는 undefined → 캡션 없이 지금과 동일.
-  const figCaption = (file: string) => {
-    const c = d.figCaptions?.[file];
-    return c ? (locale === 'ko' ? c.ko : c.en) : undefined;
-  };
+  // 도판 캡션: figCaptions 맵(파일명 → 영어 한 줄). 없는 소재는 undefined → 캡션 없이 지금과 동일.
+  // ⚠️ 한글 페이지도 같은 영어 캡션을 쓴다(상세 페이지와 같은 규칙 — 사양 목록이 이미 영어다).
+  const figCaption = (file: string) => d.figCaptions?.[file] || undefined;
   const figs: { src: string; caption?: string }[] = [];
   for (const f of d.figs ?? []) {
     const key = `/src/assets/materials/${m.id}/${f}`;
@@ -293,9 +291,15 @@ const materialsLd = {
               {p.figs.length > 0 && (
                 <div class={'mt-3 grid grid-cols-2 gap-2 ' + (p.figs.length <= 2 ? 'sm:grid-cols-2' : 'sm:grid-cols-3')}>
                   {p.figs.map((g, i) => (
-                    <figure class="flex flex-col items-center justify-center rounded-lg border border-ink/10 bg-plate p-1.5">
-                      <img src={g.src} alt={g.caption ? `${p.name} ${g.caption}` : `${p.name} characterization data ${i + 1}`} class="max-h-40 w-auto max-w-full" loading="lazy" />
-                      {g.caption && <figcaption class="mt-1.5 text-center text-[11px] leading-snug text-ink/55">{g.caption}</figcaption>}
+                    /* 상세 페이지와 같은 구성 — 흰 판(bg-plate)은 이미지 영역에만,
+                       캡션 띠는 페이지 표면에 둔다(다크에서 흰 바탕+흰 글자가 되는 것을 피한다) */
+                    <figure class="flex flex-col overflow-hidden rounded-lg border border-ink/10">
+                      <div class="flex flex-1 items-center justify-center bg-plate p-1.5">
+                        <img src={g.src} alt={g.caption ? `${p.name} ${g.caption}` : `${p.name} characterization data ${i + 1}`} class="max-h-40 w-auto max-w-full" loading="lazy" />
+                      </div>
+                      {g.caption && (
+                        <figcaption class="border-t border-ink/10 bg-ink/[0.06] px-1.5 py-1 text-center text-[11px] font-medium leading-snug text-ink/85">{g.caption}</figcaption>
+                      )}
                     </figure>
                   ))}
                 </div>

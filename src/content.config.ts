@@ -103,7 +103,9 @@ const materials = defineCollection({
     //   객체 배열로 바꾸면 캡션이 없는 나머지 48개 소재의 JSON 과 조립 코드를 전부 손대야 한다.
     //   맵이면 캡션이 있는 소재만 이 필드를 갖고, 없는 소재는 조회가 undefined → 지금과 동일 동작.
     //   PPT 원본에 도판 라벨이 있는 소재는 m25·m26·m30·m11 넷뿐이다.
-    figCaptions: opt(z.record(z.string(), z.object({ en: z.string(), ko: z.string() }))),
+    // ⚠️ 값은 **영어 한 줄**이다(ko/en 분기 없음). 바로 위 사양 목록(filmSpecs·band2Specs)이
+    //    이미 영어라, 한글 페이지에서 캡션만 한글이면 같은 카드 안에서 표기가 섞인다.
+    figCaptions: opt(z.record(z.string(), z.string())),
     targetImg: opt(z.string()),            // 타깃 원판 사진 파일명 (1장)
     // 타깃이 2장 이상인 소재(예: AlScN = AlN + Sc 코스퍼터링)용. 있으면 targetImg 대신 이쪽을 쓴다.
     targetImgs: opt(z.array(z.object({ file: z.string(), label: z.string() }))),

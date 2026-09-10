@@ -25,18 +25,9 @@
     "fig-3.webp"
   ],
   "figCaptions": {
-    "fig-1.webp": {
-      "en": "I–V",
-      "ko": "I–V"
-    },
-    "fig-2.webp": {
-      "en": "C–V",
-      "ko": "C–V"
-    },
-    "fig-3.webp": {
-      "en": "P–E",
-      "ko": "P–E"
-    }
+    "fig-1.webp": "I–V",
+    "fig-2.webp": "C–V",
+    "fig-3.webp": "P–E"
   },
   "targetImgs": [
     {

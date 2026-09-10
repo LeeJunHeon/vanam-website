@@ -51,11 +51,9 @@ async function resolveAsset(name: string) {
   const mod = await matImages[key]();
   return await getImage({ src: mod.default, width: 900, format: 'webp', quality: 88 });
 }
-// 도판 캡션: figCaptions 맵(파일명 → {en,ko})에서 찾는다. 없는 소재는 undefined → 캡션 없이 지금과 동일.
-const figCaption = (file: string) => {
-  const c = d.figCaptions?.[file];
-  return c ? (isKo ? c.ko : c.en) : undefined;
-};
+// 도판 캡션: figCaptions 맵(파일명 → 영어 한 줄)에서 찾는다. 없는 소재는 undefined → 캡션 없이 지금과 동일.
+// ⚠️ 한글 페이지도 같은 영어 캡션을 쓴다 — 바로 아래 사양 목록이 이미 영어라 섞이면 더 어색하다.
+const figCaption = (file: string) => d.figCaptions?.[file] || undefined;
 const figImgs: { src: string; caption?: string }[] = [];
 for (const f of d.figs ?? []) {
   const g = await resolveAsset(f);
@@ -137,9 +135,18 @@ const quoteHref = productId
           {figImgs.length > 0 && (
             <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {figImgs.map((g, i) => (
-                <figure class="flex flex-col items-center justify-center rounded-xl border border-ink/10 bg-plate p-2">
-                  <img src={g.src} alt={g.caption ? `${displayName} ${g.caption}` : `${displayName} characterization data ${i + 1}`} class="max-h-64 w-auto max-w-full" loading="lazy" />
-                  {g.caption && <figcaption class="mt-2 text-center text-xs leading-snug text-ink/55">{g.caption}</figcaption>}
+                /* ⚠️ bg-plate(흰 판)는 **이미지 영역에만** 준다.
+                     --v-plate 는 라이트·다크 양쪽에서 #ffffff 다(외부 자산인 그래프·SEM 이 흰 바탕 전제).
+                     띠까지 흰 판 위에 올리면 다크에서 ink(=흰색) 글자가 흰 바탕에 얹혀 안 보인다.
+                     띠는 페이지 표면에 두어 ink 토큰이 양쪽 테마에서 제대로 뒤집히게 한다.
+                   overflow-hidden: 띠가 카드 둥근 모서리 밖으로 삐져나오지 않게. */
+                <figure class="flex flex-col overflow-hidden rounded-xl border border-ink/10">
+                  <div class="flex flex-1 items-center justify-center bg-plate p-2">
+                    <img src={g.src} alt={g.caption ? `${displayName} ${g.caption}` : `${displayName} characterization data ${i + 1}`} class="max-h-64 w-auto max-w-full" loading="lazy" />
+                  </div>
+                  {g.caption && (
+                    <figcaption class="border-t border-ink/10 bg-ink/[0.06] px-2 py-1.5 text-center text-xs font-medium leading-snug text-ink/85">{g.caption}</figcaption>
+                  )}
                 </figure>
               ))}
             </div>

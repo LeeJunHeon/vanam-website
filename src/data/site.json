@@ -1642,7 +1642,7 @@
         "preFilmNone": "없음",
         "preFilmYes": "있음",
         "preFilmNote": "전달 시료에 증착된 물질 및 전처리가 있을 경우 작성해 주세요",
-        "preFilmNotePlaceholder": "ex) Pt 전극 Pattern 100nm",
+        "preFilmNotePlaceholder": "예: Pt 전극 Pattern 100nm",
         "msgPreFilmNote": "증착된 물질을 입력해 주세요",
         "sectionProcess": "공정 시퀀스",
         "processIntro": "의뢰서처럼 공정을 순서대로 하나씩 구성하세요. 단계를 추가하고 공정을 고른 뒤, 물질/가스와 두께/시간을 입력합니다.",
