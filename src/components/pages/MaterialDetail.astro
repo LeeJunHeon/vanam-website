@@ -51,10 +51,15 @@ async function resolveAsset(name: string) {
   const mod = await matImages[key]();
   return await getImage({ src: mod.default, width: 900, format: 'webp', quality: 88 });
 }
-const figImgs: { src: string }[] = [];
+// 도판 캡션: figCaptions 맵(파일명 → {en,ko})에서 찾는다. 없는 소재는 undefined → 캡션 없이 지금과 동일.
+const figCaption = (file: string) => {
+  const c = d.figCaptions?.[file];
+  return c ? (isKo ? c.ko : c.en) : undefined;
+};
+const figImgs: { src: string; caption?: string }[] = [];
 for (const f of d.figs ?? []) {
   const g = await resolveAsset(f);
-  if (g) figImgs.push(g);
+  if (g) figImgs.push({ src: g.src, caption: figCaption(f) });
 }
 // 타깃 사진: targetImgs(복수)가 있으면 우선, 없으면 기존 targetImg 1장을 같은 형태로 감싼다.
 const targetList = (d.targetImgs?.length ? d.targetImgs : (d.targetImg ? [{ file: d.targetImg, label: 'Target' }] : []));
@@ -68,6 +73,15 @@ for (const t of targetList) {
     alt: t.label === 'Target' ? 'sputtering target' : `${t.label.replace(/\s*Target$/i, '')} sputtering target`,
   });
 }
+// ALD 전구체 구조식 — 스퍼터 타깃과 같은 자리·같은 카드로 그린다(sideImgs 로 합쳐 렌더).
+// 한 소재가 타깃과 전구체를 동시에 갖는 경우는 없지만, 합쳐도 순서가 깨지지 않게 타깃을 앞에 둔다.
+const precursorPhotos: { src: string; label: string; alt: string }[] = [];
+for (const p of d.precursorImgs ?? []) {
+  const g = await resolveAsset(p.file);
+  if (!g) continue;
+  precursorPhotos.push({ src: g.src, label: p.label, alt: `${p.label} precursor structure` });
+}
+const sideImgs = [...targetPhotos, ...precursorPhotos];
 const hasA4 = (d.filmSpecs?.length ?? 0) + (d.band2Specs?.length ?? 0) + figImgs.length > 0;
 
 // 0165 에서 소재 라이브러리가 독립 메뉴가 됐는데 뒤로가기만 예전 자리(기술 소개)에 남아 있었다.
@@ -123,9 +137,10 @@ const quoteHref = productId
           {figImgs.length > 0 && (
             <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {figImgs.map((g, i) => (
-                <div class="flex items-center justify-center rounded-xl border border-ink/10 bg-plate p-2">
-                  <img src={g.src} alt={`${displayName} characterization data ${i + 1}`} class="max-h-64 w-auto max-w-full" loading="lazy" />
-                </div>
+                <figure class="flex flex-col items-center justify-center rounded-xl border border-ink/10 bg-plate p-2">
+                  <img src={g.src} alt={g.caption ? `${displayName} ${g.caption}` : `${displayName} characterization data ${i + 1}`} class="max-h-64 w-auto max-w-full" loading="lazy" />
+                  {g.caption && <figcaption class="mt-2 text-center text-xs leading-snug text-ink/55">{g.caption}</figcaption>}
+                </figure>
               ))}
             </div>
           )}
@@ -151,7 +166,7 @@ const quoteHref = productId
           )}
         </div>
 
-        {((d.band2Specs?.length ?? 0) > 0 || targetPhotos.length > 0) && (
+        {((d.band2Specs?.length ?? 0) > 0 || sideImgs.length > 0) && (
           <div class="mt-8">
             <p class="v-badge">{d.band2Title ?? 'Target Specifications'}</p>
             <div class="mt-4 flex flex-wrap items-start gap-6">
@@ -173,7 +188,7 @@ const quoteHref = productId
                   );
                 })}
               </ul>
-              {targetPhotos.map((tg) => (
+              {sideImgs.map((tg) => (
                 <div class="w-44 shrink-0 rounded-xl border border-ink/10 bg-plate p-3 text-center">
                   <img src={tg.src} alt={`${displayName} ${tg.alt}`} class="mx-auto w-full" loading="lazy" />
                   <span class="mt-2 inline-block rounded bg-ink/80 px-2.5 py-0.5 text-[11px] font-bold tracking-wide text-canvas">{tg.label}</span>

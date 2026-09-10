@@ -25,8 +25,30 @@
   "figs": [
     "fig-1.webp",
     "fig-2.webp",
-    "fig-3.webp",
-    "fig-4.webp",
-    "fig-5.webp"
+    "fig-3.webp"
+  ],
+  "figCaptions": {
+    "fig-1.webp": {
+      "en": "Optical constants",
+      "ko": "광학 상수"
+    },
+    "fig-2.webp": {
+      "en": "Cycle test",
+      "ko": "사이클 시험"
+    },
+    "fig-3.webp": {
+      "en": "Wafer thickness map",
+      "ko": "웨이퍼 두께 분포"
+    }
+  },
+  "precursorImgs": [
+    {
+      "file": "precursor-ttip.webp",
+      "label": "TTIP"
+    },
+    {
+      "file": "precursor-tdmat.webp",
+      "label": "TDMAT"
+    }
   ]
 }

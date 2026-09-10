@@ -69,20 +69,31 @@ const matImages = import.meta.glob<{ default: ImageMetadata }>(
 // 패널은 실제 HTML 로 렌더되어 hidden 토글만 하므로 /technology 자체가 SEO 대상이 된다.
 type MatPanel = {
   id: string; formula: string; name: string; system: string; category: string;
-  quoteHref: string; desc: string; figs: string[];
-  // 타깃 사진은 1장이 기본이지만 AlScN(m11) 처럼 코스퍼터링 소재는 2장 이상이다.
-  targets: { src: string; label: string; alt: string }[];
+  quoteHref: string; desc: string;
+  // 도판 — 캡션이 있는 소재(m25·m26·m30·m11)만 caption 이 채워진다. 나머지는 undefined.
+  figs: { src: string; caption?: string }[];
+  // 사양 블록 옆 사진. 스퍼터는 타깃(1장이 기본, AlScN 처럼 코스퍼터링은 2장 이상),
+  // ALD 는 전구체 구조식. 둘 다 같은 카드·배지로 그리므로 한 배열로 합쳐 넘긴다.
+  sideImgs: { src: string; label: string; alt: string }[];
   filmSpecs: string[]; band2Title: string; band2Specs: string[]; hasA4: boolean;
 };
 const matPanels: MatPanel[] = [];
 for (const m of allMaterials) {
   const d = m.data;
-  const figs: string[] = [];
+  // 도판 캡션: figCaptions 맵(파일명 → {en,ko}). 없는 소재는 undefined → 캡션 없이 지금과 동일.
+  const figCaption = (file: string) => {
+    const c = d.figCaptions?.[file];
+    return c ? (locale === 'ko' ? c.ko : c.en) : undefined;
+  };
+  const figs: { src: string; caption?: string }[] = [];
   for (const f of d.figs ?? []) {
     const key = `/src/assets/materials/${m.id}/${f}`;
     if (matImages[key]) {
       const mod = await matImages[key]();
-      figs.push((await getImage({ src: mod.default, width: 900, format: 'webp', quality: 88 })).src);
+      figs.push({
+        src: (await getImage({ src: mod.default, width: 900, format: 'webp', quality: 88 })).src,
+        caption: figCaption(f),
+      });
     }
   }
   // targetImgs(복수)가 있으면 그걸 쓰고, 없으면 기존 targetImg 1장을 같은 형태로 감싼다.
@@ -96,6 +107,18 @@ for (const m of allMaterials) {
       src: (await getImage({ src: mod.default, width: 520, format: 'webp', quality: 88 })).src,
       label: t.label,
       alt: t.label === 'Target' ? 'sputtering target' : `${t.label.replace(/\s*Target$/i, '')} sputtering target`,
+    });
+  }
+  // ALD 전구체 구조식 — 타깃과 같은 카드·배지로 그린다(상세 페이지와 동일 규칙).
+  const precursors: { src: string; label: string; alt: string }[] = [];
+  for (const pc of d.precursorImgs ?? []) {
+    const key = `/src/assets/materials/${m.id}/${pc.file}`;
+    if (!matImages[key]) continue;
+    const mod = await matImages[key]();
+    precursors.push({
+      src: (await getImage({ src: mod.default, width: 520, format: 'webp', quality: 88 })).src,
+      label: pc.label,
+      alt: `${pc.label} precursor structure`,
     });
   }
   const filmSpecs = d.filmSpecs ?? [];
@@ -113,7 +136,7 @@ for (const m of allMaterials) {
       : lhref('/contact'),
     desc: (locale === 'ko' ? (d.description_ko ?? d.description) : d.description) ?? '',
     figs,
-    targets,
+    sideImgs: [...targets, ...precursors],
     filmSpecs,
     band2Title: d.band2Title ?? 'Target Specifications',
     band2Specs,
@@ -269,10 +292,11 @@ const materialsLd = {
               <p class="mt-4 inline-flex items-center gap-2 rounded-md border border-accent/30 bg-accent/[0.08] px-3 py-1 text-[13px] font-bold text-accent">Thin-Film Specifications</p>
               {p.figs.length > 0 && (
                 <div class={'mt-3 grid grid-cols-2 gap-2 ' + (p.figs.length <= 2 ? 'sm:grid-cols-2' : 'sm:grid-cols-3')}>
-                  {p.figs.map((src, i) => (
-                    <div class="flex items-center justify-center rounded-lg border border-ink/10 bg-plate p-1.5">
-                      <img src={src} alt={`${p.name} characterization data ${i + 1}`} class="max-h-40 w-auto max-w-full" loading="lazy" />
-                    </div>
+                  {p.figs.map((g, i) => (
+                    <figure class="flex flex-col items-center justify-center rounded-lg border border-ink/10 bg-plate p-1.5">
+                      <img src={g.src} alt={g.caption ? `${p.name} ${g.caption}` : `${p.name} characterization data ${i + 1}`} class="max-h-40 w-auto max-w-full" loading="lazy" />
+                      {g.caption && <figcaption class="mt-1.5 text-center text-[11px] leading-snug text-ink/55">{g.caption}</figcaption>}
+                    </figure>
                   ))}
                 </div>
               )}
@@ -297,7 +321,7 @@ const materialsLd = {
                 </ul>
               )}
 
-              {(p.band2Specs.length > 0 || p.targets.length > 0) && (
+              {(p.band2Specs.length > 0 || p.sideImgs.length > 0) && (
                 <>
                   <p class="mt-6 inline-flex items-center gap-2 rounded-md border border-accent/30 bg-accent/[0.08] px-3 py-1 text-[13px] font-bold text-accent">{p.band2Title}</p>
                   <div class="mt-3.5 flex flex-wrap items-start gap-6">
@@ -321,7 +345,7 @@ const materialsLd = {
                         })}
                       </ul>
                     )}
-                    {p.targets.map((tg) => (
+                    {p.sideImgs.map((tg) => (
                       <div class="w-36 shrink-0 text-center sm:w-40">
                         <img src={tg.src} alt={`${p.name} ${tg.alt}`} class="mx-auto w-full rounded-lg drop-shadow-md" loading="lazy" />
                         <span class="mt-2 inline-block rounded bg-ink/80 px-3 py-0.5 text-[11px] font-bold tracking-wide text-canvas">{tg.label}</span>

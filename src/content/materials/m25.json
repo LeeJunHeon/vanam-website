@@ -33,5 +33,41 @@
     "fig-5.webp",
     "fig-6.webp",
     "fig-7.webp"
+  ],
+  "figCaptions": {
+    "fig-1.webp": {
+      "en": "Breakdown field",
+      "ko": "절연파괴전계"
+    },
+    "fig-2.webp": {
+      "en": "Dielectric constant",
+      "ko": "유전율"
+    },
+    "fig-3.webp": {
+      "en": "Optical constants",
+      "ko": "광학 상수"
+    },
+    "fig-4.webp": {
+      "en": "Cycle test",
+      "ko": "사이클 시험"
+    },
+    "fig-5.webp": {
+      "en": "Wafer thickness map",
+      "ko": "웨이퍼 두께 분포"
+    },
+    "fig-6.webp": {
+      "en": "TEM image",
+      "ko": "TEM 이미지"
+    },
+    "fig-7.webp": {
+      "en": "TEM image",
+      "ko": "TEM 이미지"
+    }
+  },
+  "precursorImgs": [
+    {
+      "file": "precursor-tma.webp",
+      "label": "TMA"
+    }
   ]
 }
