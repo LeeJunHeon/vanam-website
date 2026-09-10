@@ -60,6 +60,7 @@ const t = isKo
         dSeq: '[공정 시퀀스]', dAnalysis: '[분석]', dDelivery: '기판 전달',
         dSamples: '총 샘플 수량', dDue: '완료 희망일', dNotes: '주의사항',
         dShip: '[배송 주소]', dCountry: '국가', dSecSub: '[기판 정보]', dRecip: '수령인', dAddr: '주소', dPostal: '우편번호', dShipMemo: '배송 요청',
+        dPreFilm: '박막 증착 여부', dPreFilmNone: '없음', dPreFilmYes: '있음',
         amount: '견적 금액', vat: '(부가세 포함)',
         wQty: '수량', wQtyOne: '{n}박스', wQtyMany: '{n}박스',
         wDicing: '다이싱', wYes: '필요', wNo: '불필요', wPerBox: '/박스',
@@ -116,6 +117,7 @@ const t = isKo
         dSeq: '[Process sequence]', dAnalysis: '[Analysis]', dDelivery: 'Substrate delivery',
         dSamples: 'Total samples', dDue: 'Target completion', dNotes: 'Notes',
         dShip: '[Shipping address]', dCountry: 'Country', dSecSub: '[Substrate info]', dRecip: 'Recipient', dAddr: 'Address', dPostal: 'Postal code', dShipMemo: 'Delivery notes',
+        dPreFilm: 'Existing thin film on sample', dPreFilmNone: 'None', dPreFilmYes: 'Yes',
         amount: 'Quoted amount', vat: '(VAT included)',
         wQty: 'Quantity', wQtyOne: '{n} box', wQtyMany: '{n} boxes',
         wDicing: 'Dicing', wYes: 'Required', wNo: 'Not required', wPerBox: '/box',
@@ -271,6 +273,10 @@ const inputClass =
         delivery ? `${INQ.dDelivery}: ${delivery}` : '',
         dj.sampleCount ? `${INQ.dSamples}: ${dj.sampleCount}` : '',
         dj.completionDate ? `${INQ.dDue}: ${dj.completionDate}` : '',
+        // 박막 증착 여부(0910c). 이 항목이 생기기 전 접수 건에는 아예 없으므로,
+        // boolean 이 실제로 들어 있을 때만 줄을 만든다 — 옛 건에 '없음'을 지어내지 않는다.
+        typeof dj.preFilm === 'boolean' ? `${INQ.dPreFilm}: ${dj.preFilm ? INQ.dPreFilmYes : INQ.dPreFilmNone}` : '',
+        typeof dj.preFilm === 'boolean' && dj.preFilm && dj.preFilmNote ? String(dj.preFilmNote) : '',
         ...(dj.ship ? [
           '\n' + INQ.dShip,
           dj.ship.country ? `${INQ.dCountry}: ${dj.ship.country}` : '',
