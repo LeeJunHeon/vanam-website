@@ -207,10 +207,10 @@ const materialsLd = {
             <p class="text-xs font-semibold uppercase tracking-wider text-ink/55">{catLabel[group]}</p>
             <div class="mt-2 flex flex-wrap gap-2">
               {items.map((m) => (
-                <button type="button" data-mat={m.id}
+                <a href={lhref(`/materials/${m.id}/`)} data-mat={m.id} aria-haspopup="dialog"
                   class="cursor-pointer rounded-md border border-ink/10 bg-ink/[0.04] px-2.5 py-1 text-sm text-ink/75 transition hover:border-accent/40 hover:bg-accent/[0.08] hover:text-accent">
                   {m.formula}
-                </button>
+                </a>
               ))}
             </div>
           </div>
@@ -224,10 +224,10 @@ const materialsLd = {
             <p class="text-xs font-semibold uppercase tracking-wider text-ink/55">{catLabel[group]}</p>
             <div class="mt-2 flex flex-wrap gap-2">
               {items.map((m) => (
-                <button type="button" data-mat={m.id}
+                <a href={lhref(`/materials/${m.id}/`)} data-mat={m.id} aria-haspopup="dialog"
                   class="cursor-pointer rounded-md border border-ink/10 bg-ink/[0.04] px-2.5 py-1 text-sm text-ink/75 transition hover:border-accent/40 hover:bg-accent/[0.08] hover:text-accent">
                   {m.formula}
-                </button>
+                </a>
               ))}
             </div>
           </div>
@@ -406,8 +406,19 @@ const materialsLd = {
         lastFocused?.focus();
       }
 
-      document.querySelectorAll<HTMLElement>('[data-mat]').forEach((btn) => {
-        btn.addEventListener('click', () => open(btn.getAttribute('data-mat') || ''));
+      // 칩은 실제 상세 페이지로 가는 <a> 다(0911 — 상세 52개에 내부 링크가 하나도 없어 색인이 지연됐다).
+      // 평소 클릭은 여기서 가로채 모달을 열고, 아래 두 경우에는 브라우저에 그대로 넘긴다:
+      //   ① 새 탭·새 창·다운로드 조작(모디파이어 키·비좌클릭)
+      //   ② 해당 패널이 없을 때 — preventDefault 만 하면 아무 반응 없는 죽은 칩이 된다
+      document.querySelectorAll<HTMLElement>('[data-mat]').forEach((el) => {
+        el.addEventListener('click', (e) => {
+          const ev = e as MouseEvent;
+          if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey || ev.button !== 0) return;
+          const id = el.getAttribute('data-mat') || '';
+          if (!modal.querySelector(`[data-mat-panel="${id}"]`)) return;
+          ev.preventDefault();
+          open(id);
+        });
       });
       closeBtn?.addEventListener('click', close);
       backdrop?.addEventListener('click', close);

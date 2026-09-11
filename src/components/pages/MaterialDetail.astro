@@ -84,7 +84,7 @@ const hasA4 = (d.filmSpecs?.length ?? 0) + (d.band2Specs?.length ?? 0) + figImgs
 
 // 0165 에서 소재 라이브러리가 독립 메뉴가 됐는데 뒤로가기만 예전 자리(기술 소개)에 남아 있었다.
 // 소재 상세로 들어오는 경로는 소재 라이브러리이므로 그쪽으로 돌아가야 맞다.
-const backHref = isKo ? '/ko/materials' : '/materials';
+const backHref = isKo ? '/ko/materials/' : '/materials/';
 const t = {
   back: isKo ? '← 소재 라이브러리로' : '← Back to Materials Library',
   system: isKo ? '증착 방식' : 'Deposition',
@@ -100,7 +100,7 @@ const productId = CATEGORY_TO_PRODUCT[d.category] ?? null;
 // 매핑에 없는 분류(앞으로 생길 수 있다)는 /contact 로 폴백하며 파라미터를 붙이지 않는다.
 const quoteHref = productId
   ? (isKo ? `/ko/product/${productId}/` : `/product/${productId}/`) + quoteParams(d.system, d.formula)
-  : (isKo ? '/ko/contact' : '/contact');
+  : (isKo ? '/ko/contact/' : '/contact/');
 ---
 
 <BaseLayout title={metaTitle} description={metaDesc}>

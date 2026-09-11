@@ -3,7 +3,7 @@
 // 인적·배송 정보 입력은 전부 체크아웃에서 — 상세 페이지에는 입력 폼을 두지 않는다.
 // 대량·국내(세금계산서) 구매와 가격 미정 웨이퍼는 문의 페이지로 안내한다.
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { Image } from 'astro:assets';
+import { Image, getImage } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
 import siteData from '../../data/site.json';
 import company from '../../data/company.json';
@@ -48,6 +48,44 @@ const metaDesc = summary?.trim()
   || (isKo
     ? `${name} — ${specText}. VanaM 에서 사양을 확인하고 바로 주문할 수 있습니다.`
     : `${name} — ${specText}. Check the full specification and order directly from VanaM.`);
+
+// ── 상품 구조화 데이터 (0911) ────────────────────────────────────────────
+// 실제로 결제가 일어나는 유일한 페이지들이라 Product/Offer 를 명시한다.
+//   ⚠️ 다이싱 요금(dicingFeeKrw)은 offers 에 넣지 않는다 — 선택 옵션 가격이라
+//      상품 기본가가 아니고, 넣으면 검색 결과에 실제보다 비싼 값이 노출된다.
+//   ⚠️ 화면 표시는 달러 환산이지만 구조화 데이터에는 **원화 원본**을 넣는다.
+//      환율은 빌드 시점 값이라 굳혀 두면 실제 청구액과 어긋난다.
+const pageUrl = new URL(`${base}/wafers/${wafer.id}/`, Astro.site).href;
+const ldImage = img
+  ? new URL((await getImage({ src: img, width: 1200, format: 'webp', quality: 88 })).src, Astro.site).href
+  : undefined;
+// 박스 단위 판매라는 사실이 설명에 없으면 덧붙인다(있으면 그대로 둔다).
+const boxNote = isKo ? '25장 1박스 단위 판매' : 'Sold per box of 25';
+const hasBoxNote = isKo ? /박스/.test(metaDesc) : /per box/i.test(metaDesc);
+const ldDesc = hasBoxNote ? metaDesc : `${metaDesc} ${boxNote}`;
+const hasPrice = typeof d.priceKrw === 'number' && d.priceKrw > 0;
+const productLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Product',
+  name,
+  description: ldDesc,
+  ...(ldImage ? { image: ldImage } : {}),
+  sku: wafer.id,
+  brand: { '@type': 'Brand', name: 'VanaM' },
+  // 가격 미정 웨이퍼(가격 문의)는 offers 를 붙이지 않는다 — 없는 가격을 지어내지 않는다.
+  ...(hasPrice
+    ? {
+        offers: {
+          '@type': 'Offer',
+          url: pageUrl,
+          priceCurrency: 'KRW',
+          price: d.priceKrw,
+          availability: 'https://schema.org/InStock',
+          itemCondition: 'https://schema.org/NewCondition',
+        },
+      }
+    : {}),
+};
 ---
 
 <BaseLayout title={`${name} | VanaM`} description={metaDesc}>
@@ -294,6 +332,8 @@ const metaDesc = summary?.trim()
   });
 
 </script>
+
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(productLd)} />
 </BaseLayout>
 
 <script>
