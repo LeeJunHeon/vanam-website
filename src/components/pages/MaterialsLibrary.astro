@@ -3,7 +3,8 @@
 // 구 Technology 의 소재 섹션(배지 그리드)과 모달 패널 콘텐츠를 원문 이식해
 // "상단 인덱스 → 하단 전체 상세 카드" 로 재구성. 배지 클릭 = 해당 카드로 스크롤(+하이라이트).
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { getCollection } from 'astro:content';
+import { allMaterialsSorted, groupBySystem } from '../../lib/material-lists';
+import { metaDescriptionFor } from '../../lib/meta-descriptions';
 import { getImage } from 'astro:assets';
 import { getRelativeLocaleUrl } from 'astro:i18n';
 import type { ImageMetadata } from 'astro';
@@ -16,40 +17,15 @@ const lhref = (p) => getRelativeLocaleUrl(locale, p);
 const site = siteData[locale] ?? siteData.en;
 const tech = site.technology;
 const title = `${tech.materialsHeading} | ${locale === 'ko' ? '반암(VanaM)' : 'VanaM'}`;
-const description = tech.materialsLibraryDesc;
+// 화면 리드 문구(tech.materialsLibraryDesc)는 그대로 두고, 검색용 설명만 따로 만든다.
+const description = (await metaDescriptionFor('materials', locale)) ?? tech.materialsLibraryDesc;
 const about = site.about; // CTA 문구는 구 About 원문 사용 (0172 — tech 와 중복 회피)
 
-// materials 컬렉션에서 system 별로 category→formula[] 그룹을 재구성.
-// order 순으로 정렬해 기존 객체의 키/배열 순서를 그대로 보존한다.
-const allMaterials = (await getCollection('materials')).sort((a, b) => a.data.order - b.data.order);
-// 0828 — 인덱스 칩 정렬: 카테고리 구분(PVD/ALD × 산화물·질화물·금속·반도체)은 그대로 두고
-//   카테고리 '안에서만' 알파벳순으로 세운다. 전체를 합쳐 정렬하는 것이 아니다.
-//   비교 키는 화학식의 유니코드 아래첨자를 보통 문자로 되돌린 소문자 (Al₂O₃ → al2o3, SiNₓ → sinx).
-//   ⚠️ 데이터(m*.json)의 order 는 건드리지 않는다 → 소재가 추가돼도 렌더 시 자동으로 제자리에 들어간다.
-const SUBSCRIPTS = { '₀': '0', '₁': '1', '₂': '2', '₃': '3', '₄': '4', '₅': '5', '₆': '6', '₇': '7', '₈': '8', '₉': '9', 'ₓ': 'x' };
-const chipSortKey = (formula) => formula.replace(/[₀-₉ₓ]/g, (c) => SUBSCRIPTS[c] ?? c).toLowerCase();
-// 예외 한 건: PVD 산화물의 VO₂(m01)는 대표 소재라 늘 맨 앞. 나머지는 순수 알파벳순.
-const CHIP_PINNED = { sputter: { Oxide: 'm01' } };
-function groupBySystem(system) {
-  const groups = {};
-  for (const m of allMaterials) {
-    if (m.data.system !== system) continue;
-    // 물질 상세 팝업을 위해 formula 와 id(파일명=slug)를 함께 보관
-    (groups[m.data.category] ??= []).push({ formula: m.data.formula, id: m.id });
-  }
-  // 카테고리(키) 순서는 order 기준 첫 등장 순서 그대로 두고, 각 배열 내부만 정렬한다.
-  for (const [category, items] of Object.entries(groups)) {
-    const pinned = CHIP_PINNED[system]?.[category];
-    items.sort((a, b) => {
-      if (a.id === pinned) return -1;
-      if (b.id === pinned) return 1;
-      return chipSortKey(a.formula).localeCompare(chipSortKey(b.formula), 'en');
-    });
-  }
-  return groups;
-}
-const sputter = groupBySystem('sputter');
-const ald = groupBySystem('ald');
+// 칩 그리드의 정렬·핀 규칙은 lib/material-lists.ts 한 곳에 있다.
+// 메타 설명의 물질 나열도 같은 함수를 쓰므로, 소재를 추가하면 칩과 설명이 함께 따라온다.
+const allMaterials = await allMaterialsSorted();
+const sputter = groupBySystem(allMaterials, 'sputter');
+const ald = groupBySystem(allMaterials, 'ald');
 
 // 서비스·분석·장비·주문절차·응용분야 섹션은 Product 페이지로 이동/삭제됨 (2026-07 개편)
 

@@ -75,6 +75,55 @@ const bodyLead = cmpKey(
 const excerptKey = cmpKey(excerpt);
 const showExcerpt = excerptKey.length > 0 && !bodyLead.startsWith(excerptKey);
 
+// ── 메타 설명 자동 보강 (0911c) ──────────────────────────────────────────
+// excerpt 가 없거나 너무 짧으면(이모지 한 줄짜리 제목 복붙이 많다) 검색 결과에
+// 보여줄 문장이 사실상 없다. 그런 글만 본문 첫 문단에서 순수 텍스트를 뽑아 채운다.
+//   ⚠️ 충분히 긴 excerpt 는 손대지 않는다 — 사람이 쓴 요약이 항상 낫다.
+//   ⚠️ 말줄임표(…)는 붙이지 않는다. 스니펫에서 잘릴 때 이중으로 지저분해진다.
+const MIN_DESC = 60;                         // 이보다 짧으면 보강 대상
+const DESC_LIMIT = isKo ? 140 : 155;         // 스니펫에 잘리지 않는 길이
+const plainFromMarkdown = (md: string) =>
+  md
+    .replace(/```[\s\S]*?```/g, ' ')          // 코드 블록
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')     // 이미지
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')   // 링크 → 링크 텍스트
+    .replace(/<[^>]+>/g, ' ')                 // 인라인 HTML
+    .split('\n')
+    .filter((l) => !l.trim().startsWith('#')) // 제목 줄 제외
+    .join(' ')
+    .replace(/[*_`~>]/g, '')                  // 강조·인용 마커
+    .replace(/\s+/g, ' ')
+    .trim();
+/**
+ * 문장 경계를 우선하고, 없으면 단어 경계에서 자른다.
+ * 한국어는 공백이 드물어 단어 경계만 쓰면 조사에서 끊긴다("…여러분의"). 문장 끝을 먼저 찾는다.
+ */
+const clip = (text: string, limit: number) => {
+  if (text.length <= limit) return text;
+  const cut = text.slice(0, limit);
+  // 마침표·물음표·느낌표로 끝나는 마지막 지점(한도의 절반은 넘어야 너무 짧아지지 않는다)
+  let end = -1;
+  for (const re of [/[.!?](?=\s|$)/g]) {
+    let m;
+    while ((m = re.exec(cut))) if (m.index > limit * 0.5) end = m.index + 1;
+  }
+  if (end > 0) return cut.slice(0, end).trim();
+  const sp = cut.lastIndexOf(' ');
+  return (sp > limit * 0.6 ? cut.slice(0, sp) : cut).replace(/[\s,.;:·—-]+$/, '').trim();
+};
+const autoDesc = (() => {
+  const base = (excerpt ?? '').trim();
+  if (base.length >= MIN_DESC) return base;
+  const plain = plainFromMarkdown(bodyMd ?? '');
+  if (!plain) return base || title;
+  // 짧은 excerpt 가 본문 첫머리와 겹치지 않으면 앞에 붙여 문맥을 살린다.
+  const lead = clip(plain, DESC_LIMIT);
+  if (base && !cmpKey(plain).startsWith(cmpKey(base))) {
+    return clip(`${base} ${lead}`, DESC_LIMIT);
+  }
+  return lead;
+})();
+
 const CAT_LABEL: Record<string, string> = { linkedin: 'LinkedIn', agent: 'Agent' };
 const cat = d.category ?? 'linkedin';
 const fmtDate = (dt: Date) =>
@@ -102,7 +151,7 @@ const t = {
 };
 ---
 
-<BaseLayout title={pageTitle} description={excerpt || title} ogType="article" ogImage={ogImage}>
+<BaseLayout title={pageTitle} description={autoDesc || title} ogType="article" ogImage={ogImage}>
   <article class="v-wrap pt-28 pb-24 md:pt-32">
     <a href={`${base}/news#blog`} class="text-sm text-ink/45 transition hover:text-accent">{t.back}</a>
 

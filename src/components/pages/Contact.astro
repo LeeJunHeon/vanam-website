@@ -7,12 +7,14 @@ import { getCollection } from 'astro:content';
 import siteData from '../../data/site.json';
 import company from '../../data/company.json';
 import FaqSchema from '../FaqSchema.astro';
+import { metaDescriptionFor } from '../../lib/meta-descriptions';
 const locale = Astro.currentLocale ?? 'en';
 const site = siteData[locale] ?? siteData.en;
 const c = site.contact;
 const f = c.form;
 const title = c.metaTitle;
-const description = c.metaDescription;
+// 검색 스니펫용 설명 — 문의 유형(증착·분석·웨이퍼·협업)을 구체적으로 적는다.
+const description = (await metaDescriptionFor('contact', locale)) ?? c.metaDescription;
 
 // FAQ: published:true 이고 answer가 비어있지 않은 항목만 표시. 언어는 locale별.
 const faqs = (await getCollection('faq'))

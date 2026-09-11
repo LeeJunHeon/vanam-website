@@ -9,6 +9,7 @@ import type { ImageMetadata } from 'astro';
 import siteData from '../../data/site.json';
 import company from '../../data/company.json';
 import { formatUsd } from '../../lib/price';
+import { metaDescriptionFor } from '../../lib/meta-descriptions';
 const locale = Astro.currentLocale ?? 'en';
 const site = siteData[locale] ?? siteData.en;
 const s = site.shop;
@@ -28,9 +29,11 @@ const wafers = (await getCollection('wafers'))
 
 const name = (w) => (isKo ? w.data.name : (w.data.name_en ?? w.data.name));
 const summary = (w) => (isKo ? (w.data.summary ?? '') : (w.data.summary_en ?? w.data.summary ?? ''));
+// 검색 스니펫용 설명 — 물질·사양 나열은 웨이퍼 컬렉션 실데이터와 대조해 적었다.
+const metaDesc = (await metaDescriptionFor('wafers', locale)) ?? s.waferMetaDescription;
 ---
 
-<BaseLayout title={s.waferMetaTitle} description={s.waferMetaDescription}>
+<BaseLayout title={s.waferMetaTitle} description={metaDesc}>
   <section class="relative v-wrap py-28 md:py-36">
     <div class="flex flex-wrap items-end justify-between gap-6">
       <div class="v-reveal">

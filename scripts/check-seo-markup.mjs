@@ -110,6 +110,70 @@ if (!existsSync(smPath)) {
   else ok('블로그 lastmod = 콘텐츠 date');
 }
 
+// ── ⑤ 메타 설명 (0911c) ─────────────────────────────────
+// 검색 스니펫이 비거나 한 줄짜리면 클릭률이 바닥이다. 주요 페이지는 최소 길이를 못 박고,
+// 제품 설명의 물질 나열이 라이브러리와 어긋나지 않는지(소재 추가 시 누락) 대조한다.
+{
+  const META_D = /<meta name="description" content="([^"]*)"/;
+  const META_OG = /<meta property="og:description" content="([^"]*)"/;
+  const decode = (v) => v.replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+  const descOf = (rel) => {
+    const h = html(rel);
+    return { d: decode(META_D.exec(h)?.[1] ?? ''), og: decode(META_OG.exec(h)?.[1] ?? '') };
+  };
+
+  const KEY_PAGES = [];
+  for (const loc of ['', 'ko/']) {
+    for (const p of ['product/oxides', 'product/nitrides', 'product/metals', 'product/multilayers',
+                     'product/wafers', 'wafers', 'materials', 'contact']) {
+      KEY_PAGES.push(`${loc}${p}/index.html`);
+    }
+  }
+  const MIN_KEY = 80;
+  const short = [];
+  const noOg = [];
+  for (const rel of KEY_PAGES) {
+    if (!existsSync(join(DIST, rel))) { fail(`${rel} 없음`); continue; }
+    const { d, og } = descOf(rel);
+    if (d.length < MIN_KEY) short.push(`${rel}(${d.length}자)`);
+    if (!og.trim()) noOg.push(rel);
+  }
+  if (short.length) fail(`주요 페이지 description 이 ${MIN_KEY}자 미만: ${short.join(', ')}`);
+  else ok(`주요 페이지 ${KEY_PAGES.length}개 description ${MIN_KEY}자 이상`);
+  if (noOg.length) fail(`og:description 없음: ${noOg.join(', ')}`);
+  else ok(`주요 페이지 og:description 전부 존재`);
+
+  // 산화물 제품 설명에 라이브러리의 산화물이 전부 들어 있는지 (소재를 추가했는데 설명이 안 따라온 경우 탐지)
+  const oxides = readdirSync(join(ROOT, 'src/content/materials'))
+    .filter((f) => f.endsWith('.json'))
+    .map((f) => JSON.parse(readFileSync(join(ROOT, 'src/content/materials', f), 'utf8')))
+    .filter((m) => m.category === 'Oxide')
+    .map((m) => m.formula);
+  const uniqOxides = [...new Set(oxides)];
+  for (const rel of ['product/oxides/index.html', 'ko/product/oxides/index.html']) {
+    const { d } = descOf(rel);
+    const missing = uniqOxides.filter((f) => !d.includes(f));
+    if (missing.length) fail(`${rel}: 설명에 빠진 산화물 ${missing.length}종 — ${missing.join(', ')}`);
+    else ok(`${rel}: 라이브러리 산화물 ${uniqOxides.length}종 전부 포함`);
+  }
+
+  // 블로그 글 — 한 줄짜리 제목 복붙이 많아 자동 보강한 결과를 검사
+  const blogPages = [];
+  (function walk(dir) {
+    for (const n of readdirSync(dir, { withFileTypes: true })) {
+      const full = join(dir, n.name);
+      if (n.isDirectory()) walk(full);
+      else if (n.name === 'index.html' && /\/blog\/[^/]+\/index\.html$/.test(full)) blogPages.push(full);
+    }
+  })(DIST);
+  const MIN_BLOG = 60;
+  const shortBlog = blogPages
+    .map((f) => ({ p: f.replace(DIST + '/', ''), len: decode(META_D.exec(readFileSync(f, 'utf8'))?.[1] ?? '').length }))
+    .filter((x) => x.len < MIN_BLOG);
+  if (shortBlog.length) fail(`블로그 description ${MIN_BLOG}자 미만 ${shortBlog.length}개: ${shortBlog.slice(0, 3).map((x) => `${x.p}(${x.len})`).join(', ')}`);
+  else ok(`블로그 ${blogPages.length}편 description ${MIN_BLOG}자 이상`);
+}
+
 // ── ④ 웨이퍼 Product/Offer ───────────────────────────────
 const waferIds = readdirSync(join(ROOT, 'src/content/wafers'))
   .filter((f) => f.endsWith('.json'))

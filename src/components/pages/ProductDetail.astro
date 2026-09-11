@@ -6,6 +6,7 @@ import siteData from '../../data/site.json';
 import QuoteForm from '../QuoteForm.astro';
 import company from '../../data/company.json';
 import { formatUsd } from '../../lib/price';
+import { metaDescriptionFor } from '../../lib/meta-descriptions';
 
 const { product } = Astro.props;
 const locale = Astro.currentLocale ?? 'en';
@@ -28,9 +29,16 @@ const shipping = isKo ? d.shipping : (d.shipping_en ?? d.shipping);
 const img = d.image ? productImages[d.image]?.default : undefined;
 const isFixed = d.pricingType === 'fixed' && typeof d.price === 'number';
 const usdRate = company.usdRate || 1380;
+
+// 검색 스니펫용 설명 — 화면의 리드 문구(summary, 13~36자)와 역할이 다르다.
+//   summary 는 h1 아래 한 줄 소개라 짧아야 하고, 메타 설명은 검색 결과에 뜨는 긴 문장이다.
+//   물질 나열은 소재 라이브러리에서 자동으로 채워진다(소재를 추가하면 설명도 따라온다).
+//   /product/wafers 는 /wafers 와 같은 문장을 쓴다(둘 다 웨이퍼 판매 안내).
+const metaKey = product.id === 'wafers' ? 'wafers' : `product/${product.id}`;
+const metaDesc = (await metaDescriptionFor(metaKey, locale)) ?? summary;
 ---
 
-<BaseLayout title={`${name} | ${locale === 'ko' ? '반암(VanaM)' : 'VanaM'}`} description={summary}>
+<BaseLayout title={`${name} | ${locale === 'ko' ? '반암(VanaM)' : 'VanaM'}`} description={metaDesc}>
   <section class="relative v-wrap py-28 md:py-32">
     <a href={`${base}/product`} class="text-sm text-ink/50 transition hover:text-accent">← {s.backToShop}</a>
 

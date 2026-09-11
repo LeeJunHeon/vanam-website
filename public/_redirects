@@ -20,8 +20,9 @@
 /news-updates/news/         /news/        301
 /news-updates/news          /news/        301
 /news-updates/news/*        /news         301
-/news-updates/update        /news         301
-/news-updates/update/*      /news         301
+/news-updates/update/       /news/        301
+/news-updates/update        /news/        301
+/news-updates/update/*      /news/        301
 
 # ── 상위 경로 ────────────────────────────────────────
 # ⚠️ 0911b: `/news-updates/*` 캐치올을 **삭제했다.**
