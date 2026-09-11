@@ -2,7 +2,7 @@
 // Home ← About 통합(0165): 구 About 의 Team~Collaboration 섹션을 원문 그대로 이식한 블록.
 // 카피는 site.json 의 about.* 키를 계속 읽는다(내용 불변) — 여기서는 배치·아이브로우·헤딩 크기만 홈과 통일.
 import { getCollection } from 'astro:content';
-import { Image } from 'astro:assets';
+import { Image, getImage } from 'astro:assets';
 import siteData from '../../data/site.json';
 import CertificateGallery from '../CertificateGallery.astro';
 import BrandGuard from '../BrandGuard.astro';
@@ -16,6 +16,17 @@ const teamPhotos = import.meta.glob<{ default: ImageMetadata }>('/src/assets/tea
 const history = (await getCollection('history')).sort((a, b) => a.data.order - b.data.order);
 const achievements = (await getCollection('achievements')).sort((a, b) => a.data.order - b.data.order);
 const partners = (await getCollection('partners')).sort((a, b) => a.data.order - b.data.order);
+// 협력사 로고를 표시 폭(최대 128px)의 3배인 384px 폭 webp 로 리사이즈한다(0912a).
+//   종전엔 원본 크기 그대로 내보내 68장 889KiB 가 홈 페이로드의 1/5 을 차지했다.
+//   비율은 원본 그대로, width/height 속성은 리사이즈 결과값(원본이 384 보다 좁으면 확대하지 않고 원본 크기).
+const LOGO_W = 384;
+const partnerLogoImgs = new Map<string, { src: string; width: number; height: number }>();
+for (const p of partners) {
+  const logo = p.data.logo ? partnerLogos[p.data.logo]?.default : undefined;
+  if (!logo) continue;
+  const img = await getImage({ src: logo, width: Math.min(LOGO_W, logo.width), format: 'webp' });
+  partnerLogoImgs.set(p.id, { src: img.src, width: Number(img.attributes.width), height: Number(img.attributes.height) });
+}
 function initials(name){ const p = name.replace('Dr. ','').split(' '); return (p[0][0] + (p[1] ? p[1][0] : '')).toUpperCase(); }
 ---
   <section id="team" class="scroll-mt-24">
@@ -145,15 +156,15 @@ function initials(name){ const p = name.replace('Dr. ','').split(' '); return (p
               {[0, 1].map((copy) => (
                 <div class="flex" aria-hidden={copy === 1 ? 'true' : undefined} data-dup={copy === 1 ? '1' : undefined}>
                   {rowItems.map((p) => {
-                    const logo = p.data.logo ? partnerLogos[p.data.logo]?.default : undefined;
+                    const logo = partnerLogoImgs.get(p.id);
                     return logo ? (
                       <div class="mr-3 flex h-16 w-44 shrink-0 items-center justify-center rounded-lg border border-ink/10 bg-plate px-3">
-                        {/* ⚠️ loading 은 eager 를 유지한다 — 무한 스크롤 배너 안에서 lazy 를 쓰면
-                            화면 밖에서 흘러들어오는 로고가 빈칸으로 보인다.
-                            대신 fetchpriority="low" 로 **우선순위만** 낮춘다.
-                            로고 30장 341KB 가 히어로 영상·포스터·폰트와 대역폭을 다투던 것을 막는다.
-                            (홈은 즉시 로딩 이미지가 30장으로 전 페이지 중 압도적으로 많았다) */}
-                        <Image src={logo} alt={p.data.name} loading="eager" fetchpriority="low" class="max-h-12 max-w-[85%] w-auto object-contain" />
+                        {/* 0912a: 두 세트 모두 loading="lazy". 이 섹션(07)은 어떤 뷰포트에서도 첫 화면 밖이라
+                            1벌째도 lazy 로 두고, 2벌째(aria-hidden 복제)도 lazy.
+                            ⚠️ 무한 스크롤 배너 안에서 lazy 를 그대로 두면 overflow 로 잘린 로고가 흘러들어올 때
+                            빈칸으로 보인다(종전에 eager 를 쓴 이유). 그래서 아래 스크립트가 섹션이 뷰포트에
+                            가까워지면 마키 안 img 를 한꺼번에 eager 로 바꿔 미리 받는다. */}
+                        <img src={logo.src} alt={p.data.name} width={logo.width} height={logo.height} loading="lazy" decoding="async" class="max-h-12 max-w-[85%] w-auto object-contain" />
                       </div>
                     ) : (
                       <div class={`mr-3 flex h-16 w-44 shrink-0 items-center justify-center rounded-lg border px-3 text-center text-sm font-medium leading-tight ${p.data.needsCheck ? 'border-danger/40 bg-danger/[0.05] text-danger' : 'border-ink/10 bg-ink/[0.03] text-ink/60'}`}>{p.data.name}</div>
@@ -168,6 +179,18 @@ function initials(name){ const p = name.replace('Dr. ','').split(' '); return (p
     </div>
   </section>
 
+<script>
+  // 협력사 마키 로고 선로딩(0912a): lazy 로 둔 로고를 섹션이 뷰포트 600px 앞에 오면 일괄 eager 로 전환.
+  // overflow 로 잘린 상태에서는 브라우저 lazy 판정에 걸리지 않아 흘러들어오는 로고가 빈칸이 되는 것을 막는다.
+  (() => {
+    const sec = document.getElementById('collaboration');
+    if (!sec) return;
+    const warm = () => sec.querySelectorAll<HTMLImageElement>('.marquee img[loading="lazy"]').forEach((img) => { img.loading = 'eager'; });
+    if (!('IntersectionObserver' in window)) { warm(); return; }
+    const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { io.disconnect(); warm(); } }, { rootMargin: '600px 0px' });
+    io.observe(sec);
+  })();
+</script>
 
 <style>
   /* 협력사 로고 무한 회전(마퀴):

@@ -95,10 +95,12 @@ const kindLabel = (k: string) =>
     const overflowing = () => track.scrollWidth > track.clientWidth + 4;
 
     function updateArrows() {
-      if (!overflowing()) { nav.classList.add('hidden'); nav.classList.remove('flex'); return; }
+      // 레이아웃 읽기(scrollWidth/clientWidth/scrollLeft)를 먼저 모두 끝내고 class·disabled 쓰기는 뒤에(0912a — 강제 리플로우 방지).
+      const sw = track.scrollWidth, cw = track.clientWidth, sl = track.scrollLeft;
+      if (!(sw > cw + 4)) { nav.classList.add('hidden'); nav.classList.remove('flex'); return; }
       nav.classList.remove('hidden'); nav.classList.add('flex');
-      prev.disabled = track.scrollLeft <= 0;
-      next.disabled = track.scrollLeft + track.clientWidth >= track.scrollWidth - 1;
+      prev.disabled = sl <= 0;
+      next.disabled = sl + cw >= sw - 1;
     }
 
     const step = () => Math.max(track.clientWidth * 0.8, 200);

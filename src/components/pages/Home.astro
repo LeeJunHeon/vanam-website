@@ -27,7 +27,7 @@ const description = home.metaDescription;
         소스는 텍스트 제거본을 전 구간 전수 스캔해 안전 크롭(y=88·높이 904)한 것이라 상단 검은 띠가 없고,
         색보정(eq)은 걸지 않는다 — 원본 그레이딩이 이미 정상 노출이라 손대면 하이라이트만 날아간다.
         object-cover + 상단 기준 정렬이라 검은 여백 없이 상단 로고가 항상 온전히 보인다. */}
-    <video id="vn-vid" class="absolute inset-0 h-full w-full object-cover [object-position:center_top]" autoplay muted loop playsinline preload="auto" poster="/media/hero-poster.webp" aria-hidden="true"></video>
+    <video id="vn-vid" class="absolute inset-0 h-full w-full object-cover [object-position:center_top]" autoplay muted loop playsinline preload="none" poster="/media/hero-poster.webp" aria-hidden="true"></video>
     <div class="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/65 via-black/25 to-transparent" aria-hidden="true"></div>
     <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_90%_at_50%_42%,transparent_55%,rgba(0,0,0,0.38))]" aria-hidden="true"></div>
     <div class="pointer-events-none absolute inset-x-0 bottom-0 h-44 bg-gradient-to-b from-transparent to-canvas" aria-hidden="true"></div>
@@ -101,13 +101,21 @@ const description = home.metaDescription;
     const vid = document.getElementById('vn-vid') as HTMLVideoElement | null;
     if (!sec || !vid) return;
     const MOBILE = window.matchMedia('(max-width: 768px)').matches;
-    // 소스 지정을 첫 페인트 이후로 미룬다(0246). 포스터(preload+fetchpriority=high)가 LCP 로 먼저
-    // 그려지고 영상은 그 뒤 스트리밍되므로, 느린 회선에서 히어로 텍스트가 영상에 밀리지 않는다.
-    // 재생·루프·모바일 소스 선택 등 동작은 종전과 동일하다.
-    const setSrc = () => { vid.src = MOBILE ? '/media/hero-loop-m.mp4' : '/media/hero-loop.mp4'; };
-    if (document.readyState === 'complete') setSrc();
-    else window.addEventListener('load', () => requestAnimationFrame(setSrc), { once: true });
     const rm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // 소스 지정을 첫 페인트 이후로 미룬다(0246→0912a). 포스터(preload+fetchpriority=high)가 LCP 로 먼저
+    // 그려지고 영상은 그 뒤 스트리밍되므로, 느린 회선에서 히어로 텍스트가 영상에 밀리지 않는다.
+    //   0912a: window load 뒤 requestIdleCallback(없으면 setTimeout) 로 한 번 더 미루고,
+    //   데이터 절약 모드(saveData)·동작 줄이기(reduced-motion) 에선 아예 받지 않는다(포스터만).
+    //   preload="none" 이지만 autoplay 속성이 있어 src 를 넣는 순간 브라우저가 스스로 받기 시작한다.
+    //   재생·루프·모바일 소스 선택 등 동작은 종전과 동일하다.
+    const conn = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
+    const skipVideo = rm || !!(conn && conn.saveData);
+    const setSrc = () => { vid.src = MOBILE ? '/media/hero-loop-m.mp4' : '/media/hero-loop.mp4'; };
+    const idle = () => { if ('requestIdleCallback' in window) window.requestIdleCallback(setSrc, { timeout: 2000 }); else setTimeout(setSrc, 1); };
+    if (!skipVideo) {
+      if (document.readyState === 'complete') idle();
+      else window.addEventListener('load', idle, { once: true });
+    }
     // 모바일 자동재생은 정책(절전 모드·데이터 절약·사용자 제스처 요구)으로 조용히 거부될 수 있다.
     // 지금까지는 play() 가 한 번 실패하면 재시도가 없어 포스터만 남았다.
     // Technology 의 DBR 영상과 같은 '재생 킥'(진입·첫 터치·복귀 시 재시도)을 건다.

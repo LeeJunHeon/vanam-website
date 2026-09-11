@@ -627,8 +627,12 @@ const childHref = (path) => {
         pend.forEach((el) => obs.observe(el));
       } catch (e) {}
       const inView = (el) => { const r = el.getBoundingClientRect(); return r.top < innerHeight - 40 && r.bottom > 0; };
+      // 읽기(rect) 를 전부 끝낸 뒤 쓰기(class) 를 몰아서 한다(0912a).
+      //   같은 루프에서 rect 읽기와 class 추가를 번갈아 하면 요소마다 스타일 무효화→동기 레이아웃(강제 리플로우)이 반복된다.
       const sweep = () => {
-        pend.forEach((el) => { if (inView(el)) show(el); });
+        const hits = [];
+        pend.forEach((el) => { if (inView(el)) hits.push(el); });
+        hits.forEach(show);
         if (!pend.size) { removeEventListener('scroll', onScroll); removeEventListener('resize', onScroll); }
       };
       let tmr = 0;
