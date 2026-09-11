@@ -28,18 +28,9 @@
     "fig-3.webp"
   ],
   "figCaptions": {
-    "fig-1.webp": {
-      "en": "Optical constants",
-      "ko": "광학 상수"
-    },
-    "fig-2.webp": {
-      "en": "Cycle test",
-      "ko": "사이클 시험"
-    },
-    "fig-3.webp": {
-      "en": "Wafer thickness map",
-      "ko": "웨이퍼 두께 분포"
-    }
+    "fig-1.webp": "Optical constants",
+    "fig-2.webp": "Cycle test",
+    "fig-3.webp": "Wafer thickness map"
   },
   "precursorImgs": [
     {

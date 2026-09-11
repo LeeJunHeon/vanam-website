@@ -8,6 +8,9 @@ import { db, newId, nowIso, nowKst } from '../../lib/db';
 import { rateLimit, tooMany } from '../../lib/rate-limit';
 import { verifyTurnstile } from '../../lib/turnstile';
 import { getRate, pickWaitUntil } from '../../lib/fx';
+// 견적 폼 선택지·검증은 폼과 같은 파일에서 가져온다(서버가 별도 목록을 들면 조용히 어긋난다).
+import { validateQuoteDetails } from '../../lib/quote-fields.js';
+import { buildInquiryChatText } from '../../lib/chat-message.js';
 
 // 서버에서 온디맨드 실행 (정적 생성 금지)
 export const prerender = false;
@@ -91,6 +94,15 @@ export const POST: APIRoute = async ({ request, locals }) => {
   //    이미 각 항목이 폼에서 제한된 값들을 모아 담은 것이라 상한을 따로 넉넉히 준다.
   let detailsJson = str(body.detailsJson).slice(0, 8000);
 
+  // 4-1) 구조화 사본의 허용값 검증 (0910c)
+  //   전달 방식(delivery)이 폼 선택지 밖이거나, 박막 증착 '있음'인데 내용이 비어 있으면 막는다.
+  //   ⚠️ 확실히 틀린 것만 막는다 — 파싱 실패·필드 없음은 통과시킨다(옛 클라이언트가 캐시된 폼으로
+  //      제출하는 배포 시차 구간에서 고객 견적을 통째로 잃는 쪽이 훨씬 나쁘다).
+  {
+    const v = validateQuoteDetails(detailsJson);
+    if (!v.ok) return json({ ok: false, error: v.error }, 400);
+  }
+
   // ── 웨이퍼 문의(0829) ────────────────────────────────────
   // 웨이퍼 상세의 '대량 주문·국내 구매' 링크에서 넘어오면 product/qty/dicing 이 함께 온다.
   // ⚠️ 다이싱 **비용은 브라우저가 보낸 값을 쓰지 않는다** — 여기서 웨이퍼 컬렉션을 읽어 정한다.
@@ -146,28 +158,14 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   // 접수번호 — 알림과 DB, 관리자 화면에서 같은 값을 쓴다
   const id = newId('INQ');
-  const dash = '—';
   const who = `담당: ${name}${company ? ` (${company})` : ''} · ${email}${phone ? ` · ${phone}` : ''}`;
   const meta = `접수번호 ${id} · ${locale} · ${nowKst()} (KST)`;
 
-  let text: string;
-  if (type === 'quote') {
-    text = [
-      '📩 *새 견적 요청*',
-      `상품: ${productName} (${product})`,
-      who,
-      `기판: ${substrate || dash} | 총 샘플: ${sampleCount || dash}`,
-      // ⚠️ 예전 견적 폼의 '두께·수량·납기' 줄은 뺐다. 지금 폼에는 그 항목이 없어서
-      //    **항상 `두께: — | 수량: — | 납기: —`** 로만 찍혔다(실제 입력값이 아니다).
-      //    같은 정보는 아래 요청 본문에 '총 샘플 수량'·'완료 희망일'로 이미 들어 있다.
-      `\n${details || dash}`,
-      meta,
-    ].filter(Boolean).join('\n');
-  } else {
-    // 웨이퍼 문의면 상품·수량·다이싱을 별도 줄로 먼저 보여준다(본문에도 같은 내용이 들어 있지만
-    // 담당자가 목록에서 한눈에 구분할 수 있어야 한다).
-    text = ['✉️ *새 문의*', who, waferLine, `내용: ${message}`, meta].filter(Boolean).join('\n');
-  }
+  // 알림 본문 조립은 lib/chat-message.js 의 순수 함수가 한다.
+  // (인라인이던 시절에는 문구 확인을 위해 실제 채팅방으로 제출해 보는 수밖에 없었다)
+  const text = buildInquiryChatText({
+    type, productName, product, who, substrate, sampleCount, details, message, waferLine, meta,
+  });
 
   // 5) D1에 저장 — 알림을 놓쳐도 요청이 사라지지 않도록 남긴다.
   //    DB가 없거나(dev) 실패해도 알림은 나가야 하므로 예외를 삼킨다.

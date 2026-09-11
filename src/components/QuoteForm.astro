@@ -6,7 +6,7 @@
 // 제출 시 시퀀스를 사람이 읽을 수 있는 텍스트로 정리해 details 에, 원본은 JSON 으로 함께 보낸다.
 import siteData from '../data/site.json';
 import company from '../data/company.json';
-import { PROCESSES, MEASUREMENTS, SUBSTRATES, SUBSTRATE_SIZES, DELIVERY_METHODS, PRODUCT_MAT_FILTER, SYSTEM_TO_PROCESS, type MatCat } from '../lib/processes';
+import { PROCESSES, MEASUREMENTS, SUBSTRATES, SUBSTRATE_SIZES, DELIVERY_METHODS, DELIVERY_NEEDS_SHIPPING, PRODUCT_MAT_FILTER, SYSTEM_TO_PROCESS, type MatCat } from '../lib/processes';
 import { COUNTRIES } from '../lib/countries';
 
 const { product, productName, simple = false } = Astro.props;
@@ -36,8 +36,11 @@ const measurementData = JSON.stringify(MEASUREMENTS);
 // 기판 크기·전달 방식은 언어별 라벨을 미리 고른다
 const sizeOpts = SUBSTRATE_SIZES.map((s) => ({ value: s.value, label: isKo ? s.ko : s.en }));
 const deliveryOpts = DELIVERY_METHODS.map((d) => ({ value: d.value, label: isKo ? d.ko : d.en }));
-// 배송형 전달값(택배/배송) — 이 값 선택 시에만 배송지 블록 노출
-const shipValues = DELIVERY_METHODS.filter((d) => /courier|parcel|delivery|ship|배송|택배/i.test(`${d.value} ${d.ko} ${d.en}`)).map((d) => d.value);
+// 배송형 전달값 — 이 값 선택 시에만 배송지 블록 노출.
+// ⚠️ 예전에는 라벨에 정규식을 돌려 판정했다. 'In-person delivery'(방문 전달)처럼 라벨에
+//    delivery 가 들어가면 방문 전달에도 배송지가 뜨고 필수까지 걸린다.
+//    → 판정은 processes.ts 의 needsShipping 플래그 한 곳에서만 한다.
+const shipValues = DELIVERY_NEEDS_SHIPPING;
 // 배송 국가 (simple=고정가 주문 폼 전용)
 const countryOpts = COUNTRIES.map((cn) => ({ value: cn.code, label: isKo ? cn.ko : cn.en }));
 // 증착 공정 목록(두께 nm 단위) — 대표 소재 판정용 (세정 가스가 '소재'로 잡히던 문제 방지)
@@ -62,6 +65,7 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
       data-msg-seq-process={q.msgSeqProcess}
       data-msg-seq-material={q.msgSeqMaterial}
       data-msg-seq-value={q.msgSeqValue}
+      data-msg-prefilm={q.msgPreFilmNote}
       data-label-send={simple ? q.submitOrder : q.submit}
       data-sheet-title={q.sheetTitle}
       data-sheet-notsent={q.sheetNotSent}
@@ -161,12 +165,39 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
                 class={`${inputClass} mt-3`} placeholder={q.substrateSizeOtherPlaceholder} />
             </div>
           </div>
+          <!-- 박막 증착 여부 — 기판 종류·크기 바로 아래 전체 폭 한 줄.
+               선택 순서는 '있음 → 없음', 기본 선택은 '없음'이다. -->
+          <div>
+            <span class={labelClass}>{q.preFilm} <span class="text-danger">*</span></span>
+            <div id="q-prefilm-group" class="mt-2 flex flex-wrap gap-x-6 gap-y-2">
+              <label for="q-prefilm-yes" class="flex items-center gap-2 text-sm text-ink/70">
+                <input id="q-prefilm-yes" type="radio" name="preFilm" value="1"
+                  class="h-4 w-4 border-ink/30 text-accent" />
+                {q.preFilmYes}
+              </label>
+              <label for="q-prefilm-no" class="flex items-center gap-2 text-sm text-ink/70">
+                <input id="q-prefilm-no" type="radio" name="preFilm" value="0" checked
+                  class="h-4 w-4 border-ink/30 text-accent" />
+                {q.preFilmNone}
+              </label>
+            </div>
+          </div>
+          <!-- '있음'일 때만 펼쳐지는 자유 입력. 라디오 묶음의 자식이 아니라 기판 정보 섹션의
+               **독립 필드 그룹**이라, 위 space-y-6 이 다른 필드 그룹과 같은 간격을 준다.
+               hidden 이면 display:none 이라 그 간격도 함께 사라진다(빈 여백이 남지 않는다). -->
+          <div id="q-prefilm-wrap" hidden>
+            <label for="q-prefilm-note" class={labelClass}>{q.preFilmNote} <span class="text-danger">*</span></label>
+            <textarea id="q-prefilm-note" name="preFilmNote" rows="3"
+              class={inputClass} placeholder={q.preFilmNotePlaceholder}></textarea>
+          </div>
           <div>
             <label for="q-delivery" class={labelClass}>{q.delivery} <span class="text-danger">*</span></label>
             <select id="q-delivery" name="delivery" required class={selectClass}>
               <option value="" disabled selected>{q.deliveryPlaceholder}</option>
               {deliveryOpts.map((m) => <option value={m.value}>{m.label}</option>)}
             </select>
+            <!-- '구매 요청'을 고르면 기판을 보내지 않는다는 점을 바로 아래에서 알려준다 -->
+            <p id="q-delivery-help" hidden class="mt-2 text-sm leading-relaxed text-ink/55">{q.deliveryHelpPurchase}</p>
           </div>
           <div>
             <label for="q-sample-count" class={labelClass}>{q.sampleCount} <span class="text-danger">*</span></label>
@@ -294,10 +325,16 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
           const same = $('q-ship-same'), rec = $('q-ship-rec');
           const country = $('q-ship-country'), otherWrap = $('q-ship-other-wrap');
           const clabel = $('q-ship-clabel');
+          const help = $('q-delivery-help');
+          // 박막 증착 여부 — '있음'일 때만 자유 입력란을 펼친다.
+          const pfYes = $('q-prefilm-yes'), pfWrap = $('q-prefilm-wrap'), pfGroup = $('q-prefilm-group');
+          const pfNote = $('q-prefilm-note');
           const setReq = (id, on) => { const el = $(id); if (el) el.required = on; };
           const sync = () => {
             const on = shipVals.includes(sel.value);
             box.hidden = !on;
+            // 구매 요청: 기판을 보내지 않으므로 배송지는 숨은 채로 두고 안내만 띄운다.
+            if (help) help.hidden = sel.value !== 'purchase';
             rec.hidden = same.checked;
             const other = country.value === 'OTHER';
             otherWrap.hidden = !other;
@@ -306,12 +343,29 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
             ['q-ship-zip', 'q-ship-addr1'].forEach((i) => setReq(i, on));
             ['q-ship-name', 'q-ship-phone'].forEach((i) => setReq(i, on && !same.checked));
             setReq('q-ship-other', on && other);
+
+            if (pfWrap && pfYes) {
+              const yes = pfYes.checked;
+              pfWrap.hidden = !yes;
+              if (pfGroup) pfGroup.setAttribute('aria-expanded', yes ? 'true' : 'false');
+              // ⚠️ textarea 에 required 를 걸지 않는다. collectIssues 는 숨은 요소도 검사하므로
+              //    '없음'으로 되돌렸을 때 보이지도 않는 칸 때문에 제출이 막힌다.
+              //    필수 판정은 collectIssues 의 명시적 검사 한 곳에서만 한다(문구도 그쪽이 낸다).
+              // '없음'으로 되돌려도 입력값은 지우지 않는다(잘못 눌렀다 되돌릴 때 복구가 안 됐다).
+              // 저장으로 나가는 값은 제출 조립(preFilmFields)에서 preFilm=false 면 빈 문자열이 된다.
+              if (pfNote) pfNote.setAttribute('aria-required', yes ? 'true' : 'false');
+            }
           };
           sel.addEventListener('change', sync);
           same.addEventListener('change', sync);
           country.addEventListener('change', sync);
           $('q-ship-other').addEventListener('input', sync);
+          if (pfGroup) pfGroup.addEventListener('change', sync);
           sync();
+          // 새로고침·뒤로가기(bfcache)에서 브라우저가 폼 값을 되살리는 시점은 이 스크립트보다 늦다.
+          // 그때 한 번 더 맞춰야 라디오 상태와 펼침 상태가 어긋나지 않는다.
+          document.addEventListener('DOMContentLoaded', sync);
+          window.addEventListener('pageshow', sync);
         })();
       </script>
 
@@ -447,6 +501,8 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
   import { initTelInput, normalizeTelInputs } from '../lib/telInput';
   // 소재 value 문자열을 만드는 함수는 한 곳뿐이다 — 옵션 파생·CTA 링크·여기(프리필)가 같은 걸 쓴다.
   import { materialValue } from '../lib/material-value.js';
+  // 박막 증착 여부의 저장값 정규화 — 서버 검증·검증 스크립트와 같은 파일을 쓴다.
+  import { preFilmFields } from '../lib/quote-fields.js';
   import { showHint, hideHint } from '../lib/formHint';
   // 보안 확인 위젯 — 로드 실패 시 자동 재시도·안내까지 여기서 처리한다
   import { mountTurnstile, resetTurnstile } from '../lib/turnstile-client';
@@ -736,6 +792,14 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
         });
       }
     }
+    // 박막 증착 여부 '있음'인데 내용이 비어 있으면 차단. (textarea 에 required 를 걸지 않는 이유는
+    //  위 토글 스크립트 주석 참고 — 숨은 칸이 조용히 제출을 막는 사고를 피한다)
+    if (!M.simple) {
+      const pfYes = document.getElementById("q-prefilm-yes") as HTMLInputElement | null;
+      const pfNote = document.getElementById("q-prefilm-note") as HTMLTextAreaElement | null;
+      if (pfYes?.checked && pfNote && !pfNote.value.trim())
+        cands.push({ el: pfNote as unknown as HTMLElement, msg: M.msgPrefilm });
+    }
     if (forSubmit && !tokenOk())
       cands.push({ el: form?.querySelector(".cf-turnstile") as HTMLElement | null, msg: M.msgCaptcha });
     const live = cands.filter((c) => c.el) as { el: HTMLElement; msg?: string }[];
@@ -806,10 +870,12 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
     const DL = isKoDoc
       ? { qty: "수량", shipHdr: "[배송 주소]", country: "국가", addr: "주소", cityState: "도시/주", postal: "우편번호",
           notes: "요청사항", seqHdr: "[공정 시퀀스]", analysis: "[분석]", delivery: "기판 전달",
-          samples: "총 샘플 수량", due: "완료 희망일", caution: "주의사항", recip: "수령인", shipMemo: "배송 요청", secSub: "[기판 정보]", subLbl: "기판" }
+          samples: "총 샘플 수량", due: "완료 희망일", caution: "주의사항", recip: "수령인", shipMemo: "배송 요청", secSub: "[기판 정보]", subLbl: "기판",
+          preFilm: "박막 증착 여부", preFilmNone: "없음", preFilmYes: "있음" }
       : { qty: "Quantity", shipHdr: "[Shipping address]", country: "Country", addr: "Address", cityState: "City/State", postal: "Postal code",
           notes: "Notes", seqHdr: "[Process sequence]", analysis: "[Analysis]", delivery: "Substrate delivery",
-          samples: "Total samples", due: "Target completion", caution: "Notes", recip: "Recipient", shipMemo: "Delivery notes", secSub: "[Substrate info]", subLbl: "Substrate" };
+          samples: "Total samples", due: "Target completion", caution: "Notes", recip: "Recipient", shipMemo: "Delivery notes", secSub: "[Substrate info]", subLbl: "Substrate",
+          preFilm: "Existing thin film on sample", preFilmNone: "No", preFilmYes: "Yes" };
 
     const isSimple = !!M.simple;
     { const bad = collectIssues(false); if (bad) { flagInvalid(bad); return null; } }
@@ -856,6 +922,14 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
     const deliveryMap: Record<string, string> = JSON.parse(M.mapDelivery || "{}");
     const sizeLabel = sizeMap[data.substrateSize] || data.substrateSize || "";
     const deliveryLabel = deliveryMap[data.delivery] || data.delivery || "";
+
+    // 박막 증착 여부 — 라디오 값('1'/'0') → boolean, '없음'이면 메모는 빈 문자열.
+    // 화면에서는 값을 지우지 않으므로(되돌려도 입력 보존) **여기가 저장값을 정하는 유일한 지점**이다.
+    // 규칙은 quote-fields.js 에 두어 서버 검증·게이트가 같은 함수를 본다.
+    const { preFilm, preFilmNote } = preFilmFields(data.preFilm, data.preFilmNote);
+    const preFilmLabel = preFilm ? DL.preFilmYes : DL.preFilmNone;
+    delete data.preFilm;
+    delete data.preFilmNote;
 
     // 분석 항목(체크박스 다중) 수집
     const measures = Array.from(form.querySelectorAll<HTMLInputElement>('input[name="measurements"]:checked')).map((el) => el.value);
@@ -923,6 +997,8 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
         deliveryLabel ? `${DL.delivery}: ${deliveryLabel}` : "",
         data.sampleCount ? `${DL.samples}: ${data.sampleCount}` : "",
         data.completionDate ? `${DL.due}: ${data.completionDate}` : "",
+        `${DL.preFilm}: ${preFilmLabel}`,
+        preFilmNote,
         ...shipSec,
         "\n" + DL.seqHdr,
         seq.text,
@@ -953,6 +1029,9 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
         substrateType: String(data.substrateType ?? ""),  // 영문 또는 직접 입력
         substrateSize: String(data.substrateSize ?? ""),  // 코드값(4inch 등) 또는 직접 입력
         sampleCount: String(data.sampleCount ?? ""),
+        preFilm,                                           // 박막 증착 여부(boolean)
+        preFilmNote,                                       // 자유 입력 — 그대로
+
         completionDate: String(data.completionDate ?? ""), // 자유 입력 — 그대로
         notes: String(data.notes ?? ""),                   // 자유 입력 — 그대로
         ship: shipBlock.length ? {                          // 배송지(0217) — 조회 화면 언어 재구성용
@@ -971,6 +1050,8 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
       { l: DL.seqHdr.replace(/[[\]]/g, ''), v: seq.text },
       { l: DL.analysis.replace(/[[\]]/g, ''), v: measures.join(', ') },
       { l: DL.delivery, v: deliveryLabel },
+      // 단일 상품(고정가 주문)에는 없는 항목이라 요약·요청서에서도 빼야 한다(빈 값은 아래 filter 가 지운다).
+      { l: DL.preFilm, v: isSimple ? "" : (preFilmNote ? `${preFilmLabel} — ${preFilmNote}` : preFilmLabel) },
       { l: DL.shipHdr.replace(/[[\]]/g, ''), v: shipBlock.slice(1).join('\n') },
       { l: DL.due, v: String(data.completionDate ?? '') },
       { l: DL.caution, v: String(data.notes ?? '') },

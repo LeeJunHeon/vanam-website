@@ -7,6 +7,11 @@
 // 라이브러리에 소재를 추가하면 견적 폼 드롭다운에 자동으로 나타난다(수기 동기화 지점 제거).
 // 라이브러리에 대응 항목이 없는 선택지(플라즈마·열처리 가스, Evaporator 물질)만 EXTRAS 로 남긴다.
 import { materialValue, materialSortKey, PRODUCT_MAT_FILTER as PRODUCT_MAT_FILTER_RAW } from './material-value.js';
+import {
+  DELIVERY_METHODS as DELIVERY_METHODS_RAW,
+  DELIVERY_VALUES as DELIVERY_VALUES_RAW,
+  DELIVERY_NEEDS_SHIPPING as DELIVERY_NEEDS_SHIPPING_RAW,
+} from './quote-fields.js';
 
 // 물질의 소재 분류. 제품(Oxides/Nitrides/Metals)에 맞는 물질만 보여주는 데 쓴다.
 // 'gas' 는 플라즈마 공정의 가스라 분류와 무관하게 항상 노출.
@@ -119,7 +124,10 @@ export const SUBSTRATE_SIZES: { value: string; en: string; ko: string }[] = [
   { value: '6inch', en: '6 inch', ko: '6 inch' },
 ];
 
-export const DELIVERY_METHODS: { value: string; en: string; ko: string }[] = [
-  { value: 'courier', en: 'Courier', ko: '택배' },
-  { value: 'direct', en: 'Pick up in person', ko: '직접 수령' },
-];
+// 기판 전달 방식 — 실체는 quote-fields.js 에 있다(node 검증 스크립트가 빌드 없이 읽어야 하므로).
+// 여기서는 타입만 입혀 다시 내보낸다. material-value.js ↔ PRODUCT_MAT_FILTER 와 같은 구조다.
+export const DELIVERY_METHODS = DELIVERY_METHODS_RAW as { value: string; en: string; ko: string; needsShipping?: boolean }[];
+/** 서버 검증용 허용값 목록. */
+export const DELIVERY_VALUES = DELIVERY_VALUES_RAW as string[];
+/** 배송지 입력이 필요한 전달 방식(코드값). */
+export const DELIVERY_NEEDS_SHIPPING = DELIVERY_NEEDS_SHIPPING_RAW as string[];
