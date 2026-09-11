@@ -32,6 +32,42 @@ for (const [page, prefix] of [['materials/index.html', '/materials/'], ['ko/mate
   else ok(`${page}: 소재 상세 앵커 ${n}개`);
 }
 
+// ── ①-b 블로그 내부 링크의 끝 슬래시 ────────────────────
+// 슬래시가 빠지면 링크마다 307 이 한 홉 더 붙고, 사이트맵의 정본 URL 과 어긋난다.
+// dist 전체(HTML)에서 /blog/<slug> 형태의 슬래시 없는 내부 링크·JSON-LD url 을 찾는다.
+{
+  const pages = [];
+  (function walk(dir) {
+    for (const n of readdirSync(dir, { withFileTypes: true })) {
+      const full = join(dir, n.name);
+      if (n.isDirectory()) walk(full);
+      else if (n.name.endsWith('.html')) pages.push(full);
+    }
+  })(DIST);
+
+  // href="/ko/blog/slug"(슬래시·확장자 없음) 과 JSON-LD 의 절대 URL 둘 다 본다.
+  const HREF_RE = /href="(\/(?:ko\/)?blog\/[a-z0-9][a-z0-9-]*)"/g;
+  const LD_RE = new RegExp(`"(${SITE}\\/(?:ko\\/)?blog\\/[a-z0-9][a-z0-9-]*)"`, 'g');
+  const offenders = new Map();
+  for (const f of pages) {
+    const h = readFileSync(f, 'utf8');
+    for (const re of [HREF_RE, LD_RE]) {
+      re.lastIndex = 0;
+      let m;
+      while ((m = re.exec(h))) {
+        const rel = f.replace(DIST + '/', '');
+        if (!offenders.has(m[1])) offenders.set(m[1], rel);
+      }
+    }
+  }
+  if (offenders.size) {
+    const sample = [...offenders.entries()].slice(0, 5).map(([u, f]) => `${u} (${f})`).join(', ');
+    fail(`끝 슬래시 없는 블로그 링크 ${offenders.size}종: ${sample}`);
+  } else {
+    ok(`블로그 내부 링크 전부 끝 슬래시 (${pages.length}개 HTML 검사)`);
+  }
+}
+
 // ── ②③ 사이트맵 ─────────────────────────────────────────
 const smPath = join(DIST, 'sitemap-0.xml');
 if (!existsSync(smPath)) {

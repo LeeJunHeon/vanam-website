@@ -5,6 +5,7 @@ import BrandGuard from '../BrandGuard.astro';
 import { Image } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
 import siteData from '../../data/site.json';
+import { blogPath } from '../../lib/blog-path';
 const locale = Astro.currentLocale ?? 'en';
 const site = siteData[locale] ?? siteData.en;
 const copy = site.news;
@@ -39,7 +40,7 @@ const excerpt = (p) => (isKo ? (p.data.excerpt_ko ?? p.data.excerpt) : p.data.ex
 const postHref = (p) => p.data.url || p.data.linkedinUrl || '';
 // 본문이 있는 글 → 우리 상세 페이지(같은 탭), 없는 글 → 원문 링크(새 탭)
 const hasBody = (p) => !!p.data.body;
-const detailHref = (p) => `${base}/blog/${p.id}`;
+const detailHref = (p) => blogPath(base, p.id);   // 끝 슬래시 보장은 lib/blog-path.ts 한 곳에서
 const hasExternalOnly = () => posts.some((p) => !hasBody(p) && postHref(p));
 const postCat = (p) => p.data.category ?? 'linkedin';
 
@@ -57,7 +58,7 @@ const blogLd = {
   '@context': 'https://schema.org',
   '@type': 'Blog',
   name: 'VanaM Blog',
-  url: new URL(isKo ? '/ko/news' : '/news', Astro.site).href,
+  url: new URL(isKo ? '/ko/news/' : '/news/', Astro.site).href,   // 정본은 슬래시 포함
   inLanguage: isKo ? 'ko-KR' : 'en-US',
   publisher: { '@type': 'Organization', name: 'VanaM Inc.', url: 'https://vanam.co.kr' },
   blogPost: posts.map((p) => ({

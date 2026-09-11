@@ -8,6 +8,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import { Image } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
 import { marked } from 'marked';
+import { blogPath } from '../../lib/blog-path';
 
 const { post } = Astro.props;
 const locale = Astro.currentLocale ?? 'en';
@@ -79,7 +80,9 @@ const cat = d.category ?? 'linkedin';
 const fmtDate = (dt: Date) =>
   dt.toLocaleDateString(isKo ? 'ko-KR' : 'en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' });
 
-const canonical = new URL(`${base}/blog/${post.id}`, Astro.site).href;
+// ⚠️ 끝 슬래시 필수 — 사이트맵·BaseLayout 의 canonical 과 같은 주소여야 한다.
+//    조립은 lib/blog-path.ts 한 곳에서만 한다.
+const canonical = new URL(blogPath(base, post.id), Astro.site).href;
 const ld = {
   '@context': 'https://schema.org',
   '@type': 'BlogPosting',

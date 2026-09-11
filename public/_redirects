@@ -17,14 +17,21 @@
 /news-updates/contact/*     /contact/     301
 
 # ── 뉴스 (News / Updates 두 탭 모두 뉴스로) ──────────
-/news-updates/news          /news         301
+/news-updates/news/         /news/        301
+/news-updates/news          /news/        301
 /news-updates/news/*        /news         301
 /news-updates/update        /news         301
 /news-updates/update/*      /news         301
 
-# ── 상위 경로 (구체적 규칙 다음에 와야 한다) ─────────
-/news-updates               /news         301
-/news-updates/*             /news         301
+# ── 상위 경로 ────────────────────────────────────────
+# ⚠️ 0911b: `/news-updates/*` 캐치올을 **삭제했다.**
+#    프로덕션의 정적 자산 matcher 는 파일 순서와 무관하게 이 스플랫을 더 구체적인
+#    `/news-updates/contact` 보다 우선해서, 문의 주소가 계속 뉴스로 떨어졌다.
+#    (로컬 wrangler dev 에서는 순서대로 동작해 재현되지 않았다 — 실제 배포로만 확인됨)
+#    → 겹침 자체를 없앤다. 구 사이트에 실제로 있던 하위 경로만 명시로 남긴다.
+#      명시되지 않은 /news-updates/<임의> 는 404 로 둔다(지난 404 조사에서 요청 0건).
+/news-updates/              /news/        301
+/news-updates               /news/        301
 
 # ── 워드프레스 RSS 구독자 ───────────────────────────
 /feed                       /news         301
