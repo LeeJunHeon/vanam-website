@@ -7,12 +7,22 @@
 //   · 인증은 keystatic.cloud 가 처리한다. 편집자에게 GitHub 계정이 없어도 된다.
 //   · 무료 플랜: 팀당 3명까지.
 //
-// ⚠️ 왜 github 모드가 아니라 cloud 모드인가 — 실측으로 확인했다:
-//     cloud  모드 + 시크릿 없음 → 404 (설계대로. 서버 API 가 아무것도 안 한다)
-//     github 모드 + 시크릿 없음 → 💣 "Missing required config ... clientId, clientSecret, secret"
-//   github 모드는 저 시크릿 3개가 서버에 있어야 하는데, @keystatic/astro 는 그걸
-//   `Astro.locals.runtime.env` 로 읽는다. 그 API 는 Astro 6 에서 제거됐다
-//   (우리가 이미 폼 전송 500 으로 겪은 지뢰). cloud 모드는 그 경로를 아예 밟지 않는다.
+// ⚠️ 왜 github 모드가 아니라 cloud 모드인가:
+//     cloud  모드 → 서버 API 가 무조건 404 를 돌려준다. 콘텐츠 읽기/쓰기는 브라우저가
+//                   keystatic.cloud · api.github.com 과 직접 하고 워커는 관여하지 않는다.
+//     github 모드 → clientId / clientSecret / secret 3개가 서버에 있어야 한다.
+//
+// ⚠️ (0914 정정 — 아래 옛 결론은 틀렸다)
+//   옛 주석: "@keystatic/astro 는 시크릿을 Astro.locals.runtime.env 로 읽는데 그 API 가
+//            Astro 6 에서 제거됐다. cloud 모드는 그 경로를 아예 밟지 않는다."
+//   → 앞 문장은 맞고 뒷 문장이 틀렸다. @keystatic/astro 5.x 핸들러는 storage 종류를
+//     따지기 **전에** 첫 줄에서 context.locals?.runtime?.env 를 무조건 읽는다.
+//     dev(순수 Node)는 locals.runtime 이 undefined 라 ?. 로 빠져나가지만, 배포된 워커는
+//     @astrojs/cloudflare 13.x 가 그 자리에 "던지는 getter" 를 심어두기 때문에
+//     storage 종류와 무관하게 /api/keystatic* 요청이 전부 500 이 됐다.
+//     (2026-09-10 15:06 Cloudflare 로그에서 확인)
+//   → @keystatic/astro 6.0.0 부터 그 줄이 사라지고 astro:env 의 getSecret() 을 쓴다.
+//     **6.0.0 이상을 유지할 것.** 5.x 로 내리면 500 이 그대로 재발한다.
 //
 // ⚠️ 콘텐츠 읽기/쓰기는 브라우저가 api.github.com/graphql 로 직접 한다.
 //   워커는 관여하지 않으므로 Cloudflare 의 subrequest 한도(50/요청)와 무관하다.
