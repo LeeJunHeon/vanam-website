@@ -57,6 +57,8 @@ export default config({
         ceoKo: fields.text({ label: '대표자 (국문)', validation: { isRequired: true } }),
         ceoEn: fields.text({ label: '대표자 (영문)' }),
         bizNo: fields.text({ label: '사업자등록번호', description: '예: 894-86-02635', validation: { isRequired: true } }),
+        bizTypeKo: fields.text({ label: '업태 (국문)', description: '견적서 공급자란에 표시' }),
+        bizItemKo: fields.text({ label: '종목 (국문)', description: '견적서 공급자란에 표시' }),
         mailOrderNo: fields.text({ label: '통신판매업 신고번호', description: '예: 2025-서울영등포-1534', validation: { isRequired: true } }),
         zip: fields.text({ label: '우편번호' }),
         addressKo: fields.text({ label: '사업장 주소 (국문)', validation: { isRequired: true } }),

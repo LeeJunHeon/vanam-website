@@ -9,7 +9,7 @@
 
 /** locale 접두사(/ko)와 끝 슬래시를 뗀 '순수 경로' 기준 목록 */
 export const NOINDEX_PATHS = [
-  '/admin',        // 관리자 — 자체 <head>에 noindex 보유. 여기서는 사이트맵 제외용.
+  '/admin',        // 관리자 — 자체 <head>에 noindex 보유. 여기서는 사이트맵 제외용. (하위 경로는 isNoindexPath 가 접두사로 판정)
   '/cart',         // 장바구니
   '/checkout',     // 결제
   '/order/done',   // 주문 완료
@@ -22,5 +22,7 @@ export function isNoindexPath(pathname: string): boolean {
   let p = pathname.replace(/\/+$/, '') || '/'; // 끝 슬래시 제거
   if (p.startsWith('/ko/')) p = p.slice(3);    // locale 접두사 제거
   else if (p === '/ko') p = '/';
+  // 관리자 화면은 계속 늘어나므로 /admin 아래는 접두사로 막는다(경로를 하나씩 추가하다 빠뜨리지 않게).
+  if (p === '/admin' || p.startsWith('/admin/')) return true;
   return (NOINDEX_PATHS as readonly string[]).includes(p);
 }
