@@ -7,6 +7,8 @@ export const prerender = false;
 import '../../styles/global.css';
 import { isAdmin, adminConfigured } from '../../lib/admin-auth';
 import { db } from '../../lib/db';
+// 이 빌드의 구글챗 알림 켜짐/꺼짐 — 꺼진 빌드(맥미니 빌드 등)가 운영에 올라가면 여기서 바로 보인다.
+import { CHAT_ENABLED } from '../../lib/chat-send';
 
 const authed = await isAdmin(Astro.request);
 const configured = adminConfigured();
@@ -209,6 +211,9 @@ const spec = (r: Row) =>
           <div>
             <h1 class="text-2xl font-bold">VanaM 관리자</h1>
             <p class="mt-1 text-sm text-ink/45">주문 {orders.length}건 · 견적 {quotes.length}건 · 문의 {generals.length}건</p>
+            <p class:list={['chat-state mt-1 text-sm', CHAT_ENABLED ? 'is-on' : 'is-off']}>
+              {CHAT_ENABLED ? '구글챗 알림: 켜짐' : '구글챗 알림: 꺼짐 — 로컬/테스트 빌드'}
+            </p>
           </div>
           <div class="flex items-center gap-2">
             <button
@@ -698,6 +703,9 @@ const spec = (r: Row) =>
     )}
 
     <style>
+      /* 구글챗 알림 상태 — 공용 CSS 를 늘리지 않게 이 화면 전용 규칙으로 둔다 */
+      .chat-state.is-on { color: var(--color-ok); }
+      .chat-state.is-off { color: var(--color-warn); font-weight: 600; }
       /* 탭 — 선택된 것만 강조. 밑줄로 현재 위치를 표시한다. */
       .admin-tab {
         color: color-mix(in srgb, var(--color-ink) 45%, transparent);

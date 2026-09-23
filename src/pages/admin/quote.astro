@@ -11,6 +11,8 @@ import '../../styles/global.css';
 import { isAdmin } from '../../lib/admin-auth';
 import { telKr } from '../../lib/quote-doc';
 import company from '../../data/company.json';
+// 이 빌드의 구글챗 알림 켜짐/꺼짐 — /admin 헤더와 같은 표시
+import { CHAT_ENABLED } from '../../lib/chat-send';
 
 const authed = await isAdmin(Astro.request);
 
@@ -62,6 +64,9 @@ const defaults = {
           <div>
             <h1 class="text-2xl font-bold">견적 계산기</h1>
             <p id="qc-meta" class="mt-1 text-sm text-ink/45">가격 DB 불러오는 중…</p>
+            <p class:list={['chat-state mt-1 text-sm', CHAT_ENABLED ? 'is-on' : 'is-off']}>
+              {CHAT_ENABLED ? '구글챗 알림: 켜짐' : '구글챗 알림: 꺼짐 — 로컬/테스트 빌드'}
+            </p>
           </div>
           <a href="/admin" class="rounded-lg border border-ink/15 px-4 py-2 text-sm text-ink/60 transition hover:border-ink/40 hover:text-ink">← 관리자</a>
         </header>
@@ -152,6 +157,8 @@ const defaults = {
       #qc-preview:disabled { opacity: 0.4; cursor: not-allowed; }
       /* 공용 CSS(global)에 새 유틸리티를 만들지 않으려고 이 화면 전용 규칙으로 둔다 */
       @media (min-width: 1024px) { .qc-span2 { grid-column: span 2 / span 2; } .qc-span5 { grid-column: span 5 / span 5; } }
+      .chat-state.is-on { color: var(--color-ok); }
+      .chat-state.is-off { color: var(--color-warn); font-weight: 600; }
       .qc-ok { color: var(--color-ok); }
       .qc-bad { color: var(--color-danger); }
     </style>
