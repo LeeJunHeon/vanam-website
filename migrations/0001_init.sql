@@ -130,3 +130,93 @@ CREATE INDEX IF NOT EXISTS idx_inq_status    ON inquiries(status);
 CREATE INDEX IF NOT EXISTS idx_ord_created   ON orders(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_ord_status    ON orders(status);
 CREATE INDEX IF NOT EXISTS idx_items_order   ON order_items(order_id);
+
+-- ── 견적 가격 DB (price_*) ─────────────────────────────
+-- 구글 시트 견적 파일(V3_SHEET_*)의 DB 시트를 그대로 옮긴 원본 테이블.
+-- scripts/price-db-import.mjs 가 엑셀에서 SQL 을 생성해 DELETE→INSERT 로 통째 갱신한다.
+--
+-- ⚠️ 빈 셀은 NULL 이다. 엑셀에서 '비움'과 0 은 뜻이 다르다
+--    (loading_override_min 비움 = 장비 기본값, 0 = 0분 적용).
+--    따라서 어떤 열에도 NOT NULL / DEFAULT 를 붙이지 않는다.
+-- ⚠️ 숫자 열은 REAL. material_cost_per_nm 에 소수가 들어오고, INTEGER 면 원가가 어긋난다.
+
+-- 가격 정책 (V3_가격정책). 값은 문자열로 보관하고 vtype 이 해석 방법을 알려준다.
+CREATE TABLE IF NOT EXISTS price_policy (
+  key         TEXT PRIMARY KEY,               -- policy_key
+  value       TEXT,                           -- 원문 문자열 (숫자·불리언도 문자열로)
+  vtype       TEXT,                           -- number | string | boolean
+  applies_to  TEXT,
+  notes       TEXT
+);
+
+-- 장비 (V3_장비DB)
+CREATE TABLE IF NOT EXISTS price_equipment (
+  equipment_id        TEXT PRIMARY KEY,
+  equipment_name      TEXT,
+  process_type        TEXT,                    -- Sputter | ALD …
+  rate_per_min        REAL,                    -- 장비요율 원/min
+  default_loading_min REAL,
+  default_plasma_min  REAL,
+  default_setup_min   REAL,
+  active              INTEGER,                 -- 0/1
+  notes               TEXT
+);
+
+-- 레시피 (V3_레시피DB)
+CREATE TABLE IF NOT EXISTS price_recipe (
+  recipe_id            TEXT PRIMARY KEY,
+  material_name        TEXT,
+  process_type         TEXT,
+  equipment_id         TEXT,
+  method               TEXT,                   -- DC Power | RF Power | Ozone …
+  material_cost_per_nm REAL,
+  growth_nm_per_min    REAL,
+  default_temp_c       REAL,
+  loading_override_min REAL,                   -- 비움이면 장비 기본값
+  plasma_override_min  REAL,
+  setup_override_min   REAL,
+  legacy_min_charge    REAL,                   -- 옛 최소청구액 (현재 정책은 미적용)
+  active               INTEGER,                -- 0/1
+  verification_status  TEXT,
+  supplier             TEXT,
+  notes                TEXT
+);
+
+-- 상품 기판 (V3_상품기판DB)
+CREATE TABLE IF NOT EXISTS price_substrate (
+  catalog_id          TEXT PRIMARY KEY,
+  item_name           TEXT,
+  category            TEXT,
+  unit                TEXT,
+  cost_per_unit       REAL,                    -- 낱장 원가 (박막 원가에 포함)
+  sale_price_per_unit REAL,
+  units_per_pack      REAL,
+  legacy_pack_price   REAL,
+  size_inch           REAL,
+  oxide_nm            REAL,
+  supplier            TEXT,
+  active              INTEGER,                 -- 0/1
+  verification_status TEXT,
+  notes               TEXT
+);
+
+-- 별칭 (V3_별칭DB). 같은 alias 가 장비 범위별로 여러 줄 있을 수 있어 PK 는 대리키.
+CREATE TABLE IF NOT EXISTS price_alias (
+  id              INTEGER PRIMARY KEY AUTOINCREMENT,
+  entity_type     TEXT,                        -- EQUIPMENT | RECIPE | UNIT
+  alias           TEXT,
+  equipment_scope TEXT,                        -- 같은 alias 를 장비별로 구분할 때
+  canonical_id    TEXT,
+  status          TEXT,
+  notes           TEXT
+);
+
+-- 가져오기 이력. 어느 파일(해시)로 언제 어떤 규칙 버전을 넣었는지 남긴다.
+CREATE TABLE IF NOT EXISTS price_import_log (
+  id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  imported_at   TEXT,
+  source_file   TEXT,
+  source_sha256 TEXT,
+  rules_version TEXT,
+  counts_json   TEXT
+);

@@ -70,6 +70,42 @@ const SCHEMA = [
   //   key = "login:1.2.3.4" 등, window_start = 창 시작 시각(ms epoch)
   `CREATE TABLE IF NOT EXISTS rate_limits (
     key TEXT PRIMARY KEY, hits INTEGER NOT NULL, window_start INTEGER NOT NULL)`,
+
+  // ── 견적 가격 DB (price_*) ────────────────────────────────────────────
+  // 구글 시트 견적 파일(V3_SHEET_*)의 DB 시트를 그대로 옮긴 원본 테이블.
+  // scripts/price-db-import.mjs 가 엑셀에서 생성해 DELETE→INSERT 로 통째 갱신한다.
+  //
+  // ⚠️ 두 가지 원칙
+  //  ① 빈 셀은 NULL 로 넣는다. 엑셀에서 '비움'과 0 은 뜻이 다르다
+  //     (예: loading_override_min 비움 = 장비 기본값 사용, 0 = 0분 적용).
+  //     NOT NULL DEFAULT 0 을 붙이면 이 구분이 조용히 사라진다 → 어떤 열에도 붙이지 않는다.
+  //  ② 숫자 열은 REAL 이다. material_cost_per_nm 처럼 소수가 들어오고,
+  //     INTEGER 로 받으면 반올림되어 원가가 어긋난다.
+  //
+  // ⚠️ CREATE TABLE 문자열 안에 주석(--)을 쓰지 말 것.
+  //    scripts/check-schema.mjs 는 db.ts 쪽 SQL 에서 주석을 제거하지 않아
+  //    주석 뒤 컬럼을 못 읽고 init.sql 과 어긋난 것으로 오판한다.
+  `CREATE TABLE IF NOT EXISTS price_policy (
+    key TEXT PRIMARY KEY, value TEXT, vtype TEXT, applies_to TEXT, notes TEXT)`,
+  `CREATE TABLE IF NOT EXISTS price_equipment (
+    equipment_id TEXT PRIMARY KEY, equipment_name TEXT, process_type TEXT,
+    rate_per_min REAL, default_loading_min REAL, default_plasma_min REAL, default_setup_min REAL,
+    active INTEGER, notes TEXT)`,
+  `CREATE TABLE IF NOT EXISTS price_recipe (
+    recipe_id TEXT PRIMARY KEY, material_name TEXT, process_type TEXT, equipment_id TEXT, method TEXT,
+    material_cost_per_nm REAL, growth_nm_per_min REAL, default_temp_c REAL,
+    loading_override_min REAL, plasma_override_min REAL, setup_override_min REAL,
+    legacy_min_charge REAL, active INTEGER, verification_status TEXT, supplier TEXT, notes TEXT)`,
+  `CREATE TABLE IF NOT EXISTS price_substrate (
+    catalog_id TEXT PRIMARY KEY, item_name TEXT, category TEXT, unit TEXT,
+    cost_per_unit REAL, sale_price_per_unit REAL, units_per_pack REAL, legacy_pack_price REAL,
+    size_inch REAL, oxide_nm REAL, supplier TEXT, active INTEGER, verification_status TEXT, notes TEXT)`,
+  `CREATE TABLE IF NOT EXISTS price_alias (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, entity_type TEXT, alias TEXT, equipment_scope TEXT,
+    canonical_id TEXT, status TEXT, notes TEXT)`,
+  `CREATE TABLE IF NOT EXISTS price_import_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, imported_at TEXT, source_file TEXT, source_sha256 TEXT,
+    rules_version TEXT, counts_json TEXT)`,
 ];
 
 // 이미 만들어진 테이블에 컬럼을 덧붙일 때 쓴다.
