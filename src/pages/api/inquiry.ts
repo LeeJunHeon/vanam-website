@@ -1,9 +1,5 @@
 import type { APIRoute } from 'astro';
 import { getCollection } from 'astro:content';
-// Astro 6부터 Astro.locals.runtime.env 가 제거되어(접근 시 예외를 던짐)
-// Cloudflare 런타임 환경변수는 이 모듈에서 직접 읽는다.
-// dev(순수 Node)에서는 astro.config.mjs의 shim이 빈 객체를 돌려주고, .env 로 폴백한다.
-import { env as cfEnv } from 'cloudflare:workers';
 import { db, newId, nowIso, nowKst } from '../../lib/db';
 import { rateLimit, tooMany } from '../../lib/rate-limit';
 import { verifyTurnstile } from '../../lib/turnstile';
@@ -11,6 +7,8 @@ import { getRate, pickWaitUntil } from '../../lib/fx';
 // 견적 폼 선택지·검증은 폼과 같은 파일에서 가져온다(서버가 별도 목록을 들면 조용히 어긋난다).
 import { validateQuoteDetails } from '../../lib/quote-fields.js';
 import { buildInquiryChatText } from '../../lib/chat-message.js';
+// 구글챗은 이 통로로만 보낸다 — Cloudflare main 빌드가 아니면 코드에서 차단된다.
+import { sendChat } from '../../lib/chat-send';
 
 // 서버에서 온디맨드 실행 (정적 생성 금지)
 export const prerender = false;
@@ -209,38 +207,16 @@ export const POST: APIRoute = async ({ request, locals }) => {
     console.error('[inquiry] DB 저장 실패 (알림은 계속 진행):', e);
   }
 
-  // 6) Google Chat 웹훅 전송
-  //    - 배포(Cloudflare workerd): cloudflare:workers 의 env
-  //    - dev(Node): .env 파일 → import.meta.env
-  //    대시보드 입력칸이 여러 줄이라 개행·따옴표가 섞여 들어올 수 있어 정리한다.
-  const raw =
-    (cfEnv as Record<string, unknown> | undefined)?.GOOGLE_CHAT_WEBHOOK ??
-    import.meta.env.GOOGLE_CHAT_WEBHOOK ??
-    '';
-  const webhook = typeof raw === 'string' ? raw.trim().replace(/^["']|["']$/g, '') : '';
-
-  if (!webhook) {
-    // 웹훅 미설정: 전송하지 않는다.
-    // ⚠️ 여기에 payload(text)를 로그로 남기면 이름·이메일·전화·문의내용이 로그에 그대로 쌓인다.
-    //    접수번호만 남겨 진단 가능하게 하고, PII 는 로그에 남기지 않는다.
-    console.warn('[inquiry] GOOGLE_CHAT_WEBHOOK 미설정 — 알림을 건너뜁니다. 접수번호:', id);
+  // 6) Google Chat 알림 (chat-send.ts 가 유일한 발송 통로)
+  //    - 빌드 차단·웹훅 미설정: 접수는 끝났으니 성공으로 응답한다(알림만 빠짐).
+  //    - 전송 실패: 기존과 같은 502 — 폼이 담당자 메일 안내를 띄운다.
+  //    ⚠️ 로그에는 접수번호만 남는다. 본문(text)의 PII 는 남기지 않는다.
+  const chat = await sendChat(text, { tag: 'inquiry', ref: id });
+  if (chat.reason === 'blocked_build' || chat.reason === 'no_webhook') {
     return json({ ok: true, delivered: false, id });
   }
-
-  try {
-    const res = await fetch(webhook, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json; charset=UTF-8' },
-      body: JSON.stringify({ text }),
-    });
-    if (!res.ok) {
-      console.error('[inquiry] webhook failed:', res.status, await res.text().catch(() => ''));
-      return json({ ok: false, error: 'webhook_failed' }, 502);
-    }
-  } catch (err) {
-    console.error('[inquiry] webhook error:', err);
-    return json({ ok: false, error: 'webhook_error' }, 502);
-  }
+  if (chat.reason === 'http_error') return json({ ok: false, error: 'webhook_failed' }, 502);
+  if (chat.reason === 'fetch_error') return json({ ok: false, error: 'webhook_error' }, 502);
 
   return json({ ok: true, delivered: true, type, id });
 };

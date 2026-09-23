@@ -10,7 +10,7 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "verify": "node scripts/check-schema.mjs && node scripts/check-material-values.mjs && node scripts/check-quote-fields.mjs && node scripts/test-cart.mjs && node scripts/check-ui-tokens.mjs && node scripts/verify-design.mjs && node scripts/check-seo-markup.mjs && node scripts/test-quote-engine.mjs",
+    "verify": "node scripts/check-schema.mjs && node scripts/check-material-values.mjs && node scripts/check-quote-fields.mjs && node scripts/test-cart.mjs && node scripts/check-ui-tokens.mjs && node scripts/verify-design.mjs && node scripts/check-seo-markup.mjs && node scripts/test-quote-engine.mjs && node scripts/test-chat-guard.mjs && node scripts/check-chat-guard.mjs",
     "price:import": "node scripts/price-db-import.mjs"
   },
   "dependencies": {

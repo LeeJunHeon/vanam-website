@@ -4,6 +4,8 @@
 // - 키는 Cloudflare 환경변수: PAYPAL_CLIENT_ID / PAYPAL_SECRET / PAYPAL_ENV(sandbox|live)
 import { env as cfEnv } from 'cloudflare:workers';
 import company from '../data/company.json';
+// 구글챗은 이 통로로만 보낸다 — Cloudflare main 빌드가 아니면 코드에서 차단된다.
+import { sendChat } from './chat-send';
 
 // env 이중 접근: cloudflare:workers 의 env + (있다면) 어댑터가 주는 locals.runtime.env
 const E = (k: string, extra?: Record<string, unknown>): string => {
@@ -166,16 +168,8 @@ export async function ppRefund(captureId: string, amountUsd?: number) {
   return { httpOk: r.ok, body: j };
 }
 
+// 결제·환불·환율 경보 알림. 호출부(fx·paypal-settle·paypal/webhook·admin/order)는 그대로 두고
+// 발송만 chat-send.ts 로 넘긴다. 실패해도 던지지 않는다(기존과 같음 — 로그는 sendChat 이 남긴다).
 export async function notifyChat(text: string) {
-  const webhook = E('GOOGLE_CHAT_WEBHOOK');
-  if (!webhook) return;
-  try {
-    await fetch(webhook, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json; charset=UTF-8' },
-      body: JSON.stringify({ text }),
-    });
-  } catch (e) {
-    console.error('[paypal] 구글챗 알림 실패:', e);
-  }
+  await sendChat(text, { tag: 'notify' });
 }
