@@ -14,7 +14,7 @@
 // ⚠️ wrangler 는 dev --local 만 부른다. deploy·secret·--remote 는 쓰지 않는다.
 import { spawn, spawnSync } from 'node:child_process';
 import { randomBytes, randomInt } from 'node:crypto';
-import { chmodSync, existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { createConnection, createServer } from 'node:net';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
@@ -43,11 +43,7 @@ const portFree = () => new Promise((resolve) => {
 });
 if (!(await portFree())) die(`${HOST}:${PORT} 가 이미 사용 중입니다. 이전 로컬 서버를 PID 로 종료한 뒤 다시 실행하세요 (lsof -nP -iTCP:${PORT} -sTCP:LISTEN).`);
 
-// ② 빌드
-// Vite 사전 번들 캐시(node_modules/.vite)가 이전 빌드 것으로 남아 있으면 SSR 빌드가
-// "chunk-*.js does not exist in the optimize deps directory" 로 깨진다(맥미니에서 반복 확인).
-// 다시 만들어지는 캐시라 매번 지우고 시작한다.
-rmSync('node_modules/.vite', { recursive: true, force: true });
+// ② 빌드 (Vite 캐시 삭제는 package.json 의 prebuild 가 먼저 한다)
 console.log('▶ npm run build');
 const b = spawnSync('npm', ['run', 'build'], { stdio: 'inherit' });
 if (b.status !== 0) die(`빌드 실패 (exit ${b.status})`);
@@ -120,10 +116,42 @@ console.log(`
 if (created) console.log(`\n★ 로컬 관리자 비밀번호를 새로 만들었습니다(이번 한 번만 표시): ${local.ADMIN_PASSWORD}\n`);
 
 // ⑥ wrangler dev — 127.0.0.1 에만 연다(사내망 다른 PC 접근 차단 — 원가 화면이 있다).
+//    별도 프로세스 그룹(detached)으로 띄운다: npx 만 죽이면 자식 workerd 가 남아 8787 을 계속 잡는다.
+//    종료할 때는 그룹 전체(-pgid)에 신호를 보낸다.
 const child = spawn('npx', ['wrangler', 'dev', '--config', join(DIST, 'wrangler.json'), '--local',
   '--persist-to', '.wrangler/state', '--ip', HOST, '--port', String(PORT)], {
   stdio: 'inherit',
+  detached: true,
   env: { ...process.env, WRANGLER_SEND_METRICS: 'false' },
 });
-for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, () => child.kill(sig));
-child.on('exit', (code, signal) => process.exit(code ?? (signal ? 0 : 1)));
+const killGroup = (sig) => { try { process.kill(-child.pid, sig); } catch { /* 이미 끝남 */ } };
+
+/** 포트가 빌 때까지 최대 ms 동안 기다린다. */
+const waitPortFree = async (ms) => {
+  for (const until = Date.now() + ms; Date.now() < until;) {
+    if (await portFree()) return true;
+    await new Promise((r) => setTimeout(r, 250));
+  }
+  return portFree();
+};
+
+let stopping = false;
+const stop = async (sig) => {
+  if (stopping) return;
+  stopping = true;
+  console.log(`\n▶ ${sig} — wrangler·workerd 프로세스 그룹(${child.pid}) 종료 중…`);
+  killGroup('SIGTERM');
+  // 5초 안에 포트가 비지 않으면 그룹을 강제 종료한다.
+  let free = await waitPortFree(5000);
+  if (!free) { killGroup('SIGKILL'); free = await waitPortFree(3000); }
+  console.log(free ? `✓ ${HOST}:${PORT} 비어 있음 — 로컬 서버 종료 완료`
+    : `✗ ${HOST}:${PORT} 가 아직 사용 중 — lsof -nP -iTCP:${PORT} -sTCP:LISTEN 으로 PID 를 확인하세요`);
+  process.exit(free ? 0 : 1);
+};
+for (const sig of ['SIGINT', 'SIGTERM', 'SIGHUP']) process.on(sig, () => stop(sig));
+// wrangler 가 스스로 끝나면(오류 등) 남은 자식도 함께 정리하고 같은 코드로 끝낸다.
+child.on('exit', (code, signal) => {
+  if (stopping) return;
+  killGroup('SIGTERM');
+  process.exit(code ?? (signal ? 0 : 1));
+});
