@@ -36,6 +36,7 @@ export const RATE_RULES = {
   // PayPal 결제: 주문 생성·캡처 남용 차단. 정상 결제는 각 1~2회면 끝난다.
   paypalCreate: { limit: 10, windowSec: 10 * 60 },
   paypalCapture: { limit: 10, windowSec: 10 * 60 },
+  quoteEstimate: { limit: 60, windowSec: 600 }, // 견적 테스트 모드의 예상 견적 계산(로컬 빌드 전용)
 } satisfies Record<string, RateRule>;
 
 // 청소 기준: 가장 긴 창(현재 order = 1시간)의 2배를 지난 행은 어떤 규칙 판정에도 관여할 수 없다.
