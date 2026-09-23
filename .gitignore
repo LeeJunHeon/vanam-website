@@ -33,3 +33,9 @@ build-logs/
 
 # cloudflare 로컬 개발 캐시
 .wrangler/
+
+# 견적 가격 DB — 원가 데이터는 공개 저장소에 넣지 않는다 (원본은 ~/vanam-data/)
+/vanam-data/
+quote-db*.xlsx
+price-db*.sql
+test-excel-cases.mjs
