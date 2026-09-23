@@ -7,6 +7,7 @@
   },
   "scripts": {
     "dev": "astro dev",
+    "prebuild": "node -e \"require('fs').rmSync('node_modules/.vite',{recursive:true,force:true})\"",
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
