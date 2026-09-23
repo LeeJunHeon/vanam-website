@@ -1,0 +1,303 @@
+---
+// 견적 테스트 모드 전용 — 고객 견적 폼의 "예상 견적 보기" (내부 검증용, 운영 빌드에는 포함되지 않음).
+//
+// QuoteForm.astro 가 테스트 모드(npm run local 빌드)이고 simple 이 아닐 때만 렌더한다.
+//   part="panel"  → 버튼 줄 바로 위의 테스트 입력 패널 + 결과
+//   part="button" → 버튼 줄의 [예상 견적 보기]
+//
+// ⚠️ 스타일·스크립트는 전부 is:inline 이다. 번들 JS·CSS 로 만들면 렌더하지 않는 빌드에도
+//    파일이 생기거나 공용 CSS 가 바뀔 수 있다 — 꺼진 빌드의 공개 결과물은 main 과 같아야 한다.
+//    클래스도 이 컴포넌트 전용 이름(qet-*)만 쓴다(Tailwind 가 새 유틸리티를 만들지 않게).
+// ⚠️ 기존 폼의 DOM 은 읽기만 한다. QuoteForm 의 script·검증·제출 동작은 건드리지 않는다.
+// ⚠️ 계산은 항상 서버(/api/quote-estimate)에서 한다. 브라우저에는 가격 DB 를 내려보내지 않는다.
+const { part } = Astro.props as { part: 'panel' | 'button' };
+---
+
+{part === 'button' ? (
+  <button type="button" id="qet-run" class="v-btn-ghost">예상 견적 보기</button>
+) : (
+  <div id="qet-panel" class="qet-panel">
+    <p class="qet-title">테스트 전용 — 운영 빌드에는 포함되지 않음</p>
+    <p class="qet-sub" id="qet-meta">가격 DB 확인 중…</p>
+
+    <div class="qet-sec">
+      <p class="qet-h">증착 단계별 장비·레시피</p>
+      <div id="qet-steps" class="qet-steps"><p class="qet-muted">공정 시퀀스에 Sputter·ALD 단계를 추가하면 여기에 나타납니다.</p></div>
+    </div>
+
+    <div class="qet-sec qet-grid">
+      <label class="qet-f">1회 투입 장수<input id="qet-per-run" inputmode="numeric" placeholder="비우면 전체 1회" /></label>
+      <label class="qet-f">증착 횟수 직접 입력(선택)<input id="qet-runs" inputmode="numeric" placeholder="비우면 자동 계산" /></label>
+      <p class="qet-f">계산된 회수<span id="qet-runs-preview" class="qet-strong">—</span></p>
+    </div>
+
+    <div class="qet-sec qet-grid" id="qet-sub-wrap" hidden>
+      <label class="qet-f">기판(구매 요청)<select id="qet-sub"></select></label>
+      <label class="qet-f">기판 장수/회<input id="qet-sub-per-run" inputmode="numeric" placeholder="비우면 투입 장수" /></label>
+      <label class="qet-f qet-inline"><input type="checkbox" id="qet-sub-all" /> 크기·종류 무관 전체 보기</label>
+    </div>
+
+    <div class="qet-sec qet-grid">
+      <label class="qet-f">마진 구분
+        <select id="qet-margin">
+          <option value="기본">기본</option>
+          <option value="연구소_대학_할인">연구소_대학_할인</option>
+          <option value="특수물질">특수물질</option>
+          <option value="직접입력">직접입력</option>
+        </select>
+      </label>
+      <label class="qet-f">직접 가산율<input id="qet-direct" inputmode="decimal" placeholder="직접입력일 때 (예: 0.5)" /></label>
+      <label class="qet-f">로딩 분<input id="qet-loading" inputmode="decimal" placeholder="비우면 장비 기본값" /></label>
+      <label class="qet-f">셋업 분<input id="qet-setup" inputmode="decimal" placeholder="비우면 장비 기본값" /></label>
+      <label class="qet-f">대기 분<input id="qet-wait" inputmode="decimal" placeholder="비우면 0" /></label>
+    </div>
+
+    <div id="qet-result" class="qet-sec" hidden></div>
+
+    <style is:inline>
+      .qet-panel { margin-top: 1.5rem; border: 2px dashed var(--color-warn); border-radius: 1rem; padding: 1.25rem; background: color-mix(in srgb, var(--color-warn) 6%, transparent); font-size: 0.875rem; }
+      .qet-title { font-weight: 700; color: var(--color-warn); }
+      .qet-sub, .qet-muted { color: color-mix(in srgb, var(--color-ink) 55%, transparent); font-size: 0.8125rem; margin-top: 0.25rem; }
+      .qet-sec { margin-top: 1.25rem; }
+      .qet-h { font-weight: 600; margin-bottom: 0.5rem; }
+      .qet-grid { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); }
+      .qet-f { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.75rem; color: color-mix(in srgb, var(--color-ink) 65%, transparent); }
+      .qet-inline { flex-direction: row; align-items: center; gap: 0.5rem; }
+      .qet-panel input:not([type=checkbox]), .qet-panel select { width: 100%; border: 1px solid color-mix(in srgb, var(--color-ink) 15%, transparent); border-radius: 0.375rem; padding: 0.35rem 0.5rem; background: var(--color-canvas); color: var(--color-ink); font-size: 0.8125rem; }
+      .qet-strong { font-weight: 700; font-size: 1rem; color: var(--color-ink); }
+      .qet-steps { display: grid; gap: 0.5rem; }
+      .qet-step { display: grid; gap: 0.5rem; grid-template-columns: 9rem minmax(14rem, 1fr) 5rem 6rem; align-items: end; border-bottom: 1px solid color-mix(in srgb, var(--color-ink) 8%, transparent); padding-bottom: 0.5rem; }
+      .qet-step-name { font-weight: 600; font-size: 0.8125rem; }
+      .qet-banner { border-radius: 0.5rem; padding: 0.75rem 1rem; font-weight: 700; }
+      .qet-ok { background: color-mix(in srgb, var(--color-ok) 12%, transparent); color: var(--color-ok); }
+      .qet-part { background: color-mix(in srgb, var(--color-warn) 14%, transparent); color: var(--color-warn); }
+      .qet-bad { background: color-mix(in srgb, var(--color-danger) 12%, transparent); color: var(--color-danger); }
+      .qet-scroll { overflow-x: auto; margin-top: 0.75rem; }
+      .qet-t { width: 100%; border-spacing: 0; font-size: 0.75rem; }
+      .qet-t th, .qet-t td { padding: 0.3rem 0.5rem; border-bottom: 1px solid color-mix(in srgb, var(--color-ink) 8%, transparent); text-align: left; vertical-align: top; }
+      .qet-t th { color: color-mix(in srgb, var(--color-ink) 55%, transparent); font-weight: 600; white-space: nowrap; }
+      .qet-t td.qet-n { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+      .qet-t td.qet-pre { white-space: pre-line; }
+      .qet-panel details { margin-top: 0.75rem; }
+      .qet-panel summary { cursor: pointer; color: color-mix(in srgb, var(--color-ink) 60%, transparent); }
+      .qet-panel pre { font-size: 0.6875rem; overflow-x: auto; max-height: 24rem; background: color-mix(in srgb, var(--color-ink) 4%, transparent); padding: 0.75rem; border-radius: 0.5rem; }
+      .qet-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+      @media (max-width: 640px) { .qet-step { grid-template-columns: 1fr 1fr; } }
+    </style>
+
+    <script is:inline>
+      (() => {
+        const $ = (id) => document.getElementById(id);
+        const panel = $('qet-panel');
+        const form = $('quote-form');
+        const list = $('q-process-list');
+        if (!panel || !form || !list) return;
+        const API = '/api/quote-estimate';
+        const DEP = ['Sputter', 'ALD'];
+        const esc = (v) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        const fmt = (n) => (typeof n === 'number'
+          ? (Number.isInteger(n) ? n.toLocaleString('ko-KR') : n.toLocaleString('ko-KR', { maximumFractionDigits: 4 }))
+          : esc(n));
+        // 폼 value 와 같은 정규화(아래첨자 → ASCII, SiNx → SiN). material-value.js 와 같은 규칙.
+        const SUB = { '₀': '0', '₁': '1', '₂': '2', '₃': '3', '₄': '4', '₅': '5', '₆': '6', '₇': '7', '₈': '8', '₉': '9', 'ₓ': 'x' };
+        const matValue = (s) => { const a = String(s ?? '').replace(/[₀-₉ₓ]/g, (c) => SUB[c] ?? c); return a === 'SiNx' ? 'SiN' : a; };
+
+        let meta = null;
+        // 패널 입력칸에서 Enter 를 눌러도 견적 요청이 제출되지 않게 한다(패널은 폼 안에 있다).
+        panel.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target?.tagName === 'INPUT') e.preventDefault(); });
+        const choice = new WeakMap(); // 공정 행 → { recipeId, repeat, tempC } (사람이 고른 값 유지)
+
+        // ── 기존 폼에서 읽기(읽기 전용) ────────────────────────────────
+        const readSteps = () => Array.from(list.querySelectorAll('.q-process-row')).map((row) => {
+          const q = (s) => row.querySelector(s);
+          const matWrap = q('.q-material-wrap'), valWrap = q('.q-value-wrap');
+          return {
+            row,
+            process: q('.q-row-process')?.value ?? '',
+            material: matWrap && !matWrap.hidden ? (q('.q-row-material')?.value ?? '') : '',
+            value: valWrap && !valWrap.hidden ? (q('.q-row-value')?.value ?? '').trim() : '',
+            unit: q('.q-row-unit')?.textContent ?? '',
+            etc: (q('.q-row-etc')?.value ?? '').trim(),
+          };
+        });
+        const val = (id) => ($(id)?.value ?? '').trim();
+
+        // ── 증착 단계별 선택 UI ───────────────────────────────────────
+        const eqName = (id) => (meta?.equipment ?? []).find((e) => e.equipment_id === id)?.equipment_name ?? '';
+        const renderSteps = () => {
+          const box = $('qet-steps');
+          const steps = readSteps();
+          const deps = steps.map((s, i) => ({ ...s, n: i + 1 })).filter((s) => DEP.includes(s.process));
+          if (!deps.length) { box.innerHTML = '<p class="qet-muted">공정 시퀀스에 Sputter·ALD 단계를 추가하면 여기에 나타납니다.</p>'; return; }
+          box.innerHTML = '';
+          for (const s of deps) {
+            const c = choice.get(s.row) ?? { recipeId: '', repeat: '', tempC: '' };
+            const cands = meta?.candidates?.[`${s.process}|${matValue(s.material)}`] ?? [];
+            const el = document.createElement('div');
+            el.className = 'qet-step';
+            let sel;
+            if (!s.material) sel = '<span class="qet-muted">물질을 먼저 고르세요</span>';
+            else if (!cands.length) sel = '<span class="qet-muted">레시피 없음 — 산정 제외</span>';
+            else if (cands.length === 1) sel = `<span>${esc(cands[0].recipe_id)} · ${esc(cands[0].equipment_id)} ${esc(eqName(cands[0].equipment_id))} (자동)</span>`;
+            else {
+              const byEq = {};
+              for (const r of cands) (byEq[r.equipment_id] ??= []).push(r);
+              sel = '<select data-k="recipeId"><option value="">장비·레시피 선택</option>' +
+                Object.entries(byEq).map(([eq, rs]) => `<optgroup label="${esc(`${eq} ${eqName(eq)}`)}">` +
+                  rs.map((r) => `<option value="${esc(r.recipe_id)}"${r.recipe_id === c.recipeId ? ' selected' : ''}>${esc(r.recipe_id)} (${esc(r.method)})</option>`).join('') +
+                  '</optgroup>').join('') + '</select>';
+            }
+            el.innerHTML = `<div><p class="qet-step-name">${s.n}단계 · ${esc(s.process)} ${esc(s.material)}</p><p class="qet-muted">${esc(s.value)} ${esc(s.unit)}</p></div>` +
+              `<label class="qet-f">장비·레시피${sel}</label>` +
+              `<label class="qet-f">층 반복<input data-k="repeat" inputmode="numeric" placeholder="1" value="${esc(c.repeat)}" /></label>` +
+              `<label class="qet-f">표시 온도 °C<input data-k="tempC" inputmode="decimal" placeholder="레시피 기본" value="${esc(c.tempC)}" /></label>`;
+            el.addEventListener('input', (e) => {
+              const k = e.target?.dataset?.k;
+              if (!k) return;
+              choice.set(s.row, { ...(choice.get(s.row) ?? { recipeId: '', repeat: '', tempC: '' }), [k]: e.target.value });
+            });
+            box.appendChild(el);
+          }
+        };
+
+        // ── 회수 미리보기 · 기판 목록 ─────────────────────────────────
+        const runsPreview = () => {
+          const direct = val('qet-runs'), per = val('qet-per-run'), n = Number(val('q-sample-count'));
+          let text;
+          if (direct) text = `${direct} 회 (직접 입력)`;
+          else if (!per) text = '1 회 (투입 장수 비움 → 전체 1회)';
+          else if (n > 0 && Number(per) > 0) text = `${Math.ceil(n / Number(per))} 회 (샘플 ${n} ÷ ${per} 올림)`;
+          else text = '— (샘플 수 확인)';
+          $('qet-runs-preview').textContent = text;
+        };
+        const SIZE = { '2inch_or_piece': (s) => s <= 2, '4inch': (s) => s === 4, '6inch': (s) => s === 6 };
+        const TYPE = { Silicon: /\bSi\b|silicon/i, 'Silicon oxide': /oxide|SiO/i, Glass: /glass|quartz/i, Sapphire: /sapphire/i };
+        const renderSubs = () => {
+          const purchase = val('q-delivery') === 'purchase';
+          $('qet-sub-wrap').hidden = !purchase;
+          if (!purchase || !meta) return;
+          const sel = $('qet-sub'), keep = sel.value;
+          const all = $('qet-sub-all').checked;
+          const size = SIZE[val('q-substrate-size')], type = TYPE[val('q-substrate-type')];
+          const subs = (meta.substrates ?? []).filter((s) => all || ((!size || size(Number(s.size_inch))) && (!type || type.test(s.item_name))));
+          sel.innerHTML = '<option value="">선택 안 함(기판비 없음)</option>' +
+            subs.map((s) => `<option value="${esc(s.catalog_id)}"${s.catalog_id === keep ? ' selected' : ''}>${esc(s.catalog_id)} · ${esc(s.item_name)}</option>`).join('') +
+            (subs.length ? '' : '<option value="" disabled>조건에 맞는 기판 없음 — 전체 보기를 켜세요</option>');
+        };
+        const refresh = () => { renderSteps(); runsPreview(); renderSubs(); };
+        new MutationObserver(refresh).observe(list, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden'] });
+        list.addEventListener('change', refresh);
+        for (const id of ['q-sample-count', 'q-delivery', 'q-substrate-size', 'q-substrate-type', 'qet-runs', 'qet-per-run', 'qet-sub-all']) {
+          $(id)?.addEventListener('input', refresh);
+          $(id)?.addEventListener('change', refresh);
+        }
+
+        // ── 계산 ───────────────────────────────────────────────────────
+        const BD = [['layerCount', '층 수'], ['equipmentId', '장비 ID'], ['materialCost', '재료비/회'], ['depositMin', '증착시간/회'],
+          ['depositCost', '증착장비비/회'], ['loadingMin', '로딩 분/회'], ['setupMin', '셋업 분/회'], ['plasmaMin', '플라즈마 분/회'],
+          ['waitMin', '대기 분/회'], ['ratePerMin', '장비요율'], ['substrateCost', '기판원가/회'], ['cost', '원가/회'],
+          ['markup', '가산율'], ['markupAmount', '가산금액/회'], ['priceBeforeFloor', '절삭 전 단가']];
+        const out = $('qet-result');
+        let lastDoc = null;
+
+        const show = (j) => {
+          out.hidden = false;
+          if (!j.ok) { out.innerHTML = `<div class="qet-banner qet-bad">계산 실패: ${esc(j.message ?? j.hint ?? j.error)}</div>`; return; }
+          const r = j.result, items = j.input.items;
+          const label = { computed: ['qet-ok', '전체 산정'], partial: ['qet-part', '일부 산정 — 아래 제외 단계는 금액에 없음'], error: ['qet-bad', `오류 — ${r.status}`] }[j.status];
+          let h = `<div class="qet-banner ${label[0]}">예상 견적: ${esc(label[1])}${r.policyStatus !== '정상' ? ` · 가격 정책: ${esc(r.policyStatus)}` : ''}</div>`;
+
+          h += '<div class="qet-scroll"><table class="qet-t"><thead><tr><th>품목</th><th>장비</th><th>레시피·층별 규격</th><th>회수</th><th>상태</th><th>단가</th><th>공급가액</th><th>세액</th><th>합계</th></tr></thead><tbody>';
+          r.items.forEach((it, i) => {
+            const ls = r.layers.filter((l) => l.itemNo === it.no);
+            h += `<tr><td>${esc(items[i]?.name)}</td><td>${esc(it.breakdown?.equipmentId || ls[0]?.equipmentId || '')}</td>` +
+              `<td class="qet-pre">${ls.map((l) => `${esc(l.recipeId)} — ${esc(l.spec || l.status)}`).join('\n')}</td>` +
+              `<td class="qet-n">${fmt(items[i]?.qty)}</td><td>${esc(it.status)}</td>` +
+              `<td class="qet-n">${fmt(it.unitPrice)}</td><td class="qet-n">${fmt(it.supply)}</td><td class="qet-n">${fmt(it.vat)}</td><td class="qet-n">${fmt(it.total)}</td></tr>`;
+          });
+          h += '</tbody></table></div>';
+
+          // 원가 내역 전체 (테스트용)
+          h += '<details open><summary>원가 내역 — 품목 (V3_계산 I~W)</summary><div class="qet-scroll"><table class="qet-t"><thead><tr><th>항목</th>' +
+            r.items.map((it) => `<th>품목 ${esc(it.no)}</th>`).join('') + '</tr></thead><tbody>' +
+            BD.map(([k, lbl]) => `<tr><th>${esc(lbl)}</th>${r.items.map((it) => `<td class="qet-n">${fmt(it.breakdown?.[k])}</td>`).join('')}</tr>`).join('') +
+            '</tbody></table></div></details>';
+          h += '<details open><summary>원가 내역 — 층 (V3_박막공정)</summary><div class="qet-scroll"><table class="qet-t"><thead><tr>' +
+            '<th>품목</th><th>순서</th><th>레시피</th><th>상태</th><th>두께</th><th>반복</th><th>기준두께 원가</th><th>구간 단가</th><th>구간 수</th><th>재료비</th><th>증착시간 분</th><th>증착장비비</th></tr></thead><tbody>' +
+            r.layers.map((l) => `<tr><td class="qet-n">${esc(l.itemNo)}</td><td class="qet-n">${esc(l.order)}</td><td>${esc(l.recipeId)}</td><td>${esc(l.status)}</td>` +
+              `<td class="qet-n">${fmt(l.thicknessNm)}</td><td class="qet-n">${fmt(l.repeat)}</td><td class="qet-n">${fmt(l.basisCost)}</td><td class="qet-n">${fmt(l.tierAmount)}</td>` +
+              `<td class="qet-n">${fmt(l.tierCount)}</td><td class="qet-n">${fmt(l.materialCost)}</td><td class="qet-n">${fmt(l.depositMin)}</td><td class="qet-n">${fmt(l.depositCost)}</td></tr>`).join('') +
+            '</tbody></table></div></details>';
+
+          if (j.extras.length) {
+            h += '<div class="qet-sec"><p class="qet-h">산정 제외 단계</p><ul>' +
+              j.extras.map((e) => `<li>${e.step ? `${esc(e.step)}단계 · ` : '분석 · '}${esc(e.process)} ${esc(e.material)} — ${esc(e.reason)}</li>`).join('') + '</ul></div>';
+          }
+          h += j.status === 'partial' && !r.items.length
+            ? '<p class="qet-sec qet-muted">산정된 품목이 없습니다 — 위 제외 사유를 확인하세요.</p>'
+            : r.status === '정상'
+            ? `<div class="qet-sec qet-strong">공급가액 ₩${fmt(r.supply)} · 세액 ₩${fmt(r.vat)} · 합계 ₩${fmt(r.total)}<p class="qet-muted">일금 ${esc(r.totalKorean)} 원정${j.status === 'partial' ? ' (산정된 부분만)' : ''}</p></div>`
+            : '<p class="qet-sec qet-muted">오류가 있어 금액을 내보내지 않습니다(엑셀과 같음).</p>';
+          h += `<details><summary>계산 입력 보기 (서버가 만든 items·layers)</summary><pre>${esc(JSON.stringify(j.input, null, 2))}</pre></details>`;
+          h += '<div class="qet-actions"><button type="button" class="v-btn-ghost" id="qet-doc">예상 견적서 미리보기</button></div>';
+          out.innerHTML = h;
+          lastDoc = j.docHtml;
+          const docBtn = $('qet-doc');
+          docBtn.disabled = !lastDoc;
+          docBtn.addEventListener('click', () => {
+            if (!lastDoc) return;
+            const w = window.open('', '_blank');
+            if (!w) { alert('팝업이 차단되었습니다.'); return; }
+            w.document.write(lastDoc);
+            w.document.close();
+            // 자동 인쇄하지 않는다 — 창 안의 버튼으로만 인쇄(quote-doc.ts 규칙과 같음)
+            w.document.getElementById('vn-doc-print')?.addEventListener('click', () => w.print());
+            w.document.getElementById('vn-doc-close')?.addEventListener('click', () => w.close());
+          });
+        };
+
+        const run = async () => {
+          const steps = readSteps().map((s) => {
+            const c = choice.get(s.row) ?? {};
+            return { process: s.process, material: s.material, value: s.value, unit: s.unit, etc: s.etc,
+              recipeId: c.recipeId ?? '', repeat: c.repeat ?? '', tempC: c.tempC ?? '' };
+          });
+          const body = {
+            form: {
+              steps,
+              measurements: Array.from(form.querySelectorAll('input[name="measurements"]:checked')).map((el) => el.value),
+              sampleCount: val('q-sample-count'),
+              delivery: val('q-delivery'),
+              test: {
+                perRun: val('qet-per-run'), runs: val('qet-runs'), margin: val('qet-margin'), directMarkup: val('qet-direct'),
+                loadingMin: val('qet-loading'), setupMin: val('qet-setup'), waitMin: val('qet-wait'),
+                substrateId: val('qet-sub'), substratePerRun: val('qet-sub-per-run'),
+              },
+            },
+            doc: { name: val('q-name'), company: val('q-company'), productName: form.dataset.productName ?? '' },
+          };
+          out.hidden = false;
+          out.innerHTML = '<p class="qet-muted">계산 중…</p>';
+          try {
+            const res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+            show(await res.json().catch(() => ({ ok: false, error: `HTTP ${res.status}` })));
+          } catch (e) {
+            show({ ok: false, error: String(e) });
+          }
+          out.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        };
+        document.addEventListener('click', (e) => { if (e.target?.closest?.('#qet-run')) run(); });
+
+        // ── 시작: 선택지 메타(원가 숫자 없음) ──────────────────────────
+        fetch(API).then((r) => r.json()).then((j) => {
+          if (!j.ok) { $('qet-meta').textContent = j.hint ?? `가격 DB 확인 실패 (${j.error})`; return; }
+          meta = j;
+          const lg = j.importLog;
+          $('qet-meta').textContent = `로컬 가격 DB${lg ? ` · 가져옴 ${lg.imported_at} · ${lg.rules_version} · sha256 ${lg.sha256}` : ''}`;
+          refresh();
+        }).catch((e) => { $('qet-meta').textContent = `가격 DB 확인 실패: ${e}`; });
+        refresh();
+      })();
+    </script>
+  </div>
+)}
