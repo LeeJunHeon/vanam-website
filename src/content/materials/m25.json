@@ -39,9 +39,9 @@
     "fig-2.webp": "Dielectric constant",
     "fig-3.webp": "Optical constants",
     "fig-4.webp": "Cycle test",
-    "fig-5.webp": "Wafer thickness map",
-    "fig-6.webp": "TEM image (10 nm)",
-    "fig-7.webp": "TEM image (200 nm)"
+    "fig-5.webp": "Al₂O₃ on Si(6in)",
+    "fig-6.webp": "Al₂O₃ on Si(12in)",
+    "fig-7.webp": "Al₂O₃ on Hole substrate"
   },
   "precursorImgs": [
     {
