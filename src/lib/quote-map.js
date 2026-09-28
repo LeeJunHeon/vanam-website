@@ -2,10 +2,10 @@
 //
 // 견적 테스트 모드(/api/quote-estimate)가 쓴다. 폼은 "공정 시퀀스"(행 순서대로 공정·물질·값)를 받고,
 // 엑셀은 "품목(가격 방식·회수·플라즈마…)"과 "층(레시피·두께·반복)"을 받는다. 그 사이를 여기서 잇는다.
+// 고객에게 무엇을 보여줄지(금액/담당자 확인/입력 오류)는 quote-customer.js 가 정한다.
 //
 // ⚠️ 판단을 지어내지 않는다.
-//   - 레시피 후보가 여러 개인데 사람이 고르지 않았으면 고르지 않는다("장비 선택 필요").
-//     임시 우선순위 규칙은 두지 않는다 — 장비 선택 규칙표는 관리자 자료가 오면 따로 만든다.
+//   - 레시피 후보가 여러 개면 고르지 않는다("장비 선택 필요"). 장비 선택 규칙은 자료가 오면 따로 만든다.
 //   - 가격 데이터가 없는 공정(Ex-situ 플라즈마·어닐링·Evaporator·분석)은 금액에서 빼고 사유를 남긴다.
 //   - 숫자로 읽히지 않는 값은 원문 그대로 넘긴다 → 엔진이 엑셀과 같은 오류 문구를 낸다.
 //
@@ -20,6 +20,7 @@ export const DEPOSITION = ['Sputter', 'ALD'];
 /** 품목에 플라즈마 분으로 붙는 공정 */
 export const PLASMA = 'PlasmaCleaning (In-situ)';
 
+/** 산정 제외 사유 — kind 는 고객 문구를 고르는 코드, reason 은 사람이 읽는 내부 사유 */
 export const REASON = {
   noPrice: '가격 데이터 없음',
   noRecipe: '레시피 없음',
@@ -63,7 +64,7 @@ export function parseThickness(v) {
   return /^-?\d+(?:\.\d+)?$/.test(s) || /^-?\.\d+$/.test(s) ? Number(s) : raw.trim();
 }
 
-/** 레시피 물질명에서 괄호 부분을 떼고 폼 value 로 정규화. 'AlN(Samsung)' → 'AlN' */
+/** 레시피 물질명에서 괄호 부분을 떼고 폼 value 로 정규화. 'AlN(Fake)' → 'AlN' */
 export const recipeMaterialValue = (name) => materialValue(String(name ?? '').replace(/\([^)]*\)/g, '').trim());
 
 const isActive = (v) => v === true || v === 1 || v === '1';
@@ -92,37 +93,37 @@ export function recipeCandidates(recipes) {
 }
 
 /**
- * @typedef {object} FormStep 폼 공정 시퀀스 한 행 + 그 행의 테스트 입력
+ * @typedef {object} FormStep 폼 공정 시퀀스 한 행
  * @property {string} process
  * @property {string} [material]
  * @property {string} [value]
  * @property {string} [unit]
  * @property {string} [etc]
- * @property {string} [recipeId]  후보가 여럿일 때 고른 레시피
- * @property {unknown} [repeat]   층 반복 (비우면 1)
- * @property {unknown} [tempC]    표시 온도 (비우면 레시피 기본)
  *
  * @typedef {object} FormInput
  * @property {FormStep[]} steps
  * @property {string[]} [measurements]
  * @property {unknown} [sampleCount]
- * @property {string} [delivery]
- * @property {{perRun?: unknown, runs?: unknown, margin?: string, directMarkup?: unknown,
- *   loadingMin?: unknown, setupMin?: unknown, waitMin?: unknown,
- *   substrateId?: string, substratePerRun?: unknown}} [test]
+ *
+ * @typedef {object} MapOptions 계산 조건 — 고객 화면은 quote-customer.js 가 정해서 넘긴다
+ * @property {string} [margin]           마진 구분 (기본 '기본')
+ * @property {unknown} [runs]            회수를 직접 정할 때
+ * @property {unknown} [perRun]          1회 투입 장수 (runs 가 없을 때 ceil(샘플 ÷ perRun), 비면 1회)
+ * @property {string|null} [substrateId] 첫 증착 품목에 붙일 기판
+ * @property {unknown} [substratePerRun] 기판 장수/회 (비면 perRun, 그것도 비면 샘플 수)
+ * @property {Record<number, unknown>} [layerRepeats] 단계 번호(1부터) → 층 반복. 없으면 1
  */
 
 /**
- * 회수: 직접 입력이 있으면 그 값, 없으면 ceil(샘플 수 ÷ 1회 투입 장수). 투입 장수가 비면 1회.
- * @param {FormInput} form
+ * 회수: runs 가 있으면 그 값, 없으면 ceil(샘플 수 ÷ 1회 투입 장수). 투입 장수가 비면 1회.
+ * @param {unknown} sampleCount @param {MapOptions} [opts]
  */
-export function runsOf(form) {
-  const t = form.test ?? {};
-  const direct = conv(t.runs);
+export function runsOf(sampleCount, opts = {}) {
+  const direct = conv(opts.runs);
   if (direct !== null) return direct;
-  const per = conv(t.perRun);
+  const per = conv(opts.perRun);
   if (per === null) return 1;
-  const n = conv(form.sampleCount);
+  const n = conv(sampleCount);
   if (typeof n === 'number' && typeof per === 'number' && n > 0 && per > 0) return Math.ceil(n / per);
   return null; // 계산 불가 → 엔진이 "수량은 양수"
 }
@@ -131,15 +132,16 @@ export function runsOf(form) {
  * 폼 입력 → { items, layers, plan, extras }.
  * @param {FormInput} form
  * @param {Parameters<typeof recipeCandidates>[0]} recipes
+ * @param {MapOptions} [opts]
  */
-export function mapFormToQuote(form, recipes) {
+export function mapFormToQuote(form, recipes, opts = {}) {
   const cands = recipeCandidates(recipes);
   const steps = Array.isArray(form?.steps) ? form.steps : [];
-  const t = form?.test ?? {};
+  const repeats = opts.layerRepeats ?? {};
 
-  /** @type {{no:number, equipmentId:string, process:string, materials:string[], etcs:string[], plasma:(number|string)[], layers:any[], stepNos:number[]}[]} */
+  /** @type {{no:number, equipmentId:string, process:string, materials:string[], etcs:string[], plasma:(number|string|null)[], layers:any[], stepNos:number[]}[]} */
   const groups = [];
-  /** @type {{step:number|null, process:string, material:string, reason:string}[]} */
+  /** @type {{step:number|null, process:string, material:string, kind:string, reason:string}[]} */
   const extras = [];
   /** @type {{step:number, process:string, material:string, role:string, itemNo:number|null, recipeId:string|null, reason:string|null}[]} */
   const planSteps = [];
@@ -169,24 +171,17 @@ export function mapFormToQuote(form, recipes) {
       return; // 플라즈마는 품목을 끊지 않는다
     }
 
-    const extra = (reason) => {
-      plan.reason = reason;
-      extras.push({ step: stepNo, process, material, reason });
+    const extra = (kind) => {
+      plan.reason = REASON[kind];
+      extras.push({ step: stepNo, process, material, kind, reason: REASON[kind] });
       cur = null; // 사이에 낀 단계는 품목을 끊는다
     };
 
-    if (!DEPOSITION.includes(process)) return extra(REASON.noPrice);
-
+    if (!DEPOSITION.includes(process)) return extra('noPrice');
     const list = cands[`${process}|${materialValue(material)}`] ?? [];
-    const chosen = String(s?.recipeId ?? '').trim();
-    if (chosen && !list.some((r) => r.recipe_id === chosen)) {
-      throw new QuoteMapError('bad_recipe', `${stepNo}단계: 선택한 레시피(${chosen})가 ${process} ${material} 후보가 아닙니다`);
-    }
-    if (list.length === 0) return extra(REASON.noRecipe);
-    let recipe = null;
-    if (chosen) recipe = list.find((r) => r.recipe_id === chosen);
-    else if (list.length === 1) recipe = list[0];
-    if (!recipe) return extra(REASON.chooseEquipment);
+    if (list.length === 0) return extra('noRecipe');
+    if (list.length > 1) return extra('chooseEquipment');
+    const recipe = list[0];
 
     plan.role = 'deposit';
     plan.recipeId = recipe.recipe_id;
@@ -198,14 +193,14 @@ export function mapFormToQuote(form, recipes) {
     cur.stepNos.push(stepNo);
     const etc = String(s?.etc ?? '').trim();
     if (etc) cur.etcs.push(etc);
-    const rep = conv(s?.repeat);
+    const rep = conv(repeats[stepNo]);
     cur.layers.push({
       itemNo: cur.no,
       order: cur.layers.length + 1,
       recipeId: recipe.recipe_id,
       thicknessNm: parseThickness(s?.value),
       repeat: rep === null ? 1 : rep,
-      tempC: conv(s?.tempC),
+      tempC: null,
     });
     plan.itemNo = cur.no;
     attachPlasma(cur);
@@ -218,23 +213,23 @@ export function mapFormToQuote(form, recipes) {
     else {
       for (const p of pendingPlasma) {
         planSteps[p.planIdx].reason = REASON.noDeposition;
-        extras.push({ step: p.step, process: p.process, material: p.material, reason: REASON.noDeposition });
+        extras.push({ step: p.step, process: p.process, material: p.material, kind: 'noDeposition', reason: REASON.noDeposition });
       }
       pendingPlasma = [];
     }
   }
 
   for (const m of Array.isArray(form?.measurements) ? form.measurements : []) {
-    extras.push({ step: null, process: String(m), material: '', reason: REASON.noPrice });
+    extras.push({ step: null, process: String(m), material: '', kind: 'measurement', reason: REASON.noPrice });
   }
 
   const layerCount = groups.reduce((a, g) => a + g.layers.length, 0);
   if (groups.length > MAX_ITEMS) throw new QuoteMapError('too_many_items', `품목이 ${groups.length}개입니다(최대 ${MAX_ITEMS}개)`);
   if (layerCount > MAX_LAYERS) throw new QuoteMapError('too_many_layers', `층이 ${layerCount}개입니다(최대 ${MAX_LAYERS}개)`);
 
-  const runs = runsOf(form ?? {});
-  const purchase = String(form?.delivery ?? '') === 'purchase' && String(t.substrateId ?? '').trim() !== '';
-  const subPerRun = conv(t.substratePerRun) ?? conv(t.perRun) ?? conv(form?.sampleCount);
+  const runs = runsOf(form?.sampleCount, opts);
+  const subId = String(opts.substrateId ?? '').trim();
+  const subPerRun = conv(opts.substratePerRun) ?? conv(opts.perRun) ?? conv(form?.sampleCount);
 
   /** 플라즈마 분 합치기 — 숫자는 더하고, 숫자가 아닌 값이 있으면 그 원문을 그대로 넘긴다. */
   const plasmaMin = (vals) => {
@@ -246,7 +241,7 @@ export function mapFormToQuote(form, recipes) {
 
   const items = groups.map((g, gi) => {
     const hasPlasma = g.plasma.length > 0;
-    const first = gi === 0 && purchase;
+    const first = gi === 0 && subId !== '';
     return {
       no: g.no,
       name: `${g.process} ${g.materials.join('/')}`,
@@ -256,15 +251,15 @@ export function mapFormToQuote(form, recipes) {
       unit: '회',
       amount: null,
       vat: '별도',
-      margin: String(t.margin ?? '').trim() || '기본',
-      directMarkup: conv(t.directMarkup),
+      margin: String(opts.margin ?? '').trim() || '기본',
+      directMarkup: null,
       plasma: hasPlasma ? 'Y' : 'N',
       plasmaMin: hasPlasma ? plasmaMin(g.plasma) : null,
-      loadingMin: conv(t.loadingMin),
-      setupMin: conv(t.setupMin),
-      waitMin: conv(t.waitMin),
+      loadingMin: null,
+      setupMin: null,
+      waitMin: null,
       // 같은 샘플이 여러 품목을 거쳐도 기판은 첫 증착 품목에서 한 번만 청구한다.
-      substrateId: first ? String(t.substrateId).trim() : null,
+      substrateId: first ? subId : null,
       substratePerRun: first ? subPerRun : null,
       rawText: null,
     };

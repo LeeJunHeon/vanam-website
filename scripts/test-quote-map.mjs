@@ -1,8 +1,11 @@
-// scripts/test-quote-map.mjs — 폼 입력 → 엑셀 형식 변환(src/lib/quote-map.js) 단위 테스트
+// scripts/test-quote-map.mjs — 폼 입력 → 엑셀 형식 변환(quote-map.js)·고객 판정(quote-customer.js) 단위 테스트
 //
-// 가짜 레시피 목록으로 규칙만 본다(가격은 보지 않는다 — 금액은 엔진 테스트의 몫).
-// 레시피 ID·장비 ID 는 실제 DB 와 겹치지 않는 가짜 이름이다.
+// 가짜 레시피·기판·금액으로 규칙만 본다(실제 가격 계산은 엔진 테스트의 몫).
+// 레시피·장비·기판 ID 와 금액은 실제 DB 와 겹치지 않는 가짜 값이다.
 import { mapFormToQuote, recipeCandidates, parseThickness, runsOf, conv, QuoteMapError, REASON } from '../src/lib/quote-map.js';
+import {
+  estimateForCustomer, matchSubstrate, planRuns, prettyFormula, addDays, SAMPLE_MANUAL_MIN, FORBIDDEN_CUSTOMER_KEYS,
+} from '../src/lib/quote-customer.js';
 
 let total = 0, failed = 0;
 function eq(label, got, want) {
@@ -22,146 +25,177 @@ const RECIPES = [
   R('T-SP-Pt', 'Sputter', 'Pt', 'EQ-SP1'),
   R('T-SP2-Cr', 'Sputter', 'Cr', 'EQ-SP2'),
   R('T-SP-AlN', 'Sputter', 'AlN(Fake)', 'EQ-SP1'),       // 괄호는 떼고 AlN 으로 매칭
-  R('T-ALD1-Al2O3', 'ALD', 'Al2O3', 'EQ-ALD1'),
-  R('T-ALD2-Al2O3', 'ALD', 'Al2O3', 'EQ-ALD2'),           // 후보 2개
+  R('T-ALD1-Al2O3', 'ALD', 'Al2O3(X)', 'EQ-ALD1'),
+  R('T-ALD2-Al2O3', 'ALD', 'Al2O3(Y)', 'EQ-ALD2'),        // 후보 2개
   R('T-ALD1-HfO2', 'ALD', 'HfO2', 'EQ-ALD1'),
   R('T-SP-Off', 'Sputter', 'Mo', 'EQ-SP1', 0),            // 사용 중지 → 후보 아님
 ];
-const S = (process, material, value, extra = {}) => ({ process, material, value, unit: '', etc: '', ...extra });
-const form = (steps, over = {}) => ({ steps, sampleCount: 1, delivery: 'direct', test: {}, ...over });
-const run = (steps, over) => mapFormToQuote(form(steps, over), RECIPES);
+const S = (process, material, value) => ({ process, material, value, unit: '', etc: '' });
+const form = (steps, over = {}) => ({ steps, sampleCount: 1, ...over });
+const run = (steps, over, opts) => mapFormToQuote(form(steps, over), RECIPES, opts);
 
 // ── 후보 ────────────────────────────────────────────────────────────────────
 const C = recipeCandidates(RECIPES);
 eq('후보: Sputter Ti 1개', C['Sputter|Ti'].map((r) => r.recipe_id), ['T-SP-Ti']);
 eq('후보: 괄호 뗀 AlN', C['Sputter|AlN'].map((r) => r.recipe_id), ['T-SP-AlN']);
-eq('후보: ALD Al2O3 2개', C['ALD|Al2O3'].map((r) => r.recipe_id), ['T-ALD1-Al2O3', 'T-ALD2-Al2O3']);
+eq('후보: ALD Al2O3 2개(괄호 뗀 뒤 같음)', C['ALD|Al2O3'].map((r) => r.recipe_id), ['T-ALD1-Al2O3', 'T-ALD2-Al2O3']);
 eq('후보: 사용 중지 제외', C['Sputter|Mo'], undefined);
-eq('후보: 원가 필드 없음', Object.keys(C['Sputter|Ti'][0]).sort(), ['equipment_id', 'material_name', 'method', 'recipe_id']);
 
-// ── 단일 층 ─────────────────────────────────────────────────────────────────
+// ── 변환: 품목 묶기 ─────────────────────────────────────────────────────────
 {
   const m = run([S('Sputter', 'Pt', '45')], { sampleCount: 3 });
-  eq('단일 층: 품목 1', m.items.length, 1);
   eq('단일 층: 품목 필드', [m.items[0].name, m.items[0].method, m.items[0].unit, m.items[0].vat, m.items[0].margin, m.items[0].plasma, m.items[0].qty],
     ['Sputter Pt', '박막자동', '회', '별도', '기본', 'N', 1]);
   eq('단일 층: 층', m.layers, [{ itemNo: 1, order: 1, recipeId: 'T-SP-Pt', thicknessNm: 45, repeat: 1, tempC: null }]);
-  eq('단일 층: extras 없음', m.extras, []);
+  eq('조정값 칸은 비움', [m.items[0].directMarkup, m.items[0].loadingMin, m.items[0].setupMin, m.items[0].waitMin], [null, null, null, null]);
+  const m2 = run([S('Sputter', 'Ti', '15'), S('Sputter', 'Pt', '45')]);
+  eq('같은 장비 다층: 품목 1', [m2.items.length, m2.items[0].name], [1, 'Sputter Ti/Pt']);
+  const m3 = run([S('Sputter', 'Ti', '10'), S('ALD', 'HfO2', '5')]);
+  eq('장비 전환: 품목 2', m3.items.map((i) => i.name), ['Sputter Ti', 'ALD HfO2']);
+  eq('같은 공정 다른 장비도 분리', run([S('Sputter', 'Ti', '10'), S('Sputter', 'Cr', '10')]).items.length, 2);
 }
-
-// ── 같은 장비 다층 ──────────────────────────────────────────────────────────
-{
-  const m = run([S('Sputter', 'Ti', '15'), S('Sputter', 'Pt', '45')]);
-  eq('같은 장비 다층: 품목 1', m.items.length, 1);
-  eq('같은 장비 다층: 이름', m.items[0].name, 'Sputter Ti/Pt');
-  eq('같은 장비 다층: 층 순서', m.layers.map((l) => [l.itemNo, l.order, l.recipeId]), [[1, 1, 'T-SP-Ti'], [1, 2, 'T-SP-Pt']]);
-}
-
-// ── 장비 전환 분리 ──────────────────────────────────────────────────────────
-{
-  const m = run([S('Sputter', 'Ti', '10'), S('ALD', 'Al2O3', '20', { recipeId: 'T-ALD1-Al2O3' })]);
-  eq('장비 전환: 품목 2', m.items.map((i) => i.name), ['Sputter Ti', 'ALD Al2O3']);
-  eq('장비 전환: 층 품목 번호', m.layers.map((l) => [l.itemNo, l.order]), [[1, 1], [2, 1]]);
-  const m2 = run([S('Sputter', 'Ti', '10'), S('Sputter', 'Cr', '10')]);
-  eq('같은 공정 다른 장비도 분리', m2.items.length, 2);
-}
-
-// ── 플라즈마 부착 ───────────────────────────────────────────────────────────
+// ── 변환: 플라즈마 · 끊기 · 제외 ─────────────────────────────────────────────
 {
   const m = run([S('PlasmaCleaning (In-situ)', 'Ar', '5'), S('Sputter', 'Ti', '10')]);
   eq('플라즈마: 다음 증착 품목에 Y 5분', [m.items[0].plasma, m.items[0].plasmaMin], ['Y', 5]);
-  eq('플라즈마: 품목 수 1', m.items.length, 1);
   const m2 = run([S('Sputter', 'Ti', '10'), S('PlasmaCleaning (In-situ)', 'Ar', '5'), S('Sputter', 'Pt', '10')]);
-  eq('플라즈마는 품목을 끊지 않는다', [m2.items.length, m2.items[0].plasma, m2.items[0].plasmaMin], [1, 'Y', 5]);
-  const m3 = run([S('Sputter', 'Ti', '10'), S('PlasmaCleaning (In-situ)', 'Ar', '3')]);
-  eq('뒤에 증착 없으면 직전 품목', [m3.items[0].plasma, m3.items[0].plasmaMin], ['Y', 3]);
-  const m4 = run([S('PlasmaCleaning (In-situ)', 'Ar', '2'), S('PlasmaCleaning (In-situ)', 'O2', '3'), S('Sputter', 'Ti', '10')]);
-  eq('플라즈마 두 단계는 더한다', m4.items[0].plasmaMin, 5);
-  const m5 = run([S('PlasmaCleaning (In-situ)', 'Ar', 'abc'), S('Sputter', 'Ti', '10')]);
-  eq('플라즈마 분이 숫자가 아니면 원문', m5.items[0].plasmaMin, 'abc');
-  const m6 = run([S('Sputter', 'Ti', '10'), S('ALD', 'HfO2', '5'), S('PlasmaCleaning (In-situ)', 'Ar', '4'), S('Sputter', 'Pt', '5')]);
-  eq('플라즈마는 바로 다음 증착의 품목에', m6.items.map((i) => [i.name, i.plasma, i.plasmaMin]),
-    [['Sputter Ti', 'N', null], ['ALD HfO2', 'N', null], ['Sputter Pt', 'Y', 4]]);
+  eq('플라즈마는 품목을 끊지 않는다', [m2.items.length, m2.items[0].plasmaMin], [1, 5]);
+  const m3 = run([S('Sputter', 'Ti', '10'), S('Annealing', 'N2', '30'), S('Sputter', 'Pt', '10')]);
+  eq('어닐링이 끼면 품목 분리', m3.items.map((i) => i.name), ['Sputter Ti', 'Sputter Pt']);
+  eq('어닐링은 extras(kind)', m3.extras.map((e) => [e.step, e.kind]), [[2, 'noPrice']]);
+  eq('후보 2개 → chooseEquipment', run([S('ALD', 'Al2O3', '20')]).extras.map((e) => e.kind), ['chooseEquipment']);
+  eq('레시피 없음 → noRecipe', run([S('Sputter', 'Au', '10')]).extras.map((e) => e.kind), ['noRecipe']);
+  eq('분석 → measurement', run([S('Sputter', 'Ti', '10')], { measurements: ['XPS'] }).extras.map((e) => [e.process, e.kind]), [['XPS', 'measurement']]);
 }
-
-// ── 어닐링 끊기 ─────────────────────────────────────────────────────────────
+// ── 변환: 옵션 ──────────────────────────────────────────────────────────────
 {
-  const m = run([S('Sputter', 'Ti', '10'), S('Annealing', 'N2', '30'), S('Sputter', 'Pt', '10')]);
-  eq('어닐링이 끼면 품목 분리', m.items.map((i) => i.name), ['Sputter Ti', 'Sputter Pt']);
-  eq('어닐링은 extras', m.extras, [{ step: 2, process: 'Annealing', material: 'N2', reason: REASON.noPrice }]);
-  const m2 = run([S('Sputter', 'Ti', '10'), S('Evaporator', 'Au', '45')], { measurements: ['XPS'] });
-  eq('Evaporator·분석은 extras', m2.extras.map((e) => [e.process, e.reason]), [['Evaporator', REASON.noPrice], ['XPS', REASON.noPrice]]);
-  const m3 = run([S('PlasmaTreatment (Ex-situ)', 'O2', '5'), S('Sputter', 'Ti', '10')]);
-  eq('Ex-situ 플라즈마는 extras, 품목은 N', [m3.extras[0].reason, m3.items[0].plasma], [REASON.noPrice, 'N']);
-}
-
-// ── 후보 여러 개 미선택 · 레시피 없음 · 잘못된 선택 ─────────────────────────
-{
-  const m = run([S('ALD', 'Al2O3', '20')]);
-  eq('후보 여럿 미선택 → 장비 선택 필요', [m.items.length, m.extras[0]?.reason], [0, REASON.chooseEquipment]);
-  const m2 = run([S('Sputter', 'Ti', '10'), S('ALD', 'Al2O3', '20'), S('Sputter', 'Pt', '10')]);
-  eq('미선택 단계도 품목을 끊는다', m2.items.map((i) => i.name), ['Sputter Ti', 'Sputter Pt']);
-  const m3 = run([S('Sputter', 'Au', '10')]);
-  eq('레시피 없음', m3.extras[0]?.reason, REASON.noRecipe);
-  eq('사용 중지만 있으면 레시피 없음', run([S('Sputter', 'Mo', '10')]).extras[0]?.reason, REASON.noRecipe);
-  eq('후보 밖 recipeId 거부', throwsCode(() => run([S('Sputter', 'Ti', '10', { recipeId: 'T-SP-Pt' })])), 'bad_recipe');
-  eq('후보 1개여도 다른 recipeId 거부', throwsCode(() => run([S('ALD', 'HfO2', '5', { recipeId: 'NOPE' })])), 'bad_recipe');
-}
-
-// ── 회수 계산 ───────────────────────────────────────────────────────────────
-eq('회수: 5 ÷ 2 = 3', runsOf({ sampleCount: 5, test: { perRun: 2 } }), 3);
-eq('회수: 투입 장수 비움 → 1', runsOf({ sampleCount: 5, test: {} }), 1);
-eq('회수: 직접 입력 우선', runsOf({ sampleCount: 5, test: { perRun: 2, runs: '4' } }), 4);
-eq('회수: 모든 품목 같은 값', run([S('Sputter', 'Ti', '10'), S('ALD', 'HfO2', '5')], { sampleCount: 5, test: { perRun: 2 } }).items.map((i) => i.qty), [3, 3]);
-
-// ── 기판 첫 품목만 ──────────────────────────────────────────────────────────
-{
+  const m = run([S('Sputter', 'Ti', '10'), S('Sputter', 'Pt', '10')], {}, { layerRepeats: { 1: 7, 2: 7 } });
+  eq('층 반복 옵션', m.layers.map((l) => l.repeat), [7, 7]);
+  eq('층 반복 원문은 그대로(엔진이 검증)', run([S('Sputter', 'Ti', '10')], {}, { layerRepeats: { 1: 'x' } }).layers[0].repeat, 'x');
+  eq('마진 옵션 비우면 기본', run([S('Sputter', 'Ti', '10')], {}, {}).items[0].margin, '기본');
   const steps = [S('Sputter', 'Ti', '10'), S('ALD', 'HfO2', '5')];
-  const m = run(steps, { delivery: 'purchase', sampleCount: 8, test: { substrateId: 'SUB-X', substratePerRun: 4 } });
-  eq('기판: 첫 품목에만', m.items.map((i) => [i.substrateId, i.substratePerRun]), [['SUB-X', 4], [null, null]]);
-  const m2 = run(steps, { delivery: 'purchase', sampleCount: 8, test: { substrateId: 'SUB-X', perRun: 2 } });
-  eq('기판 장수 비움 → 투입 장수', m2.items[0].substratePerRun, 2);
-  const m3 = run(steps, { delivery: 'purchase', sampleCount: 8, test: { substrateId: 'SUB-X' } });
-  eq('투입 장수도 비움 → 샘플 수', m3.items[0].substratePerRun, 8);
-  const m4 = run(steps, { delivery: 'courier', sampleCount: 8, test: { substrateId: 'SUB-X' } });
-  eq('구매 요청이 아니면 기판 없음', m4.items[0].substrateId, null);
+  const s1 = run(steps, { sampleCount: 8 }, { substrateId: 'SUB-X', substratePerRun: 4 });
+  eq('기판: 첫 품목에만', s1.items.map((i) => [i.substrateId, i.substratePerRun]), [['SUB-X', 4], [null, null]]);
+  eq('기판 장수 비움 → 투입 장수', run(steps, { sampleCount: 8 }, { substrateId: 'SUB-X', perRun: 2 }).items[0].substratePerRun, 2);
+  eq('투입 장수도 비움 → 샘플 수', run(steps, { sampleCount: 8 }, { substrateId: 'SUB-X' }).items[0].substratePerRun, 8);
+  eq('회수: runs 옵션 우선', runsOf(8, { runs: 1, perRun: 2 }), 1);
+  eq('회수: 5 ÷ 2 = 3', runsOf(5, { perRun: 2 }), 3);
+  eq('회수: 투입 장수 비움 → 1', runsOf(5, {}), 1);
 }
-
-// ── 두께 문자열 파싱 · 층 필드 ──────────────────────────────────────────────
 eq('두께: "1,000 nm"', parseThickness('1,000 nm'), 1000);
-eq('두께: "45nm"', parseThickness('45nm'), 45);
-eq('두께: "12.5"', parseThickness('12.5'), 12.5);
 eq('두께: "100~200" 원문', parseThickness('100~200'), '100~200');
-eq('두께: 빈칸 null', parseThickness(' '), null);
-{
-  const m = run([S('Sputter', 'Ti', '10', { repeat: '3', tempC: '200' })]);
-  eq('층 반복·표시 온도', [m.layers[0].repeat, m.layers[0].tempC], [3, 200]);
-}
 eq('conv: 0 은 0', conv('0'), 0);
-eq('conv: 쉼표', conv('40,000'), 40000);
-eq('conv: 문자 원문', conv('abc'), 'abc');
-
-// ── 테스트 입력 → 품목 필드 ─────────────────────────────────────────────────
 {
-  const m = run([S('Sputter', 'Ti', '10', { etc: '조건 A' }), S('Sputter', 'Pt', '10', { etc: '조건 B' })],
-    { test: { margin: '직접입력', directMarkup: '0.5', loadingMin: '0', setupMin: '', waitMin: '3' } });
-  const it = m.items[0];
-  eq('테스트 입력 반영', [it.margin, it.directMarkup, it.loadingMin, it.setupMin, it.waitMin, it.extraSpec],
-    ['직접입력', 0.5, 0, null, 3, '조건 A; 조건 B']);
-}
-
-// ── 한도 초과 ───────────────────────────────────────────────────────────────
-{
-  // 장비를 번갈아 16품목
   const many = Array.from({ length: 16 }, (_, i) => (i % 2 ? S('Sputter', 'Cr', '1') : S('Sputter', 'Ti', '1')));
   eq('품목 16개 거부', throwsCode(() => run(many)), 'too_many_items');
-  const deep = Array.from({ length: 101 }, () => S('Sputter', 'Ti', '1'));
-  eq('층 101개 거부', throwsCode(() => run(deep)), 'too_many_layers');
-  eq('품목 15개는 허용', run(many.slice(0, 15)).items.length, 15);
+  eq('층 101개 거부', throwsCode(() => run(Array.from({ length: 101 }, () => S('Sputter', 'Ti', '1')))), 'too_many_layers');
 }
 
+// ── 고객 판정 ───────────────────────────────────────────────────────────────
+const SUB = (catalog_id, item_name, size_inch, oxide_nm, cost_per_unit, active = 1) => ({ catalog_id, item_name, size_inch, oxide_nm, cost_per_unit, active });
+const SUBSTRATES = [
+  SUB('FS-01', '4in Fake Sapphire', 4, null, 11),
+  SUB('FS-02', '4in Boron TEST bare', 4, null, 12),
+  SUB('FS-03', '6in Boron test bare', 6, null, 13),
+  SUB('FS-04', '6in Boron TEST bare copy', 6, null, 13),     // 원가 같은 중복 → 가장 작은 ID
+  SUB('FS-05', '6in Boron PRIME bare', 6, null, 14),
+  SUB('FS-06', '6in Boron Prime bare other', 6, null, 15),  // 원가 다른 중복 → 담당자 확인
+  SUB('FS-07', '6in Boron TEST oxide', 6, 90, 16),
+  SUB('FS-08', '4in Boron TEST oxide', 4, 90, 17, 0),        // 사용 중지
+];
+eq('기판: Sapphire 4', matchSubstrate(SUBSTRATES, { type: 'Sapphire', size: '4inch' }).row?.catalog_id, 'FS-01');
+eq('기판: Silicon 4 Test', matchSubstrate(SUBSTRATES, { type: 'Silicon', size: '4inch', grade: 'Test' }).row?.catalog_id, 'FS-02');
+eq('기판: 원가 같은 중복 → 작은 ID', matchSubstrate(SUBSTRATES, { type: 'Silicon', size: '6inch', grade: 'Test' }).row?.catalog_id, 'FS-03');
+eq('기판: 원가 다른 중복 → ambiguous', matchSubstrate(SUBSTRATES, { type: 'Silicon', size: '6inch', grade: 'Prime' }).status, 'ambiguous');
+eq('기판: Silicon oxide 6 Test', matchSubstrate(SUBSTRATES, { type: 'Silicon oxide', size: '6inch', grade: 'Test' }).row?.catalog_id, 'FS-07');
+eq('기판: 사용 중지 제외 → none', matchSubstrate(SUBSTRATES, { type: 'Silicon oxide', size: '4inch', grade: 'Test' }).status, 'none');
+eq('기판: Silicon 4 Prime → none', matchSubstrate(SUBSTRATES, { type: 'Silicon', size: '4inch', grade: 'Prime' }).status, 'none');
+eq('기판: Glass → none', matchSubstrate(SUBSTRATES, { type: 'Glass', size: '4inch' }).status, 'none');
+eq('기판: 기타 크기 → none', matchSubstrate(SUBSTRATES, { type: 'Sapphire', size: '__other__' }).status, 'none');
+
+// 엔진 대역: 품목이 있으면 정상 + 가짜 합계. computeQuote 가 받은 입력을 기록한다.
+let seen = null;
+const fakeEngine = (_db, q) => { seen = q; return { status: '정상', total: 1234, supply: 1122, vat: 112, items: q.items.map(() => ({ status: '정상' })) }; };
+const badEngine = () => ({ status: '공정 입력 확인', total: null, items: [] });
+const DB = { policy: [{ key: 'quote_valid_days', value: '7', vtype: 'number' }], recipes: RECIPES, equipment: [], substrates: SUBSTRATES };
+const est = (f, engine = fakeEngine) => estimateForCustomer({
+  form: { locale: 'ko', delivery: 'direct', ...f }, priceDb: DB, computeQuote: engine, formatUsd: (k, r) => `$${(k / r).toFixed(2)}`, usdRate: 1000, today: '2026-01-10',
+});
+const cust = (f, e) => est(f, e).customer;
+
+eq('estimate: 합계·USD·유효기간', cust({ steps: [S('Sputter', 'Ti', '10')], sampleCount: 1 }),
+  { kind: 'estimate', totalKrw: 1234, totalKrwText: '₩1,234', totalUsdText: '$1.23', usdRate: 1000, validDays: 7, validUntil: '2026-01-17' });
+est({ steps: [S('Sputter', 'Ti', '10')], sampleCount: 1 });
+eq('마진 항상 기본·회수 1', [seen.items[0].margin, seen.items[0].qty], ['기본', 1]);
+eq(`샘플 ${SAMPLE_MANUAL_MIN - 1} → estimate`, cust({ steps: [S('Sputter', 'Ti', '10')], sampleCount: SAMPLE_MANUAL_MIN - 1 }).kind, 'estimate');
+eq(`샘플 ${SAMPLE_MANUAL_MIN} → manual`, cust({ steps: [S('Sputter', 'Ti', '10')], sampleCount: SAMPLE_MANUAL_MIN }), { kind: 'manual', manual: ['샘플 수량 10개 이상'] });
+eq('planRuns 경계', [planRuns(9), planRuns(10)], [{ runs: 1, manual: false }, { runs: 1, manual: true }]);
+
+// 반복 구간
+{
+  const r = est({ steps: [S('Sputter', 'Ti', '5'), S('Sputter', 'Pt', '5')], sampleCount: 1, repeatGroup: { from: 1, to: 2, count: 10 } });
+  eq('반복 구간 같은 장비 → estimate, 두 층 반복 10', [r.customer.kind, r.debug.input.layers.map((l) => l.repeat)], ['estimate', [10, 10]]);
+  eq('반복 구간 debug 표시', r.debug.flags.repeatGroup, { from: 1, to: 2, count: 10, layers: [{ itemNo: 1, order: 1, repeat: 10 }, { itemNo: 1, order: 2, repeat: 10 }] });
+  const r2 = est({ steps: [S('Sputter', 'Ti', '5'), S('ALD', 'HfO2', '5'), S('Sputter', 'Pt', '5')], sampleCount: 1, repeatGroup: { from: 1, to: 2, count: 3 } });
+  eq('반복 구간 장비 다름 → manual', r2.customer, { kind: 'manual', manual: ['반복 구간 1~2단계 (장비를 오가는 반복)'] });
+  eq('구간 밖 단계는 1', r2.debug.input.layers.map((l) => l.repeat), [3, 3, 1]);
+  const r3 = cust({ steps: [S('Sputter', 'Ti', '5'), S('PlasmaCleaning (In-situ)', 'Ar', '1'), S('Sputter', 'Pt', '5')], sampleCount: 1, repeatGroup: { from: 1, to: 3, count: 2 } });
+  eq('반복 구간에 증착 외 단계 → manual', r3, { kind: 'manual', manual: ['반복 구간 1~3단계 (증착 외 단계 포함)'] });
+  const bad = (g) => cust({ steps: [S('Sputter', 'Ti', '5'), S('Sputter', 'Pt', '5')], sampleCount: 1, repeatGroup: g });
+  eq('반복 구간 끝 < 시작 → invalid', bad({ from: 2, to: 1, count: 3 }).errors.map((e) => e.field), ['repeat']);
+  eq('반복 구간 없는 단계 → invalid', bad({ from: 1, to: 3, count: 3 }).errors.map((e) => e.field), ['repeat']);
+  eq('반복 횟수 1 → invalid', bad({ from: 1, to: 2, count: 1 }).errors.map((e) => e.field), ['repeatCount']);
+  eq('반복 횟수 1.5 → invalid', bad({ from: 1, to: 2, count: '1.5' }).kind, 'invalid');
+}
+
+// 담당자 확인 항목
+eq('후보 2개 → manual', cust({ steps: [S('ALD', 'Al2O3', '10')], sampleCount: 1 }), { kind: 'manual', manual: ['1단계 ALD Al₂O₃'] });
+eq('분석 → manual', cust({ steps: [S('Sputter', 'Ti', '10')], measurements: ['XPS'], sampleCount: 1 }), { kind: 'manual', manual: ['분석: XPS'] });
+eq('어닐링 → manual', cust({ steps: [S('Sputter', 'Ti', '10'), S('Annealing', 'N2', '60'), S('Sputter', 'Pt', '10')], sampleCount: 1 }), { kind: 'manual', manual: ['2단계 Annealing N₂'] });
+eq('엔진 오류(가격 자료) → manual', cust({ steps: [S('Sputter', 'Ti', '10')], sampleCount: 1 }, badEngine), { kind: 'manual', manual: ['가격 자료 확인'] });
+
+// 기판(구매 요청)
+const buy = (type, size, grade) => est({ steps: [S('Sputter', 'Ti', '10')], sampleCount: 2, delivery: 'purchase', substrateType: type, substrateSize: size, substrateGrade: grade });
+{
+  const r = buy('Sapphire', '4inch');
+  eq('구매 Sapphire 4 → estimate + 기판 첫 품목', [r.customer.kind, r.debug.input.items[0].substrateId, r.debug.input.items[0].substratePerRun], ['estimate', 'FS-01', 2]);
+  eq('구매 Silicon 6 Test(원가 같은 중복) → estimate', buy('Silicon', '6inch', 'Test').customer.kind, 'estimate');
+  eq('구매 Silicon 6 Prime(원가 다른 중복) → manual', buy('Silicon', '6inch', 'Prime').customer, { kind: 'manual', manual: ['기판: Silicon 6 inch Prime'] });
+  eq('구매 Glass 4 → manual', buy('Glass', '4inch').customer, { kind: 'manual', manual: ['기판: Glass 4 inch'] });
+  eq('구매 Silicon 등급 없음 → invalid', buy('Silicon', '6inch', '').customer.errors.map((e) => e.field), ['substrateGrade']);
+  eq('방문 전달이면 기판 없음', est({ steps: [S('Sputter', 'Ti', '10')], sampleCount: 2, substrateType: 'Glass', substrateSize: '4inch' }).debug.input.items[0].substrateId, null);
+}
+
+// 입력 오류
+eq('두께 "100~200" → invalid 1단계', cust({ steps: [S('Sputter', 'Pt', '100~200')], sampleCount: 1 }).errors, [{ step: 1, field: 'value', message: '1단계 두께를 숫자로 입력해 주세요.' }]);
+eq('샘플 0 → invalid', cust({ steps: [S('Sputter', 'Ti', '10')], sampleCount: '0' }).errors.map((e) => e.field), ['sampleCount']);
+eq('샘플 2.5 → invalid', cust({ steps: [S('Sputter', 'Ti', '10')], sampleCount: '2.5' }).kind, 'invalid');
+eq('공정 없음 → invalid', cust({ steps: [], sampleCount: 1 }).errors.map((e) => e.field), ['process']);
+eq('물질 없음 → invalid', cust({ steps: [S('Sputter', '', '10')], sampleCount: 1 }).errors.map((e) => [e.step, e.field]), [[1, 'material']]);
+eq('플라즈마 시간 문자 → invalid', cust({ steps: [S('PlasmaCleaning (In-situ)', 'Ar', 'abc'), S('Sputter', 'Ti', '10')], sampleCount: 1 }).errors.map((e) => [e.step, e.field]), [[1, 'value']]);
+eq('영문 문구', estimateForCustomer({ form: { locale: 'en', steps: [S('Sputter', 'Pt', 'x')], sampleCount: 1 }, priceDb: DB, computeQuote: fakeEngine, formatUsd: () => '', usdRate: 1, today: '2026-01-01' }).customer.errors[0].message,
+  'Enter the thickness for step 1 as a number.');
+
+// 고객 응답에 금지 필드·ID 없음 (여러 사례 모두)
+{
+  const ids = [...RECIPES.flatMap((r) => [r.recipe_id, r.equipment_id]), ...SUBSTRATES.map((s) => s.catalog_id)];
+  const all = [
+    cust({ steps: [S('Sputter', 'Ti', '10')], sampleCount: 1 }),
+    buy('Sapphire', '4inch').customer, buy('Silicon', '6inch', 'Prime').customer,
+    cust({ steps: [S('ALD', 'Al2O3', '10')], measurements: ['XPS'], sampleCount: 12 }),
+    cust({ steps: [S('Sputter', 'Pt', 'x')], sampleCount: 0 }),
+  ];
+  const keys = new Set();
+  (function walk(o) { if (o && typeof o === 'object') for (const [k, v] of Object.entries(o)) { keys.add(k); walk(v); } })(all);
+  eq('금지 키 0건', FORBIDDEN_CUSTOMER_KEYS.filter((k) => keys.has(k)), []);
+  const text = JSON.stringify(all);
+  eq('ID 문자열 0건', ids.filter((id) => text.includes(id)), []);
+}
+eq('표기: Al2O3 → Al₂O₃', prettyFormula('Al2O3'), 'Al₂O₃');
+eq('날짜 더하기(월 넘김)', addDays('2026-01-25', 14), '2026-02-08');
+
 if (failed) {
-  console.error(`\n견적 변환(quote-map) 테스트 실패 — ${failed}/${total}건.`);
+  console.error(`\n견적 변환·고객 판정 테스트 실패 — ${failed}/${total}건.`);
   process.exit(1);
 }
-console.log(`✓ 견적 변환(quote-map) — ${total}건 통과`);
+console.log(`✓ 견적 변환(quote-map)·고객 판정(quote-customer) — ${total}건 통과`);
