@@ -1,16 +1,23 @@
 // 견적 테스트 모드 전용: 고객 견적 폼의 "예상 견적 보기" API.
 //
+// ⚠️ 운영 전환 시 debug 는 통째로 제거한다. (debug 에는 품목·층·원가 내역·장비/레시피/기판 ID 가 들어 있다)
 // ⚠️ 테스트 모드가 꺼진 빌드(일반·Cloudflare 빌드)에서는 GET·POST 모두 404 다.
 //    켜짐은 npm run local 빌드뿐이다(src/lib/quote-test-mode.js).
 //
-//   GET  → 레시피 후보·기판 목록 등 선택지 메타만. 원가·요율·마진 숫자는 넣지 않는다.
-//   POST → 폼 입력을 엑셀 형식으로 바꾸고(quote-map.js) 로컬 D1 의 price_* 로 computeQuote.
-//          테스트용이라 원가 내역(breakdown)까지 전부 돌려준다. 계산은 항상 서버에서 한다.
+//   GET  → 로컬 가격 DB 가져오기 기록만(화면 표시용).
+//   POST → { ok, customer, debug }
+//          customer: 고객에게 보일 것만 — estimate(합계·USD·유효기간) / manual(담당자 확인 항목) / invalid(입력 오류).
+//                    단가·공급가액·세액·원가·ID 는 넣지 않는다(src/lib/quote-customer.js).
+//          debug:    내부 확인용(계산 입력·엔진 결과·산정 제외·예상 견적서 HTML·flags).
+//   계산은 항상 서버에서 한다. 환율은 웨이퍼와 같은 저장값(readRate)을 쓴다.
 import type { APIRoute } from 'astro';
 import { db } from '../../lib/db';
 import { rateLimit, tooMany } from '../../lib/rate-limit';
+import { readRate } from '../../lib/fx';
+import { formatUsd } from '../../lib/price';
 import { computeQuote } from '../../lib/quote-engine.js';
-import { mapFormToQuote, recipeCandidates, QuoteMapError } from '../../lib/quote-map.js';
+import { QuoteMapError } from '../../lib/quote-map.js';
+import { estimateForCustomer } from '../../lib/quote-customer.js';
 import { buildQuoteDoc, telKr } from '../../lib/quote-doc';
 import company from '../../data/company.json';
 
@@ -33,29 +40,15 @@ type D1 = NonNullable<Awaited<ReturnType<typeof db>>>;
 const all = async <T = Record<string, unknown>>(d: D1, sql: string) =>
   (await d.prepare(sql).all<T>()).results ?? [];
 
-const RECIPE_META = `SELECT recipe_id, material_name, process_type, equipment_id, method, active
-  FROM price_recipe`;
-
 export const GET: APIRoute = async () => {
   if (!QUOTE_TEST) return NOT_FOUND();
   const d = await db();
   if (!d) return json({ ok: false, error: 'no_db' }, 503);
-  const recipes = await all(d, RECIPE_META);
-  if (recipes.length === 0) return json(EMPTY, 503);
-  const substrates = await all(d, `SELECT catalog_id, item_name, size_inch, category, active
-    FROM price_substrate ORDER BY catalog_id`);
-  const equipment = await all(d, `SELECT equipment_id, equipment_name
-    FROM price_equipment ORDER BY equipment_id`);
   const log = (await all<{ imported_at: string; rules_version: string; source_sha256: string }>(d,
     `SELECT imported_at, rules_version, source_sha256
     FROM price_import_log ORDER BY id DESC LIMIT 1`))[0] ?? null;
   return json({
     ok: true,
-    candidates: recipeCandidates(recipes as any),
-    equipment,
-    substrates: substrates
-      .filter((s) => s.active === 1 || s.active === true)
-      .map(({ catalog_id, item_name, size_inch, category }) => ({ catalog_id, item_name, size_inch, category })),
     importLog: log && { imported_at: log.imported_at, rules_version: log.rules_version, sha256: String(log.source_sha256 ?? '').slice(0, 12) },
   });
 };
@@ -88,46 +81,42 @@ export const POST: APIRoute = async ({ request }) => {
     equipment: await all(d, `SELECT equipment_id, equipment_name, process_type, rate_per_min,
       default_loading_min, default_plasma_min, default_setup_min, active
       FROM price_equipment`),
-    substrates: await all(d, `SELECT catalog_id, item_name, category, unit, cost_per_unit, active
+    substrates: await all(d, `SELECT catalog_id, item_name, category, unit, cost_per_unit, size_inch, oxide_nm, active
       FROM price_substrate`),
   };
   if (priceDb.policy.length === 0 || priceDb.recipes.length === 0) return json(EMPTY, 503);
 
-  let mapped;
+  const fx = await readRate(d);
+  const today = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10); // 한국 날짜
+  let out;
   try {
-    mapped = mapFormToQuote(form, priceDb.recipes as any);
+    out = estimateForCustomer({ form, priceDb, computeQuote, formatUsd, usdRate: fx.rate, today });
   } catch (e) {
     if (e instanceof QuoteMapError) return json({ ok: false, error: e.code, message: e.message }, 400);
     throw e;
   }
-  const { items, layers, plan, extras } = mapped;
-  const result = computeQuote(priceDb, { items, layers });
-  // computed: 엔진 정상 · 제외 단계 없음 / partial: 제외 단계가 있고 나머지는 정상(산정할 품목이 하나도 없으면 금액 없음)
-  // error: 엔진 오류
-  const status = result.status === '정상' ? (extras.length ? 'partial' : 'computed')
-    : items.length === 0 && extras.length ? 'partial' : 'error';
+  const { customer, debug } = out as { customer: any; debug: any };
 
-  // 예상 견적서(엑셀 '견적서' 탭 배치) — 엔진이 정상일 때만. 고객 = 폼의 이름·소속, 견적명 = 제품명.
+  // 예상 견적서(엑셀 '견적서' 탭 배치) — 내부 확인용. 엔진이 정상일 때만.
   let docHtml: string | null = null;
-  if (result.status === '정상') {
+  const result = debug.result;
+  if (result?.status === '정상') {
     const pv = (k: string) => (priceDb.policy as { key: string; value: string | null }[]).find((p) => p.key === k)?.value ?? '';
-    const doc = body?.doc ?? {};
-    const today = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const items = debug.input.items;
     docHtml = buildQuoteDoc({
       info: {
-        customer: [doc.company, doc.name].map((v: unknown) => String(v ?? '').trim()).filter(Boolean).join(' '),
-        ref: '', title: String(doc.productName ?? ''), date: today, quoteNo: `TEST-${today.replace(/-/g, '')}`,
+        customer: [body?.doc?.company, body?.doc?.name].map((v: unknown) => String(v ?? '').trim()).filter(Boolean).join(' '),
+        ref: '', title: String(body?.doc?.productName ?? ''), date: today, quoteNo: `TEST-${today.replace(/-/g, '')}`,
         manager: '', contact: telKr(company.tel), delivery: pv('default_delivery_due'), validDays: pv('quote_valid_days'), payment: '',
       },
       items: result.items.map((it: any, i: number) => it.status !== '정상' ? null : {
         name: String(items[i]?.name ?? ''), spec: it.spec, qty: items[i]?.qty, unit: items[i]?.unit,
         unitPrice: it.unitPrice, supply: it.supply, vat: it.vat,
       }),
-      supply: result.supply as number, vat: result.vat as number, total: result.total as number,
-      totalKorean: result.totalKorean as string,
+      supply: result.supply, vat: result.vat, total: result.total, totalKorean: result.totalKorean,
       logoUrl: new URL('/logo.png', request.url).href,
     });
   }
 
-  return json({ ok: true, status, plan, input: { items, layers }, result, extras, docHtml });
+  return json({ ok: true, customer, debug: { ...debug, docHtml, fx: { rate: fx.rate, source: fx.source } } });
 };
