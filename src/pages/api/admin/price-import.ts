@@ -131,12 +131,20 @@ export const POST: APIRoute = async ({ request }) => {
       return json({ ok: false, error: 'db_error' }, 500);
     }
 
-    const afterFp = await priceFingerprint(priceRowsForDb(await readPriceTables(d)));
+    // 여기부터는 이미 바뀐 상태 — 확인 읽기가 실패해도 '바뀌지 않았다'(db_error)로 답하면 안 된다.
+    let afterFp: string;
+    let log: Awaited<ReturnType<typeof latestImport>>;
+    try {
+      afterFp = await priceFingerprint(priceRowsForDb(await readPriceTables(d)));
+      log = await latestImport(d);
+    } catch (e) {
+      console.error('[admin/price-import] 적용 뒤 확인 읽기 실패(가격 DB 는 바뀜):', (e as Error)?.name ?? 'Error');
+      return json({ ok: false, error: 'applied_unverified' }, 500);
+    }
     if (afterFp !== nextFp) {
       console.error('[admin/price-import] 적용 뒤 지문 불일치');
       return json({ ok: false, error: 'verify_mismatch', fingerprint: afterFp }, 500);
     }
-    const log = await latestImport(d);
     return json({
       ok: true, mode, counts, fingerprint: afterFp,
       importLog: log && {

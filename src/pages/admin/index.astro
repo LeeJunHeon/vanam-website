@@ -1132,6 +1132,11 @@ const spec = (r: Row) =>
             }
             if (j.error === 'db_changed') { say('미리보기 뒤에 가격 DB 가 바뀌었습니다 — 다시 미리보기를 누르세요', 'bad'); return; }
             if (j.error === 'db_error') { say('저장하지 못했습니다 — 가격 DB 는 바뀌지 않았습니다', 'bad'); return; }
+            if (j.error === 'applied_unverified') {
+              say('가격 DB 는 바뀌었지만 확인 읽기에 실패했습니다 — 다시 미리보기를 누르면 지금 상태를 볼 수 있습니다', 'bad');
+              document.dispatchEvent(new CustomEvent('vanam:price-db-changed'));
+              return;
+            }
             if (j.error === 'verify_mismatch') {
               say('경고: 가격 DB 는 이미 바뀌었지만 다시 읽은 지문이 미리보기와 다릅니다 — 다시 미리보기로 확인하세요', 'bad');
               document.dispatchEvent(new CustomEvent('vanam:price-db-changed'));

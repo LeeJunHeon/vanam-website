@@ -284,6 +284,7 @@ const good = (await read(baseSheets())).data;
     const m = new RegExp(`\`SELECT ([^\`]*?)\\s+FROM ${spec.table}\\b`).exec(body);
     eq(`price-db.ts readPriceTables 컬럼 = 스펙 (${spec.table})`, m ? m[1].split(',').map((x) => x.trim()) : null, spec.cols.map((c) => c.name));
   }
+  eq('저장 뒤 확인 실패 applied_unverified — API·설정 탭 둘 다', [src, readFileSync('src/pages/admin/index.astro', 'utf8')].map((x) => x.includes("'applied_unverified'")), [true, true]);
 }
 
 if (failed) {
