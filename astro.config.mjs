@@ -11,17 +11,11 @@ import cloudflare from '@astrojs/cloudflare';
 
 import { isNoindexPath } from './src/lib/seo-noindex';
 import { chatModeAtBuild } from './src/lib/chat-mode.js';
-import { quoteTestModeAtBuild, QUOTE_TEST_ON } from './src/lib/quote-test-mode.js';
 
 // 구글챗 알림은 "어디서 만든 빌드인가"로 켜고 끈다 (src/lib/chat-mode.js).
 // Cloudflare Workers Builds 의 main 빌드만 켜짐, 맥미니·로컬·기타 빌드는 코드에서 차단.
 const CHAT_MODE = chatModeAtBuild(process.env);
 console.log(CHAT_MODE === 'CHAT_MODE_ON' ? '구글챗 알림: 켜짐(Cloudflare main 빌드)' : '구글챗 알림: 꺼짐(로컬·기타 빌드)');
-
-// 견적 테스트 모드(고객 견적 폼의 "예상 견적 보기")도 빌드가 정한다 (src/lib/quote-test-mode.js).
-// npm run local 빌드만 켜짐 — 일반·Cloudflare 빌드는 꺼짐이고, 꺼진 빌드의 공개 결과물은 main 과 같다.
-const QUOTE_TEST_MODE = quoteTestModeAtBuild(process.env);
-console.log(QUOTE_TEST_MODE === QUOTE_TEST_ON ? '견적 테스트 모드: 켜짐(npm run local)' : '견적 테스트 모드: 꺼짐');
 
 // dev 서버는 순수 Node로 돌리고, Cloudflare 어댑터는 빌드(astro build)에만 적용한다.
 // (dev 에서 workerd 를 쓰면 React 가 CJS 로 로드되며 깨진다)
@@ -115,11 +109,7 @@ export default defineConfig({
     //   localhost/127.0.0.1 은 HTTP 여도 보안 컨텍스트라 crypto.subtle 이 그대로 동작한다.
     plugins: isBuild ? [tailwindcss()] : [tailwindcss(), cloudflareWorkersDevShim],
     // src/lib/chat-send.ts 가 읽는 빌드 표식. scripts/check-chat-guard.mjs 가 번들에서 확인한다.
-    define: {
-      __VANAM_CHAT_MODE__: JSON.stringify(CHAT_MODE),
-      // QuoteForm·/api/quote-estimate 가 읽는 표식. scripts/check-quote-test-mode.mjs 가 번들에서 확인한다.
-      __VANAM_QUOTE_TEST__: JSON.stringify(QUOTE_TEST_MODE),
-    },
+    define: { __VANAM_CHAT_MODE__: JSON.stringify(CHAT_MODE) },
   },
 
   integrations: [

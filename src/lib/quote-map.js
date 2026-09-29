@@ -1,6 +1,6 @@
 // 고객 견적 폼 입력 → 엑셀(V3) 견적 입력 형식(items·layers) 변환. 순수 모듈 — DB·네트워크 없음.
 //
-// 견적 테스트 모드(/api/quote-estimate)가 쓴다. 폼은 "공정 시퀀스"(행 순서대로 공정·물질·값)를 받고,
+// 자동 견적(/api/quote-estimate · 접수 시 자동 견적 · 관리자 계산기)이 쓴다. 폼은 "공정 시퀀스"(행 순서대로 공정·물질·값)를 받고,
 // 엑셀은 "품목(가격 방식·회수·플라즈마…)"과 "층(레시피·두께·반복)"을 받는다. 그 사이를 여기서 잇는다.
 // 고객에게 무엇을 보여줄지(금액/담당자 확인/입력 오류)는 quote-customer.js 가 정한다.
 //
@@ -111,7 +111,6 @@ export function recipeCandidates(recipes) {
  * @property {unknown} [perRun]          1회 투입 장수 (runs 가 없을 때 ceil(샘플 ÷ perRun), 비면 1회)
  * @property {string|null} [substrateId] 첫 증착 품목에 붙일 기판
  * @property {unknown} [substratePerRun] 기판 장수/회 (비면 perRun, 그것도 비면 샘플 수)
- * @property {Record<number, unknown>} [layerRepeats] 단계 번호(1부터) → 층 반복. 없으면 1
  */
 
 /**
@@ -137,7 +136,6 @@ export function runsOf(sampleCount, opts = {}) {
 export function mapFormToQuote(form, recipes, opts = {}) {
   const cands = recipeCandidates(recipes);
   const steps = Array.isArray(form?.steps) ? form.steps : [];
-  const repeats = opts.layerRepeats ?? {};
 
   /** @type {{no:number, equipmentId:string, process:string, materials:string[], etcs:string[], plasma:(number|string|null)[], layers:any[], stepNos:number[]}[]} */
   const groups = [];
@@ -193,13 +191,12 @@ export function mapFormToQuote(form, recipes, opts = {}) {
     cur.stepNos.push(stepNo);
     const etc = String(s?.etc ?? '').trim();
     if (etc) cur.etcs.push(etc);
-    const rep = conv(repeats[stepNo]);
     cur.layers.push({
       itemNo: cur.no,
       order: cur.layers.length + 1,
       recipeId: recipe.recipe_id,
       thicknessNm: parseThickness(s?.value),
-      repeat: rep === null ? 1 : rep,
+      repeat: 1, // 층 반복은 폼에서 받지 않는다(반복 구간은 운영 범위 밖)
       tempC: null,
     });
     plan.itemNo = cur.no;

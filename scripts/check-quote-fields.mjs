@@ -66,6 +66,14 @@ const CASES = [
   ['preFilm 있음인데 내용 비었다', JSON.stringify({ v: 1, delivery: 'courier', preFilm: true, preFilmNote: '   ' }), 'missing_prefilm_note'],
   ['preFilm 있음인데 필드 자체가 없다', JSON.stringify({ v: 1, preFilm: true }), 'missing_prefilm_note'],
   ['preFilm 이 boolean 이 아니다', JSON.stringify({ v: 1, preFilm: 'yes' }), 'invalid_prefilm'],
+  // 기판 등급 — 키가 없으면 통과(옛 클라이언트), '' · Test · Prime 만 허용
+  ['등급 키 없음', JSON.stringify({ v: 1, delivery: 'purchase' }), null],
+  ['등급 빈 값', JSON.stringify({ v: 1, delivery: 'purchase', substrateGrade: '' }), null],
+  ['등급 Test', JSON.stringify({ v: 1, delivery: 'purchase', substrateGrade: 'Test' }), null],
+  ['등급 Prime', JSON.stringify({ v: 1, delivery: 'purchase', substrateGrade: 'Prime' }), null],
+  ['등급 소문자 prime', JSON.stringify({ v: 1, delivery: 'purchase', substrateGrade: 'prime' }), 'invalid_grade'],
+  ['등급 X', JSON.stringify({ v: 1, delivery: 'purchase', substrateGrade: 'X' }), 'invalid_grade'],
+  ['등급이 숫자', JSON.stringify({ v: 1, delivery: 'purchase', substrateGrade: 1 }), 'invalid_grade'],
 ];
 let caseBad = 0;
 for (const [label, input, expected] of CASES) {

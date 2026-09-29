@@ -154,7 +154,7 @@ const defaults = {
       .qc-table td.pre { white-space: pre-line; }
       .qc-table .qc-del { color: color-mix(in srgb, var(--color-ink) 45%, transparent); font-size: 0.75rem; padding: 0.35rem 0.5rem; }
       .qc-table .qc-del:hover { color: var(--color-danger); }
-      #qc-preview:disabled { opacity: 0.4; cursor: not-allowed; }
+      #qc-preview:disabled, #qc-example:disabled { opacity: 0.4; cursor: not-allowed; }
       /* 공용 CSS(global)에 새 유틸리티를 만들지 않으려고 이 화면 전용 규칙으로 둔다 */
       @media (min-width: 1024px) { .qc-span2 { grid-column: span 2 / span 2; } .qc-span5 { grid-column: span 5 / span 5; } }
       .chat-state.is-on { color: var(--color-ok); }
@@ -325,13 +325,18 @@ const defaults = {
         };
 
         // 예시 — 입력만 채운다. 기대 금액은 여기 적지 않는다(계산은 서버가 한다).
+        // ⚠️ 레시피는 불러온 목록의 첫 번째 활성 레시피를 런타임에 고른다 — 실제 레시피 ID·장비 이름을
+        //    코드에 적지 않는다(공개 저장소). 활성 레시피가 없으면 예시 버튼을 끈다.
+        const exampleRecipe = () => (meta?.recipes ?? []).find((r) => r.active === 1) ?? null;
         const example = () => {
+          const r = exampleRecipe();
+          if (!r) return;
           itemsBody().innerHTML = '';
           layersBody().innerHTML = '';
-          addItem({ name: 'Al₂O₃ 20nm 증착', method: '박막자동', qty: 2, unit: '회', vat: '별도', margin: '기본', plasma: 'N',
-            rawText: 'Rayvac Al2O3 20nm 2회, 플라즈마 미포함, 기본 마진' });
+          addItem({ name: `${r.material_name} 20nm 증착`, method: '박막자동', qty: 2, unit: '회', vat: '별도', margin: '기본', plasma: 'N',
+            rawText: `${r.material_name} 20nm 2회, 플라즈마 미포함, 기본 마진` });
           addItem({ name: '샘플박스', method: '단가입력', qty: 1, unit: 'BOX', amount: 40000, vat: '별도', rawText: '샘플박스 1 BOX, 부가세 별도' });
-          addLayer({ itemNo: 1, order: 1, recipeId: 'ALD-RAYVAC-Al2O3', thicknessNm: 20, repeat: 1 });
+          addLayer({ itemNo: 1, order: 1, recipeId: r.recipe_id, thicknessNm: 20, repeat: 1 });
           setInfo({ ...infoDefaults(), customer: '예시 고객', ref: '내부 검증', title: '박막 증착 및 샘플박스' });
           stale();
         };
@@ -442,6 +447,7 @@ const defaults = {
           } catch (e) {
             $('qc-meta').textContent = `가격 DB 확인 실패: ${e}`;
           }
+          $<HTMLButtonElement>('qc-example').disabled = !exampleRecipe();
           reset();
         })();
       }

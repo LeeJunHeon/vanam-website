@@ -5,7 +5,9 @@
 import { mapFormToQuote, recipeCandidates, parseThickness, runsOf, conv, QuoteMapError, REASON } from '../src/lib/quote-map.js';
 import {
   estimateForCustomer, matchSubstrate, planRuns, prettyFormula, addDays, SAMPLE_MANUAL_MIN, FORBIDDEN_CUSTOMER_KEYS,
+  manualLabel, manualLabelAdmin, GRADES, GRADED_TYPES,
 } from '../src/lib/quote-customer.js';
+import { SUBSTRATE_GRADES, GRADED_SUBSTRATES } from '../src/lib/quote-fields.js';
 
 let total = 0, failed = 0;
 function eq(label, got, want) {
@@ -69,9 +71,9 @@ eq('후보: 사용 중지 제외', C['Sputter|Mo'], undefined);
 }
 // ── 변환: 옵션 ──────────────────────────────────────────────────────────────
 {
+  // 반복 구간은 운영 범위 밖 — 옵션이 와도 층 반복은 항상 1
   const m = run([S('Sputter', 'Ti', '10'), S('Sputter', 'Pt', '10')], {}, { layerRepeats: { 1: 7, 2: 7 } });
-  eq('층 반복 옵션', m.layers.map((l) => l.repeat), [7, 7]);
-  eq('층 반복 원문은 그대로(엔진이 검증)', run([S('Sputter', 'Ti', '10')], {}, { layerRepeats: { 1: 'x' } }).layers[0].repeat, 'x');
+  eq('층 반복은 항상 1(옛 옵션 무시)', m.layers.map((l) => l.repeat), [1, 1]);
   eq('마진 옵션 비우면 기본', run([S('Sputter', 'Ti', '10')], {}, {}).items[0].margin, '기본');
   const steps = [S('Sputter', 'Ti', '10'), S('ALD', 'HfO2', '5')];
   const s1 = run(steps, { sampleCount: 8 }, { substrateId: 'SUB-X', substratePerRun: 4 });
@@ -131,21 +133,11 @@ eq(`샘플 ${SAMPLE_MANUAL_MIN - 1} → estimate`, cust({ steps: [S('Sputter', '
 eq(`샘플 ${SAMPLE_MANUAL_MIN} → manual`, cust({ steps: [S('Sputter', 'Ti', '10')], sampleCount: SAMPLE_MANUAL_MIN }), { kind: 'manual', manual: ['샘플 수량 10개 이상'] });
 eq('planRuns 경계', [planRuns(9), planRuns(10)], [{ runs: 1, manual: false }, { runs: 1, manual: true }]);
 
-// 반복 구간
+// 반복 구간 입력은 받지 않는다 — 와도 무시(층 반복 1, 오류 없음)
 {
-  const r = est({ steps: [S('Sputter', 'Ti', '5'), S('Sputter', 'Pt', '5')], sampleCount: 1, repeatGroup: { from: 1, to: 2, count: 10 } });
-  eq('반복 구간 같은 장비 → estimate, 두 층 반복 10', [r.customer.kind, r.debug.input.layers.map((l) => l.repeat)], ['estimate', [10, 10]]);
-  eq('반복 구간 debug 표시', r.debug.flags.repeatGroup, { from: 1, to: 2, count: 10, layers: [{ itemNo: 1, order: 1, repeat: 10 }, { itemNo: 1, order: 2, repeat: 10 }] });
-  const r2 = est({ steps: [S('Sputter', 'Ti', '5'), S('ALD', 'HfO2', '5'), S('Sputter', 'Pt', '5')], sampleCount: 1, repeatGroup: { from: 1, to: 2, count: 3 } });
-  eq('반복 구간 장비 다름 → manual', r2.customer, { kind: 'manual', manual: ['반복 구간 1~2단계 (장비를 오가는 반복)'] });
-  eq('구간 밖 단계는 1', r2.debug.input.layers.map((l) => l.repeat), [3, 3, 1]);
-  const r3 = cust({ steps: [S('Sputter', 'Ti', '5'), S('PlasmaCleaning (In-situ)', 'Ar', '1'), S('Sputter', 'Pt', '5')], sampleCount: 1, repeatGroup: { from: 1, to: 3, count: 2 } });
-  eq('반복 구간에 증착 외 단계 → manual', r3, { kind: 'manual', manual: ['반복 구간 1~3단계 (증착 외 단계 포함)'] });
-  const bad = (g) => cust({ steps: [S('Sputter', 'Ti', '5'), S('Sputter', 'Pt', '5')], sampleCount: 1, repeatGroup: g });
-  eq('반복 구간 끝 < 시작 → invalid', bad({ from: 2, to: 1, count: 3 }).errors.map((e) => e.field), ['repeat']);
-  eq('반복 구간 없는 단계 → invalid', bad({ from: 1, to: 3, count: 3 }).errors.map((e) => e.field), ['repeat']);
-  eq('반복 횟수 1 → invalid', bad({ from: 1, to: 2, count: 1 }).errors.map((e) => e.field), ['repeatCount']);
-  eq('반복 횟수 1.5 → invalid', bad({ from: 1, to: 2, count: '1.5' }).kind, 'invalid');
+  const r = est({ steps: [S('Sputter', 'Ti', '5'), S('Sputter', 'Pt', '5')], sampleCount: 1, repeatGroup: { from: 2, to: 1, count: 1 } });
+  eq('반복 구간 입력 무시 → estimate · 층 반복 1', [r.customer.kind, r.debug.input.layers.map((l) => l.repeat)], ['estimate', [1, 1]]);
+  eq('debug 에 반복 구간 표시 없음', 'repeatGroup' in r.debug.flags, false);
 }
 
 // 담당자 확인 항목
@@ -193,6 +185,57 @@ eq('영문 문구', estimateForCustomer({ form: { locale: 'en', steps: [S('Sputt
 }
 eq('표기: Al2O3 → Al₂O₃', prettyFormula('Al2O3'), 'Al₂O₃');
 eq('날짜 더하기(월 넘김)', addDays('2026-01-25', 14), '2026-02-08');
+
+// ── 담당자 확인 사유: 구조화 항목 · 고객 문구 · 담당자 문구 ──────────────────
+{
+  const r = est({ steps: [S('Sputter', 'Ti', '10'), S('Annealing', 'N2', '60'), S('ALD', 'Al2O3', '10')], measurements: ['XPS'], sampleCount: 12 });
+  eq('debug.manual 은 구조화 항목(중복 없음)', r.debug.manual, [
+    { code: 'samples' },
+    { code: 'step', step: 2, process: 'Annealing', material: 'N2', reason: 'noPrice' },
+    { code: 'step', step: 3, process: 'ALD', material: 'Al2O3', reason: 'chooseEquipment' },
+    { code: 'measure', name: 'XPS' },
+  ]);
+  eq('customer.manual 은 고객 문구(지금과 같음)', r.customer.manual, ['샘플 수량 10개 이상', '2단계 Annealing N₂', '3단계 ALD Al₂O₃', '분석: XPS']);
+  const inv = est({ steps: [S('Sputter', 'Pt', 'x')], sampleCount: 1 });
+  eq('invalid 이면 debug.errors 도 남김', inv.debug.errors.map((e) => [e.step, e.field]), [[1, 'value']]);
+}
+const SUBE = { code: 'substrate', type: 'Silicon', size: '4inch', grade: 'Prime', status: 'none' };
+eq('manualLabel ko', [
+  manualLabel({ code: 'samples' }, 'ko'), manualLabel({ code: 'step', step: 1, process: 'ALD', material: 'Al2O3', reason: 'chooseEquipment' }, 'ko'),
+  manualLabel({ code: 'measure', name: 'XPS' }, 'ko'), manualLabel({ ...SUBE, size: '6inch' }, 'ko'), manualLabel({ code: 'pricing', engineStatus: 'X' }, 'ko'),
+], ['샘플 수량 10개 이상', '1단계 ALD Al₂O₃', '분석: XPS', '기판: Silicon 6 inch Prime', '가격 자료 확인']);
+eq('manualLabel en', [
+  manualLabel({ code: 'samples' }, 'en'), manualLabel({ code: 'step', step: 1, process: 'ALD', material: 'Al2O3', reason: 'chooseEquipment' }, 'en'),
+  manualLabel({ code: 'measure', name: 'XPS' }, 'en'), manualLabel({ ...SUBE, size: '6inch' }, 'en'), manualLabel({ code: 'pricing', engineStatus: 'X' }, 'en'),
+], ['10 or more samples', 'Step 1 ALD Al₂O₃', 'Analysis: XPS', 'Substrate: Silicon 6 inch Prime', 'Pricing data review']);
+eq('manualLabel input ko/en', [
+  manualLabel({ code: 'input', step: 2, field: 'value' }, 'ko'), manualLabel({ code: 'input', field: 'sampleCount' }, 'ko'),
+  manualLabel({ code: 'input', field: 'substrateGrade' }, 'ko'), manualLabel({ code: 'input', field: 'process' }, 'ko'),
+  manualLabel({ code: 'input', step: 2, field: 'value' }, 'en'), manualLabel({ code: 'input', field: 'sampleCount' }, 'en'),
+  manualLabel({ code: 'input', field: 'substrateGrade' }, 'en'), manualLabel({ code: 'input', field: 'process' }, 'en'),
+], ['2단계 입력 확인', '샘플 수량 확인', '기판 등급 확인', '입력 확인',
+  'Check the input for step 2', 'Check the number of samples', 'Check the substrate grade', 'Check your input']);
+{
+  const reasons = [{ code: 'step', step: 1, process: 'ALD', material: 'Al2O3', reason: 'chooseEquipment' }, { ...SUBE, status: 'ambiguous' }, { code: 'pricing', engineStatus: '공정 입력 확인' }];
+  const txt = ['ko', 'en'].flatMap((l) => reasons.map((e) => manualLabel(e, l))).join(' ');
+  eq('고객 문구에 사유 없음', ['장비 선택', 'ambiguous', '원가', '공정 입력 확인', 'chooseEquipment'].filter((w) => txt.includes(w)), []);
+}
+eq('manualLabelAdmin', [
+  manualLabelAdmin({ code: 'step', step: 1, process: 'ALD', material: 'Al2O3', reason: 'chooseEquipment' }),
+  manualLabelAdmin({ code: 'measure', name: 'XPS' }),
+  manualLabelAdmin(SUBE),
+  manualLabelAdmin({ ...SUBE, status: 'ambiguous' }),
+  manualLabelAdmin({ code: 'pricing', engineStatus: '공정 입력 확인' }),
+  manualLabelAdmin({ code: 'samples' }),
+  manualLabelAdmin({ code: 'input', step: 3, field: 'value' }),
+  manualLabelAdmin({ code: 'input', step: 3, field: 'material' }),
+  manualLabelAdmin({ code: 'input', step: 3, field: 'process' }),
+  manualLabelAdmin({ code: 'input', field: 'sampleCount' }),
+  manualLabelAdmin({ code: 'input', field: 'substrateGrade' }),
+], ['1단계 ALD Al₂O₃ — 장비 선택 필요', '분석: XPS — 가격 자료 없음', '기판: Silicon 4 inch Prime — 목록에 없음',
+  '기판: Silicon 4 inch Prime — 같은 사양 원가가 다름', '가격 자료 확인 — 엔진 상태: 공정 입력 확인', '샘플 수량 10개 이상',
+  '3단계 입력 확인(두께·시간)', '3단계 입력 확인(물질)', '3단계 입력 확인(공정)', '샘플 수량 확인', '기판 등급 확인']);
+eq('등급 상수는 quote-fields 단일 출처', [GRADES === SUBSTRATE_GRADES, GRADED_TYPES === GRADED_SUBSTRATES], [true, true]);
 
 if (failed) {
   console.error(`\n견적 변환·고객 판정 테스트 실패 — ${failed}/${total}건.`);

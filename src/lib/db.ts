@@ -106,6 +106,19 @@ const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS price_import_log (
     id INTEGER PRIMARY KEY AUTOINCREMENT, imported_at TEXT, source_file TEXT, source_sha256 TEXT,
     rules_version TEXT, counts_json TEXT)`,
+
+  // ── 견적 개정 (quote_revisions) ──────────────────────────────────────
+  // 문의 한 건의 견적 이력. 접수 시 자동 계산(auto)과 담당자 저장(admin)이 개정 번호를 1,2,3… 올린다.
+  // 고객에게 나가는 금액은 doc_json 이 유일한 원천이다(input_json·result_json 은 내부 전용 — 원가 포함).
+  // 새 개정은 "기준 개정 + 1" 로 INSERT 한다 — 두 곳이 동시에 저장하면 UNIQUE 위반으로 한쪽이 실패(낙관적 잠금).
+  // 컬럼 설명은 migrations/0001_init.sql 에 있다(여기 CREATE 문자열 안에는 주석을 넣지 않는다).
+  `CREATE TABLE IF NOT EXISTS quote_revisions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, inquiry_id TEXT NOT NULL, rev INTEGER NOT NULL,
+    source TEXT NOT NULL, kind TEXT NOT NULL, total INTEGER,
+    input_json TEXT, result_json TEXT, doc_json TEXT, manual_json TEXT,
+    seen_total INTEGER, price_sha TEXT, note TEXT, created_at TEXT NOT NULL,
+    UNIQUE (inquiry_id, rev))`,
+  `CREATE INDEX IF NOT EXISTS idx_qrev_inq ON quote_revisions(inquiry_id, rev)`,
 ];
 
 // 이미 만들어진 테이블에 컬럼을 덧붙일 때 쓴다.

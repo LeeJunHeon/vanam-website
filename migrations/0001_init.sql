@@ -220,3 +220,26 @@ CREATE TABLE IF NOT EXISTS price_import_log (
   rules_version TEXT,
   counts_json   TEXT
 );
+
+-- ── 견적 개정 (quote_revisions) ─────────────────────────
+-- 문의 한 건의 견적 이력. 개정 번호(rev)는 문의별로 1,2,3… 올라간다.
+-- 새 개정은 "기준 개정 + 1" 로 INSERT 한다. 두 곳이 동시에 저장하면 UNIQUE 위반으로 한쪽이 실패한다(낙관적 잠금).
+-- ⚠️ 고객에게 나가는 금액은 doc_json 이 유일한 원천이다. input_json·result_json 은 원가가 들어 있는 내부 전용이다.
+CREATE TABLE IF NOT EXISTS quote_revisions (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  inquiry_id   TEXT NOT NULL,               -- inquiries.id
+  rev          INTEGER NOT NULL,            -- 문의별 개정 번호 1,2,3…
+  source       TEXT NOT NULL,               -- auto(접수 시 자동) | admin(담당자 저장)
+  kind         TEXT NOT NULL,               -- estimate(금액 있음) | manual(담당자 확인 필요·금액 없음)
+  total        INTEGER,                     -- 합계(부가세 포함·원). manual 이면 NULL
+  input_json   TEXT,                        -- 엔진 입력 {items, layers} — 내부 전용
+  result_json  TEXT,                        -- 엔진 결과(원가 내역 포함) — 내부 전용
+  doc_json     TEXT,                        -- 고객용 견적서 데이터 — 고객에게 나가는 금액의 유일한 원천
+  manual_json  TEXT,                        -- 담당자 확인 사유(구조화 항목 배열)
+  seen_total   INTEGER,                     -- 접수 순간 고객 화면에 떠 있던 예상 합계(참고용·계산에 안 씀)
+  price_sha    TEXT,                        -- 계산에 쓴 가격 DB(price_import_log.source_sha256)
+  note         TEXT,                        -- 담당자 메모(내부)
+  created_at   TEXT NOT NULL,
+  UNIQUE (inquiry_id, rev)
+);
+CREATE INDEX IF NOT EXISTS idx_qrev_inq ON quote_revisions(inquiry_id, rev);

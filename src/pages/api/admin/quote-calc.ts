@@ -13,6 +13,7 @@ import type { APIRoute } from 'astro';
 import { isAdmin } from '../../../lib/admin-auth';
 import { db } from '../../../lib/db';
 import { computeQuote } from '../../../lib/quote-engine.js';
+import { loadPriceDb, latestImport } from '../../../lib/price-db';
 
 export const prerender = false;
 
@@ -45,9 +46,7 @@ export const GET: APIRoute = async ({ request }) => {
     FROM price_substrate ORDER BY catalog_id`);
   const policy = await all<{ key: string; value: string | null }>(d, `SELECT key, value
     FROM price_policy WHERE key IN ('default_delivery_due', 'quote_valid_days')`);
-  const log = (await all<{ imported_at: string; rules_version: string; source_sha256: string }>(d,
-    `SELECT imported_at, rules_version, source_sha256
-    FROM price_import_log ORDER BY id DESC LIMIT 1`))[0] ?? null;
+  const log = await latestImport(d);
   if (recipes.length === 0) return json(EMPTY, 503);
 
   const pv = (k: string) => policy.find((p) => p.key === k)?.value ?? null;
@@ -90,19 +89,7 @@ export const POST: APIRoute = async ({ request }) => {
   const d = await db();
   if (!d) return json({ ok: false, error: 'no_db' }, 503);
 
-  const priceDb = {
-    policy: await all(d, `SELECT key, value, vtype FROM price_policy`),
-    recipes: await all(d, `SELECT recipe_id, material_name, process_type, equipment_id, method,
-      material_cost_per_nm, growth_nm_per_min, default_temp_c,
-      loading_override_min, plasma_override_min, setup_override_min,
-      legacy_min_charge, active
-      FROM price_recipe`),
-    equipment: await all(d, `SELECT equipment_id, equipment_name, process_type, rate_per_min,
-      default_loading_min, default_plasma_min, default_setup_min, active
-      FROM price_equipment`),
-    substrates: await all(d, `SELECT catalog_id, item_name, category, unit, cost_per_unit, active
-      FROM price_substrate`),
-  };
+  const priceDb = await loadPriceDb(d);
   if (priceDb.policy.length === 0 || priceDb.recipes.length === 0) return json(EMPTY, 503);
 
   return json({ ok: true, result: computeQuote(priceDb, { items, layers }) });

@@ -4,6 +4,11 @@
 import type { APIRoute } from 'astro';
 import { db } from '../../../lib/db';
 import { rateLimit, tooMany } from '../../../lib/rate-limit';
+// 견적 요청(INQ-)의 예상·확정 견적 요약 — 고객에게 보일 것만 허용 목록으로 만든다(quote-revision.js).
+import { latestRevision } from '../../../lib/quote-store';
+import { customerQuoteView } from '../../../lib/quote-revision.js';
+import { readRate } from '../../../lib/fx';
+import { formatUsd } from '../../../lib/price';
 
 export const prerender = false;
 
@@ -24,6 +29,8 @@ export const POST: APIRoute = async ({ request }) => {
 
   const id = typeof body.id === 'string' ? body.id.trim().toUpperCase() : '';
   const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
+  // 견적 요약의 담당자 확인 문구 언어 — 조회 화면이 보고 있는 언어
+  const locale = body.locale === 'ko' ? 'ko' : 'en';
 
   const isOrd = /^ORD-\d{8}-[A-Z0-9]{4}$/.test(id);
   const isInq = /^INQ-\d{8}-[A-Z0-9]{4}$/.test(id);
@@ -45,6 +52,26 @@ export const POST: APIRoute = async ({ request }) => {
       if (!q || String(q.email ?? '').toLowerCase() !== email) {
         await new Promise((r) => setTimeout(r, 500));
         return json({ ok: false, error: 'not_found' }, 404);
+      }
+      // 견적 요약 — 개정이 없으면 null. 여기서 실패해도 조회 자체는 지금처럼 나가야 한다.
+      let quote: ReturnType<typeof customerQuoteView> = null;
+      try {
+        const revision = await latestRevision(d, id);
+        if (revision) {
+          const fx = await readRate(d);
+          quote = customerQuoteView({
+            revision,
+            inquiry: {
+              quoted_amount: q.quoted_amount ?? null,
+              quote_currency: (q as Record<string, unknown>).quote_currency ?? null,
+              paid_at: (q as Record<string, unknown>).paid_at ?? null,
+            },
+            locale, usdRate: fx.rate, formatUsd,
+          });
+        }
+      } catch (e) {
+        console.error('[order/lookup] 견적 요약 실패(조회는 계속):', id, (e as Error)?.name ?? 'Error');
+        quote = null;
       }
       return json({
         ok: true,
@@ -70,6 +97,7 @@ export const POST: APIRoute = async ({ request }) => {
           quote_bank: (q as Record<string, unknown>).quote_bank ?? null,
           paid_at: (q as Record<string, unknown>).paid_at ?? null,
           created_at: q.created_at,
+          quote,
         },
       });
     } catch (e) {

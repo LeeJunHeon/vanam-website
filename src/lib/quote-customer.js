@@ -1,15 +1,19 @@
-// 고객 화면용 예상 견적 판정 — 견적 테스트 모드(/api/quote-estimate) 전용. 순수 모듈.
+// 고객 화면용 예상 견적 판정 — 순수 모듈 (/api/quote-estimate · 접수 시 자동 견적이 쓴다).
 //
 // 고객에게는 세 가지 중 하나만 보여준다:
 //   estimate — 자동 계산이 전부 되는 경우의 합계(부가세 포함) + USD 환산 + 유효기간
 //   manual   — 하나라도 자동 계산이 안 되는 항목이 섞이면 금액 없이 "담당자 확인" 항목 목록
-//   invalid  — 고객 입력 문제(샘플 수·두께·반복 구간 등) 목록
+//   invalid  — 고객 입력 문제(샘플 수·두께 등) 목록
 // customer 객체에는 단가·공급가액·세액·원가·장비/레시피/기판 ID 를 절대 넣지 않는다.
-// 내부 확인용 값은 debug 로만 돌려준다(운영 전환 시 API 에서 통째로 제거).
+// 내부 확인용 값은 debug 로만 돌려준다 — API 응답에는 싣지 않는다(접수 시 자동 견적이 저장에만 쓴다).
+//
+// 담당자 확인 사유는 구조화 항목({code, …})으로 모으고, 문구는 manualLabel(고객)·manualLabelAdmin(담당자)이 만든다.
+// 고객 문구에는 사유(reason·status·engineStatus)를 절대 넣지 않는다.
 //
 // ⚠️ 규칙은 DB 값으로 런타임에 판단한다. 실제 장비·레시피·기판 ID·단가를 코드에 적지 않는다.
 // ⚠️ 엔진(computeQuote)과 USD 표기(formatUsd)는 인자로 받는다 — node 테스트가 빌드 없이 쓰기 위해.
-import { mapFormToQuote, conv, parseThickness, DEPOSITION } from './quote-map.js';
+import { mapFormToQuote, conv, parseThickness, REASON } from './quote-map.js';
+import { SUBSTRATE_GRADES, GRADED_SUBSTRATES } from './quote-fields.js';
 
 /** 이 수량 이상이면 담당자 확인 — 1회 투입 장수 표가 오면 planRuns 만 바꾸면 된다. */
 export const SAMPLE_MANUAL_MIN = 10;
@@ -18,9 +22,9 @@ export const SAMPLE_MANUAL_MIN = 10;
 const NM_PROCESSES = ['Sputter', 'ALD', 'Evaporator'];
 const MIN_PROCESSES = ['PlasmaCleaning (In-situ)', 'PlasmaTreatment (Ex-situ)', 'Annealing'];
 
-/** 기판 등급을 고르는 종류(폼 value) */
-export const GRADED_TYPES = ['Silicon', 'Silicon oxide'];
-export const GRADES = ['Test', 'Prime'];
+/** 기판 등급을 고르는 종류(폼 value) — 단일 출처는 quote-fields.js (이름 호환용 재수출) */
+export const GRADED_TYPES = GRADED_SUBSTRATES;
+export const GRADES = SUBSTRATE_GRADES;
 /** 폼 크기 value → 인치 */
 const SIZE_INCH = { '4inch': 4, '6inch': 6, '2inch_or_piece': 2 };
 
@@ -32,8 +36,6 @@ const TEXT = {
     material: (n) => `${n}단계 물질을 선택해 주세요.`,
     thickness: (n) => `${n}단계 두께를 숫자로 입력해 주세요.`,
     minutes: (n) => `${n}단계 시간을 숫자로 입력해 주세요.`,
-    repeatRange: '반복 구간의 시작·끝 단계를 다시 선택해 주세요.',
-    repeatCount: '반복 횟수는 2 이상의 정수로 입력해 주세요.',
     grade: '기판 등급(Test / Prime)을 선택해 주세요.',
     step: (n, p, m) => `${n}단계 ${p}${m ? ` ${m}` : ''}`,
     measure: (m) => `분석: ${m}`,
@@ -42,9 +44,11 @@ const TEXT = {
     typeOther: '기타 종류',
     size2: '2 inch 이하·조각',
     manySamples: `샘플 수량 ${SAMPLE_MANUAL_MIN}개 이상`,
-    repeatCross: (a, b) => `반복 구간 ${a}~${b}단계 (장비를 오가는 반복)`,
-    repeatNonDep: (a, b) => `반복 구간 ${a}~${b}단계 (증착 외 단계 포함)`,
     pricing: '가격 자료 확인',
+    inputStep: (n) => `${n}단계 입력 확인`,
+    inputSamples: '샘플 수량 확인',
+    inputGrade: '기판 등급 확인',
+    input: '입력 확인',
   },
   en: {
     samples: 'Enter the number of samples as a whole number of 1 or more.',
@@ -53,8 +57,6 @@ const TEXT = {
     material: (n) => `Select the material for step ${n}.`,
     thickness: (n) => `Enter the thickness for step ${n} as a number.`,
     minutes: (n) => `Enter the time for step ${n} as a number.`,
-    repeatRange: 'Select the first and last steps of the repeat again.',
-    repeatCount: 'Enter the repeat count as a whole number of 2 or more.',
     grade: 'Select the substrate grade (Test / Prime).',
     step: (n, p, m) => `Step ${n} ${p}${m ? ` ${m}` : ''}`,
     measure: (m) => `Analysis: ${m}`,
@@ -63,9 +65,11 @@ const TEXT = {
     typeOther: 'other type',
     size2: '≤2 inch / piece',
     manySamples: `${SAMPLE_MANUAL_MIN} or more samples`,
-    repeatCross: (a, b) => `Repeat steps ${a}–${b} (alternates between tools)`,
-    repeatNonDep: (a, b) => `Repeat steps ${a}–${b} (includes non-deposition steps)`,
     pricing: 'Pricing data review',
+    inputStep: (n) => `Check the input for step ${n}`,
+    inputSamples: 'Check the number of samples',
+    inputGrade: 'Check the substrate grade',
+    input: 'Check your input',
   },
 };
 
@@ -146,13 +150,6 @@ export function validateForm(form, T) {
       if (!(typeof m === 'number' && m >= 0)) errs.push({ step: no, field: 'value', message: T.minutes(no) });
     }
   });
-  const g = form?.repeatGroup;
-  if (g) {
-    const from = conv(g.from), to = conv(g.to), count = conv(g.count);
-    const inRange = (v) => isInt(v) && v >= 1 && v <= steps.length;
-    if (!inRange(from) || !inRange(to) || from > to) errs.push({ field: 'repeat', message: T.repeatRange });
-    if (!(isInt(count) && count >= 2)) errs.push({ field: 'repeatCount', message: T.repeatCount });
-  }
   if (form?.delivery === 'purchase' && GRADED_TYPES.includes(String(form?.substrateType ?? ''))
     && !GRADES.includes(String(form?.substrateGrade ?? ''))) {
     errs.push({ field: 'substrateGrade', message: T.grade });
@@ -160,10 +157,76 @@ export function validateForm(form, T) {
   return errs;
 }
 
+// ── 담당자 확인 사유 → 문구 ────────────────────────────────────────────
+/**
+ * @typedef {{code:'samples'}
+ *   | {code:'substrate', type:string, size:string, grade:string, status:'none'|'ambiguous'}
+ *   | {code:'step', step:number, process:string, material:string, reason:string}
+ *   | {code:'measure', name:string}
+ *   | {code:'pricing', engineStatus:string}
+ *   | {code:'input', step?:number, field:string}} ManualEntry
+ */
+
+/** 기판 항목 → '종류 크기 등급' 조각 (고객·담당자 공용) */
+function substrateParts(e, T) {
+  const type = String(e.type ?? '');
+  const size = String(e.size ?? '');
+  return [
+    type === '__other__' || !type ? T.typeOther : type,
+    size === '__other__' || !size ? T.sizeOther : size === '2inch_or_piece' ? T.size2 : size.replace('inch', ' inch'),
+    GRADED_TYPES.includes(type) ? String(e.grade ?? '') : '',
+  ];
+}
+
+/**
+ * 고객 문구. 사유(reason·status·engineStatus)는 넣지 않는다.
+ * @param {ManualEntry} e @param {string} locale 'ko'|'en'
+ */
+export function manualLabel(e, locale) {
+  const T = TEXT[locale === 'en' ? 'en' : 'ko'];
+  switch (e?.code) {
+    case 'samples': return T.manySamples;
+    case 'substrate': return T.substrate(...substrateParts(e, T));
+    case 'step': return T.step(e.step, e.process, prettyFormula(e.material));
+    case 'measure': return T.measure(e.name);
+    case 'pricing': return T.pricing;
+    case 'input':
+      if (e.step) return T.inputStep(e.step);
+      if (e.field === 'sampleCount') return T.inputSamples;
+      if (e.field === 'substrateGrade') return T.inputGrade;
+      return T.input;
+    default: return T.input;
+  }
+}
+
+const INPUT_FIELD_KO = { value: '두께·시간', material: '물질', process: '공정' };
+
+/**
+ * 담당자 문구(한글, 사유 포함) — 구글챗 알림·관리자 화면용.
+ * @param {ManualEntry} e
+ */
+export function manualLabelAdmin(e) {
+  const T = TEXT.ko;
+  switch (e?.code) {
+    case 'samples': return T.manySamples;
+    case 'substrate':
+      return `${T.substrate(...substrateParts(e, T))} — ${e.status === 'ambiguous' ? '같은 사양 원가가 다름' : '목록에 없음'}`;
+    case 'step': return `${T.step(e.step, e.process, prettyFormula(e.material))} — ${REASON[e.reason] ?? e.reason}`;
+    case 'measure': return `${T.measure(e.name)} — 가격 자료 없음`;
+    case 'pricing': return `${T.pricing} — 엔진 상태: ${e.engineStatus}`;
+    case 'input':
+      if (e.step) return `${T.inputStep(e.step)}(${INPUT_FIELD_KO[e.field] ?? '입력'})`;
+      if (e.field === 'sampleCount') return T.inputSamples;
+      if (e.field === 'substrateGrade') return T.inputGrade;
+      return T.input;
+    default: return T.input;
+  }
+}
+
 /**
  * 고객 응답 + 내부 확인용 debug.
  * @param {object} args
- * @param {any} args.form 폼 입력 (steps·repeatGroup·measurements·sampleCount·delivery·substrateType·substrateSize·substrateGrade·locale)
+ * @param {any} args.form 폼 입력 (steps·measurements·sampleCount·delivery·substrateType·substrateSize·substrateGrade·locale)
  * @param {{policy: any[], recipes: any[], equipment: any[], substrates: any[]}} args.priceDb
  * @param {(db: any, q: any) => any} args.computeQuote
  * @param {(krw: number, rate: number) => string} args.formatUsd
@@ -173,24 +236,22 @@ export function validateForm(form, T) {
 export function estimateForCustomer({ form, priceDb, computeQuote, formatUsd, usdRate, today }) {
   const locale = form?.locale === 'en' ? 'en' : 'ko';
   const T = TEXT[locale];
-  const steps = Array.isArray(form?.steps) ? form.steps : [];
 
   const errors = validateForm(form, T);
   if (errors.length) return { customer: { kind: 'invalid', errors }, debug: { flags: { stage: 'validate' }, errors } };
 
   const sampleCount = /** @type {number} */ (conv(form.sampleCount));
+  /** @type {ManualEntry[]} */
   const manual = [];
-  const addManual = (label) => { if (!manual.includes(label)) manual.push(label); };
+  const seen = new Set();
+  const addManual = (entry) => {
+    const key = JSON.stringify(entry);
+    if (!seen.has(key)) { seen.add(key); manual.push(entry); }
+  };
 
   // 회수
   const runsPlan = planRuns(sampleCount);
-  if (runsPlan.manual) addManual(T.manySamples);
-
-  // 반복 구간
-  const g = form.repeatGroup ? { from: conv(form.repeatGroup.from), to: conv(form.repeatGroup.to), count: conv(form.repeatGroup.count) } : null;
-  /** @type {Record<number, number>} */
-  const layerRepeats = {};
-  if (g) for (let k = g.from; k <= g.to; k++) layerRepeats[k] = g.count;
+  if (runsPlan.manual) addManual({ code: 'samples' });
 
   // 기판 (구매 요청일 때만)
   let substrate = { status: 'notPurchase', matched: [] };
@@ -199,41 +260,34 @@ export function estimateForCustomer({ form, priceDb, computeQuote, formatUsd, us
     substrate = matchSubstrate(priceDb.substrates, { type: form.substrateType, size: form.substrateSize, grade: form.substrateGrade });
     if (substrate.status === 'ok') substrateId = String(substrate.row.catalog_id);
     else {
-      const type = String(form.substrateType ?? '');
-      const size = String(form.substrateSize ?? '');
-      addManual(T.substrate(
-        type === '__other__' || !type ? T.typeOther : type,
-        size === '__other__' || !size ? T.sizeOther : size === '2inch_or_piece' ? T.size2 : size.replace('inch', ' inch'),
-        GRADED_TYPES.includes(type) ? form.substrateGrade : '',
-      ));
+      addManual({
+        code: 'substrate',
+        type: String(form.substrateType ?? ''),
+        size: String(form.substrateSize ?? ''),
+        grade: String(form.substrateGrade ?? ''),
+        status: /** @type {'none'|'ambiguous'} */ (substrate.status),
+      });
     }
   }
 
-  const mapped = mapFormToQuote(form, priceDb.recipes, {
-    margin: '기본', runs: runsPlan.runs, substrateId, layerRepeats,
-  });
+  const mapped = mapFormToQuote(form, priceDb.recipes, { margin: '기본', runs: runsPlan.runs, substrateId });
 
-  // 산정 제외 단계 → 고객 항목명
+  // 산정 제외 단계 → 구조화 항목
   for (const e of mapped.extras) {
-    addManual(e.kind === 'measurement' ? T.measure(e.process) : T.step(e.step, e.process, prettyFormula(e.material)));
-  }
-
-  // 반복 구간: 증착 외 단계가 끼거나, 구간 안 단계가 서로 다른 품목(장비)이면 담당자 확인
-  if (g) {
-    const inside = mapped.plan.steps.filter((s) => s.step >= g.from && s.step <= g.to);
-    if (inside.some((s) => !DEPOSITION.includes(s.process))) addManual(T.repeatNonDep(g.from, g.to));
-    else if (new Set(inside.map((s) => s.itemNo)).size > 1) addManual(T.repeatCross(g.from, g.to));
+    if (e.kind === 'measurement') addManual({ code: 'measure', name: e.process });
+    else addManual({ code: 'step', step: e.step, process: e.process, material: e.material, reason: e.kind });
   }
 
   const result = mapped.items.length ? computeQuote(priceDb, { items: mapped.items, layers: mapped.layers }) : null;
-  if (result && result.status !== '정상') addManual(T.pricing); // 입력은 검증했으니 남은 오류는 가격 자료 쪽
+  // 입력은 검증했으니 남은 엔진 오류는 가격 자료 쪽이다
+  if (result && result.status !== '정상') addManual({ code: 'pricing', engineStatus: String(result.status) });
 
   const policyDays = Number((priceDb.policy ?? []).find((p) => p.key === 'quote_valid_days')?.value);
   const validDays = Number.isFinite(policyDays) && policyDays > 0 ? policyDays : null;
 
   /** @type {any} */
   let customer;
-  if (manual.length || !result) customer = { kind: 'manual', manual };
+  if (manual.length || !result) customer = { kind: 'manual', manual: manual.map((e) => manualLabel(e, locale)) };
   else {
     const total = /** @type {number} */ (result.total);
     customer = {
@@ -252,16 +306,15 @@ export function estimateForCustomer({ form, priceDb, computeQuote, formatUsd, us
     input: { items: mapped.items, layers: mapped.layers },
     result,
     extras: mapped.extras,
+    manual,
     flags: {
       samples: { count: sampleCount, runs: runsPlan.runs, manualAtOrAbove: SAMPLE_MANUAL_MIN, manual: runsPlan.manual },
-      repeatGroup: g ? { ...g, layers: mapped.layers.filter((l) => l.repeat !== 1).map((l) => ({ itemNo: l.itemNo, order: l.order, repeat: l.repeat })) } : null,
       substrate: { ...substrate, row: undefined, chosen: substrateId },
-      manual,
     },
   };
   return { customer, debug };
 }
 
-/** 고객 응답에 절대 들어가면 안 되는 키 — 테스트·게이트가 쓴다 */
+/** 고객 응답에 절대 들어가면 안 되는 키 — 테스트·점검 스크립트가 쓴다 */
 export const FORBIDDEN_CUSTOMER_KEYS = ['unitPrice', 'supply', 'vat', 'cost', 'breakdown', 'recipeId', 'recipe_id',
   'equipmentId', 'equipment_id', 'substrateId', 'catalog_id', 'items', 'layers', 'markup', 'plan', 'result'];

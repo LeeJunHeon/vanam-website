@@ -8,12 +8,8 @@ import siteData from '../data/site.json';
 import company from '../data/company.json';
 import { PROCESSES, MEASUREMENTS, SUBSTRATES, SUBSTRATE_SIZES, DELIVERY_METHODS, DELIVERY_NEEDS_SHIPPING, PRODUCT_MAT_FILTER, SYSTEM_TO_PROCESS, type MatCat } from '../lib/processes';
 import { COUNTRIES } from '../lib/countries';
-// 견적 테스트 모드(npm run local 빌드 전용) — 꺼진 빌드에서는 아무것도 렌더하지 않는다.
-import QuoteEstimateTest from './QuoteEstimateTest.astro';
-declare const __VANAM_QUOTE_TEST__: string;
 
 const { product, productName, simple = false } = Astro.props;
-const quoteTest = !simple && __VANAM_QUOTE_TEST__.endsWith('_ON');
 const locale = Astro.currentLocale ?? 'en';
 const site = siteData[locale] ?? siteData.en;
 const isKo = locale === 'ko';
@@ -445,13 +441,13 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
         ></div>
 
         {/* 다운로드 안내 — '견적서 다운로드'는 전송이 아니라는 점을 버튼 옆에서 분명히 한다 */}
-        {!simple && !quoteTest && <p class="text-sm leading-relaxed text-ink/45">{q.downloadHint}</p>}
+        {!simple && <p class="text-sm leading-relaxed text-ink/45">{q.downloadHint}</p>}
 
-        {quoteTest && <QuoteEstimateTest part="panel" />}<div class="flex flex-wrap items-center justify-end gap-4">
+        <div class="flex flex-wrap items-center justify-end gap-4">
           <p id="quote-status" class="mr-auto text-sm" role="status" aria-live="polite"></p>
-          {!simple && !quoteTest && (
+          {!simple && (
             <button type="button" id="quote-print" class="v-btn-ghost disabled:cursor-not-allowed disabled:opacity-60">{q.downloadSheet}</button>
-          )}{quoteTest && <QuoteEstimateTest part="button" />}
+          )}
           <button type="submit" id="quote-submit"
             class="v-btn disabled:cursor-not-allowed disabled:opacity-60">
             <span id="quote-submit-label">{simple ? q.submitOrder : q.submit}</span>

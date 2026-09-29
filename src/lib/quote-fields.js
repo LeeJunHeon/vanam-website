@@ -38,6 +38,14 @@ export const DELIVERY_VALUES = DELIVERY_METHODS.map((d) => d.value);
 export const DELIVERY_NEEDS_SHIPPING = DELIVERY_METHODS.filter((d) => d.needsShipping).map((d) => d.value);
 
 /**
+ * 구매 요청 기판의 등급 — 단일 출처. 폼·자동 견적(quote-customer.js)·서버 검증이 모두 이 목록을 본다.
+ * ⚠️ 저장되는 코드값이라 대소문자까지 그대로 쓴다.
+ */
+export const SUBSTRATE_GRADES = ['Test', 'Prime'];
+/** 등급을 고르는 기판 종류(폼 value) */
+export const GRADED_SUBSTRATES = ['Silicon', 'Silicon oxide'];
+
+/**
  * 견적 폼이 보낸 구조화 사본(details_json)의 최소 검증.
  *
  * 설계 원칙 — **모르는 것은 통과시킨다.**
@@ -45,6 +53,7 @@ export const DELIVERY_NEEDS_SHIPPING = DELIVERY_METHODS.filter((d) => d.needsShi
  *     · delivery 가 있는데 허용 목록에 없다 → 차단
  *     · preFilm 이 boolean 이 아니다        → 차단
  *     · preFilm 이 true 인데 메모가 비었다  → 차단
+ *     · substrateGrade 가 있는데 '', 'Test', 'Prime' 이 아니다 → 차단 (키가 없으면 통과 — 옛 클라이언트)
  *   파싱 실패·필드 없음·웨이퍼 문의 형식은 전부 통과(옛 클라이언트·다른 폼 호환).
  *
  * @param {string} detailsJson  폼이 보낸 JSON 문자열 (빈 문자열 허용)
@@ -73,6 +82,10 @@ export function validateQuoteDetails(detailsJson) {
     if (typeof dj.preFilm !== 'boolean') return { ok: false, error: 'invalid_prefilm' };
     const note = typeof dj.preFilmNote === 'string' ? dj.preFilmNote.trim() : '';
     if (dj.preFilm && !note) return { ok: false, error: 'missing_prefilm_note' };
+  }
+
+  if ('substrateGrade' in dj && dj.substrateGrade !== '' && !SUBSTRATE_GRADES.includes(dj.substrateGrade)) {
+    return { ok: false, error: 'invalid_grade' };
   }
 
   return { ok: true };
