@@ -6,6 +6,7 @@
 //    → getDb()가 null 을 돌려주고, 호출부는 DB 없이도 동작해야 한다.
 //      (문의 폼은 DB 없이도 구글챗 알림은 나가야 하므로)
 import { env as cfEnv } from 'cloudflare:workers';
+import { runSchemaInit, schemaVersionOf } from './schema-init.js';
 
 export type D1 = {
   prepare: (sql: string) => {
@@ -30,6 +31,8 @@ export function getDb(): D1 | null {
 // ── 테이블 자동 생성 ────────────────────────────────────
 // migrations/0001_init.sql 과 동일한 내용. 워커 인스턴스당 한 번만 실행된다.
 // (수동 마이그레이션 없이도 첫 요청에서 스키마가 준비되도록)
+// ⚠️ 무료 플랜은 요청당 D1 호출 50번이 한도다 — 스키마 버전 표식이 맞으면 D1 1번으로 끝낸다(schema-init.js).
+//    아래 SCHEMA·MIGRATIONS 를 한 글자라도 바꾸면 버전이 바뀌어 다음 인스턴스가 전체 점검을 한 번 한다.
 let schemaReady: Promise<void> | null = null;
 
 const SCHEMA = [
@@ -159,23 +162,40 @@ const MIGRATIONS = [
   `ALTER TABLE order_items ADD COLUMN dicing_fee INTEGER NOT NULL DEFAULT 0`,
 ];
 
+// 스키마 버전 — SCHEMA·MIGRATIONS 문장 전체의 지문(settings 'schema_version' 에 숫자로 저장)
+const SCHEMA_VERSION = schemaVersionOf([...SCHEMA, ...MIGRATIONS]);
+
 export async function ensureSchema(db: D1): Promise<void> {
   if (!schemaReady) {
-    schemaReady = (async () => {
-      for (const sql of SCHEMA) await db.prepare(sql).run();
-      for (const sql of MIGRATIONS) {
-        try {
-          await db.prepare(sql).run();
-        } catch (e) {
-          // 컬럼이 이미 있으면(duplicate column) 정상 경로 — 그 외 실패는 조용히 삼키지 않는다.
-          // (0249: ALTER 오타가 소리 없이 무시되어 스키마가 어긋나는 것을 로그로 드러낸다.
-          //  가용성 원칙은 유지 — 경고만 남기고 서비스는 계속 간다)
-          if (!/duplicate column/i.test(String(e))) {
-            console.warn('[ensureSchema] 마이그레이션 실패(무시하지 않음):', sql, e);
-          }
-        }
-      }
-    })().catch((e) => {
+    schemaReady = runSchemaInit({
+      schema: SCHEMA,
+      migrations: MIGRATIONS,
+      version: SCHEMA_VERSION,
+      readMarker: async () => {
+        const row = await db
+          .prepare(`SELECT value FROM settings WHERE key = 'schema_version'`)
+          .first<{ value: number | string | null }>();
+        const v = Number(row?.value);
+        return row && Number.isFinite(v) ? v : null;
+      },
+      writeMarker: async (v: number) => {
+        await db
+          .prepare(
+            `INSERT INTO settings (key, value, updated_at, source) VALUES ('schema_version', ?, ?, 'schema')
+             ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at, source = excluded.source`,
+          )
+          .bind(v, new Date().toISOString())
+          .run();
+      },
+      exec: (sql: string) => db.prepare(sql).run(),
+      tableColumns: async (table: string) => {
+        if (!/^\w+$/.test(table)) throw new Error(`표 이름이 이상합니다: ${table}`);
+        const { results } = await db.prepare(`PRAGMA table_info(${table})`).all<{ name: string }>();
+        return new Set((results ?? []).map((r) => r.name));
+      },
+      warn: (...a: unknown[]) => console.warn(...a),
+      log: (m: string) => console.log(m),
+    }).then(() => undefined).catch((e) => {
       schemaReady = null; // 실패하면 다음 요청에서 재시도
       throw e;
     });
