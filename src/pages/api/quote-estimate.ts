@@ -16,7 +16,7 @@ import { formatUsd } from '../../lib/price';
 import { computeQuote } from '../../lib/quote-engine.js';
 import { QuoteMapError } from '../../lib/quote-map.js';
 import { estimateForCustomer } from '../../lib/quote-customer.js';
-import { loadPriceDb } from '../../lib/price-db';
+import { loadPriceDbCached } from '../../lib/price-db';
 import { quoteAutoEnabled } from '../../lib/quote-auto';
 
 export const prerender = false;
@@ -57,7 +57,7 @@ export const POST: APIRoute = async ({ request }) => {
   const form = body?.form;
   if (!form || typeof form !== 'object' || !Array.isArray(form.steps)) return json({ ok: false, error: 'bad_shape' }, 400);
 
-  const priceDb = await loadPriceDb(d);
+  const priceDb = await loadPriceDbCached(d);
   const fx = await readRate(d);
   const today = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10); // 한국 날짜
   try {

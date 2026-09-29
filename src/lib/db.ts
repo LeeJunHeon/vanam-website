@@ -31,7 +31,7 @@ export function getDb(): D1 | null {
 // ── 테이블 자동 생성 ────────────────────────────────────
 // migrations/0001_init.sql 과 동일한 내용. 워커 인스턴스당 한 번만 실행된다.
 // (수동 마이그레이션 없이도 첫 요청에서 스키마가 준비되도록)
-// ⚠️ 무료 플랜은 요청당 D1 호출 50번이 한도다 — 스키마 버전 표식이 맞으면 D1 1번으로 끝낸다(schema-init.js).
+// 콜드 스타트 속도·D1 사용량 — 스키마 버전 표식이 맞으면 D1 1번으로 끝낸다(schema-init.js, 예전 43번 왕복).
 //    아래 SCHEMA·MIGRATIONS 를 한 글자라도 바꾸면 버전이 바뀌어 다음 인스턴스가 전체 점검을 한 번 한다.
 let schemaReady: Promise<void> | null = null;
 

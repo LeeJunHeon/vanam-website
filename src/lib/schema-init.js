@@ -1,8 +1,10 @@
 // 스키마 준비(ensureSchema) 절차 — 순수 모듈. SQL 문자열은 넣지 않는다(db.ts 가 콜백으로 준다).
 //
-// 왜 있는가: Workers 무료 플랜은 요청 1번에 D1 쿼리 + 외부 fetch 를 합쳐 50번까지만 된다.
-// 예전 ensureSchema 는 새 인스턴스마다 CREATE 18 + ALTER 25 = 43번을 먼저 실행해,
-// 콜드 인스턴스로 간 무거운 요청(자동 견적 접수 등)이 한도를 넘겨 뒤쪽 호출이 전부 실패했다.
+// 왜 있는가: 예전 ensureSchema 는 새 인스턴스의 첫 요청마다 CREATE 18 + ALTER 25 = 43번을 D1 에 차례로 왕복했다.
+// 표식이 맞으면 1번으로 끝나 콜드 스타트 응답이 빨라지고, DDL 이 쓰는 하루 D1 사용량도 준다.
+// (호출 수 한도 문제는 아니다 — 무료 플랜의 요청당 50번은 외부 fetch(Turnstile·구글챗·환율·PayPal)에만 해당하고,
+//  D1 같은 Cloudflare 내부 서비스 호출은 요청당 1,000번이다. 2026-02-11 Cloudflare 변경, Workers 한도 표
+//  "Subrequests to internal services". D1 한도 문서의 "50 (Free)" 는 옛 숫자다.)
 //
 //   1) settings 의 schema_version 표식이 이 코드의 스키마 버전과 같으면 끝(D1 1번).
 //   2) 다르면(배포 직후·새 DB) 전체 점검: CREATE 전부 → ALTER 대상 표마다 컬럼 목록 1번 → 없는 컬럼만 ALTER.

@@ -15,7 +15,7 @@ import type { APIRoute } from 'astro';
 import { isAdmin } from '../../../lib/admin-auth';
 import { db, nowIso } from '../../../lib/db';
 import { computeQuote } from '../../../lib/quote-engine.js';
-import { loadPriceDb, latestImport } from '../../../lib/price-db';
+import { loadPriceDbCached, latestImport } from '../../../lib/price-db';
 import {
   latestRevision, getRevision, listRevisions, revisionInsertStatement, isUniqueViolation,
   type RevisionRow,
@@ -105,7 +105,7 @@ export const GET: APIRoute = async ({ request, url }) => {
     const firstAutoRow = firstAutoRev ? await getRevision(d, id, firstAutoRev) : null;
     const firstAuto = firstAutoRow ? summarizeRevisions([firstAutoRow]).first : null;
 
-    const priceDb = await loadPriceDb(d);
+    const priceDb = await loadPriceDbCached(d);
     const ready = priceDb.policy.length > 0 && priceDb.recipes.length > 0;
     const imp = ready ? await latestImport(d) : null;
     const today = kstToday();
@@ -207,7 +207,7 @@ export const POST: APIRoute = async ({ request }) => {
     const latestRev = latestBefore?.rev ?? 0;
     if (baseRev !== latestRev) return json({ ok: false, error: 'conflict', latestRev }, 409);
 
-    const priceDb = await loadPriceDb(d);
+    const priceDb = await loadPriceDbCached(d);
     if (priceDb.policy.length === 0 || priceDb.recipes.length === 0) return json({ ok: false, error: 'price_db_empty' }, 503);
 
     const result = computeQuote(priceDb, { items, layers });

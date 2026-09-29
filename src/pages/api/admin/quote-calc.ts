@@ -13,7 +13,7 @@ import type { APIRoute } from 'astro';
 import { isAdmin } from '../../../lib/admin-auth';
 import { db } from '../../../lib/db';
 import { computeQuote } from '../../../lib/quote-engine.js';
-import { loadPriceDb, latestImport } from '../../../lib/price-db';
+import { loadPriceDbCached, latestImport } from '../../../lib/price-db';
 
 export const prerender = false;
 
@@ -89,7 +89,7 @@ export const POST: APIRoute = async ({ request }) => {
   const d = await db();
   if (!d) return json({ ok: false, error: 'no_db' }, 503);
 
-  const priceDb = await loadPriceDb(d);
+  const priceDb = await loadPriceDbCached(d);
   if (priceDb.policy.length === 0 || priceDb.recipes.length === 0) return json(EMPTY, 503);
 
   return json({ ok: true, result: computeQuote(priceDb, { items, layers }) });

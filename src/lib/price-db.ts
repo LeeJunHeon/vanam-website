@@ -4,6 +4,7 @@
 //    공급사·메모처럼 계산에 안 쓰는 컬럼은 읽지 않는다.
 // ⚠️ 여기서 읽은 원가·요율은 서버 안에서만 쓴다 — 응답으로 내보내는 것은 호출부가 허용 목록으로 만든다.
 import type { D1 } from './db';
+import { createPriceDbCache } from './price-cache.js';
 
 export type PriceDb = {
   policy: Record<string, unknown>[];
@@ -30,6 +31,22 @@ export async function loadPriceDb(d: D1): Promise<PriceDb> {
     substrates: await all(d, `SELECT catalog_id, item_name, category, unit, cost_per_unit, size_inch, oxide_nm, active
       FROM price_substrate`),
   };
+}
+
+const priceDbCache = createPriceDbCache();
+
+/**
+ * loadPriceDb + 워커 메모리 캐시 — 최신 가져오기 번호(price_import_log.id)가 같으면 D1 1행만 읽는다.
+ * 자동 견적·관리자 계산기·견적 편집이 쓴다. 돌려주는 객체는 깊게 얼어 있다(고치면 TypeError).
+ * ⚠️ price_* 표를 손으로 고치면 번호가 안 바뀌어 캐시가 모른다 — 규칙은 src/lib/price-cache.js 머리말.
+ *    readPriceTables(올리기 비교·지문)는 캐시를 쓰지 않는다.
+ */
+export async function loadPriceDbCached(d: D1): Promise<PriceDb> {
+  return priceDbCache({
+    latestId: async () =>
+      (await d.prepare(`SELECT id FROM price_import_log ORDER BY id DESC LIMIT 1`).first<{ id: number }>())?.id ?? null,
+    load: () => loadPriceDb(d),
+  });
 }
 
 /** 정책·레시피가 하나라도 있는가 (가져오기 전이면 false) */

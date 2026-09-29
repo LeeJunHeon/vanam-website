@@ -11,7 +11,7 @@ import { buildInquiryChatText, buildEstimateChatLine } from '../../lib/chat-mess
 import { computeQuote } from '../../lib/quote-engine.js';
 import { formFromDetails, buildAutoRevision, defaultDocInfo } from '../../lib/quote-revision.js';
 import { manualLabelAdmin } from '../../lib/quote-customer.js';
-import { loadPriceDb, latestImport } from '../../lib/price-db';
+import { loadPriceDbCached, latestImport } from '../../lib/price-db';
 import { quoteAutoEnabled } from '../../lib/quote-auto';
 import { insertRevision } from '../../lib/quote-store';
 import { telKr } from '../../lib/quote-doc';
@@ -228,7 +228,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       let dj: unknown = null;
       try { dj = detailsJson ? JSON.parse(detailsJson) : null; } catch { dj = null; }
       if (formFromDetails(dj, locale) && (await quoteAutoEnabled(saved))) {
-        const priceDb = await loadPriceDb(saved);
+        const priceDb = await loadPriceDbCached(saved);
         const today = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10); // 한국 날짜
         const info = defaultDocInfo({
           inquiry: { id, name, company, productName }, policy: priceDb.policy, today,
