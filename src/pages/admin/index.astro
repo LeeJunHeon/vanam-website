@@ -1027,6 +1027,7 @@ const spec = (r: Row) =>
           msgEl.style.color = tone === 'ok' ? 'var(--color-ok)' : tone === 'bad' ? 'var(--color-danger)' : '';
         };
         let ready: { file: { name: string; size: number; sha256: string }; data: unknown; base: string; next: string } | null = null;
+        let busy = false; // [운영 가격 DB 바꾸기] 진행 중 — 누르자마자 잠그고 confirm 취소·오류 때만 푼다
         const setApply = (on: boolean) => { applyBtn.disabled = !on; applyBtn.style.opacity = on ? '' : '0.4'; };
         const reset = () => { ready = null; setApply(false); out.hidden = true; out.innerHTML = ''; say(''); };
         setApply(false);
@@ -1071,15 +1072,22 @@ const spec = (r: Row) =>
           if (!file) { say('엑셀 파일을 먼저 고르세요.', 'bad'); return; }
           if (file.size > MAX_FILE) { say('파일이 10MB 를 넘습니다.', 'bad'); return; }
           if (!window.crypto?.subtle) { say('이 주소에서는 파일을 검사할 수 없습니다 — https 또는 localhost 주소로 여세요.', 'bad'); return; }
+          // 미리보기 중에는 파일 선택·미리보기를 잠근다. 그래도 파일이 바뀌었으면(각 await 뒤 확인) 조용히 멈춘다.
+          const gone = () => fileIn.files?.[0] !== file;
           prevBtn.disabled = true;
+          fileIn.disabled = true;
           say('엑셀을 읽는 중…');
           try {
             const { openXlsxWeb } = await import('../../lib/xlsx-core.js');
             const { readPriceWorkbook, validatePriceData } = await import('../../lib/price-sheet.js');
+            if (gone()) return;
             const bytes = new Uint8Array(await file.arrayBuffer());
+            if (gone()) return;
             const sha256 = [...new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))].map((b) => b.toString(16).padStart(2, '0')).join('');
+            if (gone()) return;
             let wb;
-            try { wb = await openXlsxWeb(bytes); } catch (e) { say(`엑셀을 읽지 못했습니다: ${(e as Error)?.message ?? e}`, 'bad'); return; }
+            try { wb = await openXlsxWeb(bytes); } catch (e) { if (!gone()) say(`엑셀을 읽지 못했습니다: ${(e as Error)?.message ?? e}`, 'bad'); return; }
+            if (gone()) return;
             const read = readPriceWorkbook(wb);
             if (read.problems.length) { say(''); showProblems('엑셀 검사 실패 — 바꾸지 않습니다', read.problems); return; }
             const v = validatePriceData(read.data);
@@ -1091,6 +1099,7 @@ const spec = (r: Row) =>
               body: JSON.stringify({ mode: 'preview', file: fileInfo, data: read.data }),
             });
             const j = await r.json().catch(() => ({}));
+            if (gone()) return;
             if (r.status === 401) { say('로그인이 만료되었습니다 — 새로고침 후 다시 로그인하세요.', 'bad'); return; }
             if (j.error === 'invalid') { say(''); showProblems('서버 검사 실패 — 바꾸지 않습니다', j.problems ?? [], j.count); return; }
             if (!j.ok) { say(`미리보기 실패: ${j.error ?? r.status}`, 'bad'); return; }
@@ -1101,20 +1110,25 @@ const spec = (r: Row) =>
               setApply(true);
             }
           } catch (e) {
-            say(`미리보기 실패: ${(e as Error)?.message ?? e}`, 'bad');
+            if (!gone()) say(`미리보기 실패: ${(e as Error)?.message ?? e}`, 'bad');
           } finally {
             prevBtn.disabled = false;
+            fileIn.disabled = false;
           }
         });
 
         applyBtn.addEventListener('click', async () => {
-          if (!ready) return;
+          if (!ready || busy) return;
+          busy = true;
+          setApply(false);
+          const job = ready;
+          const release = () => { busy = false; setApply(!!ready); };
           let autoOn = false;
           try { autoOn = (await (await fetch('/api/admin/quote-auto', { cache: 'no-store' })).json())?.on === true; } catch { autoOn = false; }
           const head = autoOn ? '지금 자동 견적이 켜져 있어 고객 예상 견적에 바로 반영됩니다.\n\n' : '';
-          if (!confirm(`${head}가격 DB 를 이 엑셀 내용으로 바꿉니다. 자동 견적과 새로 계산하는 견적에 바로 쓰입니다(이미 저장된 견적 금액은 그대로). 바꿀까요?`)) return;
-          const job = ready;
-          setApply(false);
+          if (!confirm(`${head}가격 DB 를 이 엑셀 내용으로 바꿉니다. 자동 견적과 새로 계산하는 견적에 바로 쓰입니다(이미 저장된 견적 금액은 그대로). 바꿀까요?`)) { release(); return; }
+          // 확인 창이 떠 있는 동안 파일을 바꿨으면(reset → ready 비움) 바꾸지 않는다
+          if (ready !== job) { release(); return; }
           say('바꾸는 중…');
           try {
             const r = await fetch('/api/admin/price-import', {
@@ -1122,7 +1136,7 @@ const spec = (r: Row) =>
               body: JSON.stringify({ mode: 'apply', file: job.file, data: job.data, baseFingerprint: job.base, expectFingerprint: job.next }),
             });
             const j = await r.json().catch(() => ({}));
-            ready = null;
+            if (ready === job) ready = null;
             if (r.status === 401) { say('로그인이 만료되었습니다 — 새로고침 후 다시 로그인하세요.', 'bad'); return; }
             if (j.ok) {
               const fp = String(j.fingerprint ?? '').slice(0, 12);
@@ -1131,6 +1145,7 @@ const spec = (r: Row) =>
               return;
             }
             if (j.error === 'db_changed') { say('미리보기 뒤에 가격 DB 가 바뀌었습니다 — 다시 미리보기를 누르세요', 'bad'); return; }
+            if (j.error === 'data_changed') { say('미리보기 뒤 데이터가 달라졌습니다 — 다시 미리보기를 누르세요', 'bad'); return; }
             if (j.error === 'db_error') { say('저장하지 못했습니다 — 가격 DB 는 바뀌지 않았습니다', 'bad'); return; }
             if (j.error === 'applied_unverified') {
               say('가격 DB 는 바뀌었지만 확인 읽기에 실패했습니다 — 다시 미리보기를 누르면 지금 상태를 볼 수 있습니다', 'bad');
@@ -1146,6 +1161,9 @@ const spec = (r: Row) =>
             say(`바꾸지 못했습니다: ${j.error ?? r.status}`, 'bad');
           } catch (e) {
             say(`바꾸지 못했습니다: ${(e as Error)?.message ?? e} — 결과를 확인하려면 다시 미리보기를 누르세요`, 'bad');
+          } finally {
+            // 응답이 오면 ready 가 비어 버튼은 꺼진 채(다시 미리보기 필요) · 응답 없이 실패했을 때만 다시 켜진다
+            release();
           }
         });
       })();

@@ -10,6 +10,7 @@
 //    스프레드·원본 객체 재사용 금지 — 원가·가산율·마진·ID·breakdown 이 섞여 나가는 사고를 구조로 막는다.
 import { estimateForCustomer, manualLabel, addDays } from './quote-customer.js';
 import { mapFormToQuote, QuoteMapError } from './quote-map.js';
+import { telKr } from './quote-doc-core.js';
 
 const isObj = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 const str = (v) => (v === null || v === undefined ? '' : String(v));
@@ -41,6 +42,14 @@ export function formFromDetails(dj, locale) {
 
 /** 가격 정책 한 줄의 값 */
 const policyValue = (policy, key) => (Array.isArray(policy) ? policy : []).find((p) => p?.key === key)?.value;
+
+/**
+ * 견적서 연락처 — 영문 견적서는 국제 표기(+82-…) 그대로, 한글 견적서는 국내 표기(0…).
+ * @param {string} locale @param {string} tel company.json 의 tel
+ */
+export function contactFor(locale, tel) {
+  return locale === 'en' ? str(tel) : telKr(tel);
+}
 
 /**
  * 견적서 머리 정보.

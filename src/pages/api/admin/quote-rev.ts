@@ -20,12 +20,11 @@ import {
   latestRevision, getRevision, listRevisions, revisionInsertStatement, isUniqueViolation,
   type RevisionRow,
 } from '../../../lib/quote-store';
-import { buildAutoRevision, buildDoc, customerQuoteView, defaultDocInfo, formFromDetails } from '../../../lib/quote-revision.js';
+import { buildAutoRevision, buildDoc, contactFor, customerQuoteView, defaultDocInfo, formFromDetails } from '../../../lib/quote-revision.js';
 import { manualLabelAdmin } from '../../../lib/quote-customer.js';
 import { sanitizeDocInfo, planInquirySync, summarizeRevisions } from '../../../lib/quote-admin.js';
 import { readRate } from '../../../lib/fx';
 import { formatUsd } from '../../../lib/price';
-import { telKr } from '../../../lib/quote-doc';
 import company from '../../../data/company.json';
 
 export const prerender = false;
@@ -125,16 +124,22 @@ export const GET: APIRoute = async ({ request, url }) => {
 
     const infoDefault = defaultDocInfo({
       inquiry: { id, name: q.name as string, company: q.company as string, productName: q.product_name as string },
-      policy: priceDb.policy, today, contact: telKr(company.tel), locale,
+      policy: priceDb.policy, today, contact: contactFor(locale, company.tel), locale,
     });
 
     // 불러올 입력이 없을 때만 — 접수 구조화 사본으로 자동 견적과 같은 입력을 만든다(저장하지 않는다)
+    // ⚠️ 여기서 실패해도 편집기는 열려야 한다 — prefill 만 null.
     let prefill: { input: unknown; manualAdmin: string[] } | null = null;
     if ((!current || current.input === null) && ready) {
-      const dj = parse(q.details_json);
-      if (formFromDetails(dj, locale)) {
-        const auto = buildAutoRevision({ details: dj, locale, priceDb, computeQuote, today, info: infoDefault });
-        if (auto) prefill = { input: auto.input, manualAdmin: (auto.manual ?? []).map(manualLabelAdmin) };
+      try {
+        const dj = parse(q.details_json);
+        if (formFromDetails(dj, locale)) {
+          const auto = buildAutoRevision({ details: dj, locale, priceDb, computeQuote, today, info: infoDefault });
+          if (auto) prefill = { input: auto.input, manualAdmin: (auto.manual ?? []).map(manualLabelAdmin) };
+        }
+      } catch (e) {
+        console.error('[admin/quote-rev] prefill 계산 실패(편집기는 연다):', id, (e as Error)?.name ?? 'Error');
+        prefill = null;
       }
     }
 
@@ -247,16 +252,20 @@ export const POST: APIRoute = async ({ request }) => {
       throw e;
     }
 
-    const q2 = (await readInquiry(d, id)) ?? q;
-    const saved = await getRevision(d, id, rev);
-    return json({
-      ok: true,
-      rev,
-      total: result.total,
-      ...(plan.warning ? { warning: plan.warning } : {}),
-      inquiry: { status: q2.status, quoted_amount: numOrNull(q2.quoted_amount), quote_currency: q2.quote_currency ?? null },
-      view: await viewOf(d, saved, q2),
-    });
+    // 여기부터는 이미 저장된 상태 — 확인 읽기가 실패해도 저장 실패(db_error)로 답하면 안 된다.
+    const head = { ok: true, rev, total: result.total, ...(plan.warning ? { warning: plan.warning } : {}) };
+    try {
+      const q2 = (await readInquiry(d, id)) ?? q;
+      const saved = await getRevision(d, id, rev);
+      return json({
+        ...head,
+        inquiry: { status: q2.status, quoted_amount: numOrNull(q2.quoted_amount), quote_currency: q2.quote_currency ?? null },
+        view: await viewOf(d, saved, q2),
+      });
+    } catch (e) {
+      console.error('[admin/quote-rev] 저장 뒤 확인 읽기 실패(저장은 됨):', id, (e as Error)?.name ?? 'Error');
+      return json({ ...head, unverified: true, inquiry: null, view: null });
+    }
   } catch (e) {
     console.error('[admin/quote-rev] 저장 실패:', id, (e as Error)?.name ?? 'Error');
     return json({ ok: false, error: 'db_error' }, 500);

@@ -7,6 +7,9 @@
 //   D. 구매 요청 Silicon 6inch Prime → 예상 견적 estimate 기대(아니면 문구를 출력하고 실패)
 //   E. 구매 요청 Silicon 4inch Prime → manual, 문구에 기판 항목
 //   F. 접수 구조화 사본의 substrateGrade 'prime'(소문자) → 400 invalid_grade
+//   N. (접수 없이) 서로 다른 장비의 물질을 번갈아 16단계 → manual · '공정 단계가 많아' · 금지 키 0건
+//   O. steps 101개 → 400 too_many_steps
+//   + 접수 응답 quote: A true(개정 저장) · C false(스위치 꺼짐)
 //   G~M. 관리자 견적 편집(/api/admin/quote-rev) — 새 접수 없이 A·B·C 접수건을 고친다
 //     G 저장(개정 2) → 조회 estimate·byStaff · H 같은 기준으로 다시 저장 → 409 conflict
 //     I 확정 저장 → 조회 confirmed · J 확정 뒤 다시 저장 → 확정 금액이 새 합계로
@@ -24,6 +27,7 @@ import { execFileSync } from 'node:child_process';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { FORBIDDEN_CUSTOMER_KEYS } from '../src/lib/quote-customer.js';
+import { recipeCandidates } from '../src/lib/quote-map.js';
 import { VIEW_FORBIDDEN_KEYS } from '../src/lib/quote-revision.js';
 
 const BASE = 'http://127.0.0.1:8787';
@@ -134,6 +138,7 @@ try {
   totalA = eA.json?.customer?.totalKrw ?? null;
   const iA = await submit(CASES.A, totalA);
   pass('A②: 접수 ok · delivered false', iA.json?.ok === true && iA.json?.delivered === false, `delivered=${iA.json?.delivered}`);
+  pass('A②: 접수 응답 quote true(개정 저장됨)', iA.json?.quote === true, `quote=${iA.json?.quote}`);
   if (iA.json?.id) inquiryIds.push(iA.json.id);
   const lA = await lookup(iA.json?.id);
   const qA = lA.json?.inquiry?.quote;
@@ -172,6 +177,35 @@ try {
   const mE = eE.json?.customer?.manual ?? [];
   pass('E: kind manual · 기판 항목', eE.json?.customer?.kind === 'manual' && mE.some((m) => String(m).startsWith('기판:')), JSON.stringify(mE));
 
+  // ── 사례 N — 큰 견적(16품목): 접수 없이 예상 견적만 ──
+  // 서로 다른 장비의 활성 레시피 두 개(물질마다 활성 레시피가 1개인 것)를 런타임에 골라 번갈아 16단계.
+  // ⚠️ 고른 레시피·장비·물질은 출력하지 않는다.
+  console.log('\n사례 N — 서로 다른 장비의 물질 번갈아 16단계');
+  {
+    const single = Object.entries(recipeCandidates(meta.json.recipes ?? [])).filter(([, v]) => v.length === 1);
+    const first = single[0];
+    const second = single.find(([, v]) => first && v[0].equipment_id !== first[1][0].equipment_id);
+    if (!first || !second) {
+      pass('N: 조건에 맞는 레시피 두 개', false, '서로 다른 장비의 단일 후보 물질 2개를 찾지 못함');
+    } else {
+      const toStep = ([key]) => { const [proc, mat] = key.split('|'); return step(proc, mat, '1', 'nm'); };
+      const steps = Array.from({ length: 16 }, (_, i) => toStep(i % 2 ? second : first));
+      const eN = await call('POST', '/api/quote-estimate', { form: estimateForm({ steps, measurements: [] }) });
+      customerBodies.push(eN.json);
+      const mN = eN.json?.customer?.manual ?? [];
+      pass('N: 200 · kind manual', eN.status === 200 && eN.json?.customer?.kind === 'manual', `${eN.status} ${eN.json?.customer?.kind}`);
+      pass('N: 문구에 \'공정 단계가 많아\'', mN.some((m) => String(m).includes('공정 단계가 많아')), `문구 ${mN.length}개`);
+      pass('N: customer 금지 키 0건', forbiddenIn(eN.json?.customer, FORBIDDEN_CUSTOMER_KEYS).length === 0);
+    }
+  }
+
+  // ── 사례 O — steps 101개 → 계산 전 거부 ──
+  console.log('\n사례 O — steps 101개');
+  {
+    const eO = await call('POST', '/api/quote-estimate', { form: estimateForm({ steps: Array.from({ length: 101 }, () => step('Sputter', 'Ti', '1', 'nm')), measurements: [] }) });
+    pass('O: 400 too_many_steps', eO.status === 400 && eO.json?.error === 'too_many_steps', `${eO.status} ${eO.json?.error ?? ''}`);
+  }
+
   // ── 사례 F — 등급 코드값이 틀린 접수 ──
   console.log('\n사례 F — 접수 substrateGrade \'prime\'(소문자)');
   const iF = await call('POST', '/api/inquiry', inquiryBody(CASES.A, undefined, { delivery: 'purchase', substrateGrade: 'prime' }));
@@ -188,6 +222,7 @@ try {
   pass('C: POST 404', eC.status === 404, String(eC.status));
   const iC = await submit(CASES.A, totalA);
   pass('C: 접수 ok · delivered false', iC.json?.ok === true && iC.json?.delivered === false, `delivered=${iC.json?.delivered}`);
+  pass('C: 접수 응답 quote false(스위치 꺼짐)', iC.json?.quote === false, `quote=${iC.json?.quote}`);
   if (iC.json?.id) inquiryIds.push(iC.json.id);
   const lC = await lookup(iC.json?.id);
   pass('C: 조회 quote === null', lC.json?.ok === true && lC.json?.inquiry?.quote === null);

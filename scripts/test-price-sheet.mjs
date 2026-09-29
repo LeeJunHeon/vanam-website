@@ -10,7 +10,7 @@ import { openXlsx } from './lib/xlsx-lite.mjs';
 import { inflateRawSync } from 'node:zlib';
 import {
   readPriceWorkbook, validatePriceData, priceRowsForDb, insertChunks, priceFingerprint, priceDiff,
-  TABLES, POLICY, REQUIRED_POLICY_KEYS, PRICE_TABLE_ORDER,
+  TABLES, POLICY, REQUIRED_POLICY_KEYS, PRICE_TABLE_ORDER, MAX_ROWS,
 } from '../src/lib/price-sheet.js';
 
 let total = 0, failed = 0;
@@ -175,8 +175,8 @@ const clone = (o) => JSON.parse(JSON.stringify(o));
   eq('4000자 초과', has((await read(s)).problems, /V3_레시피DB 2행: material_name 이 4000자를 넘습니다 \(4001자\)/), true);
   s = baseSheets(); s[rcSheet][1][1] = 'x'.repeat(4000);
   eq('4000자는 통과', (await read(s)).problems, []);
-  s = baseSheets(); for (let i = 3; i <= 2001; i++) s[TABLES[3].sheet].push(fakeRow(TABLES[3], i));
-  eq('2000행 초과', has((await read(s)).problems, /V3_별칭DB: 데이터 행이 2001개입니다 \(최대 2000개\)/), true);
+  s = baseSheets(); for (let i = 3; i <= 501; i++) s[TABLES[3].sheet].push(fakeRow(TABLES[3], i));
+  eq('500행 초과', has((await read(s)).problems, /V3_별칭DB: 데이터 행이 501개입니다 \(최대 500개\)/), true);
 }
 
 // ── 3. validatePriceData ─────────────────────────────────────────────────────
@@ -198,7 +198,7 @@ const good = (await read(baseSheets())).data;
   eq('모르는 열', has(V((d) => { d.price_recipe[0].cost_secret = 1; }), /price_recipe 1번째 행: 모르는 열 "cost_secret"/), true);
   eq('표 없음·배열 아님·빈 표', [has(V((d) => { delete d.price_alias; }), /price_alias: 표가 없습니다/), has(V((d) => { d.price_alias = {}; }), /price_alias: 배열이 아닙니다/),
     has(V((d) => { d.price_alias = []; }), /price_alias: 데이터 행이 없습니다/)], [true, true, true]);
-  eq('2000행 초과', has(V((d) => { d.price_alias = Array.from({ length: 2001 }, () => ({ ...d.price_alias[0] })); }), /데이터 행이 2001개/), true);
+  eq('500행 초과', has(V((d) => { d.price_alias = Array.from({ length: 501 }, () => ({ ...d.price_alias[0] })); }), /데이터 행이 501개/), true);
   eq('4000자 초과', has(V((d) => { d.price_alias[0].notes = 'x'.repeat(4001); }), /notes 이 4000자를 넘습니다/), true);
   eq('행이 객체 아님 · 데이터가 객체 아님', [has(V((d) => { d.price_alias[0] = [1]; }), /객체가 아닙니다/), validatePriceData(null).problems.length], [true, 1]);
 }
@@ -217,6 +217,9 @@ const good = (await read(baseSheets())).data;
   const rows = Array.from({ length: 25 }, (_, i) => i);
   const ch = insertChunks(rows, 16);
   eq('insertChunks: 묶음마다 ≤100 · 순서·누락 없음', [ch.every((c) => c.length * 16 <= 100), ch.flat(), ch.length], [true, rows, 5]);
+  // 올리기 batch 최악 문장 수(5표 모두 MAX_ROWS 행) = DELETE 5 + INSERT 묶음 + 기록 1 — 요청당 내부 호출 1,000 안쪽
+  const worst = 5 + 1 + [POLICY, ...TABLES].reduce((a, sp) => a + insertChunks(Array(MAX_ROWS).fill(0), sp.cols.length).length, 0);
+  eq('MAX_ROWS 500 · 최악 batch 문장 수 ≤ 1,000', [MAX_ROWS, worst <= 1000, worst], [500, true, 265]);
   eq('insertChunks: 열 수 경계', [insertChunks([1, 2, 3], 100).length, insertChunks([1, 2, 3], 101).length, insertChunks([], 5).length, insertChunks(Array(20).fill(0), 5).length], [3, 3, 0, 1]);
 }
 

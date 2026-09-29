@@ -28,12 +28,17 @@ export const REASON = {
   noDeposition: '붙일 증착 품목 없음',
 };
 
-/** 변환을 거부할 때 던진다. API 는 400 으로 돌려준다. */
+/**
+ * 변환을 거부할 때 던진다. API 는 400 으로 돌려준다.
+ * 크기 초과(too_many_items·too_many_layers)는 estimateForCustomer 가 받아 담당자 확인으로 돌린다 — detail 에 개수·최대.
+ */
 export class QuoteMapError extends Error {
-  /** @param {string} code @param {string} message */
-  constructor(code, message) {
+  /** @param {string} code @param {string} message @param {{count: number, max: number}} [detail] */
+  constructor(code, message, detail) {
     super(message);
+    this.name = 'QuoteMapError';
     this.code = code;
+    this.detail = detail ?? null;
   }
 }
 
@@ -221,8 +226,12 @@ export function mapFormToQuote(form, recipes, opts = {}) {
   }
 
   const layerCount = groups.reduce((a, g) => a + g.layers.length, 0);
-  if (groups.length > MAX_ITEMS) throw new QuoteMapError('too_many_items', `품목이 ${groups.length}개입니다(최대 ${MAX_ITEMS}개)`);
-  if (layerCount > MAX_LAYERS) throw new QuoteMapError('too_many_layers', `층이 ${layerCount}개입니다(최대 ${MAX_LAYERS}개)`);
+  if (groups.length > MAX_ITEMS) {
+    throw new QuoteMapError('too_many_items', `품목이 ${groups.length}개입니다(최대 ${MAX_ITEMS}개)`, { count: groups.length, max: MAX_ITEMS });
+  }
+  if (layerCount > MAX_LAYERS) {
+    throw new QuoteMapError('too_many_layers', `층이 ${layerCount}개입니다(최대 ${MAX_LAYERS}개)`, { count: layerCount, max: MAX_LAYERS });
+  }
 
   const runs = runsOf(form?.sampleCount, opts);
   const subId = String(opts.substrateId ?? '').trim();

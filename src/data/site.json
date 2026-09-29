@@ -831,7 +831,8 @@
         "manualCta": "Please click [{submit}] to send your request.",
         "invalidIntro": "To calculate an estimate, please check the following:",
         "fail": "We couldn't calculate the estimate. Please try again shortly.",
-        "unavailable": "Estimates aren't available right now. Send your quote request and our team will get back to you."
+        "unavailable": "Estimates aren't available right now. Send your quote request and our team will get back to you.",
+        "tooMany": "Too many steps — please describe them in the request and send it"
       },
       "view": {
         "estimate": "Estimated quote",
@@ -1752,7 +1753,8 @@
         "manualCta": "[{submit}] 버튼을 눌러 요청을 보내 주세요.",
         "invalidIntro": "예상 견적을 계산하려면 아래 내용을 확인해 주세요.",
         "fail": "예상 견적을 계산하지 못했습니다. 잠시 후 다시 시도해 주세요.",
-        "unavailable": "지금은 예상 견적을 볼 수 없습니다. 견적 요청을 보내 주시면 담당자가 안내드립니다."
+        "unavailable": "지금은 예상 견적을 볼 수 없습니다. 견적 요청을 보내 주시면 담당자가 안내드립니다.",
+        "tooMany": "단계가 너무 많습니다 — 요청사항에 적어 견적 요청을 보내 주세요"
       },
       "view": {
         "estimate": "예상 견적",

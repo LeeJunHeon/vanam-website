@@ -2,7 +2,7 @@
 //
 // 가짜 레시피·금액만 쓴다(실제 가격 DB 와 겹치지 않는 값). 엔진은 가짜 결과를 돌려주는 대역으로 대신한다.
 import {
-  formFromDetails, defaultDocInfo, buildDoc, buildAutoRevision, customerQuoteView, VIEW_FORBIDDEN_KEYS,
+  formFromDetails, defaultDocInfo, buildDoc, buildAutoRevision, customerQuoteView, VIEW_FORBIDDEN_KEYS, contactFor,
 } from '../src/lib/quote-revision.js';
 import { buildInquiryChatText, buildEstimateChatLine } from '../src/lib/chat-message.js';
 
@@ -42,6 +42,10 @@ const fakeEngine = (_db, q) => ({
   layers: q.layers.map((l) => ({ ...l, status: '정상', materialCost: 5 })),
 });
 const badEngine = () => ({ status: '공정 입력 확인', supply: null, vat: null, total: null, totalKorean: null, items: [], layers: [] });
+
+// ── contactFor ──────────────────────────────────────────────────────────────
+eq('contactFor: en 국제 표기 그대로 · ko 국내 표기', [contactFor('en', '+82-0-0000-0000'), contactFor('ko', '+82-0-0000-0000'), contactFor('ko', '')],
+  ['+82-0-0000-0000', '00-0000-0000', '']);
 
 // ── formFromDetails ─────────────────────────────────────────────────────────
 const PROC = {

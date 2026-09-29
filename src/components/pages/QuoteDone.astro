@@ -183,12 +183,13 @@ ${det ? `<pre>${esc2(det)}</pre>` : ''}
     (document.getElementById('qd-expired') as HTMLElement).hidden = false;
   }
 
-  // ── 최신 견적 — 세션에 접수번호·이메일이 있을 때만 조회 API 로 받는다 ─────────────
+  // ── 최신 견적 — 세션에 접수번호·이메일이 있고 이번 접수로 견적이 저장됐을 때(raw.quote)만 조회 API 로 받는다 ──
   // 실패·견적 없음이면 아무것도 바꾸지 않는다(지금 화면 그대로 — 요청서 인쇄·조회 링크 유지).
   const qvBox = document.getElementById('qd-quote') as HTMLElement | null;
   const QVT: Record<string, string> = JSON.parse(root.dataset.qv || '{}');
   const qEmail = raw ? String(raw.email ?? '').trim() : '';
-  if (qvBox && raw && id && qEmail) {
+  const quoteSaved = (raw as Record<string, unknown> | null)?.quote === true; // 세션 값은 JSON 이라 불리언이 그대로 온다
+  if (qvBox && raw && quoteSaved && id && qEmail) {
     const lang = document.documentElement.lang === 'ko' ? 'ko' : 'en';
     fetch('/api/order/lookup', {
       method: 'POST',

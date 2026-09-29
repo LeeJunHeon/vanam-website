@@ -28,6 +28,8 @@ const json = (b: unknown, s = 200) =>
   });
 const NOT_FOUND = () => new Response('Not Found', { status: 404, headers: { 'Cache-Control': 'no-store' } });
 const MAX_BODY = 65_536; // 64KB — 공정 수십 단계를 넉넉히 담는 크기
+const MAX_STEPS = 100;
+const MAX_MEASUREMENTS = 30;
 
 export const GET: APIRoute = async () => {
   let enabled = false;
@@ -56,6 +58,10 @@ export const POST: APIRoute = async ({ request }) => {
   }
   const form = body?.form;
   if (!form || typeof form !== 'object' || !Array.isArray(form.steps)) return json({ ok: false, error: 'bad_shape' }, 400);
+  // 계산 전 상한 — 폼이 만들 수 있는 크기보다 넉넉하다. 넘으면 고객 화면이 "요청사항에 적어 보내 주세요"로 안내한다.
+  if (form.steps.length > MAX_STEPS || (Array.isArray(form.measurements) && form.measurements.length > MAX_MEASUREMENTS)) {
+    return json({ ok: false, error: 'too_many_steps' }, 400);
+  }
 
   const priceDb = await loadPriceDbCached(d);
   const fx = await readRate(d);

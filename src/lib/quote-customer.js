@@ -12,8 +12,11 @@
 //
 // ⚠️ 규칙은 DB 값으로 런타임에 판단한다. 실제 장비·레시피·기판 ID·단가를 코드에 적지 않는다.
 // ⚠️ 엔진(computeQuote)과 USD 표기(formatUsd)는 인자로 받는다 — node 테스트가 빌드 없이 쓰기 위해.
-import { mapFormToQuote, conv, parseThickness, REASON } from './quote-map.js';
+import { mapFormToQuote, conv, parseThickness, REASON, QuoteMapError } from './quote-map.js';
 import { SUBSTRATE_GRADES, GRADED_SUBSTRATES } from './quote-fields.js';
+
+/** 입력 오류 목록은 앞에서 이만큼만 돌려준다(단계가 아주 많은 요청에서 응답이 커지지 않게). */
+export const MAX_FORM_ERRORS = 30;
 
 /** 이 수량 이상이면 담당자 확인 — 1회 투입 장수 표가 오면 planRuns 만 바꾸면 된다. */
 export const SAMPLE_MANUAL_MIN = 10;
@@ -44,6 +47,7 @@ const TEXT = {
     typeOther: '기타 종류',
     size2: '2 inch 이하·조각',
     manySamples: `샘플 수량 ${SAMPLE_MANUAL_MIN}개 이상`,
+    size: '공정 단계가 많아 담당자가 직접 계산합니다',
     pricing: '가격 자료 확인',
     inputStep: (n) => `${n}단계 입력 확인`,
     inputSamples: '샘플 수량 확인',
@@ -65,6 +69,7 @@ const TEXT = {
     typeOther: 'other type',
     size2: '≤2 inch / piece',
     manySamples: `${SAMPLE_MANUAL_MIN} or more samples`,
+    size: 'Many process steps — our team will calculate this quote',
     pricing: 'Pricing data review',
     inputStep: (n) => `Check the input for step ${n}`,
     inputSamples: 'Check the number of samples',
@@ -154,7 +159,7 @@ export function validateForm(form, T) {
     && !GRADES.includes(String(form?.substrateGrade ?? ''))) {
     errs.push({ field: 'substrateGrade', message: T.grade });
   }
-  return errs;
+  return errs.slice(0, MAX_FORM_ERRORS);
 }
 
 // ── 담당자 확인 사유 → 문구 ────────────────────────────────────────────
@@ -164,6 +169,7 @@ export function validateForm(form, T) {
  *   | {code:'step', step:number, process:string, material:string, reason:string}
  *   | {code:'measure', name:string}
  *   | {code:'pricing', engineStatus:string}
+ *   | {code:'size', what:'items'|'layers', count:number, max:number}
  *   | {code:'input', step?:number, field:string}} ManualEntry
  */
 
@@ -190,6 +196,7 @@ export function manualLabel(e, locale) {
     case 'step': return T.step(e.step, e.process, prettyFormula(e.material));
     case 'measure': return T.measure(e.name);
     case 'pricing': return T.pricing;
+    case 'size': return T.size;
     case 'input':
       if (e.step) return T.inputStep(e.step);
       if (e.field === 'sampleCount') return T.inputSamples;
@@ -214,6 +221,8 @@ export function manualLabelAdmin(e) {
     case 'step': return `${T.step(e.step, e.process, prettyFormula(e.material))} — ${REASON[e.reason] ?? e.reason}`;
     case 'measure': return `${T.measure(e.name)} — 가격 자료 없음`;
     case 'pricing': return `${T.pricing} — 엔진 상태: ${e.engineStatus}`;
+    case 'size':
+      return `자동 계산 한도 초과 — ${e.what === 'layers' ? '층' : '품목'} ${e.count}개(최대 ${e.max}) · 편집기에서 품목을 묶어 입력`;
     case 'input':
       if (e.step) return `${T.inputStep(e.step)}(${INPUT_FIELD_KO[e.field] ?? '입력'})`;
       if (e.field === 'sampleCount') return T.inputSamples;
@@ -270,15 +279,22 @@ export function estimateForCustomer({ form, priceDb, computeQuote, formatUsd, us
     }
   }
 
-  const mapped = mapFormToQuote(form, priceDb.recipes, { margin: '기본', runs: runsPlan.runs, substrateId });
+  // 품목 15개·층 100개(엑셀 V3 한도)를 넘으면 자동 계산하지 않고 담당자 확인으로 돌린다. 다른 변환 오류는 그대로 던진다.
+  let mapped = null;
+  try {
+    mapped = mapFormToQuote(form, priceDb.recipes, { margin: '기본', runs: runsPlan.runs, substrateId });
+  } catch (e) {
+    if (!(e instanceof QuoteMapError) || (e.code !== 'too_many_items' && e.code !== 'too_many_layers')) throw e;
+    addManual({ code: 'size', what: e.code === 'too_many_layers' ? 'layers' : 'items', count: Number(e.detail?.count), max: Number(e.detail?.max) });
+  }
 
   // 산정 제외 단계 → 구조화 항목
-  for (const e of mapped.extras) {
+  for (const e of mapped?.extras ?? []) {
     if (e.kind === 'measurement') addManual({ code: 'measure', name: e.process });
     else addManual({ code: 'step', step: e.step, process: e.process, material: e.material, reason: e.kind });
   }
 
-  const result = mapped.items.length ? computeQuote(priceDb, { items: mapped.items, layers: mapped.layers }) : null;
+  const result = mapped?.items.length ? computeQuote(priceDb, { items: mapped.items, layers: mapped.layers }) : null;
   // 입력은 검증했으니 남은 엔진 오류는 가격 자료 쪽이다
   if (result && result.status !== '정상') addManual({ code: 'pricing', engineStatus: String(result.status) });
 
@@ -302,10 +318,10 @@ export function estimateForCustomer({ form, priceDb, computeQuote, formatUsd, us
   }
 
   const debug = {
-    plan: mapped.plan,
-    input: { items: mapped.items, layers: mapped.layers },
+    plan: mapped?.plan ?? null,
+    input: mapped ? { items: mapped.items, layers: mapped.layers } : null,
     result,
-    extras: mapped.extras,
+    extras: mapped?.extras ?? [],
     manual,
     flags: {
       samples: { count: sampleCount, runs: runsPlan.runs, manualAtOrAbove: SAMPLE_MANUAL_MIN, manual: runsPlan.manual },

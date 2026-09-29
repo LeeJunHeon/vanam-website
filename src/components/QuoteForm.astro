@@ -1117,7 +1117,7 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
         body: JSON.stringify(data),
       });
       if (!res.ok) throw new Error("HTTP " + res.status);
-      const j = (await res.json().catch(() => ({}))) as { id?: string };
+      const j = (await res.json().catch(() => ({}))) as { id?: string; quote?: boolean };
       // 완료 페이지에서 "무엇을 제출했는지"를 조회 없이 보여주기 위해
       // 방금 구성한 내용을 세션에 담아 넘긴다. 완료 페이지는 정적이고 DB 를 읽지 않으므로
       // 접수번호만 아는 제3자에게 연락처·공정 정보가 노출될 표면이 없다.
@@ -1133,6 +1133,8 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
         method: String(data.method ?? ""),
         substrate: String(data.substrate ?? ""),
         details: String(data.details ?? ""),
+        // 이번 접수로 견적 개정이 저장됐을 때만 완료 페이지가 조회 API 를 부른다(스위치 꺼짐이면 호출 없음)
+        quote: j.quote === true,
       };
       form.reset();
       // 공정 빌더는 풀 모드에만 존재 — simple(웨이퍼 주문) 폼에서는 null 이라

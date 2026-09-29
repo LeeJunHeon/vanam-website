@@ -3,10 +3,10 @@
 // ⚠️ 숫자는 전부 가짜다(test-quote-engine.mjs 와 같은 딱 떨어지는 값). 실제 원가·요율을 넣지 않는다.
 //   1) 깊게 얼린 가짜 가격 DB 로 computeQuote · estimateForCustomer · buildAutoRevision 이
 //      예외 없이 얼리지 않은 DB 와 같은 결과를 낸다(계산 코드가 가격 DB 를 고치지 않는다).
-//   2) 캐시: 번호 같음 → 가격 표 조회 0번 / 번호 바뀜 → 다시 읽음 / 번호 없음 → 매번 읽음 (가짜 D1)
+//   2) 캐시(열쇠 = 번호|시각): 같음 → 가격 표 조회 0번 / 번호·시각 바뀜 → 다시 읽음 / 없음 → 매번 읽음 / 캐시 없음 → batch 1번 (가짜 D1)
 //   3) 배선: price-db.ts 의 loadPriceDbCached · 네 호출부가 캐시를 쓰고, 올리기 비교·지문은 쓰지 않는다.
 import { readFileSync } from 'node:fs';
-import { createPriceDbCache, deepFreeze } from '../src/lib/price-cache.js';
+import { createPriceDbCache, deepFreeze, importKeyOf } from '../src/lib/price-cache.js';
 import { computeQuote } from '../src/lib/quote-engine.js';
 import { estimateForCustomer } from '../src/lib/quote-customer.js';
 import { buildAutoRevision, defaultDocInfo } from '../src/lib/quote-revision.js';
@@ -94,83 +94,110 @@ eq('계산 뒤 가짜 DB 불변', JSON.stringify(plain), JSON.stringify(makeDb()
 
 // ── 2) 캐시 · 가짜 D1 ────────────────────────────────────────────────────────
 function fakeD1() {
-  const st = { importId: null, tableReads: 0, idReads: 0, version: 1 };
+  const st = { log: null, tableReads: 0, keyReads: 0, batches: 0, version: 1 };
+  const stmt = (sql) => ({
+    sql,
+    first: async () => {
+      if (!/FROM price_import_log/.test(sql)) throw new Error(`예상 밖 first: ${sql}`);
+      st.keyReads++;
+      return st.log;
+    },
+  });
   const d = {
-    prepare(sql) {
-      return {
-        first: async () => {
-          if (!/FROM price_import_log/.test(sql)) throw new Error(`예상 밖 first: ${sql}`);
-          st.idReads++;
-          return st.importId === null ? null : { id: st.importId };
-        },
-        all: async () => {
-          if (!/FROM price_(policy|recipe|equipment|substrate)\b/.test(sql)) throw new Error(`예상 밖 all: ${sql}`);
-          st.tableReads++;
-          return { results: [{ v: st.version }] };
-        },
-      };
+    prepare: stmt,
+    batch: async (stmts) => {
+      st.batches++;
+      return stmts.map(({ sql }) => {
+        if (/FROM price_import_log/.test(sql)) return { results: st.log ? [st.log] : [] };
+        if (!/FROM price_(policy|recipe|equipment|substrate)\b/.test(sql)) throw new Error(`예상 밖 batch: ${sql}`);
+        st.tableReads++;
+        return { results: [{ v: st.version }] };
+      });
     },
   };
   return { d, st };
 }
-// price-db.ts 의 loadPriceDbCached 와 같은 모양(SQL 은 아래 3) 에서 원문 대조)
+// price-db.ts 의 loadPriceDbCached 와 같은 모양(SQL 원문은 아래 3) 에서 대조)
+const KEY_SQL = 'SELECT id, imported_at FROM price_import_log ORDER BY id DESC LIMIT 1';
 const wire = (cache, d) => cache({
-  latestId: async () => (await d.prepare(`SELECT id FROM price_import_log ORDER BY id DESC LIMIT 1`).first())?.id ?? null,
-  load: async () => ({
-    policy: (await d.prepare('SELECT key FROM price_policy').all()).results,
-    recipes: (await d.prepare('SELECT recipe_id FROM price_recipe').all()).results,
-    equipment: (await d.prepare('SELECT equipment_id FROM price_equipment').all()).results,
-    substrates: (await d.prepare('SELECT catalog_id FROM price_substrate').all()).results,
-  }),
+  latestKey: async () => importKeyOf(await d.prepare(KEY_SQL).first()),
+  loadSnapshot: async () => {
+    const r = await d.batch([KEY_SQL, 'SELECT key FROM price_policy', 'SELECT recipe_id FROM price_recipe',
+      'SELECT equipment_id FROM price_equipment', 'SELECT catalog_id FROM price_substrate'].map((q) => d.prepare(q)));
+    return { key: importKeyOf(r[0].results[0]), db: { policy: r[1].results, recipes: r[2].results, equipment: r[3].results, substrates: r[4].results } };
+  },
 });
+eq('열쇠 = 번호|시각 · 없으면 null', [importKeyOf({ id: 5, imported_at: '2026-01-01T00:00:00Z' }), importKeyOf(null), importKeyOf({ id: null })],
+  ['5|2026-01-01T00:00:00Z', null, null]);
 {
   const { d, st } = fakeD1();
   const cache = createPriceDbCache();
 
-  st.importId = 5;
+  st.log = { id: 5, imported_at: 'T1' };
   const r1 = await wire(cache, d);
-  eq('첫 요청 → 가격 표 4번 · 번호 1번', [st.tableReads, st.idReads], [4, 1]);
+  eq('캐시 없음 → 열쇠 1번 + batch 1번(가격 표 4개)', [st.keyReads, st.batches, st.tableReads], [1, 1, 4]);
   eq('캐시 값은 깊게 얼어 있다', [Object.isFrozen(r1), Object.isFrozen(r1.policy), Object.isFrozen(r1.policy[0])], [true, true, true]);
 
-  st.version = 2; // 손으로 고친 경우 — 번호가 같아 캐시가 모른다(주석대로)
+  st.version = 2; // 손으로 고친 경우 — 기록이 같아 캐시가 모른다(주석대로)
   const r2 = await wire(cache, d);
-  eq('번호 같음 → 가격 표 조회 0번 · 같은 객체', [st.tableReads, st.idReads, r2 === r1, r2.policy[0].v], [4, 2, true, 1]);
+  eq('열쇠 같음 → batch 0번 · 같은 객체', [st.batches, st.keyReads, r2 === r1, r2.policy[0].v], [1, 2, true, 1]);
 
-  st.importId = 6; // 올리기 apply · price:import
+  st.log = { id: 5, imported_at: 'T2' }; // DB 시점 복원 뒤 같은 번호가 다른 시각으로 다시 쓰임
   const r3 = await wire(cache, d);
-  eq('번호 바뀜 → 다시 읽음', [st.tableReads, r3 === r1, r3.policy[0].v], [8, false, 2]);
-  await wire(cache, d);
-  eq('바뀐 번호로 다시 → 조회 0번', st.tableReads, 8);
+  eq('같은 번호·다른 시각 → 다시 읽음', [st.batches, r3 === r1, r3.policy[0].v], [2, false, 2]);
 
-  st.importId = null; // 가져오기 기록 없음
+  st.log = { id: 6, imported_at: 'T3' }; // 올리기 apply · price:import
+  st.version = 3;
+  const r4 = await wire(cache, d);
+  eq('번호 바뀜 → 다시 읽음', [st.batches, r4.policy[0].v], [3, 3]);
+  await wire(cache, d);
+  eq('바뀐 열쇠로 다시 → batch 0번', st.batches, 3);
+
+  st.log = null; // 가져오기 기록 없음
   const r5 = await wire(cache, d);
   const r6 = await wire(cache, d);
-  eq('번호 없음 → 매번 읽음(얼리기는 같다)', [st.tableReads, r5 === r6, Object.isFrozen(r5.recipes[0])], [16, false, true]);
+  eq('열쇠 없음 → 매번 읽음(얼리기는 같다)', [st.batches, r5 === r6, Object.isFrozen(r5.recipes[0])], [5, false, true]);
 
-  st.importId = 6; // 기록 없음을 지나면 캐시는 비었다 → 다시 읽음
+  st.log = { id: 6, imported_at: 'T3' }; // 기록 없음을 지나면 캐시는 비었다 → 다시 읽음
   await wire(cache, d);
-  eq('번호 없음 뒤 같은 번호 → 다시 읽음', st.tableReads, 20);
+  eq('열쇠 없음 뒤 같은 열쇠 → 다시 읽음', st.batches, 6);
+}
+{
+  // 가벼운 열쇠 읽기와 batch 사이에 올리기가 끼면 batch 안에서 읽은 열쇠로 저장한다(표와 열쇠가 섞이지 않게)
+  const { d, st } = fakeD1();
+  const cache = createPriceDbCache();
+  st.log = { id: 7, imported_at: 'A' };
+  const orig = d.batch;
+  d.batch = async (stmts) => { st.log = { id: 8, imported_at: 'B' }; st.version = 9; return orig(stmts); };
+  await wire(cache, d);
+  d.batch = orig;
+  const again = await wire(cache, d);
+  eq('batch 안의 열쇠로 저장 → 다음 요청 batch 0번 · 새 값', [st.batches, again.policy[0].v], [1, 9]);
 }
 {
   const { d, st } = fakeD1();
   const cache = createPriceDbCache();
-  st.importId = 1;
+  st.log = { id: 1, imported_at: 'X' };
   let err = null;
-  const bad = cache({ latestId: async () => 1, load: async () => { throw new Error('D1 down'); } });
-  try { await bad; } catch (e) { err = e.message; }
+  try { await cache({ latestKey: async () => '1|X', loadSnapshot: async () => { throw new Error('D1 down'); } }); } catch (e) { err = e.message; }
   await wire(cache, d);
-  eq('읽기 실패 → 오류 그대로 · 캐시 안 됨 → 다음 요청 다시 읽음', [err, st.tableReads], ['D1 down', 4]);
+  eq('읽기 실패 → 오류 그대로 · 캐시 안 됨 → 다음 요청 다시 읽음', [err, st.batches], ['D1 down', 1]);
 }
 
 // ── 3) 배선(원문 대조) ────────────────────────────────────────────────────────
 const src = (p) => readFileSync(p, 'utf8');
 const priceDbSrc = src('src/lib/price-db.ts');
-eq('price-db.ts: loadPriceDbCached 가 캐시·최신 번호 SQL·loadPriceDb 를 쓴다', [
+const cachedBody = priceDbSrc.slice(priceDbSrc.indexOf('export async function loadPriceDbCached'));
+eq('price-db.ts: loadPriceDbCached 가 캐시·열쇠 SQL·batch(기록+표 4개)를 쓴다', [
   /export async function loadPriceDbCached\(d: D1\)/.test(priceDbSrc),
-  priceDbSrc.includes('SELECT id FROM price_import_log ORDER BY id DESC LIMIT 1'),
-  /load: \(\) => loadPriceDb\(d\)/.test(priceDbSrc),
+  priceDbSrc.includes(`const IMPORT_KEY_SQL = \`${KEY_SQL}\``),
   /createPriceDbCache\(\)/.test(priceDbSrc),
+  /d\.batch\(\[\s*d\.prepare\(IMPORT_KEY_SQL\), d\.prepare\(POLICY_SQL\), d\.prepare\(RECIPE_SQL\), d\.prepare\(EQUIPMENT_SQL\), d\.prepare\(SUBSTRATE_SQL\)/.test(cachedBody),
 ], [true, true, true, true]);
+{
+  const loadBody = priceDbSrc.slice(priceDbSrc.indexOf('export async function loadPriceDb('), priceDbSrc.indexOf('const priceDbCache'));
+  eq('loadPriceDb 도 같은 SQL 상수', ['POLICY_SQL', 'RECIPE_SQL', 'EQUIPMENT_SQL', 'SUBSTRATE_SQL'].every((k) => loadBody.includes(`all(d, ${k})`)), true);
+}
 for (const f of ['src/pages/api/quote-estimate.ts', 'src/pages/api/inquiry.ts', 'src/pages/api/admin/quote-calc.ts', 'src/pages/api/admin/quote-rev.ts']) {
   const s = src(f);
   eq(`${f}: loadPriceDbCached 만 쓴다`, [/loadPriceDbCached\(/.test(s), /\bloadPriceDb\(/.test(s)], [true, false]);
@@ -183,4 +210,4 @@ if (failed) {
   console.error(`\n가격 DB 캐시(price-cache) 테스트 실패 — ${failed}/${total}건.`);
   process.exit(1);
 }
-console.log(`✓ 가격 DB 캐시(price-cache) — ${total}건 통과 · 얼린 DB 계산 3종 동일 · 캐시 적중 시 가격 표 조회 0번`);
+console.log(`✓ 가격 DB 캐시(price-cache) — ${total}건 통과 · 얼린 DB 계산 3종 동일 · 캐시 적중 시 가격 표 조회 0번 · 캐시 없음 batch 1번`);

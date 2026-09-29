@@ -269,6 +269,9 @@ const qvText = editId ? JSON.stringify({ ko: siteData.ko.quote.view, en: siteDat
         let lastItems: any[] = [];  // 그 결과를 만든 품목 입력
         let lastLayers: any[] = []; // 그 결과를 만든 층 입력(편집 모드 저장에 쓴다)
         let fresh = false;          // 마지막 계산 뒤 입력이 바뀌지 않았는가
+        // 계산 요청 번호 — 입력 변경(stale)·칸 채우기(fill·reset)·새 계산이 올린다.
+        // 응답이 왔을 때 번호가 바뀌어 있으면 옛 입력의 결과다 → last·lastItems·lastLayers·fresh 를 바꾸지 않는다.
+        let calcNo = 0;
         // 편집 모드 — 접수번호(없으면 계산기 모드). 편집 모드 코드는 전부 EDIT 가 있을 때만 돈다.
         const EDIT = root.dataset.edit ?? '';
         let onFreshChange = () => {};
@@ -389,6 +392,7 @@ const qvText = editId ? JSON.stringify({ ko: siteData.ko.quote.view, en: siteDat
 
         // 입력이 바뀌면 이전 결과로 견적서를 뽑지 못하게 막는다(화면과 문서가 어긋나는 사고 방지).
         const stale = () => {
+          calcNo++;
           $<HTMLButtonElement>('qc-preview').disabled = true;
           if (last) $('qc-note').textContent = '입력이 바뀌었습니다 — 다시 계산하세요.';
           fresh = false;
@@ -404,6 +408,7 @@ const qvText = editId ? JSON.stringify({ ko: siteData.ko.quote.view, en: siteDat
         });
 
         const reset = () => {
+          calcNo++;
           itemsBody().innerHTML = '';
           layersBody().innerHTML = '';
           addItem();
@@ -474,6 +479,12 @@ const qvText = editId ? JSON.stringify({ ko: siteData.ko.quote.view, en: siteDat
         const calc = async () => {
           const items = readItems();
           const layers = readLayers();
+          const my = ++calcNo;
+          const dropped = () => {
+            if (my === calcNo) return false;
+            $('qc-note').textContent = '입력이 바뀌어 이 계산 결과는 버렸습니다 — 다시 계산하세요.';
+            return true;
+          };
           $('qc-note').textContent = '계산 중…';
           try {
             const res = await fetch('/api/admin/quote-calc', {
@@ -482,6 +493,7 @@ const qvText = editId ? JSON.stringify({ ko: siteData.ko.quote.view, en: siteDat
               body: JSON.stringify({ items, layers }),
             });
             const j = await res.json().catch(() => ({}));
+            if (dropped()) return;
             if (res.status === 401) { $('qc-note').textContent = '로그인이 만료되었습니다 — /admin 에서 다시 로그인하세요.'; return; }
             if (!j.ok) { $('qc-note').textContent = `계산 실패: ${j.hint ?? j.error ?? res.status}`; return; }
             last = j.result;
@@ -493,6 +505,7 @@ const qvText = editId ? JSON.stringify({ ko: siteData.ko.quote.view, en: siteDat
             fresh = last.status === '정상';
             onFreshChange();
           } catch (e) {
+            if (dropped()) return;
             $('qc-note').textContent = `계산 실패: ${e}`;
           }
         };
@@ -637,6 +650,7 @@ const qvText = editId ? JSON.stringify({ ko: siteData.ko.quote.view, en: siteDat
 
           /** 칸 채우기 — 불러온 개정의 입력(없으면 접수 사본으로 만든 입력)과 견적 정보 */
           const fill = (j: Loaded) => {
+            calcNo++;
             const input = j.current?.input ?? j.prefill?.input ?? null;
             itemsBody().innerHTML = '';
             layersBody().innerHTML = '';
@@ -682,6 +696,18 @@ const qvText = editId ? JSON.stringify({ ko: siteData.ko.quote.view, en: siteDat
             return true;
           };
 
+          /** load 를 부르는 곳(처음·이력·충돌 뒤·저장 뒤)용 — 네트워크 오류면 불러오기 칸에만 알린다(저장 문구는 그대로). */
+          const loadSafe = async (rev: number | null, doFill: boolean) => {
+            try {
+              return await load(rev, doFill);
+            } catch {
+              const el = $('qe-load');
+              el.textContent = '불러오기 실패 — 새로고침하세요';
+              el.hidden = false;
+              return false;
+            }
+          };
+
           const save = async (confirmIt: boolean) => {
             if (!L || !fresh || locked || busy || last?.status !== '정상') return;
             // USD 로 확정된 문의는 확정 저장하면 원화 확정으로 바뀐다(서버 동작 그대로) — PayPal 버튼이 사라지니 먼저 알린다
@@ -705,10 +731,14 @@ const qvText = editId ? JSON.stringify({ ko: siteData.ko.quote.view, en: siteDat
               if (j.ok) {
                 const warn = j.warning === 'usd_confirmed'
                   ? '<br>USD 로 확정된 견적이라 확정 금액은 바뀌지 않았습니다 — 견적 탭에서 직접 고치세요' : '';
-                msg(`저장됨 — 개정 ${esc(j.rev)} · 고객 조회 화면에 반영됨 (합계 ${esc(won(j.total))})${warn}`, j.warning ? 'warn' : 'ok');
+                if (j.unverified) {
+                  msg(`저장됨 — 개정 ${esc(j.rev)} (화면 새로고침에 실패했습니다 — 페이지를 새로고침해 확인하세요)${warn}`, 'warn');
+                } else {
+                  msg(`저장됨 — 개정 ${esc(j.rev)} · 고객 조회 화면에 반영됨 (합계 ${esc(won(j.total))})${warn}`, j.warning ? 'warn' : 'ok');
+                }
                 $<HTMLInputElement>('qe-note').value = '';
-                await load(null, false);
-                showView(j.view);
+                await loadSafe(null, false);
+                if (j.view) showView(j.view);
                 return;
               }
               if (j.error === 'conflict') {
@@ -716,13 +746,13 @@ const qvText = editId ? JSON.stringify({ ko: siteData.ko.quote.view, en: siteDat
                 document.getElementById('qe-reload')?.addEventListener('click', async () => {
                   if (!confirm('지금 입력한 내용을 최신 개정으로 덮어씁니다. 불러올까요?')) return;
                   msg('');
-                  await load(null, true);
+                  await loadSafe(null, true);
                 });
                 return;
               }
               if (j.error === 'already_paid') {
                 msg('결제가 끝난 견적이라 저장할 수 없습니다.', 'bad');
-                await load(null, false);
+                await loadSafe(null, false);
                 return;
               }
               if (j.error === 'engine') {
@@ -751,9 +781,9 @@ const qvText = editId ? JSON.stringify({ ko: siteData.ko.quote.view, en: siteDat
             if (!b) return;
             if (!confirm(`개정 ${b.dataset.loadRev}을(를) 불러와 지금 입력을 덮어씁니다. 불러올까요?`)) return;
             msg('');
-            await load(Number(b.dataset.loadRev), true);
+            await loadSafe(Number(b.dataset.loadRev), true);
           });
-          startEdit = async () => { await load(null, true); };
+          startEdit = async () => { await loadSafe(null, true); };
         }
 
         // ── 시작: 메타(이름 목록)만 받는다 ──────────────────────────────

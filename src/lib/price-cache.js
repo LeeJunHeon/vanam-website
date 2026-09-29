@@ -2,15 +2,17 @@
 //
 // 왜 있는가: 예상 견적 버튼·견적 접수·관리자 계산기가 부를 때마다 가격 표 4개(약 60행)를 D1 에서 다시 읽었다.
 // 가격이 바뀌는 길은 가져오기(관리자 [가격 DB 올리기] apply · npm run price:import)뿐이고 둘 다
-// price_import_log 에 새 줄을 쓴다 → 최신 가져오기 번호 1행만 읽어 같으면 메모리 값을 그대로 쓴다.
+// price_import_log 에 새 줄을 쓴다 → 최신 가져오기 1행의 열쇠만 읽어 같으면 메모리 값을 그대로 쓴다.
 //
-//   · 번호가 캐시 번호와 같음 → 캐시(가격 표 조회 0번)
-//   · 다르거나 캐시 없음      → load() 로 다시 읽고 번호와 함께 저장
-//   · 번호 없음(가져오기 기록 없음) → 캐시하지 않고 매번 load()
+//   열쇠 = `${id}|${imported_at}` — DB 를 옛 시점으로 되돌린 뒤 같은 id 가 다시 쓰여도 시각이 달라 구별된다.
+//   · 열쇠가 캐시와 같음 → 캐시(가격 표 조회 0번 · D1 1번)
+//   · 다르거나 캐시 없음 → loadSnapshot(): 가져오기 기록 1행 + 가격 표 4개를 batch 한 번(트랜잭션)으로 읽고,
+//                          그 batch 안에서 읽은 열쇠로 저장한다 — 올리는 순간에 읽어도 표와 열쇠가 섞이지 않는다.
+//   · 열쇠 없음(가져오기 기록 없음) → 캐시하지 않고 매번 읽는다.
 //
-// ⚠️ price_* 표를 손으로(SQL 콘솔 등) 고치면 기록 번호가 그대로라 캐시가 모른다 — 인스턴스가 바뀔 때까지 옛 값.
+// ⚠️ price_* 표를 손으로(SQL 콘솔 등) 고치면 기록이 그대로라 캐시가 모른다 — 인스턴스가 바뀔 때까지 옛 값.
 //    손으로 고쳤으면 가져오기를 다시 하거나 price_import_log 에 줄을 하나 더 쓴다.
-// ⚠️ price:import 는 표를 채운 뒤 마지막에 기록을 쓴다. 기록 전에 멈추면 번호가 안 바뀌어 캐시가 옛(또는 중간) 값을
+// ⚠️ price:import 는 표를 채운 뒤 마지막에 기록을 쓴다. 기록 전에 멈추면 열쇠가 안 바뀌어 캐시가 옛(또는 중간) 값을
 //    계속 쓸 수 있다 → 가져오기를 다시 끝까지 한다.
 // ⚠️ 돌려주는 객체는 깊게 얼린다(표 배열·행 객체까지). 계산 코드가 실수로 고치면 다음 요청이 조용히 틀린 값을
 //    쓰는 대신 그 자리에서 TypeError 가 난다(ESM 은 strict mode).
@@ -28,21 +30,28 @@ export function deepFreeze(o) {
 }
 
 /**
+ * 가져오기 기록 1행 → 캐시 열쇠. 행이 없거나 id 가 없으면 null.
+ * @param {{id?: unknown, imported_at?: unknown} | null | undefined} row
+ * @returns {string | null}
+ */
+export function importKeyOf(row) {
+  if (!row || row.id === null || row.id === undefined) return null;
+  return `${row.id}|${row.imported_at ?? ''}`;
+}
+
+/**
  * 캐시 하나(워커 인스턴스당 하나 — price-db.ts 모듈 변수).
- * @returns {<T>(o: { latestId: () => Promise<unknown>, load: () => Promise<T> }) => Promise<T>}
+ * @returns {<T>(o: { latestKey: () => Promise<string | null>, loadSnapshot: () => Promise<{ key: string | null, db: T }> }) => Promise<T>}
  */
 export function createPriceDbCache() {
-  /** @type {{ id: unknown, db: any } | null} */
+  /** @type {{ key: string, db: any } | null} */
   let cache = null;
-  return async ({ latestId, load }) => {
-    const id = await latestId();
-    if (id === null || id === undefined) {
-      cache = null;
-      return deepFreeze(await load());
-    }
-    if (cache && cache.id === id) return cache.db;
-    const db = deepFreeze(await load());
-    cache = { id, db };
+  return async ({ latestKey, loadSnapshot }) => {
+    const key = await latestKey();
+    if (key !== null && cache && cache.key === key) return cache.db;
+    const snap = await loadSnapshot();
+    const db = deepFreeze(snap.db);
+    cache = snap.key === null ? null : { key: snap.key, db };
     return db;
   };
 }

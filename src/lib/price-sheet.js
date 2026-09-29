@@ -61,7 +61,12 @@ export const PRICE_TABLE_ORDER = ['price_policy', 'price_equipment', 'price_reci
 const SPEC = Object.fromEntries([POLICY, ...TABLES].map((s) => [s.table, s]));
 
 export const MAX_TEXT = 4000;
-export const MAX_ROWS = 2000;
+// 표당 최대 행. 올리기(apply)는 batch 하나에 DELETE 5 + INSERT 묶음 + 기록 1 을 담는다.
+// INSERT 한 문장당 자리표시자 ≤100(insertChunks)이라 표마다 ceil(행 ÷ floor(100 ÷ 열 수)) 문장 —
+// 지금 스펙(열 5·9·16·14·6)으로 5표 모두 500행이면 25+46+84+72+32 = 259 → 합계 265 문장.
+// 2000행이면 1,033 문장으로 요청당 Cloudflare 내부 호출 1,000번을 넘는다 → 500 으로 둔다.
+// (scripts/test-price-sheet.mjs 가 스펙 열 수로 최악 문장 수를 다시 계산해 1,000 안쪽인지 본다)
+export const MAX_ROWS = 500;
 
 const isBlank = (v) => v === null || v === undefined || v === '';
 

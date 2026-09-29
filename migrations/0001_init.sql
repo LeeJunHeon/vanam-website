@@ -240,6 +240,5 @@ CREATE TABLE IF NOT EXISTS quote_revisions (
   price_sha    TEXT,                        -- 계산에 쓴 가격 DB(price_import_log.source_sha256)
   note         TEXT,                        -- 담당자 메모(내부)
   created_at   TEXT NOT NULL,
-  UNIQUE (inquiry_id, rev)
+  UNIQUE (inquiry_id, rev)                  -- 이 UNIQUE 의 자동 인덱스가 (inquiry_id, rev) 조회를 맡는다(따로 인덱스 두지 않음)
 );
-CREATE INDEX IF NOT EXISTS idx_qrev_inq ON quote_revisions(inquiry_id, rev);

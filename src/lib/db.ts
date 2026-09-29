@@ -121,7 +121,7 @@ const SCHEMA = [
     input_json TEXT, result_json TEXT, doc_json TEXT, manual_json TEXT,
     seen_total INTEGER, price_sha TEXT, note TEXT, created_at TEXT NOT NULL,
     UNIQUE (inquiry_id, rev))`,
-  `CREATE INDEX IF NOT EXISTS idx_qrev_inq ON quote_revisions(inquiry_id, rev)`,
+  // (inquiry_id, rev) 조회는 UNIQUE 의 자동 인덱스가 맡는다 — 같은 열의 인덱스를 따로 두면 개정 저장마다 쓰기만 는다.
 ];
 
 // 이미 만들어진 테이블에 컬럼을 덧붙일 때 쓴다.

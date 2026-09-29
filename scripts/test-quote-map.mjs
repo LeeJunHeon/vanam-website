@@ -5,8 +5,9 @@
 import { mapFormToQuote, recipeCandidates, parseThickness, runsOf, conv, QuoteMapError, REASON } from '../src/lib/quote-map.js';
 import {
   estimateForCustomer, matchSubstrate, planRuns, prettyFormula, addDays, SAMPLE_MANUAL_MIN, FORBIDDEN_CUSTOMER_KEYS,
-  manualLabel, manualLabelAdmin, GRADES, GRADED_TYPES,
+  manualLabel, manualLabelAdmin, GRADES, GRADED_TYPES, MAX_FORM_ERRORS,
 } from '../src/lib/quote-customer.js';
+import { buildAutoRevision } from '../src/lib/quote-revision.js';
 import { SUBSTRATE_GRADES, GRADED_SUBSTRATES } from '../src/lib/quote-fields.js';
 
 let total = 0, failed = 0;
@@ -235,6 +236,40 @@ eq('manualLabelAdmin', [
 ], ['1단계 ALD Al₂O₃ — 장비 선택 필요', '분석: XPS — 가격 자료 없음', '기판: Silicon 4 inch Prime — 목록에 없음',
   '기판: Silicon 4 inch Prime — 같은 사양 원가가 다름', '가격 자료 확인 — 엔진 상태: 공정 입력 확인', '샘플 수량 10개 이상',
   '3단계 입력 확인(두께·시간)', '3단계 입력 확인(물질)', '3단계 입력 확인(공정)', '샘플 수량 확인', '기판 등급 확인']);
+
+// ── 큰 견적: 품목 16개↑·층 101개↑ → 던지지 않고 담당자 확인('size') ─────────────
+{
+  // 서로 다른 가짜 장비(EQ-SP1 Ti · EQ-SP2 Cr)를 번갈아 → 단계마다 새 품목
+  const alt = (n) => Array.from({ length: n }, (_, i) => (i % 2 ? S('Sputter', 'Cr', '1') : S('Sputter', 'Ti', '1')));
+  const same = (n) => Array.from({ length: n }, () => S('Sputter', 'Ti', '1'));
+  const e = new QuoteMapError('too_many_items', 'x', { count: 16, max: 15 });
+  eq('QuoteMapError.name · detail', [e.name, e.detail, new QuoteMapError('c', 'm').detail], ['QuoteMapError', { count: 16, max: 15 }, null]);
+  let err = null;
+  try { run(alt(16)); } catch (x) { err = x; }
+  eq('변환 자체는 여전히 던진다(detail 포함)', [err?.code, err?.detail], ['too_many_items', { count: 16, max: 15 }]);
+
+  const r16 = est({ steps: alt(16), sampleCount: 1 });
+  eq('16품목 → manual size items', [r16.customer.kind, r16.debug.manual, r16.debug.input],
+    ['manual', [{ code: 'size', what: 'items', count: 16, max: 15 }], null]);
+  eq('16품목 → 고객 문구', r16.customer.manual, ['공정 단계가 많아 담당자가 직접 계산합니다']);
+  const r101 = est({ steps: same(101), sampleCount: 1 });
+  eq('101층 → manual size layers', [r101.customer.kind, r101.debug.manual], ['manual', [{ code: 'size', what: 'layers', count: 101, max: 100 }]]);
+  eq('15품목 → estimate', est({ steps: alt(15), sampleCount: 1 }).customer.kind, 'estimate');
+  eq('100층 → estimate', est({ steps: same(100), sampleCount: 1 }).customer.kind, 'estimate');
+  eq('size 와 다른 사유는 함께', est({ steps: alt(16), sampleCount: SAMPLE_MANUAL_MIN }).debug.manual.map((m) => m.code), ['samples', 'size']);
+
+  const details = { v: 1, sampleCount: '1', delivery: 'direct', seq: alt(16), measures: [] };
+  let auto = null, autoErr = null;
+  try { auto = buildAutoRevision({ details, locale: 'ko', priceDb: DB, computeQuote: fakeEngine, today: '2026-01-10', info: {} }); } catch (x) { autoErr = x?.name; }
+  eq('buildAutoRevision 16품목 → 던지지 않고 manual · input null', [autoErr, auto?.kind, auto?.input, auto?.manual],
+    [null, 'manual', null, [{ code: 'size', what: 'items', count: 16, max: 15 }]]);
+
+  eq('size 문구(고객 ko·en)', [manualLabel({ code: 'size', what: 'items', count: 16, max: 15 }, 'ko'), manualLabel({ code: 'size', what: 'layers', count: 101, max: 100 }, 'en')],
+    ['공정 단계가 많아 담당자가 직접 계산합니다', 'Many process steps — our team will calculate this quote']);
+  eq('size 문구(담당자)', [manualLabelAdmin({ code: 'size', what: 'items', count: 16, max: 15 }), manualLabelAdmin({ code: 'size', what: 'layers', count: 101, max: 100 })],
+    ['자동 계산 한도 초과 — 품목 16개(최대 15) · 편집기에서 품목을 묶어 입력', '자동 계산 한도 초과 — 층 101개(최대 100) · 편집기에서 품목을 묶어 입력']);
+  eq('입력 오류는 앞 30개까지', [MAX_FORM_ERRORS, cust({ steps: Array.from({ length: 40 }, () => S('Sputter', 'Ti', 'x')), sampleCount: 1 }).errors.length], [30, 30]);
+}
 eq('등급 상수는 quote-fields 단일 출처', [GRADES === SUBSTRATE_GRADES, GRADED_TYPES === GRADED_SUBSTRATES], [true, true]);
 
 if (failed) {

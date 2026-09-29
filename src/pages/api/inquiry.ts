@@ -9,12 +9,11 @@ import { validateQuoteDetails } from '../../lib/quote-fields.js';
 import { buildInquiryChatText, buildEstimateChatLine } from '../../lib/chat-message.js';
 // 접수 시 자동 견적(운영 스위치 '자동 견적'이 켜졌을 때만) — 실패해도 접수·알림은 그대로 진행한다.
 import { computeQuote } from '../../lib/quote-engine.js';
-import { formFromDetails, buildAutoRevision, defaultDocInfo } from '../../lib/quote-revision.js';
+import { formFromDetails, buildAutoRevision, defaultDocInfo, contactFor } from '../../lib/quote-revision.js';
 import { manualLabelAdmin } from '../../lib/quote-customer.js';
 import { loadPriceDbCached, latestImport } from '../../lib/price-db';
 import { quoteAutoEnabled } from '../../lib/quote-auto';
 import { insertRevision } from '../../lib/quote-store';
-import { telKr } from '../../lib/quote-doc';
 import companyInfo from '../../data/company.json';
 // 구글챗은 이 통로로만 보낸다 — Cloudflare main 빌드가 아니면 코드에서 차단된다.
 import { sendChat } from '../../lib/chat-send';
@@ -223,6 +222,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   //      결과는 quote_revisions 에 개정 1로 남고, 담당자 알림에 한 줄이 붙는다.
   //      ⚠️ 여기서 무슨 일이 나도 접수 응답·알림은 그대로 진행한다. 로그에는 접수번호와 오류 종류만 남긴다.
   let estimateLine: string | undefined;
+  let quoteSaved = false; // 이번 접수로 개정이 저장됐는가 — 완료 페이지가 이때만 조회 API 를 부른다
   if (type === 'quote' && saved) {
     try {
       let dj: unknown = null;
@@ -232,7 +232,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         const today = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10); // 한국 날짜
         const info = defaultDocInfo({
           inquiry: { id, name, company, productName }, policy: priceDb.policy, today,
-          contact: telKr(companyInfo.tel), locale,
+          contact: contactFor(locale, companyInfo.tel), locale,
         });
         const auto = buildAutoRevision({ details: dj, locale, priceDb, computeQuote, today, info });
         if (auto) {
@@ -244,6 +244,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
             seenTotal, priceSha: imp?.source_sha256 ?? null,
           });
           if (r.ok) {
+            quoteSaved = true;
             estimateLine = buildEstimateChatLine({
               kind: auto.kind, total: auto.total, seenTotal, manualAdmin: auto.manual.map(manualLabelAdmin),
             });
@@ -270,10 +271,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
   //    ⚠️ 로그에는 접수번호만 남는다. 본문(text)의 PII 는 남기지 않는다.
   const chat = await sendChat(text, { tag: 'inquiry', ref: id });
   if (chat.reason === 'blocked_build' || chat.reason === 'no_webhook') {
-    return json({ ok: true, delivered: false, id });
+    return json({ ok: true, delivered: false, id, quote: quoteSaved });
   }
   if (chat.reason === 'http_error') return json({ ok: false, error: 'webhook_failed' }, 502);
   if (chat.reason === 'fetch_error') return json({ ok: false, error: 'webhook_error' }, 502);
 
-  return json({ ok: true, delivered: true, type, id });
+  return json({ ok: true, delivered: true, type, id, quote: quoteSaved });
 };
