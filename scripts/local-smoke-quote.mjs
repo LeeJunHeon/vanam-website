@@ -4,6 +4,10 @@
 //   A. 스위치 켜짐 · 계산 가능한 공정 → 예상 견적 estimate · 접수 시 개정 저장 · 조회에 견적서(doc)
 //   B. 스위치 켜짐 · 담당자 확인 공정(장비 후보 여럿 + 분석) → manual · 조회 reviewing · doc 없음
 //   C. 스위치 꺼짐 → GET enabled false · POST 404 · 조회 quote null
+//   D. 구매 요청 Silicon 6inch Prime → 예상 견적 estimate 기대(아니면 문구를 출력하고 실패)
+//   E. 구매 요청 Silicon 4inch Prime → manual, 문구에 기판 항목
+//   F. 접수 구조화 사본의 substrateGrade 'prime'(소문자) → 400 invalid_grade
+//   ※ 접수는 10분에 5회 제한 — 이 스크립트의 접수 요청은 A·B·C·F 4회.
 //   + 고객 응답(예상 견적·조회)에 금지 키·실제 ID 문자열 0건 · 저장소 파일에 실제 ID 문자열 0건
 //
 // ⚠️ 실제 금액·레시피/장비/기판 ID 를 이 파일에 적지 않는다. ID 목록은 런타임에 관리자 API 에서 받아
@@ -58,16 +62,16 @@ const CASES = {
   A: { steps: [step('Sputter', 'Ti', '10', 'nm'), step('Sputter', 'Pt', '50', 'nm')], measurements: [], material: 'Ti, Pt' },
   B: { steps: [step('ALD', 'Al2O3', '10', 'nm')], measurements: ['XPS'], material: 'Al2O3' },
 };
-const estimateForm = (c) => ({
+const estimateForm = (c, sub = {}) => ({
   steps: c.steps, measurements: c.measurements, sampleCount: '5', delivery: 'direct',
-  substrateType: 'Silicon', substrateSize: '4inch', substrateGrade: '', locale: 'ko',
+  substrateType: 'Silicon', substrateSize: '4inch', substrateGrade: '', locale: 'ko', ...sub,
 });
-const inquiryBody = (c, seen) => ({
+const inquiryBody = (c, seen, extra = {}) => ({
   type: 'quote', product: 'multilayers', productName: 'Multilayers', name: 'SMOKE TEST', email: 'smoke@test.local',
   privacy: 'agreed', material: c.material, locale: 'ko', details: '자동 견적 로컬 점검(SMOKE TEST)',
   detailsJson: JSON.stringify({
     v: 1, delivery: 'direct', preFilm: false, preFilmNote: '', sampleCount: '5',
-    substrateType: 'Silicon', substrateSize: '4inch', seq: c.steps, measures: c.measurements,
+    substrateType: 'Silicon', substrateSize: '4inch', seq: c.steps, measures: c.measurements, ...extra,
   }),
   ...(seen !== undefined ? { estimateSeenKrw: seen } : {}),
   'cf-turnstile-response': 'local',
@@ -148,6 +152,25 @@ try {
   pass('B③: quote.state reviewing', qB?.state === 'reviewing', qB?.state);
   pass('B③: manual 문구 2개 이상 · doc null', (qB?.manual?.length ?? 0) >= 2 && qB?.doc === null, JSON.stringify(qB?.manual ?? []));
   pass('B③: quote 금지 키 0건', forbiddenIn(qB, VIEW_FORBIDDEN_KEYS).length === 0);
+
+  // ── 사례 D·E — 구매 요청 기판 ──
+  const PURCHASE = { steps: [step('Sputter', 'Ti', '10', 'nm')], measurements: [], material: 'Ti' };
+  console.log('\n사례 D — 구매 요청 Silicon 6inch Prime');
+  const eD = await call('POST', '/api/quote-estimate', { form: estimateForm(PURCHASE, { delivery: 'purchase', substrateType: 'Silicon', substrateSize: '6inch', substrateGrade: 'Prime' }) });
+  customerBodies.push(eD.json);
+  pass('D: kind estimate', eD.json?.customer?.kind === 'estimate',
+    eD.json?.customer?.kind === 'estimate' ? 'estimate' : `${eD.json?.customer?.kind} ${JSON.stringify(eD.json?.customer?.manual ?? eD.json?.customer?.errors ?? '')}`);
+  console.log('\n사례 E — 구매 요청 Silicon 4inch Prime');
+  const eE = await call('POST', '/api/quote-estimate', { form: estimateForm(PURCHASE, { delivery: 'purchase', substrateType: 'Silicon', substrateSize: '4inch', substrateGrade: 'Prime' }) });
+  customerBodies.push(eE.json);
+  const mE = eE.json?.customer?.manual ?? [];
+  pass('E: kind manual · 기판 항목', eE.json?.customer?.kind === 'manual' && mE.some((m) => String(m).startsWith('기판:')), JSON.stringify(mE));
+
+  // ── 사례 F — 등급 코드값이 틀린 접수 ──
+  console.log('\n사례 F — 접수 substrateGrade \'prime\'(소문자)');
+  const iF = await call('POST', '/api/inquiry', inquiryBody(CASES.A, undefined, { delivery: 'purchase', substrateGrade: 'prime' }));
+  if (iF.json?.delivered === true) throw new Stop('접수 응답 delivered === true — 즉시 멈춘다.');
+  pass('F: 400 invalid_grade', iF.status === 400 && iF.json?.error === 'invalid_grade', `${iF.status} ${iF.json?.error ?? ''}`);
 
   // ── 사례 C ──
   console.log('\n사례 C — 스위치 꺼짐');

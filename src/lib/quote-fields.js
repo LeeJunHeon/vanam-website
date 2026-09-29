@@ -53,7 +53,7 @@ export const GRADED_SUBSTRATES = ['Silicon', 'Silicon oxide'];
  *     · delivery 가 있는데 허용 목록에 없다 → 차단
  *     · preFilm 이 boolean 이 아니다        → 차단
  *     · preFilm 이 true 인데 메모가 비었다  → 차단
- *     · substrateGrade 가 있는데 '', 'Test', 'Prime' 이 아니다 → 차단 (키가 없으면 통과 — 옛 클라이언트)
+ *     · substrateGrade 가 있는데 '', null, 'Test', 'Prime' 이 아니다 → 차단 (키가 없으면 통과 — 옛 클라이언트)
  *   파싱 실패·필드 없음·웨이퍼 문의 형식은 전부 통과(옛 클라이언트·다른 폼 호환).
  *
  * @param {string} detailsJson  폼이 보낸 JSON 문자열 (빈 문자열 허용)
@@ -84,7 +84,8 @@ export function validateQuoteDetails(detailsJson) {
     if (dj.preFilm && !note) return { ok: false, error: 'missing_prefilm_note' };
   }
 
-  if ('substrateGrade' in dj && dj.substrateGrade !== '' && !SUBSTRATE_GRADES.includes(dj.substrateGrade)) {
+  // null 은 빈 값과 같다(확실히 틀린 값만 막는다)
+  if ('substrateGrade' in dj && dj.substrateGrade !== '' && dj.substrateGrade !== null && !SUBSTRATE_GRADES.includes(dj.substrateGrade)) {
     return { ok: false, error: 'invalid_grade' };
   }
 

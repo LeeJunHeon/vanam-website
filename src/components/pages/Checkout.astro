@@ -192,6 +192,8 @@ const inputClass =
   'v-input';
 const labelClass = 'block text-sm font-medium text-ink/80';
 const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
+// Turnstile 사이트 키 — 빌드가 정한다(src/lib/turnstile-key.js · astro.config.mjs define).
+declare const __VANAM_TURNSTILE_SITEKEY__: string;
 ---
 
 <BaseLayout title={t.meta} description={t.metaDesc}>
@@ -408,7 +410,7 @@ const legendClass = 'text-sm font-medium uppercase tracking-widest text-accent';
               {/* Turnstile 봇 검증 위젯 */}
               <div
                 class="cf-turnstile"
-                data-sitekey="0x4AAAAAAD5eNOFVFYfnvXUA"
+                data-sitekey={__VANAM_TURNSTILE_SITEKEY__}
                 data-theme="auto"
                 data-language="auto"
                 data-refresh-expired="auto"

@@ -11,7 +11,7 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "verify": "node scripts/check-schema.mjs && node scripts/check-material-values.mjs && node scripts/check-quote-fields.mjs && node scripts/test-cart.mjs && node scripts/check-ui-tokens.mjs && node scripts/verify-design.mjs && node scripts/check-seo-markup.mjs && node scripts/test-quote-engine.mjs && node scripts/test-chat-guard.mjs && node scripts/check-chat-guard.mjs && node scripts/test-quote-map.mjs && node scripts/test-quote-revision.mjs",
+    "verify": "node scripts/check-schema.mjs && node scripts/check-material-values.mjs && node scripts/check-quote-fields.mjs && node scripts/test-cart.mjs && node scripts/check-ui-tokens.mjs && node scripts/verify-design.mjs && node scripts/check-seo-markup.mjs && node scripts/test-quote-engine.mjs && node scripts/test-chat-guard.mjs && node scripts/check-chat-guard.mjs && node scripts/test-quote-map.mjs && node scripts/test-quote-revision.mjs && node scripts/test-quote-doc.mjs && node scripts/test-quote-view.mjs && node scripts/check-turnstile-key.mjs && node scripts/check-quote-ui.mjs",
     "price:import": "node scripts/price-db-import.mjs",
     "local": "node scripts/local-run.mjs",
     "smoke:quote": "node scripts/local-smoke-quote.mjs"

@@ -7,10 +7,13 @@ import company from '../../data/company.json';
 
 import { getCollection } from 'astro:content';
 import { SUBSTRATE_SIZES, DELIVERY_METHODS } from '../../lib/processes';
+import siteData from '../../data/site.json';
 
 const locale = (Astro.currentLocale ?? 'en') as 'ko' | 'en';
 const isKo = locale === 'ko';
 const lhref = (p: string) => getRelativeLocaleUrl(locale, p);
+// 예상·확정 견적 상자 문구 — 완료 화면과 같은 문구(site.json quote.view)
+const QV = ((siteData as Record<string, any>)[locale] ?? siteData.en).quote.view;
 
 // 주문 완료 화면에서 넘어오면 주문번호가 채워져 있다
 const prefill = Astro.url.searchParams.get('id') ?? '';
@@ -169,6 +172,7 @@ const inputClass =
       data-label-loading={t.loading}
       data-labels={JSON.stringify(t.st)}
       data-inq={JSON.stringify(t.inq)}
+      data-qv={JSON.stringify(QV)}
       data-product-names={JSON.stringify(productNames)}
       data-map-size={JSON.stringify(sizeMap)}
       data-map-delivery={JSON.stringify(deliveryMap)}
@@ -216,6 +220,9 @@ const inputClass =
 
 <script>
   import { buildQuoteSheet, openQuoteSheet } from '../../lib/quote-sheet';
+  // 견적 요약 상자·엑셀형 견적서 — 금액은 서버가 준 inquiry.quote 만 쓴다(화면에서 계산하지 않는다)
+  import { renderQuoteBox, docOptions, injectQuoteViewStyle } from '../../lib/quote-view-render.js';
+  import { buildQuoteDoc, openQuoteDoc } from '../../lib/quote-doc';
   const form = document.getElementById('lookup-form') as HTMLFormElement | null;
   if (form) {
     const M = form.dataset;
@@ -225,6 +232,8 @@ const inputClass =
     const ST: Record<string, string> = JSON.parse(M.labels ?? '{}');
     const C = JSON.parse(M.copy ?? '{}');
     const INQ = JSON.parse(M.inq ?? '{}');
+    const QVT: Record<string, string> = JSON.parse(M.qv ?? '{}');
+    const PAGE_LANG: 'ko' | 'en' = document.documentElement.lang === 'ko' ? 'ko' : 'en';
     // 상품 id → 이 페이지 언어의 상품명. 접수 당시 언어로 굳은 이름 대신 이걸 우선 쓴다.
     const PNAMES: Record<string, string> = JSON.parse(M.productNames ?? '{}');
     const SIZE_MAP: Record<string, string> = JSON.parse(M.mapSize ?? '{}');
@@ -269,7 +278,7 @@ const inputClass =
       const delivery = DELIV_MAP[String(dj.delivery ?? '')] ?? String(dj.delivery ?? '');
       const out = [
         INQ.dSecSub,
-        [dj.substrateType, dj.substrateSize].filter(Boolean).length ? `${INQ.substrate}: ${[dj.substrateType, SIZE_MAP[String(dj.substrateSize ?? '')] ?? dj.substrateSize].filter(Boolean).join(' / ')}` : '',
+        [dj.substrateType, dj.substrateSize].filter(Boolean).length ? `${INQ.substrate}: ${[dj.substrateType, SIZE_MAP[String(dj.substrateSize ?? '')] ?? dj.substrateSize, dj.substrateGrade].filter(Boolean).join(' / ')}` : '',
         delivery ? `${INQ.dDelivery}: ${delivery}` : '',
         dj.sampleCount ? `${INQ.dSamples}: ${dj.sampleCount}` : '',
         dj.completionDate ? `${INQ.dDue}: ${dj.completionDate}` : '',
@@ -299,7 +308,8 @@ const inputClass =
       try {
         const dj = JSON.parse(String(raw));
         const size = SIZE_MAP[String(dj.substrateSize ?? '')] ?? String(dj.substrateSize ?? '');
-        const joined = [dj.substrateType, size].filter(Boolean).join(' / ');
+        // 등급(Test·Prime)은 코드값이 곧 표기다 — 구매 요청 + Silicon 계열일 때만 들어 있다
+        const joined = [dj.substrateType, size, dj.substrateGrade].filter(Boolean).join(' / ');
         return joined || fallback;
       } catch { return fallback; }
     };
@@ -370,6 +380,8 @@ const inputClass =
       label.textContent = M.labelLoading!;
 
       const data = Object.fromEntries(new FormData(form).entries()) as Record<string, string>;
+      // 견적 요약의 담당자 확인 문구 언어 — 이 페이지 언어
+      data.locale = PAGE_LANG;
 
       try {
         const res = await fetch('/api/order/lookup', {
@@ -490,6 +502,19 @@ const inputClass =
             : q.quote_currency === 'USD'
               ? `$${Number(q.quoted_amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
               : `₩${Number(q.quoted_amount).toLocaleString('ko-KR')}`;
+          // 견적 요약(자동 견적·담당자 개정) — 예상·검토 중이면 금액 줄 자리에, 확정이면 금액 줄 아래에 상자를 둔다
+          const qv = q.quote ?? null;
+          const qvState = String(qv?.state ?? '');
+          const qvBox = renderQuoteBox(qv, QVT, { refresh: true });
+          if (qvBox) injectQuoteViewStyle(document);
+          const amountRow = `
+              <div class="mt-5 flex items-center justify-between border-t border-ink/10 pt-5">
+                <span class="text-sm text-ink/60">${esc(INQ.amount)} <span class="text-ink/35">${esc(INQ.vat)}</span></span>
+                <span class="text-xl font-bold text-ink">${amt ?? `<span class="text-base font-medium text-ink/45">${esc(INQ.pending)}</span>`}</span>
+              </div>`;
+          const amountBlock = qvBox && (qvState === 'estimate' || qvState === 'reviewing')
+            ? `<div class="mt-5 border-t border-ink/10 pt-1">${qvBox}</div>`
+            : amountRow + (qvBox ? qvBox : '');
           resEl.innerHTML = `
             <div class="rounded-xl border border-ink/10 bg-ink/[0.02] p-7">
               <div class="flex flex-wrap items-start justify-between gap-4">
@@ -515,10 +540,7 @@ const inputClass =
                   <summary class="cursor-pointer px-4 py-3 text-sm font-medium text-ink/70">${esc(INQ.reqBody)}</summary>
                   <pre class="whitespace-pre-wrap border-t border-ink/10 px-4 py-3 font-sans text-sm leading-relaxed text-ink/65">${esc(dTxt)}</pre>
                 </details>` : ''}
-              <div class="mt-5 flex items-center justify-between border-t border-ink/10 pt-5">
-                <span class="text-sm text-ink/60">${esc(INQ.amount)} <span class="text-ink/35">${esc(INQ.vat)}</span></span>
-                <span class="text-xl font-bold text-ink">${amt ?? `<span class="text-base font-medium text-ink/45">${esc(INQ.pending)}</span>`}</span>
-              </div>
+              ${amountBlock}
               ${q.quote_bank ? `
                 <p class="mt-5 rounded-lg border border-ink/10 bg-ink/[0.03] p-4 text-sm leading-relaxed text-ink/70"><span class="text-ink/45">${esc(INQ.sheetBank)}</span><br>${esc(q.quote_bank)}</p>` : ''}
               ${q.quote_note ? `
@@ -530,10 +552,25 @@ const inputClass =
             </div>`;
           resEl.hidden = false;
 
+          // 엑셀형 견적서(견적 요약에 견적서가 있을 때) — 팝업이 막히면 상자 안에 안내
+          const openDoc = (): boolean => {
+            const o = docOptions(qv, QVT, PAGE_LANG);
+            if (!o) return false;
+            const ok = openQuoteDoc(buildQuoteDoc({ ...o, logoUrl: new URL('/logo.png', location.href).href }));
+            const msg = resEl.querySelector('[data-qv-msg]') as HTMLElement | null;
+            if (msg) { msg.textContent = ok ? '' : QVT.popupBlocked; msg.hidden = ok; }
+            return true;
+          };
+          resEl.querySelector('[data-qv-doc]')?.addEventListener('click', () => { openDoc(); });
+          // 최신 견적 다시 보기 — 같은 접수번호·이메일로 다시 조회한다
+          resEl.querySelector('[data-qv-refresh]')?.addEventListener('click', () => { form.requestSubmit(); });
+
           // 견적서 인쇄 — 접수 확인 페이지를 이미 닫았거나 나중에 다시 찾은 고객이
           // 조회 화면에서 바로 견적서를 뽑을 수 있어야 한다(구매팀에 넘길 서류가 된다).
           // 자동 인쇄하지 않는다 — 창 안의 버튼을 눌러야 인쇄창이 뜬다.
+          // 견적 요약에 견적서(doc)가 있으면 엑셀형 견적서를, 없으면 예전 요청서 양식을 쓴다.
           document.getElementById('inq-sheet')?.addEventListener('click', () => {
+            if (qv?.doc && openDoc()) return;
             // 웨이퍼 문의면 수량·다이싱을 인쇄물에도 별도 행으로 싣는다(구매팀에 그대로 넘어가는 서류다).
             let wf: Record<string, any> | null = null;
             try { wf = JSON.parse(String(q.details_json ?? '{}'))?.wafer ?? null; } catch { wf = null; }

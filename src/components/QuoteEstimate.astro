@@ -1,0 +1,226 @@
+---
+// 견적 폼의 예상 견적 — QuoteForm.astro 가 공정 견적 폼(simple 아님)에서 두 번 렌더한다.
+//   part="panel"  → 다운로드 안내 바로 아래: 결과 상자 + 접수 때 함께 보낼 '고객 화면 금액'(estimateSeenKrw)
+//   part="button" → 버튼 줄의 [예상 견적 보기] (처음엔 hidden)
+//
+// 운영 스위치 '자동 견적'이 꺼져 있으면(= GET /api/quote-estimate 가 enabled:false·오류) 아무것도 바꾸지 않는다
+// — 지금 화면(견적서 다운로드) 그대로다. 켜져 있으면 [예상 견적 보기]를 보이고 다운로드 버튼·안내를 숨긴다.
+//
+// ⚠️ 금액·문구는 서버 응답(customer)만 쓴다. 화면에서 금액을 계산하지 않는다. 넣는 문자열은 전부 이스케이프.
+// ⚠️ 기존 폼의 검증·제출·다운로드 로직은 건드리지 않는다. 폼 DOM 은 읽기만 한다.
+import siteData from '../data/site.json';
+
+const { part } = Astro.props as { part: 'panel' | 'button' };
+const locale = Astro.currentLocale ?? 'en';
+const site = (siteData as Record<string, any>)[locale] ?? siteData.en;
+const T = site.quote.estimate;
+const submitLabel = site.quote.form.submit;
+---
+
+{part === 'button' ? (
+  <button type="button" id="quote-estimate-run" class="v-btn-ghost" hidden>{T.button}</button>
+) : (
+  <>
+    <div id="quote-estimate-result" class="qe-box" hidden aria-live="polite"
+      data-t={JSON.stringify(T)} data-submit={submitLabel}></div>
+    <input type="hidden" name="estimateSeenKrw" id="quote-estimate-seen" value="" />
+  </>
+)}
+
+<style>
+  .qe-box { margin-top: 1rem; border: 1px solid color-mix(in srgb, var(--color-ink) 12%, transparent); border-radius: 0.75rem; padding: 1.1rem 1.25rem; line-height: 1.65; }
+  .qe-box :global(.qe-title) { font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.02em; color: color-mix(in srgb, var(--color-ink) 60%, transparent); }
+  .qe-box :global(.qe-total) { margin-top: 0.25rem; font-size: 1.25rem; font-weight: 700; color: var(--color-ink); }
+  .qe-box :global(.qe-notice) { margin-top: 0.75rem; border: 2px solid var(--color-warn); border-radius: 0.5rem; padding: 0.7rem 0.9rem; background: color-mix(in srgb, var(--color-warn) 12%, transparent); font-weight: 700; color: var(--color-ink); }
+  .qe-box :global(.qe-valid) { margin-top: 0.6rem; font-size: 0.875rem; color: color-mix(in srgb, var(--color-ink) 65%, transparent); }
+  .qe-box :global(.qe-text) { font-size: 0.9375rem; color: color-mix(in srgb, var(--color-ink) 80%, transparent); }
+  .qe-box :global(.qe-list) { margin: 0.5rem 0 0.5rem 1.25rem; list-style: disc; font-size: 0.9375rem; color: color-mix(in srgb, var(--color-ink) 80%, transparent); }
+  .qe-box.qe-bad { border-color: color-mix(in srgb, var(--color-danger) 45%, transparent); background: color-mix(in srgb, var(--color-danger) 6%, transparent); }
+  .qe-box.qe-part { border-color: color-mix(in srgb, var(--color-warn) 45%, transparent); }
+  :global(.qe-flag) { box-shadow: 0 0 0 2px var(--color-danger); }
+</style>
+
+<script>
+  // 공정 견적 폼 전용. 조건부 요소는 전부 null 안전(simple 폼·다른 페이지에는 없다).
+  type Customer = {
+    kind: 'estimate' | 'manual' | 'invalid';
+    totalKrw?: number; totalKrwText?: string; totalUsdText?: string; validDays?: number | null; validUntil?: string | null;
+    manual?: string[]; errors?: { step?: number; field: string; message: string }[];
+  };
+
+  const runBtn = document.getElementById('quote-estimate-run') as HTMLButtonElement | null;
+  const box = document.getElementById('quote-estimate-result') as HTMLElement | null;
+  const seen = document.getElementById('quote-estimate-seen') as HTMLInputElement | null;
+  const form = document.getElementById('quote-form') as HTMLFormElement | null;
+  const list = document.getElementById('q-process-list');
+  const printBtn = document.getElementById('quote-print') as HTMLElement | null;
+  const hint = document.getElementById('q-download-hint') as HTMLElement | null;
+
+  const T: Record<string, string> = JSON.parse(box?.dataset.t || '{}');
+  const submitLabel = box?.dataset.submit || '';
+  const API = '/api/quote-estimate';
+
+  const esc = (v: unknown) =>
+    String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  /** 이스케이프한 문구의 {자리}에 이스케이프한 값을 넣는다 */
+  const fill = (tpl: string, vars: Record<string, unknown>) =>
+    esc(tpl).replace(/\{(\w+)\}/g, (m: string, k: string) => (k in vars ? esc(vars[k]) : m));
+
+  const clearFlags = () => {
+    document.querySelectorAll('.qe-flag').forEach((el) => el.classList.remove('qe-flag'));
+  };
+  /** 결과를 숨기고 고객 화면 금액을 비운다 — 입력이 바뀌면 이전 금액은 더 이상 맞지 않는다 */
+  const invalidate = () => {
+    if (box && !box.hidden) { box.hidden = true; box.innerHTML = ''; }
+    if (seen) seen.value = '';
+    clearFlags();
+  };
+  const show = (html: string, tone: '' | 'qe-part' | 'qe-bad') => {
+    if (!box) return;
+    box.className = `qe-box${tone ? ` ${tone}` : ''}`;
+    box.innerHTML = html;
+    box.hidden = false;
+  };
+  const setDownloadVisible = (on: boolean) => {
+    if (printBtn) printBtn.hidden = !on;
+    if (hint) hint.hidden = !on;
+  };
+
+  /** 폼 값 읽기 — 숨은 칸은 빈 값 */
+  const readForm = () => {
+    const rows = Array.from(list?.querySelectorAll<HTMLElement>('.q-process-row') ?? []);
+    const steps = rows.map((row) => {
+      const matWrap = row.querySelector<HTMLElement>('.q-material-wrap');
+      const valWrap = row.querySelector<HTMLElement>('.q-value-wrap');
+      return {
+        process: row.querySelector<HTMLSelectElement>('.q-row-process')?.value ?? '',
+        material: matWrap && !matWrap.hidden ? (row.querySelector<HTMLSelectElement>('.q-row-material')?.value ?? '') : '',
+        value: valWrap && !valWrap.hidden ? (row.querySelector<HTMLInputElement>('.q-row-value')?.value ?? '').trim() : '',
+        unit: row.querySelector<HTMLElement>('.q-row-unit')?.textContent ?? '',
+        etc: (row.querySelector<HTMLInputElement>('.q-row-etc')?.value ?? '').trim(),
+      };
+    });
+    const val = (id: string) => ((document.getElementById(id) as HTMLInputElement | null)?.value ?? '').trim();
+    const grade = document.getElementById('q-grade') as HTMLSelectElement | null;
+    return {
+      steps,
+      measurements: Array.from(form?.querySelectorAll<HTMLInputElement>('input[name="measurements"]:checked') ?? []).map((el) => el.value),
+      sampleCount: val('q-sample-count'),
+      delivery: val('q-delivery'),
+      substrateType: val('q-substrate-type'),
+      substrateSize: val('q-substrate-size'),
+      substrateGrade: grade && !grade.disabled ? grade.value : '',
+      locale: document.documentElement.lang === 'ko' ? 'ko' : 'en',
+    };
+  };
+
+  /** 입력 오류 → 해당 칸 */
+  const fieldEl = (e: { step?: number; field: string }): HTMLElement | null => {
+    const row = e.step ? (list?.querySelectorAll<HTMLElement>('.q-process-row')[e.step - 1] ?? null) : null;
+    if (e.field === 'sampleCount') return document.getElementById('q-sample-count');
+    if (e.field === 'substrateGrade') return document.getElementById('q-grade');
+    if (e.field === 'process') return row ? row.querySelector<HTMLElement>('.q-row-process') : document.getElementById('q-process-add');
+    if (e.field === 'material') return row?.querySelector<HTMLElement>('.q-row-material') ?? null;
+    if (e.field === 'value') return row?.querySelector<HTMLElement>('.q-row-value') ?? null;
+    return null;
+  };
+
+  const render = (c: Customer) => {
+    clearFlags();
+    if (c.kind === 'estimate') {
+      show(
+        `<p class="qe-title">${esc(T.title)}</p>` +
+        `<p class="qe-total">${fill(T.total, { krw: c.totalKrwText, usd: c.totalUsdText })}</p>` +
+        `<div class="qe-notice">${esc(T.notice)}</div>` +
+        (c.validUntil && c.validDays ? `<p class="qe-valid">${fill(T.valid, { days: c.validDays, date: c.validUntil })}</p>` : ''),
+        '',
+      );
+      if (seen) seen.value = typeof c.totalKrw === 'number' ? String(c.totalKrw) : '';
+      return;
+    }
+    if (seen) seen.value = '';
+    if (c.kind === 'manual') {
+      show(
+        `<p class="qe-text">${esc(T.manualIntro)}</p>` +
+        `<ul class="qe-list">${(c.manual ?? []).map((m) => `<li>${esc(m)}</li>`).join('')}</ul>` +
+        `<p class="qe-text">${fill(T.manualCta, { submit: submitLabel })}</p>`,
+        'qe-part',
+      );
+      return;
+    }
+    const errs = c.errors ?? [];
+    show(
+      `<p class="qe-text">${esc(T.invalidIntro)}</p>` +
+      `<ul class="qe-list">${errs.map((e) => `<li>${esc(e.message)}</li>`).join('')}</ul>`,
+      'qe-bad',
+    );
+    const els = errs.map(fieldEl).filter((el): el is HTMLElement => !!el);
+    els.forEach((el) => el.classList.add('qe-flag'));
+    if (els[0]) {
+      try { els[0].scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) { /* 무시 */ }
+    }
+  };
+
+  const run = async () => {
+    if (!runBtn) return;
+    const label = runBtn.textContent;
+    runBtn.disabled = true;
+    runBtn.textContent = T.calculating;
+    try {
+      const res = await fetch(API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ form: readForm() }),
+      });
+      if (res.status === 404) {
+        // 그 사이 스위치가 꺼졌다 — 예전 화면(견적서 다운로드)으로 돌아간다
+        runBtn.hidden = true;
+        setDownloadVisible(true);
+        if (seen) seen.value = '';
+        show(`<p class="qe-text">${esc(T.unavailable)}</p>`, 'qe-part');
+        return;
+      }
+      const j = await res.json().catch(() => null);
+      if (!res.ok || !j?.ok || !j.customer) throw new Error(`HTTP ${res.status}`);
+      render(j.customer as Customer);
+    } catch (e) {
+      if (seen) seen.value = '';
+      show(`<p class="qe-text">${esc(T.fail)}</p>`, 'qe-bad');
+    } finally {
+      runBtn.disabled = false;
+      runBtn.textContent = label;
+    }
+  };
+
+  // 가격에 영향 있는 칸 — 결과가 보이는 동안 바뀌면 결과를 숨긴다(이름·이메일 등은 제외)
+  const PRICE_IDS = ['q-sample-count', 'q-delivery', 'q-substrate-type', 'q-substrate-size',
+    'q-substrate-type-other', 'q-substrate-size-other', 'q-grade'];
+  const onFieldChange = (e: Event) => {
+    const t = e.target as HTMLElement | null;
+    if (!t) return;
+    const inList = !!list && list.contains(t);
+    const isMeasure = (t as HTMLInputElement).name === 'measurements';
+    if (inList || isMeasure || PRICE_IDS.includes(t.id)) invalidate();
+  };
+
+  if (runBtn && box && seen && form) {
+    runBtn.addEventListener('click', run);
+    form.addEventListener('input', onFieldChange);
+    form.addEventListener('change', onFieldChange);
+    // 행 추가·삭제
+    if (list) new MutationObserver(invalidate).observe(list, { childList: true });
+    // 제출 성공 뒤 form.reset() — hidden input 의 값은 reset 으로 지워지지 않으니 직접 비운다
+    form.addEventListener('reset', () => { invalidate(); setTimeout(() => { if (seen) seen.value = ''; }, 0); });
+
+    // 운영 스위치 확인 — 켜졌을 때만 화면을 바꾼다. 꺼짐·오류·응답 없음이면 지금 화면 그대로.
+    fetch(API, { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (j && j.ok === true && j.enabled === true) {
+          runBtn.hidden = false;
+          setDownloadVisible(false);
+        }
+      })
+      .catch(() => { /* 지금 화면 그대로 */ });
+  }
+</script>

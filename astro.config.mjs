@@ -11,11 +11,17 @@ import cloudflare from '@astrojs/cloudflare';
 
 import { isNoindexPath } from './src/lib/seo-noindex';
 import { chatModeAtBuild } from './src/lib/chat-mode.js';
+import { turnstileSitekeyAtBuild, TURNSTILE_SITEKEY_TEST } from './src/lib/turnstile-key.js';
 
 // 구글챗 알림은 "어디서 만든 빌드인가"로 켜고 끈다 (src/lib/chat-mode.js).
 // Cloudflare Workers Builds 의 main 빌드만 켜짐, 맥미니·로컬·기타 빌드는 코드에서 차단.
 const CHAT_MODE = chatModeAtBuild(process.env);
 console.log(CHAT_MODE === 'CHAT_MODE_ON' ? '구글챗 알림: 켜짐(Cloudflare main 빌드)' : '구글챗 알림: 꺼짐(로컬·기타 빌드)');
+
+// Turnstile 사이트 키도 빌드가 정한다 (src/lib/turnstile-key.js).
+// npm run local(VANAM_LOCAL_TURNSTILE=test)만 로컬 테스트 키, 그 외는 운영 키. Cloudflare 빌드에 설정이 있으면 멈춘다.
+const TURNSTILE_SITEKEY = turnstileSitekeyAtBuild(process.env);
+console.log(TURNSTILE_SITEKEY === TURNSTILE_SITEKEY_TEST ? 'Turnstile: 로컬 테스트 키' : 'Turnstile: 운영 키');
 
 // dev 서버는 순수 Node로 돌리고, Cloudflare 어댑터는 빌드(astro build)에만 적용한다.
 // (dev 에서 workerd 를 쓰면 React 가 CJS 로 로드되며 깨진다)
@@ -109,7 +115,11 @@ export default defineConfig({
     //   localhost/127.0.0.1 은 HTTP 여도 보안 컨텍스트라 crypto.subtle 이 그대로 동작한다.
     plugins: isBuild ? [tailwindcss()] : [tailwindcss(), cloudflareWorkersDevShim],
     // src/lib/chat-send.ts 가 읽는 빌드 표식. scripts/check-chat-guard.mjs 가 번들에서 확인한다.
-    define: { __VANAM_CHAT_MODE__: JSON.stringify(CHAT_MODE) },
+    define: {
+      __VANAM_CHAT_MODE__: JSON.stringify(CHAT_MODE),
+      // QuoteForm·Contact·Checkout 의 data-sitekey. scripts/check-turnstile-key.mjs 가 산출물에서 확인한다.
+      __VANAM_TURNSTILE_SITEKEY__: JSON.stringify(TURNSTILE_SITEKEY),
+    },
   },
 
   integrations: [

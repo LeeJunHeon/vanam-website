@@ -19,6 +19,7 @@ import { createConnection, createServer } from 'node:net';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { scanDist, judgeDist, WEBHOOK_HOST } from './check-chat-guard.mjs';
+import { TURNSTILE_SITEKEY_TEST } from '../src/lib/turnstile-key.js';
 
 const HOST = '127.0.0.1';
 const PORT = 8787;
@@ -44,8 +45,10 @@ const portFree = () => new Promise((resolve) => {
 if (!(await portFree())) die(`${HOST}:${PORT} 가 이미 사용 중입니다. 이전 로컬 서버를 PID 로 종료한 뒤 다시 실행하세요 (lsof -nP -iTCP:${PORT} -sTCP:LISTEN).`);
 
 // ② 빌드 (Vite 캐시 삭제는 package.json 의 prebuild 가 먼저 한다)
-console.log('▶ npm run build');
-const b = spawnSync('npm', ['run', 'build'], { stdio: 'inherit' });
+//    Turnstile 은 로컬 테스트 키로 빌드한다(운영 키는 localhost 에서 위젯이 뜨지 않아 폼 제출 시험이 안 된다).
+console.log('▶ npm run build (Turnstile 로컬 테스트 키)');
+const BUILD_ENV = { ...process.env, VANAM_LOCAL_TURNSTILE: 'test' };
+const b = spawnSync('npm', ['run', 'build'], { stdio: 'inherit', env: BUILD_ENV });
 if (b.status !== 0) die(`빌드 실패 (exit ${b.status})`);
 
 // ③ 번들이 알림 꺼짐이고 웹훅 주소가 없는지 — 아니면 절대 띄우지 않는다.
@@ -53,6 +56,13 @@ const errs = judgeDist(scanDist(DIST), process.env);
 if (errs.length) die(`알림 게이트 실패:\n  ${errs.join('\n  ')}`);
 if (scanDist(DIST).markers[0].value !== 'CHAT_MODE_OFF') die('번들이 알림 꺼짐(CHAT_MODE_OFF)이 아닙니다.');
 console.log('✓ 번들 확인 — 구글챗 알림 꺼짐(CHAT_MODE_OFF) · 웹훅 주소 0건');
+{
+  const page = join('dist', 'client', 'ko', 'product', 'multilayers', 'index.html');
+  if (!existsSync(page) || !readFileSync(page, 'utf8').includes(`data-sitekey="${TURNSTILE_SITEKEY_TEST}"`)) {
+    die(`${page} 에 Turnstile 로컬 테스트 키가 없습니다 — 로컬 폼 제출 시험이 안 됩니다.`);
+  }
+  console.log('✓ 번들 확인 — Turnstile 로컬 테스트 키(제품 페이지)');
+}
 
 // ── dotenv 최소 파서 (키=값, 따옴표 벗김) ─────────────────────────────────
 const KEY_RE = /^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=/;

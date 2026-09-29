@@ -8,6 +8,10 @@ import siteData from '../data/site.json';
 import company from '../data/company.json';
 import { PROCESSES, MEASUREMENTS, SUBSTRATES, SUBSTRATE_SIZES, DELIVERY_METHODS, DELIVERY_NEEDS_SHIPPING, PRODUCT_MAT_FILTER, SYSTEM_TO_PROCESS, type MatCat } from '../lib/processes';
 import { COUNTRIES } from '../lib/countries';
+// 기판 등급 — 선택지·대상 종류의 단일 출처(서버 검증·자동 견적과 같은 목록)
+import { SUBSTRATE_GRADES, GRADED_SUBSTRATES } from '../lib/quote-fields.js';
+// 예상 견적(운영 스위치 '자동 견적'이 켜졌을 때만 화면에 나타난다 — 꺼져 있으면 숨은 채로 지금 화면 그대로)
+import QuoteEstimate from './QuoteEstimate.astro';
 
 const { product, productName, simple = false } = Astro.props;
 const locale = Astro.currentLocale ?? 'en';
@@ -45,6 +49,8 @@ const shipValues = DELIVERY_NEEDS_SHIPPING;
 const countryOpts = COUNTRIES.map((cn) => ({ value: cn.code, label: isKo ? cn.ko : cn.en }));
 // 증착 공정 목록(두께 nm 단위) — 대표 소재 판정용 (세정 가스가 '소재'로 잡히던 문제 방지)
 const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name);
+// Turnstile 사이트 키 — 빌드가 정한다(src/lib/turnstile-key.js · astro.config.mjs define).
+declare const __VANAM_TURNSTILE_SITEKEY__: string;
 ---
 
 <section id="quote" class="mt-20 scroll-mt-24 border-t border-ink/10 pt-16">
@@ -198,6 +204,15 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
             </select>
             <!-- '구매 요청'을 고르면 기판을 보내지 않는다는 점을 바로 아래에서 알려준다 -->
             <p id="q-delivery-help" hidden class="mt-2 text-sm leading-relaxed text-ink/55">{q.deliveryHelpPurchase}</p>
+            <!-- 기판 등급 — 구매 요청 + 등급이 있는 종류(Silicon 계열)일 때만 보이고 필수가 된다.
+                 숨을 때는 disabled 라 제출 데이터(FormData)에 들어가지 않는다. -->
+            <div id="q-grade-wrap" hidden class="mt-4" data-graded={JSON.stringify(GRADED_SUBSTRATES)}>
+              <label for="q-grade" class={labelClass}>{q.grade} <span class="text-danger">*</span></label>
+              <select id="q-grade" name="substrateGrade" disabled class={selectClass}>
+                <option value="" disabled selected>{q.gradePlaceholder}</option>
+                {SUBSTRATE_GRADES.map((g) => <option value={g}>{g}</option>)}
+              </select>
+            </div>
           </div>
           <div>
             <label for="q-sample-count" class={labelClass}>{q.sampleCount} <span class="text-danger">*</span></label>
@@ -329,12 +344,22 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
           // 박막 증착 여부 — '있음'일 때만 자유 입력란을 펼친다.
           const pfYes = $('q-prefilm-yes'), pfWrap = $('q-prefilm-wrap'), pfGroup = $('q-prefilm-group');
           const pfNote = $('q-prefilm-note');
+          // 기판 등급 — 구매 요청 + 등급 대상 종류일 때만 표시·활성·필수
+          const gradeWrap = $('q-grade-wrap'), grade = $('q-grade'), subType = $('q-substrate-type');
+          const graded = gradeWrap ? JSON.parse(gradeWrap.dataset.graded || '[]') : [];
           const setReq = (id, on) => { const el = $(id); if (el) el.required = on; };
           const sync = () => {
             const on = shipVals.includes(sel.value);
             box.hidden = !on;
             // 구매 요청: 기판을 보내지 않으므로 배송지는 숨은 채로 두고 안내만 띄운다.
             if (help) help.hidden = sel.value !== 'purchase';
+            if (gradeWrap && grade) {
+              const g = sel.value === 'purchase' && !!subType && graded.includes(subType.value);
+              gradeWrap.hidden = !g;
+              grade.disabled = !g;
+              grade.required = g;
+              // 값은 지우지 않는다(박막 여부 칸과 같은 원칙 — 되돌렸다 다시 고를 때 복구). 숨으면 disabled 라 제출되지 않는다.
+            }
             rec.hidden = same.checked;
             const other = country.value === 'OTHER';
             otherWrap.hidden = !other;
@@ -361,6 +386,7 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
           country.addEventListener('change', sync);
           $('q-ship-other').addEventListener('input', sync);
           if (pfGroup) pfGroup.addEventListener('change', sync);
+          if (subType) subType.addEventListener('change', sync);
           sync();
           // 새로고침·뒤로가기(bfcache)에서 브라우저가 폼 값을 되살리는 시점은 이 스크립트보다 늦다.
           // 그때 한 번 더 맞춰야 라디오 상태와 펼침 상태가 어긋나지 않는다.
@@ -435,19 +461,21 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
         {/* Turnstile 봇 검증 위젯 */}
         <div
           class="cf-turnstile"
-          data-sitekey="0x4AAAAAAD5eNOFVFYfnvXUA"
+          data-sitekey={__VANAM_TURNSTILE_SITEKEY__}
           data-theme="auto"
           data-language="auto"
         ></div>
 
         {/* 다운로드 안내 — '견적서 다운로드'는 전송이 아니라는 점을 버튼 옆에서 분명히 한다 */}
-        {!simple && <p class="text-sm leading-relaxed text-ink/45">{q.downloadHint}</p>}
+        {!simple && <p id="q-download-hint" class="text-sm leading-relaxed text-ink/45">{q.downloadHint}</p>}
+        {!simple && <QuoteEstimate part="panel" />}
 
         <div class="flex flex-wrap items-center justify-end gap-4">
           <p id="quote-status" class="mr-auto text-sm" role="status" aria-live="polite"></p>
           {!simple && (
             <button type="button" id="quote-print" class="v-btn-ghost disabled:cursor-not-allowed disabled:opacity-60">{q.downloadSheet}</button>
           )}
+          {!simple && <QuoteEstimate part="button" />}
           <button type="submit" id="quote-submit"
             class="v-btn disabled:cursor-not-allowed disabled:opacity-60">
             <span id="quote-submit-label">{simple ? q.submitOrder : q.submit}</span>
@@ -922,6 +950,9 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
     const deliveryMap: Record<string, string> = JSON.parse(M.mapDelivery || "{}");
     const sizeLabel = sizeMap[data.substrateSize] || data.substrateSize || "";
     const deliveryLabel = deliveryMap[data.delivery] || data.delivery || "";
+    // 기판 등급 — 칸이 켜져 있을 때만 FormData 에 들어온다. 기판 표기(data.substrate)와 구조화 사본에만 쓴다.
+    const substrateGrade = String(data.substrateGrade ?? "");
+    delete data.substrateGrade;
 
     // 박막 증착 여부 — 라디오 값('1'/'0') → boolean, '없음'이면 메모는 빈 문자열.
     // 화면에서는 값을 지우지 않으므로(되돌려도 입력 보존) **여기가 저장값을 정하는 유일한 지점**이다.
@@ -973,7 +1004,7 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
         || seq.json[0]?.process
         || "Process request";
       data.method = uniq(depRows.map((s) => s.process)).join(", ");
-      data.substrate = [data.substrateType, sizeLabel].filter(Boolean).join(" / ");
+      data.substrate = [data.substrateType, sizeLabel, substrateGrade].filter(Boolean).join(" / ");
       // 배송지(0217) — 전달 방식이 배송형일 때만. '주문자와 동일'이면 상단 연락처로 폴백.
       const shipOn = !(document.getElementById("q-ship") as HTMLElement | null)?.hidden;
       const shipSame = (document.getElementById("q-ship-same") as HTMLInputElement | null)?.checked ?? true;
@@ -1028,6 +1059,7 @@ const DEP_PROCESSES = PROCESSES.filter((p) => p.unit === 'nm').map((p) => p.name
         delivery: String(data.delivery ?? ""),            // 코드값(courier·direct)
         substrateType: String(data.substrateType ?? ""),  // 영문 또는 직접 입력
         substrateSize: String(data.substrateSize ?? ""),  // 코드값(4inch 등) 또는 직접 입력
+        substrateGrade,                                    // Test·Prime 또는 '' (구매 요청 + Silicon 계열일 때만)
         sampleCount: String(data.sampleCount ?? ""),
         preFilm,                                           // 박막 증착 여부(boolean)
         preFilmNote,                                       // 자유 입력 — 그대로
