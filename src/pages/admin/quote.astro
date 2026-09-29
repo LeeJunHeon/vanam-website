@@ -684,7 +684,12 @@ const qvText = editId ? JSON.stringify({ ko: siteData.ko.quote.view, en: siteDat
 
           const save = async (confirmIt: boolean) => {
             if (!L || !fresh || locked || busy || last?.status !== '정상') return;
-            if (confirmIt && !confirm("고객 화면이 '확정 견적'으로 바뀝니다. 확정할까요?")) return;
+            // USD 로 확정된 문의는 확정 저장하면 원화 확정으로 바뀐다(서버 동작 그대로) — PayPal 버튼이 사라지니 먼저 알린다
+            const usdConfirmed = String(L.inquiry.quote_currency ?? '').toUpperCase() === 'USD'
+              && typeof L.inquiry.quoted_amount === 'number' && L.inquiry.quoted_amount > 0;
+            const usdWarn = usdConfirmed
+              ? '이 문의는 USD 로 확정돼 있습니다. 확정 저장하면 원화(KRW) 확정으로 바뀌고 고객 화면의 PayPal 결제 버튼이 사라집니다.\n\n' : '';
+            if (confirmIt && !confirm(`${usdWarn}고객 화면이 '확정 견적'으로 바뀝니다. 확정할까요?`)) return;
             busy = true;
             onFreshChange();
             msg('저장 중…');

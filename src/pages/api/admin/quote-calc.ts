@@ -27,7 +27,7 @@ const MAX_ITEMS = 15;     // 엑셀 V3_견적입력 15~29행
 const MAX_LAYERS = 100;   // 엑셀 V3_박막공정 2~101행
 const MAX_BODY = 200_000; // 15품목·100층을 넉넉히 담는 크기
 
-const EMPTY = { ok: false, error: 'price_db_empty', hint: '로컬 가격 DB 가 비어 있습니다. npm run price:import 를 먼저 실행하세요.' };
+const EMPTY = { ok: false, error: 'price_db_empty', hint: '가격 DB 가 비어 있습니다 — 관리자 설정 탭의 [가격 DB 올리기]로 올리세요 (맥미니 로컬은 npm run price:import)' };
 
 type D1 = NonNullable<Awaited<ReturnType<typeof db>>>;
 const all = async <T = Record<string, unknown>>(d: D1, sql: string) =>

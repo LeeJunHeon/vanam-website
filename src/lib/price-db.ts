@@ -48,3 +48,35 @@ export async function latestImport(d: D1): Promise<{ imported_at: string; rules_
     .first<{ imported_at: string; rules_version: string; source_sha256: string }>();
   return row ?? null;
 }
+
+export type PriceTables = {
+  price_policy: Record<string, unknown>[];
+  price_equipment: Record<string, unknown>[];
+  price_recipe: Record<string, unknown>[];
+  price_substrate: Record<string, unknown>[];
+  price_alias: Record<string, unknown>[];
+};
+
+/**
+ * 가격 DB 5개 표 전체(스펙 컬럼 전부 — 공급사·메모 포함, 별칭의 자동 id 는 제외).
+ * ⚠️ 관리자 비교·지문 전용(/api/admin/price-import · quote-auto GET). 고객 응답에 쓰지 않는다.
+ *    열 목록은 src/lib/price-sheet.js 의 스펙과 같아야 한다(scripts/test-price-sheet.mjs 가 대조).
+ */
+export async function readPriceTables(d: D1): Promise<PriceTables> {
+  return {
+    price_policy: await all(d, `SELECT key, value, vtype, applies_to, notes FROM price_policy`),
+    price_equipment: await all(d, `SELECT equipment_id, equipment_name, process_type, rate_per_min,
+      default_loading_min, default_plasma_min, default_setup_min, active, notes
+      FROM price_equipment`),
+    price_recipe: await all(d, `SELECT recipe_id, material_name, process_type, equipment_id, method,
+      material_cost_per_nm, growth_nm_per_min, default_temp_c,
+      loading_override_min, plasma_override_min, setup_override_min,
+      legacy_min_charge, active, verification_status, supplier, notes
+      FROM price_recipe`),
+    price_substrate: await all(d, `SELECT catalog_id, item_name, category, unit, cost_per_unit,
+      sale_price_per_unit, units_per_pack, legacy_pack_price, size_inch,
+      oxide_nm, supplier, active, verification_status, notes
+      FROM price_substrate`),
+    price_alias: await all(d, `SELECT entity_type, alias, equipment_scope, canonical_id, status, notes FROM price_alias`),
+  };
+}

@@ -376,12 +376,36 @@ const spec = (r: Row) =>
                 <dt class="text-ink/50">가져온 시각 · 규칙 버전 · sha</dt>
                 <dd id="qa-import" class="text-ink/90">—</dd>
               </div>
+              <div class="flex justify-between border-b border-ink/10 py-2">
+                <dt class="text-ink/50">데이터 지문</dt>
+                <dd id="qa-fp" class="font-mono text-ink/90">—</dd>
+              </div>
             </dl>
             <p id="qa-warn" hidden class="mt-4 rounded-lg border border-danger/30 bg-danger/10 p-3 text-sm text-danger">가격 DB가 비어 있어 자동 견적이 동작하지 않습니다</p>
             <p id="qa-msg" class="mt-3 text-sm" role="status" aria-live="polite"></p>
             <p class="mt-3 text-xs leading-relaxed text-ink/40">
               켜면 제품 페이지에 [예상 견적 보기]가 나타나고, 견적 요청마다 자동 견적이 저장됩니다.
               끄면 즉시 이전 화면(견적서 다운로드)으로 돌아갑니다. 이미 저장된 견적은 조회 화면에 그대로 보입니다.
+            </p>
+          </div>
+
+          <!-- ── 설정: 가격 DB 올리기 (엑셀) — 브라우저가 엑셀을 읽고, 서버가 다시 검사한 뒤 한 번에 바꾼다(/api/admin/price-import) ── -->
+          <div class="mt-6 rounded-xl border border-ink/10 bg-ink/[0.02] p-5" id="pi-card">
+            <h2 class="text-lg font-semibold text-accent">가격 DB 올리기 (엑셀)</h2>
+            <div class="mt-4 flex flex-wrap items-center gap-2">
+              <input id="pi-file" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" class="text-sm text-ink/70" />
+              <button id="pi-preview" type="button"
+                class="rounded-lg border border-ink/15 px-3 py-1.5 text-sm text-ink/70 transition hover:border-accent hover:text-accent">미리보기</button>
+              <button id="pi-apply" type="button" disabled
+                class="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-onbrand transition hover:brightness-110">운영 가격 DB 바꾸기</button>
+            </div>
+            <p id="pi-msg" class="mt-3 text-sm" role="status" aria-live="polite"></p>
+            <div id="pi-result" hidden class="mt-4 text-sm"></div>
+            <p class="mt-3 text-xs leading-relaxed text-ink/40">
+              구글 시트 → 파일 → 다운로드 → Microsoft Excel(.xlsx) 로 받은 파일을 고르세요(10MB 이하).
+              파일은 이 브라우저에서 읽고 검사한 값만 서버로 보냅니다(파일은 저장하지 않습니다).
+              되돌리려면 이전 버전 엑셀을 다시 올리세요(구글 시트 버전 기록).
+              https 또는 localhost 주소에서만 동작합니다.
             </p>
           </div>
         </section>
@@ -946,6 +970,7 @@ const spec = (r: Row) =>
             setText('qa-db', db.ready ? '준비됨' : '비어 있음');
             setText('qa-counts', `${c.policy ?? 0} · ${c.recipes ?? 0} · ${c.equipment ?? 0} · ${c.substrates ?? 0}`);
             setText('qa-import', lg ? `${lg.imported_at} · ${lg.rules_version} · ${lg.sha256}` : '—');
+            setText('qa-fp', db.ready && db.fingerprint ? String(db.fingerprint).slice(0, 12) : '—');
             const warn = $('qa-warn');
             if (warn) warn.hidden = !(on && !db.ready);
             if (onBtn) onBtn.hidden = on;
@@ -975,8 +1000,149 @@ const spec = (r: Row) =>
           void save(true);
         });
         offBtn?.addEventListener('click', () => { void save(false); });
+        // 가격 DB 올리기 카드가 바꾸면 다시 불러온다
+        document.addEventListener('vanam:price-db-changed', () => { void load(); });
 
         void load();
+      })();
+
+      // ── 가격 DB 올리기 (엑셀) ──────────────────────────
+      // 엑셀은 이 브라우저에서 읽는다(워커 CPU 한도) → 검사 → 서버 미리보기(서버가 다시 검사) → 확인 → 교체.
+      // 서버는 미리보기 때의 지문(base)이 지금 DB 와 같을 때만 바꾸고, 바꾼 뒤 다시 읽어 지문을 확인한다.
+      (() => {
+        const card = document.getElementById('pi-card');
+        if (!card) return;
+        const fileIn = document.getElementById('pi-file') as HTMLInputElement;
+        const prevBtn = document.getElementById('pi-preview') as HTMLButtonElement;
+        const applyBtn = document.getElementById('pi-apply') as HTMLButtonElement;
+        const msgEl = document.getElementById('pi-msg') as HTMLElement;
+        const out = document.getElementById('pi-result') as HTMLElement;
+        const MAX_FILE = 10 * 1024 * 1024;
+        const LABEL: Record<string, string> = {
+          price_policy: '정책', price_equipment: '장비', price_recipe: '레시피', price_substrate: '기판', price_alias: '별칭',
+        };
+        const esc = (v: unknown) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        const say = (t: string, tone: 'ok' | 'bad' | '' = '') => {
+          msgEl.textContent = t;
+          msgEl.style.color = tone === 'ok' ? 'var(--color-ok)' : tone === 'bad' ? 'var(--color-danger)' : '';
+        };
+        let ready: { file: { name: string; size: number; sha256: string }; data: unknown; base: string; next: string } | null = null;
+        const setApply = (on: boolean) => { applyBtn.disabled = !on; applyBtn.style.opacity = on ? '' : '0.4'; };
+        const reset = () => { ready = null; setApply(false); out.hidden = true; out.innerHTML = ''; say(''); };
+        setApply(false);
+
+        const showProblems = (title: string, list: string[], total?: number) => {
+          const n = total ?? list.length;
+          out.innerHTML = `<p style="font-weight:600;color:var(--color-danger)">${esc(title)} — ${n}건</p>` +
+            `<ul style="margin-top:.5rem;padding-left:1.25rem;list-style:disc;line-height:1.6">${list.slice(0, 30).map((p) => `<li>${esc(p)}</li>`).join('')}</ul>` +
+            (n > 30 ? `<p style="margin-top:.25rem;opacity:.6">… 외 ${n - 30}건</p>` : '');
+          out.hidden = false;
+        };
+
+        const showPreview = (j: any) => {
+          const th = 'style="text-align:left;padding:.35rem .6rem;border-bottom:1px solid color-mix(in srgb,var(--color-ink) 12%,transparent);opacity:.6;font-weight:500"';
+          const td = 'style="padding:.35rem .6rem;border-bottom:1px solid color-mix(in srgb,var(--color-ink) 8%,transparent)"';
+          const rows = Object.keys(LABEL).map((t) => {
+            const d = j.diff?.[t] ?? {};
+            return `<tr><td ${td}>${esc(LABEL[t])}</td><td ${td}>${esc(j.current?.counts?.[t] ?? 0)} → ${esc(j.counts?.[t] ?? 0)}</td>` +
+              `<td ${td}>${esc(d.added ?? 0)}</td><td ${td}>${esc(d.removed ?? 0)}</td><td ${td}>${esc(d.changed ?? 0)}</td></tr>`;
+          }).join('');
+          const details = Object.keys(LABEL).map((t) => {
+            const ids = j.diff?.[t]?.ids;
+            if (!ids || (!ids.added.length && !ids.removed.length && !ids.changed.length)) return '';
+            const line = (k: string, v: string) => (v ? `<p style="margin-top:.25rem"><span style="opacity:.6">${esc(k)}:</span> ${v}</p>` : '');
+            return `<div style="margin-top:.5rem"><p style="font-weight:600">${esc(LABEL[t])}</p>` +
+              line('추가', ids.added.map(esc).join(', ')) + line('삭제', ids.removed.map(esc).join(', ')) +
+              line('변경', ids.changed.map((c: any) => `${esc(c.id)} (${c.cols.map(esc).join(', ')})`).join(' · ')) + '</div>';
+          }).join('');
+          out.innerHTML =
+            `<div style="overflow-x:auto"><table style="border-collapse:collapse;min-width:24rem"><thead><tr><th ${th}>표</th><th ${th}>행 수 (지금 → 새)</th><th ${th}>추가</th><th ${th}>삭제</th><th ${th}>변경</th></tr></thead><tbody>${rows}</tbody></table></div>` +
+            (details ? `<details style="margin-top:.75rem"><summary style="cursor:pointer;opacity:.7">바뀌는 ID·열 이름 보기</summary>${details}</details>` : '') +
+            `<p style="margin-top:.75rem;font-family:ui-monospace,monospace">새 지문 ${esc(String(j.next?.fingerprint ?? '').slice(0, 12))} · 지금 지문 ${esc(String(j.current?.fingerprint ?? '').slice(0, 12))}</p>` +
+            (j.same ? `<p style="margin-top:.5rem;font-weight:600">바뀌는 내용이 없습니다</p>` : '');
+          out.hidden = false;
+        };
+
+        fileIn.addEventListener('change', reset);
+
+        prevBtn.addEventListener('click', async () => {
+          reset();
+          const file = fileIn.files?.[0];
+          if (!file) { say('엑셀 파일을 먼저 고르세요.', 'bad'); return; }
+          if (file.size > MAX_FILE) { say('파일이 10MB 를 넘습니다.', 'bad'); return; }
+          if (!window.crypto?.subtle) { say('이 주소에서는 파일을 검사할 수 없습니다 — https 또는 localhost 주소로 여세요.', 'bad'); return; }
+          prevBtn.disabled = true;
+          say('엑셀을 읽는 중…');
+          try {
+            const { openXlsxWeb } = await import('../../lib/xlsx-core.js');
+            const { readPriceWorkbook, validatePriceData } = await import('../../lib/price-sheet.js');
+            const bytes = new Uint8Array(await file.arrayBuffer());
+            const sha256 = [...new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))].map((b) => b.toString(16).padStart(2, '0')).join('');
+            let wb;
+            try { wb = await openXlsxWeb(bytes); } catch (e) { say(`엑셀을 읽지 못했습니다: ${(e as Error)?.message ?? e}`, 'bad'); return; }
+            const read = readPriceWorkbook(wb);
+            if (read.problems.length) { say(''); showProblems('엑셀 검사 실패 — 바꾸지 않습니다', read.problems); return; }
+            const v = validatePriceData(read.data);
+            if (v.problems.length) { say(''); showProblems('데이터 검사 실패 — 바꾸지 않습니다', v.problems); return; }
+            say('서버에서 지금 가격 DB 와 비교하는 중…');
+            const fileInfo = { name: file.name, size: file.size, sha256 };
+            const r = await fetch('/api/admin/price-import', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ mode: 'preview', file: fileInfo, data: read.data }),
+            });
+            const j = await r.json().catch(() => ({}));
+            if (r.status === 401) { say('로그인이 만료되었습니다 — 새로고침 후 다시 로그인하세요.', 'bad'); return; }
+            if (j.error === 'invalid') { say(''); showProblems('서버 검사 실패 — 바꾸지 않습니다', j.problems ?? [], j.count); return; }
+            if (!j.ok) { say(`미리보기 실패: ${j.error ?? r.status}`, 'bad'); return; }
+            showPreview(j);
+            say(j.same ? '' : '미리보기를 확인한 뒤 [운영 가격 DB 바꾸기]를 누르세요.');
+            if (!j.same) {
+              ready = { file: fileInfo, data: read.data, base: j.current.fingerprint, next: j.next.fingerprint };
+              setApply(true);
+            }
+          } catch (e) {
+            say(`미리보기 실패: ${(e as Error)?.message ?? e}`, 'bad');
+          } finally {
+            prevBtn.disabled = false;
+          }
+        });
+
+        applyBtn.addEventListener('click', async () => {
+          if (!ready) return;
+          let autoOn = false;
+          try { autoOn = (await (await fetch('/api/admin/quote-auto', { cache: 'no-store' })).json())?.on === true; } catch { autoOn = false; }
+          const head = autoOn ? '지금 자동 견적이 켜져 있어 고객 예상 견적에 바로 반영됩니다.\n\n' : '';
+          if (!confirm(`${head}가격 DB 를 이 엑셀 내용으로 바꿉니다. 자동 견적과 새로 계산하는 견적에 바로 쓰입니다(이미 저장된 견적 금액은 그대로). 바꿀까요?`)) return;
+          const job = ready;
+          setApply(false);
+          say('바꾸는 중…');
+          try {
+            const r = await fetch('/api/admin/price-import', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ mode: 'apply', file: job.file, data: job.data, baseFingerprint: job.base, expectFingerprint: job.next }),
+            });
+            const j = await r.json().catch(() => ({}));
+            ready = null;
+            if (r.status === 401) { say('로그인이 만료되었습니다 — 새로고침 후 다시 로그인하세요.', 'bad'); return; }
+            if (j.ok) {
+              const fp = String(j.fingerprint ?? '').slice(0, 12);
+              say(`바꿨습니다 — 지문 ${fp}${j.fingerprint === job.next ? ' (미리보기와 같음)' : ''}`, 'ok');
+              document.dispatchEvent(new CustomEvent('vanam:price-db-changed'));
+              return;
+            }
+            if (j.error === 'db_changed') { say('미리보기 뒤에 가격 DB 가 바뀌었습니다 — 다시 미리보기를 누르세요', 'bad'); return; }
+            if (j.error === 'db_error') { say('저장하지 못했습니다 — 가격 DB 는 바뀌지 않았습니다', 'bad'); return; }
+            if (j.error === 'verify_mismatch') {
+              say('경고: 가격 DB 는 이미 바뀌었지만 다시 읽은 지문이 미리보기와 다릅니다 — 다시 미리보기로 확인하세요', 'bad');
+              document.dispatchEvent(new CustomEvent('vanam:price-db-changed'));
+              return;
+            }
+            if (j.error === 'invalid') { showProblems('서버 검사 실패 — 바꾸지 않습니다', j.problems ?? [], j.count); say(''); return; }
+            say(`바꾸지 못했습니다: ${j.error ?? r.status}`, 'bad');
+          } catch (e) {
+            say(`바꾸지 못했습니다: ${(e as Error)?.message ?? e} — 결과를 확인하려면 다시 미리보기를 누르세요`, 'bad');
+          }
+        });
       })();
 
       // 로그인
