@@ -7,6 +7,11 @@
 //   D. 구매 요청 Silicon 6inch Prime → 예상 견적 estimate 기대(아니면 문구를 출력하고 실패)
 //   E. 구매 요청 Silicon 4inch Prime → manual, 문구에 기판 항목
 //   F. 접수 구조화 사본의 substrateGrade 'prime'(소문자) → 400 invalid_grade
+//   G~M. 관리자 견적 편집(/api/admin/quote-rev) — 새 접수 없이 A·B·C 접수건을 고친다
+//     G 저장(개정 2) → 조회 estimate·byStaff · H 같은 기준으로 다시 저장 → 409 conflict
+//     I 확정 저장 → 조회 confirmed · J 확정 뒤 다시 저장 → 확정 금액이 새 합계로
+//     K 담당자 확인 건(B)을 레시피·단가입력으로 채워 저장 → estimate · L 두께 'abc' → 400 engine
+//     M 개정 없는 건(C) → current null · prefill 있음
 //   ※ 접수는 10분에 5회 제한 — 이 스크립트의 접수 요청은 A·B·C·F 4회.
 //   + 고객 응답(예상 견적·조회)에 금지 키·실제 ID 문자열 0건 · 저장소 파일에 실제 ID 문자열 0건
 //
@@ -89,6 +94,7 @@ const ids = new Set();
 const inquiryIds = [];
 let totalA = null;
 const customerBodies = [];
+const saved = {};
 try {
   // 로그인
   const pw = /^ADMIN_PASSWORD="(.*)"$/m.exec(readFileSync(join(homedir(), 'vanam-data', 'local.vars'), 'utf8'))?.[1];
@@ -186,6 +192,94 @@ try {
   const lC = await lookup(iC.json?.id);
   pass('C: 조회 quote === null', lC.json?.ok === true && lC.json?.inquiry?.quote === null);
 
+  // ── 사례 G~M — 관리자 견적 편집 ──
+  const idA = iA.json?.id, idB = iB.json?.id, idC = iC.json?.id;
+  if (!idA || !idB || !idC) throw new Stop('A·B·C 접수번호가 없어 편집 사례를 건너뛸 수 없다');
+  const rev = (id, r) => call('GET', `/api/admin/quote-rev?id=${id}${r ? `&rev=${r}` : ''}`, null, { admin: true });
+  const saveRev = (body) => call('POST', '/api/admin/quote-rev', body, { admin: true });
+  const withQty = (input, qty) => ({ items: input.items.map((it, i) => (i === 0 ? { ...it, qty } : it)), layers: input.layers });
+  const custCheck = (label, q) => {
+    customerBodies.push(q);
+    const bad = forbiddenIn(q, VIEW_FORBIDDEN_KEYS);
+    pass(`${label}: quote 금지 키 0건`, bad.length === 0, bad.join(','));
+  };
+
+  console.log('\n사례 G — A 접수건 담당자 저장(품목 1 수량 2)');
+  const gA = await rev(idA);
+  pass('G: GET current rev 1 · auto', gA.json?.current?.rev === 1 && gA.json?.current?.source === 'auto' && gA.json?.latestRev === 1,
+    `${gA.status} rev=${gA.json?.current?.rev} ${gA.json?.current?.source}`);
+  const inA = gA.json?.current?.input;
+  if (!inA?.items?.length) throw new Stop('A 접수건 개정 1에 입력(input)이 없다');
+  const sG = await saveRev({ id: idA, baseRev: 1, ...withQty(inA, 2), info: gA.json.current.info, note: 'SMOKE G', confirm: false });
+  saved.G = sG.json?.total;
+  pass('G: 저장 → 개정 2', sG.status === 200 && sG.json?.ok === true && sG.json?.rev === 2, `${sG.status} ${sG.json?.error ?? ''}`);
+  const lG = (await lookup(idA)).json?.inquiry?.quote;
+  pass('G: 조회 estimate · byStaff · totalKrw = 저장 합계 · 원래 합계와 다름',
+    lG?.state === 'estimate' && lG?.byStaff === true && lG?.totalKrw === saved.G && saved.G !== totalA,
+    `${lG?.state} byStaff=${lG?.byStaff}`);
+  custCheck('G', lG);
+
+  console.log('\n사례 H — 같은 기준 개정 1로 다시 저장');
+  const sH = await saveRev({ id: idA, baseRev: 1, ...withQty(inA, 2), info: gA.json.current.info, note: 'SMOKE H', confirm: false });
+  const hCount = (await rev(idA)).json?.revisions?.length;
+  pass('H: 409 conflict · 개정 수 2 그대로', sH.status === 409 && sH.json?.error === 'conflict' && sH.json?.latestRev === 2 && hCount === 2,
+    `${sH.status} ${sH.json?.error ?? ''} 개정 ${hCount}`);
+
+  console.log('\n사례 I — 확정 저장(기준 개정 2)');
+  const sI = await saveRev({ id: idA, baseRev: 2, ...withQty(inA, 2), info: gA.json.current.info, note: 'SMOKE I', confirm: true });
+  saved.I = sI.json?.total;
+  pass('I: 저장 → 개정 3 · 문의 quoted', sI.json?.ok === true && sI.json?.rev === 3 && sI.json?.inquiry?.status === 'quoted' && sI.json?.inquiry?.quoted_amount === saved.I,
+    `${sI.status} ${sI.json?.error ?? ''}`);
+  const lIr = (await lookup(idA)).json?.inquiry;
+  pass('I: 조회 confirmed · doc 있음 · doc.total = quoted_amount',
+    lIr?.quote?.state === 'confirmed' && !!lIr?.quote?.doc && lIr.quote.doc.total === lIr.quoted_amount, `${lIr?.quote?.state}`);
+  custCheck('I', lIr?.quote);
+
+  console.log('\n사례 J — 확정 뒤 수량 3 으로 저장(confirm false)');
+  const sJ = await saveRev({ id: idA, baseRev: 3, ...withQty(inA, 3), info: gA.json.current.info, note: 'SMOKE J', confirm: false });
+  saved.J = sJ.json?.total;
+  pass('J: 저장 → 개정 4', sJ.json?.ok === true && sJ.json?.rev === 4, `${sJ.status} ${sJ.json?.error ?? ''}`);
+  const lJr = (await lookup(idA)).json?.inquiry;
+  pass('J: 조회 confirmed · quoted_amount = 새 합계 · doc.total 일치',
+    lJr?.quote?.state === 'confirmed' && lJr?.quoted_amount === saved.J && saved.J !== saved.I && lJr?.quote?.doc?.total === saved.J, `${lJr?.quote?.state}`);
+  custCheck('J', lJr?.quote);
+
+  console.log('\n사례 K — B 접수건(담당자 확인)을 채워 저장');
+  const gB = await rev(idB);
+  pass('K: GET current kind manual', gB.json?.current?.kind === 'manual', `${gB.status} ${gB.json?.current?.kind}`);
+  // 레시피 물질 이름은 '물질(전구체)' 꼴이다 — 괄호 앞 물질로 비교한다
+  const ald = (meta.json.recipes ?? []).find((r) => Number(r.active) === 1 && /^ald$/i.test(String(r.process_type ?? '').trim())
+    && String(r.material_name ?? '').replace(/\(.*$/, '').trim() === 'Al2O3');
+  if (!ald) throw new Stop('활성 ALD Al2O3 레시피가 목록에 없다');
+  const itemBase = { extraSpec: null, amount: null, vat: '별도', margin: '기본', directMarkup: null, plasma: 'N', plasmaMin: null,
+    loadingMin: null, setupMin: null, waitMin: null, substrateId: null, substratePerRun: null, rawText: null };
+  const inK = {
+    items: [
+      { ...itemBase, no: 1, name: 'ALD Al2O3', method: '박막자동', qty: 1, unit: '회' },
+      { ...itemBase, no: 2, name: '분석 XPS', method: '단가입력', qty: 1, unit: '건', amount: 12345, margin: null, plasma: null },
+    ],
+    layers: [{ itemNo: 1, order: 1, recipeId: ald.recipe_id, thicknessNm: 10, repeat: 1, tempC: null }],
+  };
+  const sK = await saveRev({ id: idB, baseRev: gB.json?.latestRev ?? 0, ...inK, info: gB.json?.defaultInfo, note: 'SMOKE K', confirm: false });
+  saved.K = sK.json?.total;
+  pass('K: 저장 ok', sK.json?.ok === true, `${sK.status} ${sK.json?.error ?? ''} ${sK.json?.status ?? ''}`);
+  const lK = (await lookup(idB)).json?.inquiry?.quote;
+  pass('K: 조회 estimate · byStaff · doc 있음', lK?.state === 'estimate' && lK?.byStaff === true && !!lK?.doc, `${lK?.state}`);
+  custCheck('K', lK);
+
+  console.log('\n사례 L — 두께 abc 로 저장');
+  const before = (await rev(idB)).json?.revisions?.length;
+  const sL = await saveRev({ id: idB, baseRev: before, items: inK.items, layers: [{ ...inK.layers[0], thicknessNm: 'abc' }],
+    info: gB.json?.defaultInfo, note: 'SMOKE L', confirm: false });
+  const after = (await rev(idB)).json?.revisions?.length;
+  pass('L: 400 engine · 개정 수 그대로', sL.status === 400 && sL.json?.error === 'engine' && before === after,
+    `${sL.status} ${sL.json?.error ?? ''} ${sL.json?.status ?? ''} 개정 ${before}→${after}`);
+
+  console.log('\n사례 M — C 접수건(개정 없음)');
+  const gC2 = await rev(idC);
+  pass('M: current null · prefill.input.items 1개 이상', gC2.json?.ok === true && gC2.json?.current === null && (gC2.json?.prefill?.input?.items?.length ?? 0) >= 1,
+    `current=${JSON.stringify(gC2.json?.current)} items=${gC2.json?.prefill?.input?.items?.length ?? 0}`);
+
   // ── 고객 응답의 실제 ID 문자열 ──
   const text = JSON.stringify(customerBodies);
   const leaked = [...ids].filter((id) => text.includes(id));
@@ -219,7 +313,9 @@ try {
   }
 }
 
-console.log(`\n사례 A 합계: ${typeof totalA === 'number' ? `${totalA.toLocaleString('ko-KR')}원` : '-'}`);
+const krw = (n) => (typeof n === 'number' ? `${n.toLocaleString('ko-KR')}원` : '-');
+console.log(`\n사례 A 합계: ${krw(totalA)}`);
+console.log(`저장 합계 — G ${krw(saved.G)} · I ${krw(saved.I)} · J ${krw(saved.J)} · K ${krw(saved.K)}`);
 console.log(`접수번호: ${inquiryIds.join(', ') || '-'}`);
 const bad = results.filter((r) => !r.ok).length;
 console.log(`\n${bad ? '✗' : '✓'} 자동 견적 로컬 점검 — ${results.length - bad}/${results.length} 통과`);

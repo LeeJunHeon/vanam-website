@@ -512,6 +512,8 @@ const inputClass =
                 <span class="text-sm text-ink/60">${esc(INQ.amount)} <span class="text-ink/35">${esc(INQ.vat)}</span></span>
                 <span class="text-xl font-bold text-ink">${amt ?? `<span class="text-base font-medium text-ink/45">${esc(INQ.pending)}</span>`}</span>
               </div>`;
+          // 견적 상자에 [견적서 보기]가 있으면 아래 예전 [견적서 인쇄]는 그리지 않는다(같은 문서를 여는 버튼이 둘이 되지 않게)
+          const hasDocBtn = qvBox.includes('data-qv-doc');
           const amountBlock = qvBox && (qvState === 'estimate' || qvState === 'reviewing')
             ? `<div class="mt-5 border-t border-ink/10 pt-1">${qvBox}</div>`
             : amountRow + (qvBox ? qvBox : '');
@@ -545,7 +547,7 @@ const inputClass =
                 <p class="mt-5 rounded-lg border border-ink/10 bg-ink/[0.03] p-4 text-sm leading-relaxed text-ink/70"><span class="text-ink/45">${esc(INQ.sheetBank)}</span><br>${esc(q.quote_bank)}</p>` : ''}
               ${q.quote_note ? `
                 <p class="mt-5 rounded-lg bg-ink/[0.05] p-4 text-sm leading-relaxed text-ink/65">${esc(q.quote_note)}</p>` : ''}
-              <button type="button" id="inq-sheet" class="mt-5 v-btn-ghost-sm">🖨 ${esc(INQ.sheetBtn)}</button>
+              ${hasDocBtn ? '' : `<button type="button" id="inq-sheet" class="mt-5 v-btn-ghost-sm">🖨 ${esc(INQ.sheetBtn)}</button>`}
               ${q.paid_at ? `
                 <p class="mt-5 rounded-lg border border-ok/25 bg-ok/10 p-3 text-center text-sm font-semibold text-ok">✅ ${P2.paidAt} — ${when(q.paid_at)}</p>` : ''}
               ${!q.paid_at && q.quote_currency === 'USD' && Number(q.quoted_amount) > 0 && q.status !== 'closed' ? payBlock(q.id) : ''}

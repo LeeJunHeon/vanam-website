@@ -5,12 +5,19 @@
 //    내려보내지 않는다 — 드롭다운용 이름 목록만 받는다. 결과의 원가 내역은 계산한 뒤에만 보인다.
 // ⚠️ 입력은 엑셀 의미 그대로 보낸다: 빈칸 → null, 숫자로 읽히면 숫자(천 단위 쉼표 허용),
 //    그 외는 문자열 그대로. 0 을 빈칸으로 바꾸지 않는다(엑셀에서 0 과 비움은 뜻이 다르다).
+//
+// 두 가지 모드:
+//   · 계산기 모드(/admin/quote)          — 지금까지와 똑같다(저장 없음).
+//   · 편집 모드(/admin/quote?id=INQ-…)   — 문의별 견적을 불러와 고치고 저장한다(/api/admin/quote-rev).
+//     저장하면 새 개정으로 쌓이고 고객 조회·완료 화면·견적서에 바로 반영된다. 저장 금액은 서버가 다시 계산한 값이다.
+//     편집 모드 전용 요소는 editId 가 있을 때만 그린다 — 계산기 모드의 HTML·동작은 바뀌지 않는다.
 export const prerender = false;
 
 import '../../styles/global.css';
 import { isAdmin } from '../../lib/admin-auth';
 import { telKr } from '../../lib/quote-doc';
 import company from '../../data/company.json';
+import siteData from '../../data/site.json';
 // 이 빌드의 구글챗 알림 켜짐/꺼짐 — /admin 헤더와 같은 표시
 import { CHAT_ENABLED } from '../../lib/chat-send';
 
@@ -18,11 +25,17 @@ const authed = await isAdmin(Astro.request);
 
 // 기본값 — 견적일은 한국 날짜(워커는 UTC 로 돈다)
 const todayKst = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
+// 편집 모드 — ?id=INQ-… (형식이 틀리면 계산기 모드로 두고 안내만 띄운다)
+const idParam = (Astro.url.searchParams.get('id') ?? '').trim().toUpperCase();
+const editId = /^INQ-\d{8}-[A-Z0-9]{4}$/.test(idParam) ? idParam : '';
+const badId = idParam !== '' && !editId;
 const defaults = {
   date: todayKst,
-  quoteNo: `TEST-${todayKst.replace(/-/g, '')}`,
+  quoteNo: editId || `TEST-${todayKst.replace(/-/g, '')}`,
   contact: telKr(company.tel),
 };
+// 고객 화면 견적 상자·견적서 도장/안내 문구 — 조회 화면과 같은 문구(site.json quote.view)
+const qvText = editId ? JSON.stringify({ ko: siteData.ko.quote.view, en: siteData.en.quote.view }) : undefined;
 ---
 
 <html lang="ko" class="bg-canvas">
@@ -30,7 +43,7 @@ const defaults = {
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex, nofollow" />
-    <title>VanaM 관리자 — 견적 계산기</title>
+    <title>{editId ? `VanaM 관리자 — 견적 편집 ${editId}` : 'VanaM 관리자 — 견적 계산기'}</title>
     <link rel="icon" href="/favicon.ico" />
     <!-- 테마 초기화: 관리자 화면(/admin)과 같은 'vanam-theme' 키 -->
     <script is:inline>
@@ -59,10 +72,10 @@ const defaults = {
         </div>
       </main>
     ) : (
-      <main class="mx-auto max-w-7xl px-6 py-10" id="qc" data-defaults={JSON.stringify(defaults)}>
+      <main class="mx-auto max-w-7xl px-6 py-10" id="qc" data-defaults={JSON.stringify(defaults)} data-edit={editId || undefined} data-qv={qvText}>
         <header class="flex flex-wrap items-center justify-between gap-4 border-b border-ink/10 pb-6">
           <div>
-            <h1 class="text-2xl font-bold">견적 계산기</h1>
+            <h1 class="text-2xl font-bold">{editId ? `견적 편집 — ${editId}` : '견적 계산기'}</h1>
             <p id="qc-meta" class="mt-1 text-sm text-ink/45">가격 DB 불러오는 중…</p>
             <p class:list={['chat-state mt-1 text-sm', CHAT_ENABLED ? 'is-on' : 'is-off']}>
               {CHAT_ENABLED ? '구글챗 알림: 켜짐' : '구글챗 알림: 꺼짐 — 로컬/테스트 빌드'}
@@ -72,6 +85,23 @@ const defaults = {
         </header>
 
         <div id="qc-dberr" class="mt-6 hidden rounded-lg border border-danger/30 bg-danger/10 p-4 text-sm text-danger"></div>
+        {badId && (
+          <div class="mt-6 rounded-lg border border-danger/30 bg-danger/10 p-4 text-sm text-danger">접수번호 형식이 아닙니다(INQ-YYYYMMDD-XXXX) — 계산기 모드로 열었습니다.</div>
+        )}
+
+        {editId && (
+          <section class="mt-8" id="qe-panel">
+            <h2 class="text-lg font-semibold">문의</h2>
+            <p id="qe-load" class="mt-2 text-sm text-ink/45">불러오는 중…</p>
+            <div id="qe-lock" class="qe-alert qe-alert-bad" hidden></div>
+            <div id="qe-pricewarn" class="qe-alert qe-alert-warn" hidden>이 견적은 이전 가격 DB로 계산됐습니다 — 다시 계산하면 금액이 달라질 수 있습니다</div>
+            <dl id="qe-facts" class="qe-facts" hidden></dl>
+            <details class="qe-raw" id="qe-raw" hidden>
+              <summary>고객 요청 원문</summary>
+              <pre id="qe-raw-text"></pre>
+            </details>
+          </section>
+        )}
 
         <!-- ① 견적 정보 -->
         <section class="mt-8">
@@ -88,6 +118,7 @@ const defaults = {
             <label class="qc-field">유효 일수<input data-info="validDays" inputmode="numeric" /></label>
             <label class="qc-field qc-span5">결제조건<input data-info="payment" placeholder="예: 계좌이체" /></label>
           </div>
+          {editId && <p id="qe-prevdate" class="qe-sub" hidden></p>}
         </section>
 
         <!-- ② 품목 (엑셀 V3_견적입력 B~R 열 순서) -->
@@ -115,11 +146,33 @@ const defaults = {
         <!-- 버튼 -->
         <div class="mt-8 flex flex-wrap gap-2">
           <button type="button" id="qc-calc" class="rounded-lg bg-brand px-5 py-2.5 text-sm font-semibold text-onbrand transition hover:brightness-110">계산</button>
-          <button type="button" id="qc-reset" class="rounded-lg border border-ink/15 px-4 py-2.5 text-sm text-ink/70 transition hover:border-ink/40 hover:text-ink">초기화</button>
-          <button type="button" id="qc-example" class="rounded-lg border border-ink/15 px-4 py-2.5 text-sm text-ink/70 transition hover:border-ink/40 hover:text-ink">예시 불러오기</button>
+          <button type="button" id="qc-reset" class="rounded-lg border border-ink/15 px-4 py-2.5 text-sm text-ink/70 transition hover:border-ink/40 hover:text-ink">{editId ? '불러온 값으로 되돌리기' : '초기화'}</button>
+          <button type="button" id="qc-example" hidden={Boolean(editId)} class="rounded-lg border border-ink/15 px-4 py-2.5 text-sm text-ink/70 transition hover:border-ink/40 hover:text-ink">예시 불러오기</button>
+          {editId && (
+            <select id="qe-lang" data-nostale class="qe-select" aria-label="견적서 언어">
+              <option value="ko">한국어</option>
+              <option value="en">English</option>
+            </select>
+          )}
           <button type="button" id="qc-preview" disabled class="rounded-lg border border-ink/15 px-4 py-2.5 text-sm text-ink/70 transition hover:border-ink/40 hover:text-ink">견적서 미리보기</button>
           <span id="qc-note" class="self-center text-sm text-ink/45"></span>
         </div>
+
+        {editId && (
+          <section class="mt-8" id="qe-save-box">
+            <label class="qc-field qe-note-field" data-nostale>메모 (내부 — 고객에게 보이지 않음 · 500자)<input id="qe-note" maxlength="500" /></label>
+            <div class="mt-4 flex flex-wrap gap-2">
+              <button type="button" id="qe-save" disabled class="rounded-lg bg-brand px-5 py-2.5 text-sm font-semibold text-onbrand transition hover:brightness-110">저장 — 고객 화면에 바로 반영</button>
+              <button type="button" id="qe-save-confirm" disabled class="rounded-lg border border-ink/15 px-4 py-2.5 text-sm text-ink/70 transition hover:border-ink/40 hover:text-ink">저장 + 견적 확정</button>
+            </div>
+            <p class="qe-sub">저장은 계산 결과가 '정상'이고 그 뒤 입력을 바꾸지 않았을 때만 됩니다. 금액은 서버가 다시 계산해 저장합니다.</p>
+            <div id="qe-msg" class="qe-alert" hidden></div>
+            <div id="qe-view-wrap" hidden>
+              <h3 class="mt-6 text-sm font-semibold text-ink/70">고객에게 이렇게 보입니다</h3>
+              <div id="qe-view"></div>
+            </div>
+          </section>
+        )}
 
         <!-- ④ 결과 -->
         <section class="mt-10" id="qc-result" hidden>
@@ -135,6 +188,16 @@ const defaults = {
           </div>
           <div id="qc-total" class="mt-6 rounded-lg border border-ink/10 bg-ink/[0.03] p-4 text-sm"></div>
         </section>
+
+        {editId && (
+          <section class="mt-10" id="qe-history-box">
+            <h2 class="text-lg font-semibold">개정 이력</h2>
+            <p class="qe-sub">이전 개정을 불러와 저장하면 새 개정으로 쌓입니다(되돌리기).</p>
+            <div class="mt-3 overflow-x-auto rounded-lg border border-ink/10">
+              <table class="qc-table" id="qe-history"></table>
+            </div>
+          </section>
+        )}
       </main>
     )}
 
@@ -154,17 +217,36 @@ const defaults = {
       .qc-table td.pre { white-space: pre-line; }
       .qc-table .qc-del { color: color-mix(in srgb, var(--color-ink) 45%, transparent); font-size: 0.75rem; padding: 0.35rem 0.5rem; }
       .qc-table .qc-del:hover { color: var(--color-danger); }
-      #qc-preview:disabled, #qc-example:disabled { opacity: 0.4; cursor: not-allowed; }
+      #qc-preview:disabled, #qc-example:disabled, #qe-save:disabled, #qe-save-confirm:disabled { opacity: 0.4; cursor: not-allowed; }
       /* 공용 CSS(global)에 새 유틸리티를 만들지 않으려고 이 화면 전용 규칙으로 둔다 */
       @media (min-width: 1024px) { .qc-span2 { grid-column: span 2 / span 2; } .qc-span5 { grid-column: span 5 / span 5; } }
       .chat-state.is-on { color: var(--color-ok); }
       .chat-state.is-off { color: var(--color-warn); font-weight: 600; }
       .qc-ok { color: var(--color-ok); }
       .qc-bad { color: var(--color-danger); }
+      /* 편집 모드 전용 — 공용 CSS 에 새 유틸리티를 만들지 않으려고 이 화면 규칙으로 둔다 */
+      .qe-facts { margin-top: 0.75rem; display: grid; grid-template-columns: max-content 1fr; gap: 0.35rem 1rem; font-size: 0.875rem; }
+      .qe-facts dt { color: color-mix(in srgb, var(--color-ink) 50%, transparent); }
+      .qe-facts dd { margin: 0; color: var(--color-ink); }
+      .qe-sub { margin-top: 0.5rem; font-size: 0.8125rem; color: color-mix(in srgb, var(--color-ink) 50%, transparent); }
+      .qe-alert { margin-top: 0.75rem; border-radius: 0.5rem; border: 1px solid color-mix(in srgb, var(--color-ink) 12%, transparent); padding: 0.75rem 1rem; font-size: 0.875rem; }
+      .qe-alert-ok { border-color: color-mix(in srgb, var(--color-ok) 35%, transparent); background: color-mix(in srgb, var(--color-ok) 10%, transparent); color: var(--color-ok); }
+      .qe-alert-warn { border-color: color-mix(in srgb, var(--color-warn) 40%, transparent); background: color-mix(in srgb, var(--color-warn) 10%, transparent); color: var(--color-warn); font-weight: 600; }
+      .qe-alert-bad { border-color: color-mix(in srgb, var(--color-danger) 35%, transparent); background: color-mix(in srgb, var(--color-danger) 10%, transparent); color: var(--color-danger); }
+      .qe-alert button { margin-left: 0.5rem; text-decoration: underline; font-weight: 600; }
+      .qe-raw { margin-top: 0.75rem; font-size: 0.875rem; }
+      .qe-raw summary { cursor: pointer; color: color-mix(in srgb, var(--color-ink) 60%, transparent); }
+      .qe-raw pre { margin-top: 0.5rem; white-space: pre-wrap; border-radius: 0.5rem; padding: 0.75rem; font-family: inherit; line-height: 1.6;
+        background: color-mix(in srgb, var(--color-ink) 5%, transparent); color: color-mix(in srgb, var(--color-ink) 75%, transparent); }
+      .qe-select { border-radius: 0.5rem; border: 1px solid color-mix(in srgb, var(--color-ink) 15%, transparent); background: var(--color-canvas); color: var(--color-ink); padding: 0.5rem 0.75rem; font-size: 0.875rem; }
+      .qe-note-field { max-width: 40rem; }
+      .qe-load-rev { font-size: 0.75rem; text-decoration: underline; color: var(--color-accent); }
+      .qe-cur td { background: color-mix(in srgb, var(--color-accent) 8%, transparent); }
     </style>
 
     <script>
       import { buildQuoteDoc, openQuoteDoc } from '../../lib/quote-doc';
+      import { renderQuoteBox, docOptions, injectQuoteViewStyle, kstStamp } from '../../lib/quote-view-render.js';
 
       const root = document.getElementById('qc');
       if (root) {
@@ -185,6 +267,11 @@ const defaults = {
         let meta: Meta | null = null;
         let last: any = null;       // 마지막 계산 결과
         let lastItems: any[] = [];  // 그 결과를 만든 품목 입력
+        let lastLayers: any[] = []; // 그 결과를 만든 층 입력(편집 모드 저장에 쓴다)
+        let fresh = false;          // 마지막 계산 뒤 입력이 바뀌지 않았는가
+        // 편집 모드 — 접수번호(없으면 계산기 모드). 편집 모드 코드는 전부 EDIT 가 있을 때만 돈다.
+        const EDIT = root.dataset.edit ?? '';
+        let onFreshChange = () => {};
 
         // ── 엑셀 의미의 입력 변환 ──────────────────────────────────────
         // 빈칸 → null · 숫자로 읽히면 number(천 단위 쉼표 허용) · 그 외 문자열 그대로. 0 은 0.
@@ -304,9 +391,13 @@ const defaults = {
         const stale = () => {
           $<HTMLButtonElement>('qc-preview').disabled = true;
           if (last) $('qc-note').textContent = '입력이 바뀌었습니다 — 다시 계산하세요.';
+          fresh = false;
+          onFreshChange();
         };
-        root.addEventListener('input', stale);
-        root.addEventListener('change', stale);
+        // 편집 모드의 메모·견적서 언어(data-nostale)는 계산 입력이 아니다 — 계산기 모드에는 그런 요소가 없다.
+        const inputChanged = (e: Event) => { if (!(e.target as HTMLElement)?.closest?.('[data-nostale]')) stale(); };
+        root.addEventListener('input', inputChanged);
+        root.addEventListener('change', inputChanged);
         root.addEventListener('click', (e) => {
           const t = e.target as HTMLElement;
           if (t.matches('[data-del]')) { t.closest('tr')!.remove(); renumber(); stale(); }
@@ -322,6 +413,8 @@ const defaults = {
           $('qc-result').hidden = true;
           $('qc-note').textContent = '';
           $<HTMLButtonElement>('qc-preview').disabled = true;
+          fresh = false;
+          onFreshChange();
         };
 
         // 예시 — 입력만 채운다. 기대 금액은 여기 적지 않는다(계산은 서버가 한다).
@@ -393,18 +486,24 @@ const defaults = {
             if (!j.ok) { $('qc-note').textContent = `계산 실패: ${j.hint ?? j.error ?? res.status}`; return; }
             last = j.result;
             lastItems = items;
+            lastLayers = layers;
             showResult(last, items);
             $('qc-note').textContent = '';
             $<HTMLButtonElement>('qc-preview').disabled = last.status !== '정상';
+            fresh = last.status === '정상';
+            onFreshChange();
           } catch (e) {
             $('qc-note').textContent = `계산 실패: ${e}`;
           }
         };
 
+        // 편집 모드 견적서 옵션(언어·도장·안내) — 계산기 모드는 {} 라 지금과 같은 문서
+        let editDocOpts: () => Record<string, string> = () => ({});
         const preview = () => {
           if (!last || last.status !== '정상') return;
           const info = readInfo();
           const html = buildQuoteDoc({
+            ...editDocOpts(),
             info: info as any,
             items: last.items.map((it: any, i: number) => it.status !== '정상' ? null : {
               name: String(lastItems[i]?.name ?? ''), spec: it.spec, qty: lastItems[i]?.qty, unit: lastItems[i]?.unit,
@@ -423,9 +522,234 @@ const defaults = {
           stale();
         });
         $('qc-calc').addEventListener('click', calc);
-        $('qc-reset').addEventListener('click', reset);
+        if (!EDIT) $('qc-reset').addEventListener('click', reset);
         $('qc-example').addEventListener('click', example);
         $('qc-preview').addEventListener('click', preview);
+
+        // ── 편집 모드 (/admin/quote?id=INQ-…) ───────────────────────────
+        let startEdit: () => Promise<void> = async () => {};
+        if (EDIT) {
+          type Rev = { rev: number; source: string; kind: string; total: number | null; seen_total: number | null; price_sha: string | null; note: string | null; created_at: string };
+          type Loaded = {
+            inquiry: Record<string, any>; revisions: Rev[]; current: Record<string, any> | null; latestRev: number;
+            prefill: { input: any; manualAdmin: string[] } | null; defaultInfo: Record<string, string>;
+            priceDb: { ready: boolean; sha12: string | null }; view: any; firstAuto: Record<string, any> | null;
+          };
+          const QV = JSON.parse(root.dataset.qv || '{}') as { ko: Record<string, string>; en: Record<string, string> };
+          injectQuoteViewStyle(document);
+          const STATUS_KO: Record<string, string> = { new: '신규', quoted: '견적 발송', replied: '회신 완료', paid: '결제 완료', closed: '종료' };
+          const VIEW_KO: Record<string, string> = { estimate: '예상 견적', reviewing: '담당자 확인 중', confirmed: '확정 견적' };
+          const won = (n: unknown) => (typeof n === 'number' ? `₩${n.toLocaleString('ko-KR')}` : '—');
+          const who = (src: string) => (src === 'auto' ? '자동' : '담당자');
+          const revTotal = (r: { kind: string; total: number | null }) => (r.kind === 'manual' || r.total == null ? '담당자 확인' : won(r.total));
+
+          let L: Loaded | null = null;   // 마지막으로 받은 GET 응답
+          let baseRev = 0;               // 저장 요청의 기준 개정(불러올 때의 최신 개정)
+          let locked = false;            // 결제 완료 → 편집 잠금
+          let busy = false;
+
+          const saveBtns = () => [$<HTMLButtonElement>('qe-save'), $<HTMLButtonElement>('qe-save-confirm')];
+          onFreshChange = () => {
+            const ok = fresh && !locked && !busy && !!L && last?.status === '정상';
+            saveBtns().forEach((b) => { b.disabled = !ok; });
+          };
+          const msg = (html: string, tone: 'ok' | 'warn' | 'bad' | '' = '') => {
+            const m = $('qe-msg');
+            m.className = `qe-alert${tone ? ` qe-alert-${tone}` : ''}`;
+            m.innerHTML = html;
+            m.hidden = !html;
+          };
+          const confirmedNow = () => typeof L?.inquiry?.quoted_amount === 'number' && L.inquiry.quoted_amount > 0;
+          editDocOpts = () => {
+            const lang = ($<HTMLSelectElement>('qe-lang').value === 'en' ? 'en' : 'ko') as 'ko' | 'en';
+            const T = QV[lang];
+            return confirmedNow()
+              ? { lang, stamp: '', note: T.docNoteConfirmed, fxNote: '' }
+              : { lang, stamp: T.docStamp, note: T.docNoteEstimate, fxNote: '' };
+          };
+
+          const showView = (view: any) => {
+            const html = renderQuoteBox(view, QV.ko);
+            $('qe-view').innerHTML = html || '<p class="qe-sub">고객 화면에 표시되는 견적이 없습니다.</p>';
+            $('qe-view-wrap').hidden = false;
+            $('qe-view').querySelector('[data-qv-doc]')?.addEventListener('click', () => {
+              const o = docOptions(view, QV.ko, 'ko');
+              if (!o) return;
+              if (!openQuoteDoc(buildQuoteDoc({ ...o, logoUrl: new URL('/logo.png', location.href).href } as any))) {
+                const m = $('qe-view').querySelector('[data-qv-msg]') as HTMLElement | null;
+                if (m) { m.textContent = QV.ko.popupBlocked; m.hidden = false; }
+              }
+            });
+          };
+
+          const renderPanel = (j: Loaded) => {
+            const q = j.inquiry;
+            const revs = j.revisions;
+            const latest = revs.length ? revs[revs.length - 1] : null;
+            const fa = j.firstAuto;
+            let auto = '없음(스위치 꺼짐 또는 공정 견적 아님)';
+            if (fa) {
+              auto = fa.kind === 'manual' || fa.total == null
+                ? `담당자 확인 필요 — 사유: ${(fa.manualAdmin ?? []).join(' / ') || '—'}`
+                : won(fa.total);
+              if (typeof fa.seenTotal === 'number' && fa.seenTotal !== fa.total) auto += ` · 폼에서 본 금액 ${won(fa.seenTotal)} 과 다름`;
+            }
+            const rows: [string, string][] = [
+              ['접수번호', q.id],
+              ['접수일', kstStamp(q.created_at) || String(q.created_at ?? '')],
+              ['고객', [q.name, q.company, q.email].filter(Boolean).join(' / ')],
+              ['상태', STATUS_KO[q.status] ?? String(q.status ?? '')],
+              ['결제', q.paid_at ? `결제 완료 (${kstStamp(q.paid_at)})` : '미결제'],
+              ['확정 금액', q.quoted_amount == null ? '—' : (q.quote_currency === 'USD' ? `$${q.quoted_amount}` : won(q.quoted_amount))],
+              ['고객 화면', j.view ? (VIEW_KO[j.view.state] ?? j.view.state) : '견적 없음(고객 화면에 표시되지 않음)'],
+              ['현재 개정', latest ? `개정 ${latest.rev} · ${who(latest.source)} · ${kstStamp(latest.created_at)} · ${revTotal(latest)}` : '없음'],
+              ['접수 시 자동 견적', auto],
+              ['가격 DB', j.priceDb.ready ? `sha ${j.priceDb.sha12 ?? '—'}` : '비어 있음 — 계산·저장 불가'],
+            ];
+            const facts = $('qe-facts');
+            facts.innerHTML = rows.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('');
+            facts.hidden = false;
+            $('qe-load').hidden = true;
+
+            const sha = String(j.current?.price_sha ?? '').slice(0, 12);
+            $('qe-pricewarn').hidden = !(sha && j.priceDb.sha12 && sha !== j.priceDb.sha12);
+
+            $('qe-raw-text').textContent = String(q.details ?? '');
+            $('qe-raw').hidden = !q.details;
+
+            locked = !!q.paid_at;
+            const lk = $('qe-lock');
+            lk.textContent = locked ? '결제가 끝난 견적이라 저장할 수 없습니다(편집 잠금). 계산·미리보기는 할 수 있습니다.' : '';
+            lk.hidden = !locked;
+
+            const curRev = j.current?.rev;
+            $('qe-history').innerHTML = revs.length
+              ? `<thead><tr><th>개정</th><th>시각</th><th>작성</th><th>합계</th><th>메모</th><th></th></tr></thead><tbody>` +
+                revs.slice().reverse().map((r) => `<tr${r.rev === curRev ? ' class="qe-cur"' : ''}><td class="num">${esc(r.rev)}</td><td>${esc(kstStamp(r.created_at))}</td>` +
+                  `<td>${esc(who(r.source))}</td><td class="num">${esc(revTotal(r))}</td><td>${esc(r.note ?? '')}</td>` +
+                  `<td><button type="button" class="qe-load-rev" data-load-rev="${esc(r.rev)}">이 개정 불러오기</button></td></tr>`).join('') + '</tbody>'
+              : '<tbody><tr><td>아직 개정이 없습니다 — 저장하면 개정 1이 됩니다.</td></tr></tbody>';
+
+            $('qe-view-wrap').hidden = true;
+            if (j.view) showView(j.view);
+            onFreshChange();
+          };
+
+          /** 칸 채우기 — 불러온 개정의 입력(없으면 접수 사본으로 만든 입력)과 견적 정보 */
+          const fill = (j: Loaded) => {
+            const input = j.current?.input ?? j.prefill?.input ?? null;
+            itemsBody().innerHTML = '';
+            layersBody().innerHTML = '';
+            const its = Array.isArray(input?.items) ? input.items.slice(0, MAX_ITEMS) : [];
+            const ls = Array.isArray(input?.layers) ? input.layers : [];
+            if (its.length) its.forEach((v: any) => addItem(v ?? {})); else addItem();
+            if (ls.length) ls.forEach((v: any) => addLayer(v ?? {})); else addLayer({ itemNo: 1, order: 1, repeat: 1 });
+            const info = { ...(j.current?.info ?? j.defaultInfo) };
+            const prev = String(info.date ?? '');
+            info.date = serverDefaults.date;
+            if (!String(info.quoteNo ?? '').trim()) info.quoteNo = EDIT;
+            setInfo(info);
+            const pd = $('qe-prevdate');
+            pd.textContent = j.current?.info && prev ? `직전 견적일 ${prev}` : '';
+            pd.hidden = !pd.textContent;
+            $<HTMLInputElement>('qe-note').value = '';
+            $<HTMLSelectElement>('qe-lang').value = j.inquiry.locale === 'en' ? 'en' : 'ko';
+            last = null;
+            $('qc-result').hidden = true;
+            $<HTMLButtonElement>('qc-preview').disabled = true;
+            fresh = false;
+            const why = !j.current && j.prefill?.manualAdmin?.length ? ` 자동 계산이 안 된 항목: ${j.prefill.manualAdmin.join(' / ')}` : '';
+            $('qc-note').textContent = (j.current ? `개정 ${j.current.rev}을(를) 불러왔습니다 — 계산을 눌러 확인하세요.`
+              : j.prefill ? '접수 내용으로 칸을 채웠습니다 — 계산을 눌러 확인하세요.' : '불러올 견적 입력이 없습니다 — 직접 입력하세요.') + why;
+            onFreshChange();
+          };
+
+          /** GET — rev 가 있으면 그 개정. doFill 이 거짓이면 패널·이력·기준 개정만 새로 고친다(칸은 그대로). */
+          const load = async (rev: number | null, doFill: boolean) => {
+            const res = await fetch(`/api/admin/quote-rev?id=${encodeURIComponent(EDIT)}${rev ? `&rev=${rev}` : ''}`, { cache: 'no-store' });
+            const j = await res.json().catch(() => ({}));
+            if (res.status === 401) { $('qe-load').textContent = '로그인이 만료되었습니다 — /admin 에서 다시 로그인하세요.'; return false; }
+            if (!j.ok) {
+              $('qe-load').textContent = j.error === 'not_found' ? '이 접수번호의 문의가 없습니다.'
+                : j.error === 'not_quote' ? '견적 요청이 아닌 문의입니다.' : `불러오기 실패 (${j.error ?? res.status})`;
+              $('qe-load').hidden = false;
+              return false;
+            }
+            L = j as Loaded;
+            baseRev = L.latestRev;
+            if (doFill) fill(L);
+            renderPanel(L);
+            return true;
+          };
+
+          const save = async (confirmIt: boolean) => {
+            if (!L || !fresh || locked || busy || last?.status !== '정상') return;
+            if (confirmIt && !confirm("고객 화면이 '확정 견적'으로 바뀝니다. 확정할까요?")) return;
+            busy = true;
+            onFreshChange();
+            msg('저장 중…');
+            try {
+              const res = await fetch('/api/admin/quote-rev', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: EDIT, baseRev, items: lastItems, layers: lastLayers, info: readInfo(),
+                  note: $<HTMLInputElement>('qe-note').value, confirm: confirmIt }),
+              });
+              const j = await res.json().catch(() => ({}));
+              if (res.status === 401) { msg('로그인이 만료되었습니다 — /admin 에서 다시 로그인하세요.', 'bad'); return; }
+              if (j.ok) {
+                const warn = j.warning === 'usd_confirmed'
+                  ? '<br>USD 로 확정된 견적이라 확정 금액은 바뀌지 않았습니다 — 견적 탭에서 직접 고치세요' : '';
+                msg(`저장됨 — 개정 ${esc(j.rev)} · 고객 조회 화면에 반영됨 (합계 ${esc(won(j.total))})${warn}`, j.warning ? 'warn' : 'ok');
+                $<HTMLInputElement>('qe-note').value = '';
+                await load(null, false);
+                showView(j.view);
+                return;
+              }
+              if (j.error === 'conflict') {
+                msg(`다른 곳에서 먼저 저장했습니다(개정 ${esc(j.latestRev)}).<button type="button" id="qe-reload">최신 개정 불러오기</button>`, 'bad');
+                document.getElementById('qe-reload')?.addEventListener('click', async () => {
+                  if (!confirm('지금 입력한 내용을 최신 개정으로 덮어씁니다. 불러올까요?')) return;
+                  msg('');
+                  await load(null, true);
+                });
+                return;
+              }
+              if (j.error === 'already_paid') {
+                msg('결제가 끝난 견적이라 저장할 수 없습니다.', 'bad');
+                await load(null, false);
+                return;
+              }
+              if (j.error === 'engine') {
+                // 서버 재계산 결과가 '정상'이 아님 — 계산 결과와 같은 방식으로 보여준다(저장 안 됨)
+                last = j.result;
+                showResult(j.result, lastItems);
+                fresh = false;
+                $<HTMLButtonElement>('qc-preview').disabled = true;
+                msg(`저장하지 않았습니다 — 서버 계산 결과: ${esc(j.status)}`, 'bad');
+                return;
+              }
+              msg(`저장 실패: ${esc(j.error ?? res.status)}`, 'bad');
+            } catch (e) {
+              msg(`저장 실패: ${esc(e)}`, 'bad');
+            } finally {
+              busy = false;
+              onFreshChange();
+            }
+          };
+
+          $('qe-save').addEventListener('click', () => save(false));
+          $('qe-save-confirm').addEventListener('click', () => save(true));
+          $('qc-reset').addEventListener('click', () => { if (L) fill(L); });
+          $('qe-history').addEventListener('click', async (e) => {
+            const b = (e.target as HTMLElement).closest('[data-load-rev]') as HTMLElement | null;
+            if (!b) return;
+            if (!confirm(`개정 ${b.dataset.loadRev}을(를) 불러와 지금 입력을 덮어씁니다. 불러올까요?`)) return;
+            msg('');
+            await load(Number(b.dataset.loadRev), true);
+          });
+          startEdit = async () => { await load(null, true); };
+        }
 
         // ── 시작: 메타(이름 목록)만 받는다 ──────────────────────────────
         renderHeads();
@@ -449,6 +773,7 @@ const defaults = {
           }
           $<HTMLButtonElement>('qc-example').disabled = !exampleRecipe();
           reset();
+          await startEdit();
         })();
       }
     </script>
