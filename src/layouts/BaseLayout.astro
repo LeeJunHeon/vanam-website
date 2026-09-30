@@ -210,6 +210,16 @@ const childHref = (path) => {
       })();
     </script>
     <script is:inline>
+      // 해시(#)로 들어온 페이지는 첫 도착을 '즉시 이동'으로 한다 (0930).
+      // global.css 의 html { scroll-behavior: smooth } 때문에 브라우저의 해시 이동과 body 끝 해시 처리
+      // (el.scrollIntoView)가 부드러운 스크롤로 움직이는데, 그 사이 웹폰트(Pretendard — 비동기 로드·swap)가
+      // 늦게 적용되면 위쪽 글 높이가 바뀌어 목표에서 어긋난다(휴대폰에서 가끔 약 20px).
+      // 여기서 끄고, 도착 위치를 잡은 뒤 body 끝의 해시 처리가 원래대로(smooth) 되돌린다.
+      (function () {
+        try { if (location.hash.length > 1) document.documentElement.style.scrollBehavior = 'auto'; } catch (e) {}
+      })();
+    </script>
+    <script is:inline>
       // 배너·SNS "세션 기준" 표시 제어의 공통 준비.
       // 정의: 새로고침·새 탭 접속 → 다시 보임 / 사이트 내 페이지 이동 → 숨김(직전에 봤으니).
       // 구현: sessionStorage 로 "이번 세션에 봤음"을 기억하되, 이번 로드가 '새로고침'이면 그 기억을 지운다.
@@ -746,8 +756,11 @@ const childHref = (path) => {
     -->
     <script is:inline>
       (function () {
+        var root = document.documentElement;
+        // 머리의 0930 스크립트가 첫 도착 동안 꺼 둔 부드러운 스크롤을 되돌린다.
+        var restore = function () { root.style.scrollBehavior = ''; };
         var h = location.hash.slice(1);
-        if (!h) return;
+        if (!h) { restore(); return; }
         var p = location.pathname.replace(/\/$/, '');
         var ko = p.indexOf('/ko') === 0;
         var base = ko ? '/ko' : '';
@@ -765,7 +778,42 @@ const childHref = (path) => {
         }
         // 이미 목적지 페이지인데 해당 요소가 있으면 스크롤만 맞춘다
         var el = document.getElementById(h);
-        if (el) el.scrollIntoView();
+        if (!el) { restore(); return; }
+        el.scrollIntoView(); // 즉시 이동(머리 스크립트가 부드러운 스크롤을 꺼 둔 상태)
+
+        // (0930) 페이지가 자리 잡을 때까지 목표 위치를 붙잡아 둔다.
+        //   웹폰트·이미지가 늦게 들어와 위쪽 높이가 바뀌면 매 프레임 확인해 다시 맞춘다.
+        //   사용자가 스크롤·터치·키·클릭을 하면 그 즉시 손을 뗀다(사용자 조작과 싸우지 않는다).
+        //   끝나는 때: load → 두 프레임 → 폰트 준비(document.fonts.ready) → 0.8초 더 지켜본 뒤. 어떤 경우에도 6초면 끝.
+        var want = parseFloat(getComputedStyle(el).scrollMarginTop) || 0;
+        var done = false, until = 0, start = Date.now();
+        var USER = ['wheel', 'touchstart', 'keydown', 'mousedown'];
+        var release = function () {
+          if (done) return;
+          done = true;
+          for (var i = 0; i < USER.length; i++) removeEventListener(USER[i], release, true);
+          restore();
+        };
+        for (var i = 0; i < USER.length; i++) addEventListener(USER[i], release, { capture: true, passive: true });
+        var tick = function () {
+          if (done) return;
+          var now = Date.now();
+          if ((until && now > until) || now - start > 6000) return release();
+          if (Math.abs(el.getBoundingClientRect().top - want) > 1) el.scrollIntoView();
+          requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+        var settle = function () {
+          // load 직후엔 폰트 요청이 아직 시작 전일 수 있어 두 프레임 뒤에 폰트 준비를 본다
+          requestAnimationFrame(function () {
+            requestAnimationFrame(function () {
+              var fr = document.fonts && document.fonts.ready;
+              (fr || Promise.resolve()).then(function () { until = Date.now() + 800; });
+            });
+          });
+        };
+        if (document.readyState === 'complete') settle();
+        else addEventListener('load', settle, { once: true });
       })();
     </script>
     <script is:inline>
