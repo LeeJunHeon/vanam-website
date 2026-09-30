@@ -6,7 +6,7 @@
 // 제출 시 시퀀스를 사람이 읽을 수 있는 텍스트로 정리해 details 에, 원본은 JSON 으로 함께 보낸다.
 import siteData from '../data/site.json';
 import company from '../data/company.json';
-import { PROCESSES, MEASUREMENTS, SUBSTRATES, SUBSTRATE_SIZES, DELIVERY_METHODS, DELIVERY_NEEDS_SHIPPING, PRODUCT_MAT_FILTER, SYSTEM_TO_PROCESS, type MatCat } from '../lib/processes';
+import { PROCESSES, MEASUREMENTS, SUBSTRATES, SUBSTRATE_SIZES, DELIVERY_METHODS, DELIVERY_NEEDS_SHIPPING, PRODUCT_MAT_FILTER, type MatCat } from '../lib/processes';
 import { COUNTRIES } from '../lib/countries';
 // 기판 등급 — 선택지·대상 종류의 단일 출처(서버 검증·자동 견적과 같은 목록)
 import { SUBSTRATE_GRADES, GRADED_SUBSTRATES } from '../lib/quote-fields.js';
@@ -112,8 +112,7 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
       data-map-size={JSON.stringify(Object.fromEntries(sizeOpts.map((s) => [s.value, s.label])))}
       data-map-delivery={JSON.stringify(Object.fromEntries(deliveryOpts.map((d) => [d.value, d.label])))}
       data-map-country={JSON.stringify(Object.fromEntries(countryOpts.map((cn) => [cn.value, cn.label])))}
-      data-dep-processes={JSON.stringify(DEP_PROCESSES)}
-      data-sys-proc={JSON.stringify(SYSTEM_TO_PROCESS)}>
+      data-dep-processes={JSON.stringify(DEP_PROCESSES)}>
       <!-- Honeypot: 사람에겐 안 보임 (스팸 트랩) -->
       <div class="absolute left-[-9999px]" aria-hidden="true">
         <label>{c.honeypot}
@@ -528,7 +527,7 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
 <script>
   import { initTelInput, normalizeTelInputs } from '../lib/telInput';
   // 소재 value 문자열을 만드는 함수는 한 곳뿐이다 — 옵션 파생·CTA 링크·여기(프리필)가 같은 걸 쓴다.
-  import { materialValue } from '../lib/material-value.js';
+  import { materialValue, formProcessFor } from '../lib/material-value.js';
   // 박막 증착 여부의 저장값 정규화 — 서버 검증·검증 스크립트와 같은 파일을 쓴다.
   import { preFilmFields } from '../lib/quote-fields.js';
   import { showHint, hideHint } from '../lib/formHint';
@@ -726,12 +725,9 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
     const q = new URLSearchParams(location.search);
     const rawMat = (q.get('material') ?? '').trim();
     if (!rawMat) return;
-    const sys = (q.get('system') ?? '').trim().toLowerCase();
-    // 라이브러리 system → 폼 공정 이름. 매핑의 출처는 processes.ts 하나이고 data 속성으로 넘어온다
-    // (processes.ts 를 클라이언트에서 import 하면 소재 JSON 52개가 번들에 딸려 온다).
-    let sysToProc: Record<string, string> = {};
-    try { sysToProc = JSON.parse(M.sysProc ?? '{}'); } catch { return; }
-    const procName = sysToProc[sys] ?? '';
+    // 라이브러리 system(+물질) → 폼 공정 이름. Ag·Te 처럼 라이브러리에선 sputter 지만 폼에선
+    // Evaporator 로 받는 물질도 여기서 갈린다. 규칙은 material-value.js 한 곳(소재 JSON 을 끌고 오지 않는 파일).
+    const procName = formProcessFor(q.get('system') ?? '', rawMat);
     const want = materialValue(rawMat);
 
     addRow();

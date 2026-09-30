@@ -49,6 +49,34 @@ export function materialSortKey(value) {
   return materialValue(value).toLowerCase();
 }
 
+// ── 라이브러리 system ↔ 견적 폼 공정 ─────────────────────────────
+// 라이브러리의 system 은 sputter(= "PVD — Sputter & Evaporator")·ald 두 가지뿐이다.
+// 폼은 Sputter 와 Evaporator 를 따로 받으므로, 라이브러리에선 sputter 로 분류돼 있어도
+// 실제로는 Evaporator 로만 증착하는 물질을 아래 EVAPORATOR_ONLY 에 적는다.
+//   → processes.ts: Sputter 선택지에서 빠지고 Evaporator 선택지에 들어간다.
+//   → QuoteForm 프리필: CTA 의 ?system=sputter&material=Ag 를 Evaporator + Ag 로 채운다.
+// 쓰는 곳이 서버(processes.ts)·클라이언트(QuoteForm 프리필)·node 게이트 셋이라 여기(.js) 둔다.
+
+/** 라이브러리 system → 견적 폼 공정 이름 (기본 대응) */
+export const SYSTEM_TO_PROCESS = /** @type {Record<string, string>} */ ({ sputter: 'Sputter', ald: 'ALD' });
+
+/** 라이브러리에선 sputter(PVD)지만 폼에서는 Evaporator 로만 받는 물질 (폼 value) */
+export const EVAPORATOR_ONLY = /** @type {readonly string[]} */ (Object.freeze(['Ag', 'Te']));
+
+/**
+ * CTA 의 ?system= · ?material= → 견적 폼 공정 이름. 대응이 없으면 ''.
+ * @param {string} system 'sputter' | 'ald' (대소문자·공백 무시)
+ * @param {string} material 폼 value 또는 라이브러리 화학식
+ * @returns {string}
+ */
+export function formProcessFor(system, material) {
+  const sys = String(system ?? '').trim().toLowerCase();
+  // hasOwnProperty.call — ?system=__proto__ 같은 값이 프로토타입을 집어 오지 않게(Object.hasOwn 은 구형 사파리에 없다)
+  const base = Object.prototype.hasOwnProperty.call(SYSTEM_TO_PROCESS, sys) ? SYSTEM_TO_PROCESS[sys] : '';
+  if (base === 'Sputter' && EVAPORATOR_ONLY.includes(materialValue(material))) return 'Evaporator';
+  return base;
+}
+
 /**
  * 견적 폼으로 보내는 CTA 링크의 쿼리·해시.
  * @param {string} system 'sputter' | 'ald'

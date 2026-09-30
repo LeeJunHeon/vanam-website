@@ -145,6 +145,11 @@ eq('planRuns 경계', [planRuns(9), planRuns(10)], [{ runs: 1, manual: false }, 
 eq('후보 2개 → manual', cust({ steps: [S('ALD', 'Al2O3', '10')], sampleCount: 1 }), { kind: 'manual', manual: ['1단계 ALD Al₂O₃'] });
 eq('분석 → manual', cust({ steps: [S('Sputter', 'Ti', '10')], measurements: ['XPS'], sampleCount: 1 }), { kind: 'manual', manual: ['분석: XPS'] });
 eq('어닐링 → manual', cust({ steps: [S('Sputter', 'Ti', '10'), S('Annealing', 'N2', '60'), S('Sputter', 'Pt', '10')], sampleCount: 1 }), { kind: 'manual', manual: ['2단계 Annealing N₂'] });
+// 공정 시퀀스 물질 변경 — Annealing O2·Ar 추가, Ag·Te 는 Evaporator 로(가격 자료가 없어 담당자 확인)
+eq('어닐링 O2 → manual', cust({ steps: [S('Sputter', 'Ti', '10'), S('Annealing', 'O2', '30')], sampleCount: 1 }), { kind: 'manual', manual: ['2단계 Annealing O₂'] });
+eq('어닐링 Ar → manual', cust({ steps: [S('Annealing', 'Ar', '30'), S('Sputter', 'Pt', '10')], sampleCount: 1 }), { kind: 'manual', manual: ['1단계 Annealing Ar'] });
+eq('Evaporator Ag → manual', cust({ steps: [S('Evaporator', 'Ag', '50')], sampleCount: 1 }), { kind: 'manual', manual: ['1단계 Evaporator Ag'] });
+eq('Evaporator Te → manual', cust({ steps: [S('Sputter', 'Ti', '10'), S('Evaporator', 'Te', '20')], sampleCount: 1 }), { kind: 'manual', manual: ['2단계 Evaporator Te'] });
 eq('엔진 오류(가격 자료) → manual', cust({ steps: [S('Sputter', 'Ti', '10')], sampleCount: 1 }, badEngine), { kind: 'manual', manual: ['가격 자료 확인'] });
 
 // 기판(구매 요청)

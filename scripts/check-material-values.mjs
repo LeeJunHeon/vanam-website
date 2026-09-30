@@ -15,12 +15,14 @@
 //   ③ 파생 value 중복 없음 (같은 방식 안에서)
 //   ④ VALUE_EXCEPTIONS 에 죽은 항목 없음 (정규화만으로 충분한데 예외로 적어둔 것)
 //   ⑤ CTA↔필터 정합: 소재의 CTA 가 향하는 제품 페이지의 필터가 그 소재의 분류를 통과시킨다
+//   ⑥ Evaporator 전용(EVAPORATOR_ONLY): 라이브러리에 sputter 로 실재 · Sputter 선택지에 없음 ·
+//      프리필 규칙(formProcessFor)이 Evaporator 로 보냄 · 나머지 소재는 기본 공정 그대로
 // 사용: node scripts/check-material-values.mjs [--dump]   (--dump = 파생 옵션 전수 표 출력)
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 // 파생에 쓰는 함수 그대로 가져온다 — 검증이 별도 규칙을 다시 구현하면 게이트가 아니라 사본이 된다.
-import { materialValue, materialSortKey, VALUE_EXCEPTIONS, CATEGORY_TO_PRODUCT, PRODUCT_MAT_FILTER } from '../src/lib/material-value.js';
+import { materialValue, materialSortKey, VALUE_EXCEPTIONS, CATEGORY_TO_PRODUCT, PRODUCT_MAT_FILTER, SYSTEM_TO_PROCESS, EVAPORATOR_ONLY, formProcessFor } from '../src/lib/material-value.js';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const MAT_DIR = join(ROOT, 'src/content/materials');
@@ -39,21 +41,23 @@ const BASELINE = {
   ],
   ALD: ['Al2O3', 'HfO2', 'TiO2'],
 };
-// 폼 공정 이름 ↔ 라이브러리 system (processes.ts 의 SYSTEM_TO_PROCESS 와 같은 대응)
-const SYSTEMS = { Sputter: 'sputter', ALD: 'ald' };
+// 폼 공정 이름 ↔ 라이브러리 system — material-value.js 의 SYSTEM_TO_PROCESS 를 뒤집어 쓴다(사본을 두지 않는다)
+const SYSTEMS = Object.fromEntries(Object.entries(SYSTEM_TO_PROCESS).map(([sys, proc]) => [proc, sys]));
+const isEvapOnly = (value) => EVAPORATOR_ONLY.includes(value);
 
 // ── 라이브러리 적재 (Astro 없이 파일에서 직접) ────────────────────────────
 const library = readdirSync(MAT_DIR)
   .filter((f) => f.endsWith('.json'))
   .map((f) => ({ id: f.replace(/\.json$/, ''), ...JSON.parse(readFileSync(join(MAT_DIR, f), 'utf8')) }));
 
-// processes.ts 의 fromLibrary() 와 같은 순서·중복 규칙
-function derive(system) {
+// processes.ts 의 fromLibrary() 와 같은 순서·중복·골라내기 규칙
+function derive(system, pick = () => true) {
   const seen = new Set();
   const out = [];
   for (const m of library) {
     if (m.system !== system) continue;
     const value = materialValue(m.formula);
+    if (!pick(value)) continue;
     if (seen.has(value)) { out.push({ id: m.id, formula: m.formula, value, category: m.category, dup: true }); continue; }
     seen.add(value);
     out.push({ id: m.id, formula: m.formula, value, category: m.category, dup: false });
@@ -62,7 +66,10 @@ function derive(system) {
   return out;
 }
 
-const derived = Object.fromEntries(Object.entries(SYSTEMS).map(([proc, sys]) => [proc, derive(sys)]));
+// Sputter 는 Evaporator 전용 물질을 뺀다(processes.ts 와 같다). 빠진 것은 Evaporator 로 간다.
+const derived = Object.fromEntries(Object.entries(SYSTEMS).map(([proc, sys]) =>
+  [proc, derive(sys, proc === 'Sputter' ? (v) => !isEvapOnly(v) : undefined)]));
+const evapRouted = derive('sputter', isEvapOnly);
 
 console.log('· 견적 폼 소재 value 게이트');
 
@@ -79,7 +86,7 @@ for (const [proc, values] of Object.entries(BASELINE)) {
 }
 
 // ② 라이브러리 소재 중 옵션 누락
-const optioned = new Set(Object.values(derived).flat().filter((m) => !m.dup).map((m) => m.id));
+const optioned = new Set([...Object.values(derived).flat(), ...evapRouted].filter((m) => !m.dup).map((m) => m.id));
 // 폼에 대응 공정이 없는 system 이 라이브러리에 생기면(예: evaporator 를 별도 system 으로 추가) 여기서 멈춘다.
 const orphanSystems = [...new Set(library.map((m) => m.system))].filter((s) => !Object.values(SYSTEMS).includes(s));
 if (orphanSystems.length) fail(`라이브러리에 대응 폼 공정이 없는 system: ${orphanSystems.join(', ')}`);
@@ -124,8 +131,28 @@ if (ctaMismatch.length) {
     + (linked < library.length ? ` (/contact 폴백 ${library.length - linked}종)` : ''));
 }
 
+// ⑥ Evaporator 전용 물질 — Sputter 에서 빼서 Evaporator 로 보내는 목록이 살아 있는지
+{
+  const libSputter = new Set(library.filter((m) => m.system === 'sputter').map((m) => materialValue(m.formula)));
+  const dead = EVAPORATOR_ONLY.filter((v) => !libSputter.has(v));
+  if (dead.length) fail(`EVAPORATOR_ONLY 에 있는데 라이브러리(sputter)에 없는 물질: ${dead.join(', ')} — 목록에서 빼거나 라이브러리를 확인할 것`);
+  const leaked = derived.Sputter.filter((m) => isEvapOnly(m.value)).map((m) => m.value);
+  if (leaked.length) fail(`Sputter 선택지에 남은 Evaporator 전용 물질: ${leaked.join(', ')}`);
+  const wrongRoute = [];
+  for (const m of library) {
+    const want = m.system === 'sputter' && isEvapOnly(materialValue(m.formula)) ? 'Evaporator' : SYSTEM_TO_PROCESS[m.system];
+    const got = formProcessFor(m.system, m.formula);
+    if (got !== want) wrongRoute.push(`${m.id}/${m.formula}: ${got || '(없음)'} ≠ ${want}`);
+  }
+  if (wrongRoute.length) fail(`프리필 공정이 어긋난 소재 ${wrongRoute.length}종: ${wrongRoute.join(', ')}`);
+  if (!dead.length && !leaked.length && !wrongRoute.length) {
+    console.log(`  ✓ Evaporator 전용 ${EVAPORATOR_ONLY.length}종(${EVAPORATOR_ONLY.join(', ')}) — 라이브러리 실재 · Sputter 선택지에 없음 · 프리필 → Evaporator`);
+  }
+}
+
 // ── --dump: 파생 옵션 전수 표 ────────────────────────────────────
 if (process.argv.includes('--dump')) {
+  console.log(`\n[Evaporator ← 라이브러리] ${evapRouted.map((m) => m.value).join(', ')} (+ processes.ts EXTRAS 의 손 관리 목록)`);
   for (const [proc, list] of Object.entries(derived)) {
     const byCat = {};
     for (const m of list) (byCat[m.category] ??= []).push(m);
