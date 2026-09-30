@@ -6,7 +6,12 @@
 // (src/content/materials/*.json)가 단일 소스이고, Sputter/ALD 의 선택지는 거기서 파생한다.
 // 라이브러리에 소재를 추가하면 견적 폼 드롭다운에 자동으로 나타난다(수기 동기화 지점 제거).
 // 라이브러리에 대응 항목이 없는 선택지(플라즈마·열처리 가스, Evaporator 물질)만 EXTRAS 로 남긴다.
-import { materialValue, materialSortKey, PRODUCT_MAT_FILTER as PRODUCT_MAT_FILTER_RAW } from './material-value.js';
+import {
+  materialValue,
+  materialSortKey,
+  PRODUCT_MAT_FILTER as PRODUCT_MAT_FILTER_RAW,
+  EVAPORATOR_ONLY,
+} from './material-value.js';
 import {
   DELIVERY_METHODS as DELIVERY_METHODS_RAW,
   DELIVERY_VALUES as DELIVERY_VALUES_RAW,
@@ -43,45 +48,56 @@ const LIBRARY: LibMaterial[] = Object.values(libModules).map(
 // 한 증착 방식(system)의 물질 선택지. value 문자열은 material-value.js 가 만든다(단일 함수).
 // 정렬은 소재 라이브러리 칩과 같은 규칙(소문자 알파벳순). 분류별 묶음(optgroup)과 그 순서는
 // QuoteForm 클라이언트의 CAT_ORDER 가 정하므로 여기서는 전체를 한 줄로 정렬해 두면 된다.
-function fromLibrary(system: 'sputter' | 'ald'): [string, MatCat][] {
+// pick 으로 일부만 고를 수 있다 — Sputter 에서 Evaporator 전용 물질(EVAPORATOR_ONLY)을 빼고, 그것만 Evaporator 로 보낼 때 쓴다.
+const bySortKey = (a: [string, MatCat], b: [string, MatCat]) =>
+  materialSortKey(a[0]).localeCompare(materialSortKey(b[0]), 'en');
+function fromLibrary(system: 'sputter' | 'ald', pick: (value: string) => boolean = () => true): [string, MatCat][] {
   const seen = new Set<string>();
   const out: [string, MatCat][] = [];
   for (const m of LIBRARY) {
     if (m.system !== system) continue;
     const value = materialValue(m.formula);
+    if (!pick(value)) continue;
     if (seen.has(value)) continue; // 같은 방식 안에 같은 화학식이 둘이면 하나만 (선택지 중복 방지)
     seen.add(value);
     out.push([value, m.category]);
   }
-  out.sort((a, b) => materialSortKey(a[0]).localeCompare(materialSortKey(b[0]), 'en'));
+  out.sort(bySortKey);
   return out;
 }
+const isEvaporatorOnly = (value: string) => EVAPORATOR_ONLY.includes(value);
 
 // ── extras: 라이브러리에 대응 항목이 없어 파생되지 않는 선택지 ──────────
 // (a) 비증착 공정의 가스 — 플라즈마 세정·처리, 열처리 분위기. 소재 라이브러리는 증착 소재만 담는다.
 // (b) Evaporator 물질 — 라이브러리의 system 은 sputter/ald 두 가지뿐이라 대응 항목이 없다.
-//     (라이브러리에서 sputter 는 "PVD — Sputter & Evaporator" 로 함께 표기되지만,
-//      폼의 Evaporator 는 별도 공정이고 실제 취급 물질도 3종뿐이라 현행 목록을 그대로 둔다.)
+//     (라이브러리에서 sputter 는 "PVD — Sputter & Evaporator" 로 함께 표기된다.)
+//     여기 3종(Al·Au·Ni)은 손으로 관리하고, 라이브러리의 Ag·Te 는 material-value.js 의
+//     EVAPORATOR_ONLY 로 지정돼 Sputter 대신 여기에 합쳐진다(evaporatorMaterials).
 // 이 목록은 라이브러리가 커져도 자동으로 늘지 않는다 — 손으로 관리한다.
 const EXTRAS: Record<string, [string, MatCat][]> = {
   'PlasmaCleaning (In-situ)': [['Ar', 'gas'], ['O2', 'gas']],
   'PlasmaTreatment (Ex-situ)': [['Ar', 'gas'], ['O2', 'gas'], ['N2', 'gas'], ['CF4', 'gas']],
   Evaporator: [['Al', 'Metal'], ['Au', 'Metal'], ['Ni', 'Metal']],
-  Annealing: [['ATM', 'gas'], ['N2', 'gas']],
+  Annealing: [['ATM', 'gas'], ['N2', 'gas'], ['O2', 'gas'], ['Ar', 'gas']],
 };
+
+// Evaporator = 손으로 관리하는 목록(EXTRAS) + 라이브러리에서 Evaporator 전용으로 지정한 물질(Ag·Te).
+// 같은 value 가 양쪽에 있으면 하나만. 정렬은 라이브러리 칩과 같은 규칙.
+function evaporatorMaterials(): [string, MatCat][] {
+  const out = new Map<string, MatCat>(EXTRAS['Evaporator']!);
+  for (const [value, cat] of fromLibrary('sputter', isEvaporatorOnly)) if (!out.has(value)) out.set(value, cat);
+  return [...out].sort(bySortKey);
+}
 
 // 증착·처리 공정 (엑셀 Sheet2). 순서·이름·단위는 기존 그대로.
 export const PROCESSES: ProcessDef[] = [
   { name: 'PlasmaCleaning (In-situ)', unit: 'min', materials: EXTRAS['PlasmaCleaning (In-situ)']! },
   { name: 'PlasmaTreatment (Ex-situ)', unit: 'min', materials: EXTRAS['PlasmaTreatment (Ex-situ)']! },
-  { name: 'Sputter', unit: 'nm', materials: fromLibrary('sputter') },
+  { name: 'Sputter', unit: 'nm', materials: fromLibrary('sputter', (v) => !isEvaporatorOnly(v)) },
   { name: 'ALD', unit: 'nm', materials: fromLibrary('ald') },
-  { name: 'Evaporator', unit: 'nm', materials: EXTRAS['Evaporator']! },
+  { name: 'Evaporator', unit: 'nm', materials: evaporatorMaterials() },
   { name: 'Annealing', unit: 'min', materials: EXTRAS['Annealing']! },
 ];
-
-// 견적 폼 공정 이름 ↔ 라이브러리 system. CTA 의 ?system= 을 폼의 공정으로 되돌릴 때 쓴다.
-export const SYSTEM_TO_PROCESS: Record<string, string> = { sputter: 'Sputter', ald: 'ALD' };
 
 // 측정 공정 (별도 섹션 · 선택 사항). 물질·값 없음.
 export const MEASUREMENTS: ProcessDef[] = [
