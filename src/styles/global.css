@@ -275,8 +275,10 @@ body.v-zebra main > section:nth-of-type(even) {
   /* 히어로 전용 알약 버튼 — 어두운 영상 위 전용 디자인이라 본문 버튼과 형태가 다르다.
      ⚠️ 이건 '예외'가 아니라 '다른 역할'이다. 그래서 클래스로 이름을 붙여 둔다.
         (예전엔 파일 단위 예외로 두었더니, 같은 파일의 하단 CTA 까지 알약으로 남아 있는 걸 놓쳤다) */
-  .v-btn-hero       { @apply rounded-full bg-brand px-6 py-3 text-sm font-semibold text-onbrand transition hover:brightness-110; }
-  .v-btn-hero-ghost { @apply rounded-full border border-white/40 px-6 py-3 text-sm font-medium text-white/90 transition hover:border-white hover:text-white; }
+  .v-btn-hero       { @apply inline-flex items-center justify-center gap-2 rounded-full bg-brand px-6 py-3 text-sm font-semibold text-onbrand transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white; }
+  /* 흰 채움 — 예전 외곽선(border-white/40)은 영상 위에서 잘 안 보여 [문의하기]를 놓치는 고객이 많았다.
+     히어로는 테마와 무관하게 항상 어두운 영상이라 라이트/다크 모두 같은 색이다(그래서 테마 토큰이 아닌 고정색). */
+  .v-btn-hero-solid { @apply inline-flex items-center justify-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-semibold text-[#0b0d10] transition hover:bg-white/85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white; }
 
   /* 입력칸 — 문의·견적·주문서·조회 4개 폼에 같은 문자열이 각각 복사돼 있었다 */
   .v-input    { @apply mt-2 w-full rounded-lg border border-ink/10 bg-ink/[0.03] px-4 py-3 text-ink placeholder-ink/30 outline-none transition focus:border-accent focus:ring-1 focus:ring-accent; }
