@@ -8,6 +8,7 @@
 //
 // ⚠️ 금액·문구는 서버 응답(customer)만 쓴다. 화면에서 금액을 계산하지 않는다. 넣는 문자열은 전부 이스케이프.
 // ⚠️ 기존 폼의 검증·제출·다운로드 로직은 건드리지 않는다. 폼 DOM 은 읽기만 한다.
+// 결과 상자 모양은 완료·조회 화면과 같다 — src/lib/quote-view-render.js 의 QV_CSS·qv-* 클래스(여기서 따로 꾸미지 않는다).
 import siteData from '../data/site.json';
 
 const { part } = Astro.props as { part: 'panel' | 'button' };
@@ -21,27 +22,20 @@ const submitLabel = site.quote.form.submit;
   <button type="button" id="quote-estimate-run" class="v-btn-ghost" hidden>{T.button}</button>
 ) : (
   <>
-    <div id="quote-estimate-result" class="qe-box" hidden aria-live="polite"
+    <div id="quote-estimate-result" class="qv-box" hidden aria-live="polite"
       data-t={JSON.stringify(T)} data-submit={submitLabel}></div>
     <input type="hidden" name="estimateSeenKrw" id="quote-estimate-seen" value="" autocomplete="off" />
   </>
 )}
 
 <style>
-  .qe-box { margin-top: 1rem; border: 1px solid color-mix(in srgb, var(--color-ink) 12%, transparent); border-radius: 0.75rem; padding: 1.1rem 1.25rem; line-height: 1.65; }
-  .qe-box :global(.qe-title) { font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.02em; color: color-mix(in srgb, var(--color-ink) 60%, transparent); }
-  .qe-box :global(.qe-total) { margin-top: 0.25rem; font-size: 1.25rem; font-weight: 700; color: var(--color-ink); }
-  .qe-box :global(.qe-notice) { margin-top: 0.75rem; border: 2px solid var(--color-warn); border-radius: 0.5rem; padding: 0.7rem 0.9rem; background: color-mix(in srgb, var(--color-warn) 12%, transparent); font-weight: 700; color: var(--color-ink); }
-  .qe-box :global(.qe-valid) { margin-top: 0.6rem; font-size: 0.875rem; color: color-mix(in srgb, var(--color-ink) 65%, transparent); }
-  .qe-box :global(.qe-text) { font-size: 0.9375rem; color: color-mix(in srgb, var(--color-ink) 80%, transparent); }
-  .qe-box :global(.qe-list) { margin: 0.5rem 0 0.5rem 1.25rem; list-style: disc; font-size: 0.9375rem; color: color-mix(in srgb, var(--color-ink) 80%, transparent); }
-  .qe-box.qe-bad { border-color: color-mix(in srgb, var(--color-danger) 45%, transparent); background: color-mix(in srgb, var(--color-danger) 6%, transparent); }
-  .qe-box.qe-part { border-color: color-mix(in srgb, var(--color-warn) 45%, transparent); }
+  /* 입력 오류 칸 표시만 여기서 — 결과 상자는 QV_CSS(quote-view-render.js)가 꾸민다 */
   :global(.qe-flag) { box-shadow: 0 0 0 2px var(--color-danger); }
 </style>
 
 <script>
   // 공정 견적 폼 전용. 조건부 요소는 전부 null 안전(simple 폼·다른 페이지에는 없다).
+  import { injectQuoteViewStyle, totalLine } from '../lib/quote-view-render.js';
   type Customer = {
     kind: 'estimate' | 'manual' | 'invalid';
     totalKrw?: number; totalKrwText?: string; totalUsdText?: string; validDays?: number | null; validUntil?: string | null;
@@ -80,9 +74,11 @@ const submitLabel = site.quote.form.submit;
     if (seen) seen.value = '';
     clearFlags();
   };
-  const show = (html: string, tone: '' | 'qe-part' | 'qe-bad') => {
+  /** 결과 상자 — tone 'qv-bad' 는 입력 오류·계산 실패(빨간 테두리) */
+  const show = (html: string, tone: '' | 'qv-bad' = '') => {
     if (!box) return;
-    box.className = `qe-box${tone ? ` ${tone}` : ''}`;
+    injectQuoteViewStyle(document);
+    box.className = `qv-box${tone ? ` ${tone}` : ''}`;
     box.innerHTML = html;
     box.hidden = false;
   };
@@ -133,12 +129,12 @@ const submitLabel = site.quote.form.submit;
   const render = (c: Customer) => {
     clearFlags();
     if (c.kind === 'estimate') {
+      // 완료·조회 화면의 예상 견적과 같은 순서: 제목 → 금액 → 유효기간 → 안내
       show(
-        `<p class="qe-title">${esc(T.title)}</p>` +
-        `<p class="qe-total">${fill(T.total, { krw: c.totalKrwText, usd: c.totalUsdText })}</p>` +
-        `<div class="qe-notice">${esc(T.notice)}</div>` +
-        (c.validUntil && c.validDays ? `<p class="qe-valid">${fill(T.valid, { days: c.validDays, date: c.validUntil })}</p>` : ''),
-        '',
+        `<p class="qv-label">${esc(T.title)}</p>` +
+        totalLine(T, c.totalKrwText, c.totalUsdText) +
+        (c.validUntil && c.validDays ? `<p class="qv-sub">${fill(T.valid, { days: c.validDays, date: c.validUntil })}</p>` : '') +
+        `<div class="qv-notice">${esc(T.notice)}</div>`,
       );
       if (seen) seen.value = typeof c.totalKrw === 'number' ? String(c.totalKrw) : '';
       return;
@@ -146,18 +142,19 @@ const submitLabel = site.quote.form.submit;
     if (seen) seen.value = '';
     if (c.kind === 'manual') {
       show(
-        `<p class="qe-text">${esc(T.manualIntro)}</p>` +
-        `<ul class="qe-list">${(c.manual ?? []).map((m) => `<li>${esc(m)}</li>`).join('')}</ul>` +
-        `<p class="qe-text">${fill(T.manualCta, { submit: submitLabel })}</p>`,
-        'qe-part',
+        `<p class="qv-label">${esc(T.manualTitle)}</p>` +
+        `<p class="qv-text">${esc(T.manualIntro)}</p>` +
+        `<ul class="qv-list">${(c.manual ?? []).map((m) => `<li>${esc(m)}</li>`).join('')}</ul>` +
+        `<p class="qv-sub">${fill(T.manualCta, { submit: submitLabel })}</p>`,
       );
       return;
     }
     const errs = c.errors ?? [];
     show(
-      `<p class="qe-text">${esc(T.invalidIntro)}</p>` +
-      `<ul class="qe-list">${errs.map((e) => `<li>${esc(e.message)}</li>`).join('')}</ul>`,
-      'qe-bad',
+      `<p class="qv-label">${esc(T.invalidTitle)}</p>` +
+      `<p class="qv-text">${esc(T.invalidIntro)}</p>` +
+      `<ul class="qv-list">${errs.map((e) => `<li>${esc(e.message)}</li>`).join('')}</ul>`,
+      'qv-bad',
     );
     const els = errs.map(fieldEl).filter((el): el is HTMLElement => !!el);
     els.forEach((el) => el.classList.add('qe-flag'));
@@ -185,14 +182,14 @@ const submitLabel = site.quote.form.submit;
         runBtn.hidden = true;
         setDownloadVisible(true);
         if (seen) seen.value = '';
-        show(`<p class="qe-text">${esc(T.unavailable)}</p>`, 'qe-part');
+        show(`<p class="qv-text">${esc(T.unavailable)}</p>`);
         return;
       }
       const j = await res.json().catch(() => null);
       if (stale()) return;
       if (res.status === 400 && j?.error === 'too_many_steps') {
         if (seen) seen.value = '';
-        show(`<p class="qe-text">${esc(T.tooMany)}</p>`, 'qe-bad');
+        show(`<p class="qv-text">${esc(T.tooMany)}</p>`, 'qv-bad');
         return;
       }
       if (!res.ok || !j?.ok || !j.customer) throw new Error(`HTTP ${res.status}`);
@@ -200,7 +197,7 @@ const submitLabel = site.quote.form.submit;
     } catch (e) {
       if (stale()) return;
       if (seen) seen.value = '';
-      show(`<p class="qe-text">${esc(T.fail)}</p>`, 'qe-bad');
+      show(`<p class="qv-text">${esc(T.fail)}</p>`, 'qv-bad');
     } finally {
       runBtn.disabled = false;
       runBtn.textContent = label;
