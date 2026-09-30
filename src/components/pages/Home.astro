@@ -4,6 +4,7 @@ import { getRelativeLocaleUrl } from 'astro:i18n';
 import siteData from '../../data/site.json';
 import AboutBlocks from '../home/AboutBlocks.astro';
 import BrandGuard from '../BrandGuard.astro';
+import ProcessPicker from '../ProcessPicker.astro';
 
 const locale = Astro.currentLocale ?? 'en';
 const lhref = (p) => getRelativeLocaleUrl(locale, p);
@@ -30,7 +31,9 @@ const description = home.metaDescription;
     <video id="vn-vid" class="absolute inset-0 h-full w-full object-cover [object-position:center_top]" autoplay muted loop playsinline preload="none" poster="/media/hero-poster.webp" aria-hidden="true"></video>
     <div class="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/65 via-black/25 to-transparent" aria-hidden="true"></div>
     <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_90%_at_50%_42%,transparent_55%,rgba(0,0,0,0.38))]" aria-hidden="true"></div>
-    <div class="pointer-events-none absolute inset-x-0 bottom-0 h-44 bg-gradient-to-b from-transparent to-canvas" aria-hidden="true"></div>
+    {/* 아래쪽 그라디언트는 모바일(<640px)에서 짧게(h-12) — 버튼이 세로 3줄로 내려와, 라이트 테마에서
+        흰 버튼이 흰 그라디언트(canvas)에 묻히지 않게 한다. PC 는 종전 그대로 h-44. */}
+    <div class="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-b from-transparent to-canvas sm:h-44" aria-hidden="true"></div>
 
     <div id="vh-copy" class="absolute inset-0 flex items-center px-6">
       <div class="vn-copy-in mx-auto w-full max-w-6xl">
@@ -40,18 +43,28 @@ const description = home.metaDescription;
         <p translate="no" class="mb-5 font-mono text-xs tracking-[0.25em] text-[#1ebbf0]">VANA&nbsp;MATERIALS&nbsp;LAB.{locale === 'ko' && <span class="ml-2 tracking-normal">· 반암(주)</span>}</p>
         <h1 class="text-5xl font-bold leading-[1.05] tracking-tight text-white sm:text-7xl">{home.heroTitle.line1}<br />{home.heroTitle.line2}</h1>
         <p class="mt-6 max-w-xl text-lg leading-relaxed text-white/75">{home.heroSubtitle.line1}{home.heroSubtitle.line2 && <><br />{home.heroSubtitle.line2}</>}</p>
-        <div class="mt-9 flex flex-wrap gap-4">
+        {/* 히어로 CTA 3개 — 문의하기·공정 의뢰는 흰 채움(.v-btn-hero-solid): 예전 외곽선 버튼은 영상 위에서 잘 안 보여
+            고객이 사이트 대신 이메일로 주문하는 일이 잦았다. 모바일은 세로 3줄(전체 폭), sm 이상은 한 줄.
+            [공정 의뢰]는 박막 증착 서비스 4종 선택 창(ProcessPicker)을 연다 — JS 가 없으면 href(제품 목록)로 이동. */}
+        <div class="mt-8 grid gap-3 sm:mt-9 sm:flex sm:flex-wrap sm:gap-4">
           <a href={lhref('/technology')} class="v-btn-hero">{home.heroCtaPrimary}</a>
-          <a href={lhref('/contact')} class="v-btn-hero-ghost">{home.heroCtaSecondary}</a>
+          <a href={lhref('/contact')} class="v-btn-hero-solid">{home.heroCtaSecondary}</a>
+          <a href={lhref('/product')} class="v-btn-hero-solid" data-process-open aria-haspopup="dialog" aria-controls="process-picker">
+            {home.heroCtaQuote}
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+          </a>
         </div>
       </div>
     </div>
 
-    <div id="vh-hint" class="vn-bounce absolute bottom-7 left-1/2 flex -translate-x-1/2 flex-col items-center gap-1">
+    {/* SCROLL 표시는 sm 이상에서만 — 모바일은 버튼 3줄과 자리가 겹친다 */}
+    <div id="vh-hint" class="vn-bounce absolute bottom-7 left-1/2 hidden -translate-x-1/2 flex-col items-center gap-1 sm:flex">
       <span class="font-mono text-[10px] tracking-widest text-white/60">SCROLL</span>
       <span class="text-white/70">↓</span>
     </div>
   </section>
+
+  <ProcessPicker />
 
   <section id="vision" class="scroll-mt-24">
     <div class="v-reveal v-wrap py-20">

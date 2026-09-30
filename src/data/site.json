@@ -1,5 +1,12 @@
 {
   "en": {
+    "processPicker": {
+      "title": "Which thin-film deposition do you need?",
+      "intro": "Pick one to go straight to its quote request form.",
+      "close": "Close",
+      "unsure": "Not sure which one fits?",
+      "unsureCta": "Contact us"
+    },
     "home": {
       "heroTitle": {
         "line1": "Thin Films,",
@@ -11,6 +18,7 @@
       },
       "heroCtaPrimary": "Explore the technology →",
       "heroCtaSecondary": "Contact",
+      "heroCtaQuote": "Request a quote",
       "visionBody": "VanaM builds the thin-film materials infrastructure for next-generation hardware. Through proprietary vacuum deposition technology, core IP and AI-assisted process optimization, we develop high-performance thin films that are difficult to source or not yet commercialized.\n\nFrom our first foundry in Seoul, we support deep-tech teams in quantum photonics, AI semiconductors, power electronics, and advanced optical systems with faster R&D cycles, flexible batch production and a path from prototyping to pilot manufacturing.",
       "pillars": [
         {
@@ -887,6 +895,13 @@
     }
   },
   "ko": {
+    "processPicker": {
+      "title": "어떤 박막 증착을 의뢰하시나요?",
+      "intro": "선택하면 해당 서비스의 견적 요청서로 바로 이동합니다.",
+      "close": "닫기",
+      "unsure": "어떤 서비스가 맞는지 모르겠다면",
+      "unsureCta": "문의하기"
+    },
     "home": {
       "heroTitle": {
         "line1": "Thin Films,",
@@ -898,6 +913,7 @@
       },
       "heroCtaPrimary": "기술 살펴보기 →",
       "heroCtaSecondary": "문의하기",
+      "heroCtaQuote": "공정 의뢰",
       "visionBody": "반암(VanaM)은 차세대 하드웨어를 위한 박막 소재 인프라를 구축합니다. 독자적인 진공 증착 기술과 핵심 IP, AI 기반 공정 최적화를 통해 확보가 어렵거나 아직 상용화되지 않은 고성능 박막을 개발합니다.\n\n서울의 첫 파운드리를 기반으로, 양자 포토닉스·AI 반도체·전력반도체·첨단 광학 시스템 분야의 딥테크 팀에게 더 빠른 R&D 사이클, 유연한 배치 생산, 그리고 시제품부터 파일럿 양산까지 이어지는 경로를 제공합니다.",
       "pillars": [
         {
