@@ -43,16 +43,15 @@ const description = home.metaDescription;
         <p translate="no" class="mb-5 font-mono text-xs tracking-[0.25em] text-[#1ebbf0]">VANA&nbsp;MATERIALS&nbsp;LAB.{locale === 'ko' && <span class="ml-2 tracking-normal">· 반암(주)</span>}</p>
         <h1 class="text-5xl font-bold leading-[1.05] tracking-tight text-white sm:text-7xl">{home.heroTitle.line1}<br />{home.heroTitle.line2}</h1>
         <p class="mt-6 max-w-xl text-lg leading-relaxed text-white/75">{home.heroSubtitle.line1}{home.heroSubtitle.line2 && <><br />{home.heroSubtitle.line2}</>}</p>
-        {/* 히어로 CTA 3개 — 문의하기·공정 의뢰는 흰 채움(.v-btn-hero-solid): 예전 외곽선 버튼은 영상 위에서 잘 안 보여
+        {/* 히어로 CTA 3개 — 순서: 기술 살펴보기 → 공정 의뢰 → 문의하기 (주문으로 이어지는 공정 의뢰를 주 버튼 바로 옆에).
+            공정 의뢰·문의하기는 흰 채움(.v-btn-hero-solid): 예전 외곽선 버튼은 영상 위에서 잘 안 보여
             고객이 사이트 대신 이메일로 주문하는 일이 잦았다. 모바일은 세로 3줄(전체 폭), sm 이상은 한 줄.
-            [공정 의뢰]는 박막 증착 서비스 4종 선택 창(ProcessPicker)을 연다 — JS 가 없으면 href(제품 목록)로 이동. */}
+            [공정 의뢰]는 박막 증착 서비스 4종 선택 창(ProcessPicker)을 연다 — JS 가 없으면 href(제품 목록)로 이동.
+            아래 화살표(⌄)는 달지 않는다: ⌄ 는 '버튼 아래로 목록이 펼쳐진다'는 표시인데, 이 버튼은 화면 가운데 창을 띄운다. */}
         <div class="mt-8 grid gap-3 sm:mt-9 sm:flex sm:flex-wrap sm:gap-4">
           <a href={lhref('/technology')} class="v-btn-hero">{home.heroCtaPrimary}</a>
+          <a href={lhref('/product')} class="v-btn-hero-solid" data-process-open aria-haspopup="dialog" aria-controls="process-picker">{home.heroCtaQuote}</a>
           <a href={lhref('/contact')} class="v-btn-hero-solid">{home.heroCtaSecondary}</a>
-          <a href={lhref('/product')} class="v-btn-hero-solid" data-process-open aria-haspopup="dialog" aria-controls="process-picker">
-            {home.heroCtaQuote}
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
-          </a>
         </div>
       </div>
     </div>
