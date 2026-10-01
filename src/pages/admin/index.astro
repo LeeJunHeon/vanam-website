@@ -683,6 +683,11 @@ const spec = (r: Row) =>
                   )}
 
                   <form class="quote-form mt-4 flex flex-wrap items-end gap-3 border-t border-ink/10 pt-4" data-id={r.id}>
+                    {/* 두 입력 경로의 차이 — 견적 편집(엑셀식 계산·견적서)과 이 칸(금액만)을 헷갈리지 않게(10-01) */}
+                    <p class="w-full text-xs leading-relaxed text-ink/45">
+                      금액만 직접 정하는 칸입니다 — 달러(PayPal) 견적·입금 계좌·고객에게 보일 안내문은 여기서 넣습니다.
+                      엑셀처럼 품목을 계산해 견적서를 만들려면 위의 [견적 편집]을 쓰세요.
+                    </p>
                     <div>
                       <label class="block text-xs text-ink/45">통화 <span class="text-ink/30">— PayPal 결제 버튼은 $ USD 견적에만 표시됩니다</span></label>
                       <select name="currency"

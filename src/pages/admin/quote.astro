@@ -1,16 +1,20 @@
 ---
-// VanaM 관리자 — 견적 계산기 (엑셀 V3 견적 파일의 화면판)
+// VanaM 관리자 — 견적 계산기 · 문의별 견적 편집 (엑셀 V3 견적 파일의 화면판)
 //
-// ⚠️ 계산은 항상 서버(/api/admin/quote-calc)에서 한다. 이 화면에는 원가·요율·마진 숫자를
-//    내려보내지 않는다 — 드롭다운용 이름 목록만 받는다. 결과의 원가 내역은 계산한 뒤에만 보인다.
-// ⚠️ 입력은 엑셀 의미 그대로 보낸다: 빈칸 → null, 숫자로 읽히면 숫자(천 단위 쉼표 허용),
-//    그 외는 문자열 그대로. 0 을 빈칸으로 바꾸지 않는다(엑셀에서 0 과 비움은 뜻이 다르다).
+// ⚠️ 계산은 항상 서버(/api/admin/quote-calc)에서 한다. 엑셀과 같은 엔진(src/lib/quote-engine.js)이고 이 화면은 바꾸지 않는다.
+//    이 화면에는 원가·요율·마진 숫자를 내려보내지 않는다 — 드롭다운용 이름 목록만 받는다. 원가 내역은 계산한 뒤에만 보인다.
+//
+// 화면 구성(10-01 개편 — 관리자가 보자마자 알 수 있게):
+//   · 견적서의 한 줄 = 품목 카드 하나. 박막 증착 품목은 카드 안에 층(레시피·두께)이 붙는다.
+//     엔진에 보내는 표(items·layers)는 src/lib/quote-editor.js 가 만든다 — 품목 번호·층 순서는 카드 순서로 자동.
+//   · 가격 방식(박막 증착 / 단가 입력 / 총액 입력)을 고르면 그 방식에 필요한 칸만 보인다.
+//   · 입력을 바꾸면 잠시 뒤 자동으로 다시 계산한다. 결과·오류는 해당 카드와 칸에, 합계·저장은 오른쪽에 늘 보인다.
+//   · 견적서 정보(담당자·납기 등)는 금액과 무관 — 바꿔도 다시 계산하지 않고, 저장·미리보기 때 그 순간 값을 쓴다.
 //
 // 두 가지 모드:
-//   · 계산기 모드(/admin/quote)          — 지금까지와 똑같다(저장 없음).
+//   · 계산기 모드(/admin/quote)          — 저장 없음(시험·확인용).
 //   · 편집 모드(/admin/quote?id=INQ-…)   — 문의별 견적을 불러와 고치고 저장한다(/api/admin/quote-rev).
 //     저장하면 새 개정으로 쌓이고 고객 조회·완료 화면·견적서에 바로 반영된다. 저장 금액은 서버가 다시 계산한 값이다.
-//     편집 모드 전용 요소는 editId 가 있을 때만 그린다 — 계산기 모드의 HTML·동작은 바뀌지 않는다.
 export const prerender = false;
 
 import '../../styles/global.css';
@@ -18,6 +22,7 @@ import { isAdmin } from '../../lib/admin-auth';
 import { telKr } from '../../lib/quote-doc';
 import company from '../../data/company.json';
 import siteData from '../../data/site.json';
+import { UNITS } from '../../lib/quote-editor.js';
 // 이 빌드의 구글챗 알림 켜짐/꺼짐 — /admin 헤더와 같은 표시
 import { CHAT_ENABLED } from '../../lib/chat-send';
 
@@ -73,15 +78,29 @@ const qvText = editId ? JSON.stringify({ ko: siteData.ko.quote.view, en: siteDat
       </main>
     ) : (
       <main class="mx-auto max-w-7xl px-6 py-10" id="qc" data-defaults={JSON.stringify(defaults)} data-edit={editId || undefined} data-qv={qvText}>
-        <header class="flex flex-wrap items-center justify-between gap-4 border-b border-ink/10 pb-6">
-          <div>
-            <h1 class="text-2xl font-bold">{editId ? `견적 편집 — ${editId}` : '견적 계산기'}</h1>
-            <p id="qc-meta" class="mt-1 text-sm text-ink/45">가격 DB 불러오는 중…</p>
-            <p class:list={['chat-state mt-1 text-sm', CHAT_ENABLED ? 'is-on' : 'is-off']}>
-              {CHAT_ENABLED ? '구글챗 알림: 켜짐' : '구글챗 알림: 꺼짐 — 로컬/테스트 빌드'}
-            </p>
+        <header class="border-b border-ink/10 pb-6">
+          <div class="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <h1 class="text-2xl font-bold">{editId ? `견적 편집 — ${editId}` : '견적 계산기'}</h1>
+              <p id="qc-meta" class="mt-1 text-sm text-ink/45">가격 DB 불러오는 중…</p>
+              <p class:list={['chat-state mt-1 text-sm', CHAT_ENABLED ? 'is-on' : 'is-off']}>
+                {CHAT_ENABLED ? '구글챗 알림: 켜짐' : '구글챗 알림: 꺼짐 — 로컬/테스트 빌드'}
+              </p>
+            </div>
+            <a href="/admin" class="rounded-lg border border-ink/15 px-4 py-2 text-sm text-ink/60 transition hover:border-ink/40 hover:text-ink">← 관리자</a>
           </div>
-          <a href="/admin" class="rounded-lg border border-ink/15 px-4 py-2 text-sm text-ink/60 transition hover:border-ink/40 hover:text-ink">← 관리자</a>
+          <details class="qc-help mt-4">
+            <summary>이 화면 사용법</summary>
+            <ol>
+              <li>견적서의 한 줄이 <b>품목</b> 하나입니다. 박막 증착은 층(레시피·두께)으로 엑셀과 같은 방식으로 계산되고, 분석·기판·박스처럼 값이 정해진 줄은 단가나 총액으로 넣습니다.</li>
+              <li>입력을 바꾸면 금액이 바로 다시 계산됩니다. 계산은 서버가 엑셀과 같은 규칙으로 합니다.</li>
+              <li>고칠 곳이 있으면 그 칸이 빨갛게 표시되고, 오른쪽 합계 칸에 목록이 나옵니다(누르면 그 칸으로 갑니다).</li>
+              <li>견적서 정보(담당자·납기 등)는 금액과 무관해서 바꿔도 다시 계산하지 않습니다.</li>
+              {editId
+                ? <li>저장하면 새 개정으로 쌓이고 <b>고객 조회 화면에 바로 보입니다</b>. 저장 없이 시험하려면 관리자 화면 위쪽의 [견적 계산기]를 쓰세요.</li>
+                : <li>이 계산기는 저장하지 않습니다. 문의별 견적은 관리자 견적 탭의 [견적 편집]에서 만듭니다.</li>}
+            </ol>
+          </details>
         </header>
 
         <div id="qc-dberr" class="mt-6 hidden rounded-lg border border-danger/30 bg-danger/10 p-4 text-sm text-danger"></div>
@@ -89,164 +108,297 @@ const qvText = editId ? JSON.stringify({ ko: siteData.ko.quote.view, en: siteDat
           <div class="mt-6 rounded-lg border border-danger/30 bg-danger/10 p-4 text-sm text-danger">접수번호 형식이 아닙니다(INQ-YYYYMMDD-XXXX) — 계산기 모드로 열었습니다.</div>
         )}
 
-        {editId && (
-          <section class="mt-8" id="qe-panel">
-            <h2 class="text-lg font-semibold">문의</h2>
-            <p id="qe-load" class="mt-2 text-sm text-ink/45">불러오는 중…</p>
-            <div id="qe-lock" class="qe-alert qe-alert-bad" hidden></div>
-            <div id="qe-pricewarn" class="qe-alert qe-alert-warn" hidden>이 견적은 이전 가격 DB로 계산됐습니다 — 다시 계산하면 금액이 달라질 수 있습니다</div>
-            <dl id="qe-facts" class="qe-facts" hidden></dl>
-            <details class="qe-raw" id="qe-raw" hidden>
-              <summary>고객 요청 원문</summary>
-              <pre id="qe-raw-text"></pre>
-            </details>
-          </section>
-        )}
+        <div class:list={['qc-layout mt-8', editId && 'is-edit']}>
+            {editId && (
+              <section class="qc-sec" id="qe-panel">
+                <h2 class="qc-h2">문의</h2>
+                <p id="qe-load" class="qc-sub">불러오는 중…</p>
+                <div id="qe-lock" class="qe-alert qe-alert-bad" hidden></div>
+                <div id="qe-pricewarn" class="qe-alert qe-alert-warn" hidden>이 견적은 이전 가격 DB로 계산됐습니다 — 다시 계산하면 금액이 달라질 수 있습니다</div>
+                <dl id="qe-facts" class="qe-facts" hidden></dl>
+                <details class="qe-raw" id="qe-raw" hidden>
+                  <summary>고객 요청 원문</summary>
+                  <pre id="qe-raw-text"></pre>
+                </details>
+              </section>
+            )}
 
-        <!-- ① 견적 정보 -->
-        <section class="mt-8">
-          <h2 class="text-lg font-semibold">① 견적 정보</h2>
-          <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5" id="qc-info">
-            <label class="qc-field">고객(귀하)<input data-info="customer" /></label>
-            <label class="qc-field">참조<input data-info="ref" /></label>
-            <label class="qc-field qc-span2">견적명<input data-info="title" /></label>
-            <label class="qc-field">견적일<input data-info="date" type="date" /></label>
-            <label class="qc-field">견적번호<input data-info="quoteNo" /></label>
-            <label class="qc-field">담당자<input data-info="manager" /></label>
-            <label class="qc-field">연락처<input data-info="contact" /></label>
-            <label class="qc-field">납기<input data-info="delivery" /></label>
-            <label class="qc-field">유효 일수<input data-info="validDays" inputmode="numeric" /></label>
-            <label class="qc-field qc-span5">결제조건<input data-info="payment" placeholder="예: 계좌이체" /></label>
-          </div>
-          {editId && <p id="qe-prevdate" class="qe-sub" hidden></p>}
-        </section>
+            <section class="qc-sec" id="qc-items-sec">
+              <h2 class="qc-h2">품목</h2>
+              <p class="qc-sub">견적서의 한 줄이 품목 하나입니다. 입력을 바꾸면 금액이 바로 다시 계산됩니다.</p>
+              <div id="qc-fillnote" class="qe-alert" hidden></div>
+              <div id="qc-orphans" class="qe-alert qe-alert-warn" hidden></div>
+              <div id="qc-cards" class="qc-cards"></div>
+              <div class="mt-4 flex flex-wrap items-center gap-2">
+                <button type="button" class="qc-btn" data-add="박막자동">+ 박막 증착 품목</button>
+                <button type="button" class="qc-btn" data-add="단가입력">+ 금액 입력 품목</button>
+                <span id="qc-addnote" class="qc-sub"></span>
+              </div>
+              <datalist id="qc-units">{UNITS.map((u) => <option value={u} />)}</datalist>
+            </section>
 
-        <!-- ② 품목 (엑셀 V3_견적입력 B~R 열 순서) -->
-        <section class="mt-10">
-          <div class="flex flex-wrap items-center justify-between gap-3">
-            <h2 class="text-lg font-semibold">② 품목 <span class="text-sm font-normal text-ink/45">(최대 15줄 · 번호는 줄 순서)</span></h2>
-            <button type="button" id="qc-add-item" class="rounded-lg border border-ink/15 px-3 py-1.5 text-sm text-ink/70 transition hover:border-ink/40 hover:text-ink">+ 품목 추가</button>
-          </div>
-          <div class="mt-3 overflow-x-auto rounded-lg border border-ink/10">
-            <table class="qc-table" id="qc-items"><thead></thead><tbody></tbody></table>
-          </div>
-        </section>
+            <section class="qc-sec" id="qc-info-sec">
+              <h2 class="qc-h2">견적서 정보</h2>
+              <p class="qc-sub">견적서 머리에 들어가는 글자입니다. 금액과 무관해서 바꿔도 다시 계산하지 않습니다.</p>
+              <div class="qc-info" id="qc-info">
+                <label class="qc-field">고객(귀하)<input data-info="customer" /></label>
+                <label class="qc-field">참조<input data-info="ref" /></label>
+                <label class="qc-field qc-span2">견적명<input data-info="title" /></label>
+                <label class="qc-field">견적일<input data-info="date" type="date" /></label>
+                <label class="qc-field">견적번호<input data-info="quoteNo" /></label>
+                <label class="qc-field">담당자<input data-info="manager" /></label>
+                <label class="qc-field">연락처<input data-info="contact" /></label>
+                <label class="qc-field qc-span2">납품기한<input data-info="delivery" /></label>
+                <label class="qc-field">유효 일수<input data-info="validDays" inputmode="numeric" /></label>
+                <label class="qc-field qc-span3">대금 지불방식<input data-info="payment" placeholder="예: 계좌이체" /></label>
+              </div>
+              <p class="qc-sub">납품기한·유효 일수의 처음 값은 엑셀 가격정책 탭의 기본값입니다.</p>
+              {editId && <p id="qe-prevdate" class="qc-sub" hidden></p>}
+            </section>
 
-        <!-- ③ 박막공정 (엑셀 V3_박막공정 A~F 열) -->
-        <section class="mt-10">
-          <div class="flex flex-wrap items-center justify-between gap-3">
-            <h2 class="text-lg font-semibold">③ 박막공정</h2>
-            <button type="button" id="qc-add-layer" class="rounded-lg border border-ink/15 px-3 py-1.5 text-sm text-ink/70 transition hover:border-ink/40 hover:text-ink">+ 층 추가</button>
-          </div>
-          <div class="mt-3 overflow-x-auto rounded-lg border border-ink/10">
-            <table class="qc-table" id="qc-layers"><thead></thead><tbody></tbody></table>
-          </div>
-        </section>
+            {editId && (
+              <section class="qc-sec" id="qe-history-box">
+                <h2 class="qc-h2">개정 이력</h2>
+                <p class="qc-sub">저장할 때마다 개정이 하나씩 쌓입니다. 이전 개정을 불러와 저장하면 그 상태로 되돌립니다.</p>
+                <div class="mt-3 overflow-x-auto rounded-lg border border-ink/10">
+                  <table class="qc-table" id="qe-history"></table>
+                </div>
+              </section>
+            )}
 
-        <!-- 버튼 -->
-        <div class="mt-8 flex flex-wrap gap-2">
-          <button type="button" id="qc-calc" class="rounded-lg bg-brand px-5 py-2.5 text-sm font-semibold text-onbrand transition hover:brightness-110">계산</button>
-          <button type="button" id="qc-reset" class="rounded-lg border border-ink/15 px-4 py-2.5 text-sm text-ink/70 transition hover:border-ink/40 hover:text-ink">{editId ? '불러온 값으로 되돌리기' : '초기화'}</button>
-          <button type="button" id="qc-example" hidden={Boolean(editId)} class="rounded-lg border border-ink/15 px-4 py-2.5 text-sm text-ink/70 transition hover:border-ink/40 hover:text-ink">예시 불러오기</button>
-          {editId && (
-            <select id="qe-lang" data-nostale class="qe-select" aria-label="견적서 언어">
-              <option value="ko">한국어</option>
-              <option value="en">English</option>
-            </select>
-          )}
-          <button type="button" id="qc-preview" disabled class="rounded-lg border border-ink/15 px-4 py-2.5 text-sm text-ink/70 transition hover:border-ink/40 hover:text-ink">견적서 미리보기</button>
-          <span id="qc-note" class="self-center text-sm text-ink/45"></span>
+          <aside class="qc-side" aria-label="합계와 저장">
+            <div class="qc-card" id="qc-summary">
+              <h2 class="qc-h3">합계</h2>
+              <p id="qc-state" class="qc-state" aria-live="polite">가격 DB 불러오는 중…</p>
+              <ul id="qc-problems" class="qc-problems" hidden></ul>
+              <dl class="qc-amounts" id="qc-amounts">
+                <div><dt>공급가액</dt><dd id="qc-supply">—</dd></div>
+                <div><dt>세액</dt><dd id="qc-vat">—</dd></div>
+                <div class="qc-grand"><dt>합계</dt><dd id="qc-total">—</dd></div>
+              </dl>
+              <p id="qc-korean" class="qc-sub"></p>
+              <div class="mt-4 flex flex-wrap items-center gap-2">
+                <button type="button" id="qc-preview" disabled class="qc-btn">견적서 미리보기</button>
+                {editId && (
+                  <select id="qe-lang" class="qe-select" aria-label="견적서 언어">
+                    <option value="ko">한국어</option>
+                    <option value="en">English</option>
+                  </select>
+                )}
+                <button type="button" id="qc-calc" class="qc-link">다시 계산</button>
+              </div>
+              <p id="qc-note" class="qc-sub"></p>
+            </div>
+
+            {editId ? (
+              <div class="qc-card" id="qe-save-box">
+                <h2 class="qc-h3">저장</h2>
+                <label class="qc-field mt-3">메모 (내부용 — 고객에게 보이지 않음 · 500자)<input id="qe-note" maxlength="500" /></label>
+                <div class="mt-3 grid gap-2">
+                  <button type="button" id="qe-save" disabled class="qc-btn-primary">저장 — 고객 화면에 바로 반영</button>
+                  <button type="button" id="qe-save-confirm" disabled class="qc-btn">저장 + 견적 확정</button>
+                </div>
+                <p id="qe-why" class="qc-sub"></p>
+                <ul class="qc-rules">
+                  <li id="qe-rule-save">[저장] 새 개정으로 쌓이고, 고객 조회 화면에 '예상 견적(담당자 수정)'으로 바로 보입니다.</li>
+                  <li id="qe-rule-confirm">[저장 + 견적 확정] 확정 금액이 이 합계(원화)가 되고, 상태는 '견적 발송', 고객 화면은 '확정 견적'이 됩니다.</li>
+                </ul>
+                <div id="qe-msg" class="qe-alert" hidden></div>
+                <button type="button" id="qc-reset" class="qc-link mt-3">불러온 값으로 되돌리기</button>
+              </div>
+            ) : (
+              <div class="qc-card">
+                <h2 class="qc-h3">계산기</h2>
+                <p class="qc-sub">이 화면은 저장하지 않습니다 — 금액과 견적서를 미리 확인하는 용도입니다.</p>
+                <div class="mt-3 flex flex-wrap gap-2">
+                  <button type="button" id="qc-example" class="qc-btn">예시 불러오기</button>
+                  <button type="button" id="qc-reset" class="qc-btn">처음부터</button>
+                </div>
+              </div>
+            )}
+
+            {editId && (
+              <div class="qc-card" id="qe-view-wrap" hidden>
+                <h2 class="qc-h3">고객에게 이렇게 보입니다</h2>
+                <p class="qc-sub">지금 저장돼 있는 견적 기준입니다(저장하면 바뀝니다).</p>
+                <div id="qe-view" class="mt-3"></div>
+              </div>
+            )}
+          </aside>
         </div>
-
-        {editId && (
-          <section class="mt-8" id="qe-save-box">
-            <label class="qc-field qe-note-field" data-nostale>메모 (내부 — 고객에게 보이지 않음 · 500자)<input id="qe-note" maxlength="500" /></label>
-            <div class="mt-4 flex flex-wrap gap-2">
-              <button type="button" id="qe-save" disabled class="rounded-lg bg-brand px-5 py-2.5 text-sm font-semibold text-onbrand transition hover:brightness-110">저장 — 고객 화면에 바로 반영</button>
-              <button type="button" id="qe-save-confirm" disabled class="rounded-lg border border-ink/15 px-4 py-2.5 text-sm text-ink/70 transition hover:border-ink/40 hover:text-ink">저장 + 견적 확정</button>
-            </div>
-            <p class="qe-sub">저장은 계산 결과가 '정상'이고 그 뒤 입력을 바꾸지 않았을 때만 됩니다. 금액은 서버가 다시 계산해 저장합니다.</p>
-            <div id="qe-msg" class="qe-alert" hidden></div>
-            <div id="qe-view-wrap" hidden>
-              <h3 class="mt-6 text-sm font-semibold text-ink/70">고객에게 이렇게 보입니다</h3>
-              <div id="qe-view"></div>
-            </div>
-          </section>
-        )}
-
-        <!-- ④ 결과 -->
-        <section class="mt-10" id="qc-result" hidden>
-          <h2 class="text-lg font-semibold">④ 결과</h2>
-          <div id="qc-banner" class="mt-4 rounded-lg border p-4 text-sm font-semibold"></div>
-          <h3 class="mt-6 text-sm font-semibold text-ink/70">품목</h3>
-          <div class="mt-2 overflow-x-auto rounded-lg border border-ink/10">
-            <table class="qc-table" id="qc-r-items"></table>
-          </div>
-          <h3 class="mt-6 text-sm font-semibold text-ink/70">층</h3>
-          <div class="mt-2 overflow-x-auto rounded-lg border border-ink/10">
-            <table class="qc-table" id="qc-r-layers"></table>
-          </div>
-          <div id="qc-total" class="mt-6 rounded-lg border border-ink/10 bg-ink/[0.03] p-4 text-sm"></div>
-        </section>
-
-        {editId && (
-          <section class="mt-10" id="qe-history-box">
-            <h2 class="text-lg font-semibold">개정 이력</h2>
-            <p class="qe-sub">이전 개정을 불러와 저장하면 새 개정으로 쌓입니다(되돌리기).</p>
-            <div class="mt-3 overflow-x-auto rounded-lg border border-ink/10">
-              <table class="qc-table" id="qe-history"></table>
-            </div>
-          </section>
-        )}
       </main>
     )}
 
     <style is:global>
-      .qc-field { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.75rem; color: color-mix(in srgb, var(--color-ink) 55%, transparent); }
-      .qc-field input, .qc-table input, .qc-table select {
-        width: 100%; border-radius: 0.375rem; border: 1px solid color-mix(in srgb, var(--color-ink) 12%, transparent);
-        background: color-mix(in srgb, var(--color-ink) 3%, transparent); color: var(--color-ink);
-        padding: 0.4rem 0.5rem; font-size: 0.8125rem; outline-style: none;
+      /* 이 화면 전용 규칙 — 공용 CSS(global)에 새 유틸리티를 만들지 않는다. 색은 모두 테마 토큰(라이트/다크 공통). */
+      /* 넓은 화면: 왼쪽 섹션들 | 오른쪽 합계·저장(고정). 좁은 화면: 문의 → 품목 → 합계·저장 → 견적서 정보 → 이력 */
+      .qc-layout { display: grid; gap: 2.75rem 2rem; grid-template-columns: minmax(0, 1fr); }
+      .qc-layout > * { min-width: 0; }
+      @media (min-width: 1024px) {
+        .qc-layout { grid-template-columns: minmax(0, 1fr) 21rem; grid-template-rows: repeat(2, auto) 1fr; align-items: start; }
+        .qc-layout.is-edit { grid-template-rows: repeat(4, auto) 1fr; }
+        .qc-side { grid-column: 2; grid-row: 1 / -1; position: sticky; top: 1.5rem; max-height: calc(100vh - 3rem); overflow-y: auto; }
       }
-      .qc-field input:focus, .qc-table input:focus, .qc-table select:focus { border-color: var(--color-accent); }
-      .qc-table select option, .qc-table select optgroup { background: var(--color-canvas); color: var(--color-ink); }
+      @media (max-width: 1023.98px) {
+        #qe-panel { order: 1; } #qc-items-sec { order: 2; } .qc-side { order: 3; } #qc-info-sec { order: 4; } #qe-history-box { order: 5; }
+      }
+      .qc-side { display: grid; gap: 1rem; align-content: start; }
+      .qc-h2 { font-size: 1.125rem; font-weight: 600; }
+      .qc-h3 { font-size: 0.9375rem; font-weight: 600; }
+      .qc-sub { margin-top: 0.25rem; font-size: 0.8125rem; line-height: 1.55; color: color-mix(in srgb, var(--color-ink) 52%, transparent); word-break: keep-all; }
+      .qc-sub:empty { display: none; }
+      .qc-card { border-radius: 0.75rem; border: 1px solid color-mix(in srgb, var(--color-ink) 10%, transparent); background: color-mix(in srgb, var(--color-ink) 2%, transparent); padding: 1.25rem; }
+      .qc-cards { margin-top: 1rem; display: grid; gap: 1rem; }
+      .qc-cards > * { min-width: 0; }
+      .qc-empty { border: 1px dashed color-mix(in srgb, var(--color-ink) 18%, transparent); border-radius: 0.75rem; padding: 1.25rem; font-size: 0.875rem; color: color-mix(in srgb, var(--color-ink) 55%, transparent); }
+      .qc-help { font-size: 0.875rem; color: color-mix(in srgb, var(--color-ink) 70%, transparent); }
+      .qc-help summary { cursor: pointer; color: var(--color-accent); width: fit-content; }
+      .qc-help ol { margin-top: 0.5rem; padding-left: 1.25rem; list-style: decimal; display: grid; gap: 0.25rem; max-width: 52rem; line-height: 1.6; word-break: keep-all; }
+
+      /* 버튼 — /admin 화면과 같은 모양 */
+      .qc-btn { border-radius: 0.5rem; border: 1px solid color-mix(in srgb, var(--color-ink) 15%, transparent); padding: 0.5rem 0.9rem; font-size: 0.875rem; color: color-mix(in srgb, var(--color-ink) 75%, transparent); transition: border-color .15s, color .15s; }
+      .qc-btn:hover:not(:disabled) { border-color: color-mix(in srgb, var(--color-ink) 40%, transparent); color: var(--color-ink); }
+      .qc-btn-primary { border-radius: 0.5rem; background: var(--color-brand); padding: 0.65rem 1rem; font-size: 0.875rem; font-weight: 600; color: var(--color-onbrand); transition: filter .15s; }
+      .qc-btn-primary:hover:not(:disabled) { filter: brightness(1.1); }
+      .qc-btn:disabled, .qc-btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+      .qc-link { font-size: 0.8125rem; color: var(--color-accent); text-decoration: underline; text-underline-offset: 2px; }
+      .qc-link:disabled { opacity: 0.4; cursor: not-allowed; }
+      .qc-icon { width: 1.75rem; height: 1.75rem; border-radius: 0.375rem; font-size: 0.8125rem; color: color-mix(in srgb, var(--color-ink) 55%, transparent); }
+      .qc-icon:hover:not(:disabled) { background: color-mix(in srgb, var(--color-ink) 7%, transparent); color: var(--color-ink); }
+      .qc-icon:disabled { opacity: 0.25; cursor: default; }
+      .qc-del { font-size: 0.8125rem; padding: 0.25rem 0.5rem; border-radius: 0.375rem; color: color-mix(in srgb, var(--color-ink) 50%, transparent); }
+      .qc-del:hover, .qc-x:hover:not(:disabled) { color: var(--color-danger); }
+      /* 포커스 테두리는 긴 속성 이름으로 쓴다 — 단축 속성 낱말 하나만 있으면 Tailwind 가 클래스로 잡아 공용 CSS(공개 페이지 전부)를 바꾼다 */
+      :where(#qc) button:focus-visible, :where(#qc) summary:focus-visible { outline-width: 2px; outline-style: solid; outline-color: var(--color-accent); outline-offset: 2px; }
+
+      /* 입력칸 */
+      .qc-field { display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.75rem; color: color-mix(in srgb, var(--color-ink) 58%, transparent); min-width: 0; }
+      .qc-field input:not([type='checkbox']):not([type='radio']), .qc-field select, .qc-table input, .qc-table select {
+        width: 100%; border-radius: 0.375rem; border: 1px solid color-mix(in srgb, var(--color-ink) 14%, transparent);
+        background: color-mix(in srgb, var(--color-ink) 3%, transparent); color: var(--color-ink);
+        padding: 0.45rem 0.55rem; font-size: 0.875rem; outline-style: none;
+      }
+      .qc-field input:focus, .qc-field select:focus, .qc-table input:focus, .qc-table select:focus { border-color: var(--color-accent); }
+      .qc-field select option, .qc-field select optgroup, .qc-table select option, .qc-table select optgroup { background: var(--color-canvas); color: var(--color-ink); }
+      .qc-field input::placeholder, .qc-table input::placeholder { color: color-mix(in srgb, var(--color-ink) 32%, transparent); }
+      fieldset.qc-field { border: 0; padding: 0; margin: 0; }
+      fieldset.qc-field legend { padding: 0; margin-bottom: 0.3rem; }
+      .qc-grid { margin-top: 0.9rem; display: grid; gap: 0.75rem 1rem; grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr)); }
+      @media (min-width: 640px) { .qc-grid .qc-wide { grid-column: span 2; } }
+      .qc-grid .qc-full { grid-column: 1 / -1; }
+      .qc-suffix { display: flex; align-items: center; gap: 0.4rem; color: color-mix(in srgb, var(--color-ink) 60%, transparent); font-size: 0.8125rem; }
+      .qc-suffix input { min-width: 0; }
+      .qc-inline { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; min-height: 2.3rem; }
+      .qc-check { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.875rem; color: var(--color-ink); cursor: pointer; }
+      .qc-check input { accent-color: var(--color-accent); width: 1rem; height: 1rem; }
+      .qc-info { margin-top: 1rem; display: grid; gap: 0.75rem 1rem; grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr)); }
+      @media (min-width: 768px) { .qc-info .qc-span2 { grid-column: span 2; } .qc-info .qc-span3 { grid-column: span 3; } }
+      .qc-hint { font-size: 0.75rem; color: color-mix(in srgb, var(--color-ink) 45%, transparent); }
+
+      /* 품목 카드 */
+      .qc-item { border-radius: 0.75rem; border: 1px solid color-mix(in srgb, var(--color-ink) 11%, transparent); background: color-mix(in srgb, var(--color-ink) 2%, transparent); padding: 1rem 1.25rem 1.1rem; }
+      .qc-item.is-bad { border-color: color-mix(in srgb, var(--color-danger) 45%, transparent); }
+      .qc-item-head { display: flex; align-items: flex-end; gap: 0.75rem; }
+      .qc-item-head .qc-field { flex: 1 1 auto; }
+      .qc-no { flex: none; display: inline-grid; place-items: center; width: 2rem; height: 2rem; margin-bottom: 0.15rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 700; background: color-mix(in srgb, var(--color-accent) 16%, transparent); color: var(--color-ink); }
+      .qc-tools { flex: none; display: flex; align-items: center; gap: 0.15rem; margin-bottom: 0.2rem; }
+      .qc-method-row { margin-top: 0.85rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; }
+      .qc-method-row .qc-sub { margin-top: 0; flex: 1 1 16rem; }
+      .qc-methods { display: inline-flex; border-radius: 0.5rem; border: 1px solid color-mix(in srgb, var(--color-ink) 15%, transparent); overflow: hidden; }
+      .qc-methods button { padding: 0.4rem 0.85rem; font-size: 0.8125rem; color: color-mix(in srgb, var(--color-ink) 62%, transparent); }
+      .qc-methods button + button { border-left: 1px solid color-mix(in srgb, var(--color-ink) 15%, transparent); }
+      .qc-methods button[aria-checked='true'] { background: color-mix(in srgb, var(--color-accent) 18%, transparent); color: var(--color-ink); font-weight: 600; }
+      .qc-methods button:hover:not([aria-checked='true']) { background: color-mix(in srgb, var(--color-ink) 5%, transparent); }
+      /* position: relative — 표 머리의 화면 낭독용 글자(.qc-sr, absolute)가 스크롤 상자 밖으로 새어 휴대폰 폭에서 가로 넘침을 만들지 않게 */
+      .qc-layers { position: relative; margin-top: 1rem; border-radius: 0.5rem; border: 1px solid color-mix(in srgb, var(--color-ink) 10%, transparent); padding: 0.25rem 0.5rem 0.6rem; overflow-x: auto; }
+      .qc-layers-title { padding: 0.5rem 0.25rem 0.25rem; font-size: 0.75rem; color: color-mix(in srgb, var(--color-ink) 58%, transparent); }
+      .qc-adv { margin-top: 0.9rem; }
+      .qc-adv summary { cursor: pointer; width: fit-content; font-size: 0.8125rem; color: color-mix(in srgb, var(--color-ink) 65%, transparent); }
+      .qc-adv summary .qc-sub { display: inline; margin-left: 0.35rem; }
+      .qc-note { margin-top: 0.75rem; font-size: 0.8125rem; color: var(--color-warn); }
+
+      /* 표(층·이력·원가 내역) */
       .qc-table { width: 100%; border-spacing: 0; font-size: 0.8125rem; }
-      .qc-table th { text-align: left; font-weight: 600; font-size: 0.75rem; white-space: nowrap; padding: 0.5rem; color: color-mix(in srgb, var(--color-ink) 55%, transparent); background: color-mix(in srgb, var(--color-ink) 3%, transparent); border-bottom: 1px solid color-mix(in srgb, var(--color-ink) 10%, transparent); }
-      .qc-table td { padding: 0.35rem 0.5rem; border-bottom: 1px solid color-mix(in srgb, var(--color-ink) 6%, transparent); vertical-align: top; }
+      .qc-table th { text-align: left; font-weight: 600; font-size: 0.75rem; white-space: nowrap; padding: 0.5rem; color: color-mix(in srgb, var(--color-ink) 55%, transparent); border-bottom: 1px solid color-mix(in srgb, var(--color-ink) 10%, transparent); }
+      .qc-table td { padding: 0.35rem 0.5rem; border-bottom: 1px solid color-mix(in srgb, var(--color-ink) 6%, transparent); vertical-align: middle; }
+      .qc-table tr:last-child td { border-bottom: 0; }
       .qc-table td.num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
-      .qc-table td.pre { white-space: pre-line; }
-      .qc-table .qc-del { color: color-mix(in srgb, var(--color-ink) 45%, transparent); font-size: 0.75rem; padding: 0.35rem 0.5rem; }
-      .qc-table .qc-del:hover { color: var(--color-danger); }
-      #qc-preview:disabled, #qc-example:disabled, #qe-save:disabled, #qe-save-confirm:disabled { opacity: 0.4; cursor: not-allowed; }
-      /* 공용 CSS(global)에 새 유틸리티를 만들지 않으려고 이 화면 전용 규칙으로 둔다 */
-      @media (min-width: 1024px) { .qc-span2 { grid-column: span 2 / span 2; } .qc-span5 { grid-column: span 5 / span 5; } }
+      .qc-ltable td { min-width: 5.5rem; }
+      .qc-ltable td.qc-lno { min-width: 0; width: 2rem; text-align: center; color: color-mix(in srgb, var(--color-ink) 50%, transparent); }
+      .qc-ltable td.qc-lrecipe { min-width: 15rem; width: 45%; }
+      .qc-ltable td[data-lf='tempC'] { min-width: 7.5rem; }
+      .qc-ltable td.qc-row-tools { min-width: 0; width: 1%; white-space: nowrap; text-align: right; }
+      .qc-lmsg td { padding-top: 0; color: var(--color-danger); font-size: 0.8125rem; }
+      .qc-ltable .qc-lmsg td { min-width: 0; }
+
+      /* 오류 표시 */
+      .qc-field.is-bad > input, .qc-field.is-bad > select, .qc-field.is-bad > .qc-suffix input, .qc-suffix.is-bad input, .qc-table td.is-bad input, .qc-table td.is-bad select {
+        border-color: var(--color-danger) !important; background: color-mix(in srgb, var(--color-danger) 7%, transparent) !important;
+      }
+      .qc-methods.is-bad, .qc-layers.is-bad, [data-fw].is-bad .qc-methods { border-color: var(--color-danger); }
+      fieldset.is-bad legend, .qc-field.is-bad { color: var(--color-danger); }
+
+      /* 카드 아래 계산 결과 */
+      .qc-result { margin-top: 1rem; border-top: 1px solid color-mix(in srgb, var(--color-ink) 9%, transparent); padding-top: 0.75rem; font-size: 0.8125rem; }
+      .qc-result:empty { display: none; }
+      .qc-cards.is-stale .qc-result { opacity: 0.45; }
+      .qc-nums { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.35rem 1.1rem; color: color-mix(in srgb, var(--color-ink) 72%, transparent); }
+      .qc-nums strong { color: var(--color-ink); font-size: 0.9375rem; }
+      .qc-okmark { color: var(--color-ok); font-weight: 600; }
+      .qc-err { color: var(--color-danger); font-weight: 600; }
+      .qc-spec { margin-top: 0.6rem; display: grid; grid-template-columns: max-content 1fr; gap: 0.75rem; }
+      .qc-spec .qc-sub { margin-top: 0.05rem; }
+      .qc-spec pre { margin: 0; white-space: pre-wrap; font-family: inherit; line-height: 1.5; color: color-mix(in srgb, var(--color-ink) 80%, transparent); }
+      .qc-bd { margin-top: 0.6rem; }
+      .qc-bd summary { cursor: pointer; width: fit-content; color: color-mix(in srgb, var(--color-ink) 55%, transparent); }
+      .qc-bd table { margin-top: 0.4rem; max-width: 26rem; }
+
+      /* 오른쪽 합계·저장 */
+      .qc-state { margin-top: 0.4rem; font-size: 0.875rem; line-height: 1.5; color: color-mix(in srgb, var(--color-ink) 70%, transparent); }
+      .qc-state.is-ok { color: var(--color-ok); font-weight: 600; }
+      .qc-state.is-bad { color: var(--color-danger); font-weight: 600; }
+      .qc-state.is-busy { color: color-mix(in srgb, var(--color-ink) 55%, transparent); }
+      .qc-problems { margin-top: 0.5rem; display: grid; gap: 0.25rem; font-size: 0.8125rem; }
+      .qc-problems button { text-align: left; color: var(--color-danger); text-decoration: underline; text-underline-offset: 2px; line-height: 1.45; }
+      .qc-amounts { margin-top: 0.9rem; display: grid; gap: 0.35rem; font-size: 0.875rem; }
+      .qc-amounts > div { display: flex; justify-content: space-between; gap: 1rem; }
+      .qc-amounts dt { color: color-mix(in srgb, var(--color-ink) 55%, transparent); }
+      .qc-amounts dd { margin: 0; font-variant-numeric: tabular-nums; }
+      .qc-amounts .qc-grand { margin-top: 0.35rem; padding-top: 0.5rem; border-top: 1px solid color-mix(in srgb, var(--color-ink) 10%, transparent); align-items: baseline; }
+      .qc-amounts .qc-grand dt { color: var(--color-ink); font-weight: 600; }
+      .qc-amounts .qc-grand dd { font-size: 1.5rem; font-weight: 700; }
+      .qc-amounts.is-stale { opacity: 0.45; }
+      .qc-rules { margin-top: 0.75rem; display: grid; gap: 0.35rem; font-size: 0.75rem; line-height: 1.55; color: color-mix(in srgb, var(--color-ink) 55%, transparent); word-break: keep-all; }
       .chat-state.is-on { color: var(--color-ok); }
       .chat-state.is-off { color: var(--color-warn); font-weight: 600; }
-      .qc-ok { color: var(--color-ok); }
-      .qc-bad { color: var(--color-danger); }
-      /* 편집 모드 전용 — 공용 CSS 에 새 유틸리티를 만들지 않으려고 이 화면 규칙으로 둔다 */
+
+      /* 편집 모드 — 문의·알림·이력 */
       .qe-facts { margin-top: 0.75rem; display: grid; grid-template-columns: max-content 1fr; gap: 0.35rem 1rem; font-size: 0.875rem; }
       .qe-facts dt { color: color-mix(in srgb, var(--color-ink) 50%, transparent); }
-      .qe-facts dd { margin: 0; color: var(--color-ink); }
-      .qe-sub { margin-top: 0.5rem; font-size: 0.8125rem; color: color-mix(in srgb, var(--color-ink) 50%, transparent); }
-      .qe-alert { margin-top: 0.75rem; border-radius: 0.5rem; border: 1px solid color-mix(in srgb, var(--color-ink) 12%, transparent); padding: 0.75rem 1rem; font-size: 0.875rem; }
+      .qe-facts dd { margin: 0; color: var(--color-ink); word-break: keep-all; }
+      .qe-alert { margin-top: 0.75rem; border-radius: 0.5rem; border: 1px solid color-mix(in srgb, var(--color-ink) 12%, transparent); padding: 0.75rem 1rem; font-size: 0.875rem; line-height: 1.55; word-break: keep-all; }
       .qe-alert-ok { border-color: color-mix(in srgb, var(--color-ok) 35%, transparent); background: color-mix(in srgb, var(--color-ok) 10%, transparent); color: var(--color-ok); }
       .qe-alert-warn { border-color: color-mix(in srgb, var(--color-warn) 40%, transparent); background: color-mix(in srgb, var(--color-warn) 10%, transparent); color: var(--color-warn); font-weight: 600; }
       .qe-alert-bad { border-color: color-mix(in srgb, var(--color-danger) 35%, transparent); background: color-mix(in srgb, var(--color-danger) 10%, transparent); color: var(--color-danger); }
       .qe-alert button { margin-left: 0.5rem; text-decoration: underline; font-weight: 600; }
       .qe-raw { margin-top: 0.75rem; font-size: 0.875rem; }
-      .qe-raw summary { cursor: pointer; color: color-mix(in srgb, var(--color-ink) 60%, transparent); }
+      .qe-raw summary { cursor: pointer; color: color-mix(in srgb, var(--color-ink) 60%, transparent); width: fit-content; }
       .qe-raw pre { margin-top: 0.5rem; white-space: pre-wrap; border-radius: 0.5rem; padding: 0.75rem; font-family: inherit; line-height: 1.6;
         background: color-mix(in srgb, var(--color-ink) 5%, transparent); color: color-mix(in srgb, var(--color-ink) 75%, transparent); }
-      .qe-select { border-radius: 0.5rem; border: 1px solid color-mix(in srgb, var(--color-ink) 15%, transparent); background: var(--color-canvas); color: var(--color-ink); padding: 0.5rem 0.75rem; font-size: 0.875rem; }
-      .qe-note-field { max-width: 40rem; }
+      .qe-select { border-radius: 0.5rem; border: 1px solid color-mix(in srgb, var(--color-ink) 15%, transparent); background: var(--color-canvas); color: var(--color-ink); padding: 0.45rem 0.6rem; font-size: 0.875rem; }
       .qe-load-rev { font-size: 0.75rem; text-decoration: underline; color: var(--color-accent); }
       .qe-cur td { background: color-mix(in srgb, var(--color-accent) 8%, transparent); }
+      .qc-sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+      @media (prefers-reduced-motion: reduce) { .qc-btn, .qc-btn-primary { transition: none; } }
     </style>
 
     <script>
       import { buildQuoteDoc, openDoc } from '../../lib/quote-doc';
       import { renderQuoteBox, docOptions, injectQuoteViewStyle, kstStamp } from '../../lib/quote-view-render.js';
+      import {
+        METHODS, MARGINS, MAX_ITEMS, MAX_LAYERS, STATUS_HINT, newCard, newLayer, isBlankCard, inputFromCards, cardsFromInput,
+        equipmentOptions, recipeOptions, substrateOptions, clearForeignRecipes, problemsOf, fieldForItemStatus, fieldForLayerStatus, isPolicyStatus, isActive,
+      } from '../../lib/quote-editor.js';
 
       const root = document.getElementById('qc');
       if (root) {
@@ -257,130 +409,589 @@ const qvText = editId ? JSON.stringify({ ko: siteData.ko.quote.view, en: siteDat
           defaults: { delivery: string; validDays: number | null };
           importLog: { imported_at: string; rules_version: string; sha256: string } | null;
         };
+        type Card = ReturnType<typeof newCard>;
+        type Opt = { value: string; label: string; active?: boolean };
         const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
         const esc = (v: unknown) =>
           String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         const fmt = (n: unknown) =>
           typeof n === 'number' ? (Number.isInteger(n) ? n.toLocaleString('ko-KR') : n.toLocaleString('ko-KR', { maximumFractionDigits: 4 })) : esc(n);
+        const won = (n: unknown) => (typeof n === 'number' ? `₩${n.toLocaleString('ko-KR')}` : '—');
+        const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
         const serverDefaults = JSON.parse(root.dataset.defaults || '{}') as Record<string, string>;
-        let meta: Meta | null = null;
-        let last: any = null;       // 마지막 계산 결과
-        let lastItems: any[] = [];  // 그 결과를 만든 품목 입력
-        let lastLayers: any[] = []; // 그 결과를 만든 층 입력(편집 모드 저장에 쓴다)
-        let fresh = false;          // 마지막 계산 뒤 입력이 바뀌지 않았는가
-        // 계산 요청 번호 — 입력 변경(stale)·칸 채우기(fill·reset)·새 계산이 올린다.
-        // 응답이 왔을 때 번호가 바뀌어 있으면 옛 입력의 결과다 → last·lastItems·lastLayers·fresh 를 바꾸지 않는다.
-        let calcNo = 0;
         // 편집 모드 — 접수번호(없으면 계산기 모드). 편집 모드 코드는 전부 EDIT 가 있을 때만 돈다.
         const EDIT = root.dataset.edit ?? '';
+        const cardsEl = $('qc-cards');
+
+        let meta: Meta | null = null;
+        let eqOf = new Map<string, string>();   // 레시피 ID → 장비 ID
+        let eqOpts: Opt[] = [];
+        let subOpts: Opt[] = [];
+
+        let cards: Card[] = [];
+        const notes = new Map<number, string>();      // 카드 열쇠 → 잠깐 보이는 안내(장비를 바꿔 레시피를 비웠다 등)
+        const advOpen = new Map<number, boolean>();   // 카드 열쇠 → [공정 시간 조정] 펼침 여부(다시 그려도 유지)
+        const bdOpen = new Map<number, boolean>();    // 카드 열쇠 → [원가 내역] 펼침 여부(다시 계산해도 유지)
+        let lockedNow = false;                        // 편집 모드: 결제 완료로 저장 잠김
+
+        let last: any = null;                 // 마지막 계산 결과
+        let lastItems: any[] = [];            // 그 결과를 만든 품목 입력(저장·견적서에 그대로 쓴다)
+        let lastLayers: any[] = [];           // 그 결과를 만든 층 입력
+        let lastRefs: [number, number][] = []; // 결과의 층 → [카드 위치, 카드 안 층 위치]
+        let lastStruct = -1;                  // 그 결과를 만들 때의 카드 구조 번호
+        let structVer = 0;                    // 카드·층을 더하거나 지우거나 옮기거나 방식을 바꾸면 올린다
+        let fresh = false;                    // 마지막 계산 뒤 입력이 바뀌지 않았는가
+        let pending = false;                  // 다시 계산을 기다리는 중
+        let calcErr = '';
+        // 계산 요청 번호 — 입력이 바뀌거나 새 계산을 보낼 때 올린다. 응답이 왔을 때 번호가 바뀌어 있으면 옛 입력의 결과라 버린다.
+        let calcNo = 0;
+        let calcTimer: ReturnType<typeof setTimeout> | undefined;
         let onFreshChange = () => {};
+        let metaTried = false;                // 가격 DB 목록을 받아 봤는가(받기 전에는 '불러오는 중')
+        let cardsLoading = Boolean(EDIT);     // 편집 모드: 문의를 불러오기 전
 
-        // ── 엑셀 의미의 입력 변환 ──────────────────────────────────────
-        // 빈칸 → null · 숫자로 읽히면 number(천 단위 쉼표 허용) · 그 외 문자열 그대로. 0 은 0.
-        const NUM_RE = /^-?(?:\d{1,3}(?:,\d{3})+|\d+)?(?:\.\d+)?$/;
-        const conv = (raw: string): string | number | null => {
-          const t = raw.trim();
-          if (t === '') return null;
-          if (/\d/.test(t) && NUM_RE.test(t)) return Number(t.replace(/,/g, ''));
-          return raw;
+        // ── 드롭다운 HTML ───────────────────────────────────────────────
+        const opt = (v: string, label: string, cur: string) => `<option value="${esc(v)}"${v === cur ? ' selected' : ''}>${esc(label)}</option>`;
+        const recipeLabel = (id: string) => {
+          const r = meta?.recipes.find((x) => String(x.recipe_id) === id);
+          return r ? [r.material_name, r.method].filter(Boolean).join(' · ') : id;
         };
-
-        // ── 열 정의 ────────────────────────────────────────────────────
-        type Col = { key: string; label: string; kind?: 'select' | 'recipe' | 'substrate'; options?: string[]; w?: string };
-        const ITEM_COLS: Col[] = [
-          { key: 'name', label: '품명', w: '11rem' },
-          { key: 'extraSpec', label: '추가 규격', w: '9rem' },
-          { key: 'method', label: '가격 방식', kind: 'select', options: ['박막자동', '단가입력', '총액입력'], w: '7rem' },
-          { key: 'qty', label: '수량', w: '4rem' },
-          { key: 'unit', label: '단위', w: '4rem' },
-          { key: 'amount', label: '입력 금액', w: '7rem' },
-          { key: 'vat', label: '부가세 기준', kind: 'select', options: ['별도', '포함'], w: '5rem' },
-          { key: 'margin', label: '마진 구분', kind: 'select', options: ['기본', '연구소_대학_할인', '특수물질', '직접입력'], w: '9rem' },
-          { key: 'directMarkup', label: '직접 가산율', w: '5rem' },
-          { key: 'plasma', label: '플라즈마', kind: 'select', options: ['Y', 'N'], w: '4rem' },
-          { key: 'plasmaMin', label: '플라즈마 분', w: '4.5rem' },
-          { key: 'loadingMin', label: '로딩 분', w: '4.5rem' },
-          { key: 'setupMin', label: '셋업 분', w: '4.5rem' },
-          { key: 'waitMin', label: '대기 분', w: '4.5rem' },
-          { key: 'substrateId', label: '기판 ID', kind: 'substrate', w: '10rem' },
-          { key: 'substratePerRun', label: '기판 장수/회', w: '4.5rem' },
-          { key: 'rawText', label: '입력 원문', w: '12rem' },
-        ];
-        const LAYER_COLS: Col[] = [
-          { key: 'itemNo', label: '품목 번호', w: '4.5rem' },
-          { key: 'order', label: '층 순서', w: '4.5rem' },
-          { key: 'recipeId', label: '레시피', kind: 'recipe', w: '22rem' },
-          { key: 'thicknessNm', label: '두께 nm', w: '5rem' },
-          { key: 'repeat', label: '층 반복', w: '4.5rem' },
-          { key: 'tempC', label: '표시 온도 °C', w: '5rem' },
-        ];
-        const MAX_ITEMS = 15;
-
-        const selectHtml = (col: Col, value: string) => {
-          const opt = (v: string, label: string) =>
-            `<option value="${esc(v)}"${v === value ? ' selected' : ''}>${esc(label)}</option>`;
-          let body = opt('', '');
-          if (col.kind === 'select') body += (col.options ?? []).map((o) => opt(o, o)).join('');
-          if (col.kind === 'substrate') {
-            body += (meta?.substrates ?? []).map((s) =>
-              opt(s.catalog_id, `${s.catalog_id} · ${s.item_name}${s.active === 1 ? '' : ' (중지)'}`)).join('');
-          }
-          if (col.kind === 'recipe') {
-            // 장비별로 묶는다 — 한 품목은 한 장비만 쓸 수 있어서 이 묶음이 곧 선택 단위다.
-            for (const e of meta?.equipment ?? []) {
-              const rs = (meta?.recipes ?? []).filter((r) => r.equipment_id === e.equipment_id);
-              if (!rs.length) continue;
-              body += `<optgroup label="${esc(`${e.equipment_id} · ${e.equipment_name}${e.active === 1 ? '' : ' (중지)'}`)}">` +
-                rs.map((r) => opt(r.recipe_id, `${r.recipe_id} — ${r.material_name} (${r.method})${r.active === 1 ? '' : ' (중지)'}`)).join('') +
-                '</optgroup>';
+        const eqSelect = (c: Card, i: number) => {
+          let body = opt('', '장비 선택', c.equipmentId);
+          body += eqOpts.map((o) => opt(o.value, o.label, c.equipmentId)).join('');
+          if (c.equipmentId && !eqOpts.some((o) => o.value === c.equipmentId)) body += opt(c.equipmentId, `${c.equipmentId} (목록에 없음)`, c.equipmentId);
+          return `<select data-f="equipmentId" aria-label="품목 ${i + 1} 장비">${body}</select>`;
+        };
+        const recipeSelect = (c: Card, i: number, l: Card['layers'][number], j: number) => {
+          const cur = l.recipeId.trim();
+          let body = opt('', c.equipmentId ? '레시피 선택' : '레시피 선택 (장비가 함께 정해집니다)', cur);
+          let found = false;
+          if (c.equipmentId) {
+            const os = recipeOptions(meta?.recipes ?? [], c.equipmentId);
+            found = os.some((o) => o.value === cur);
+            body += os.map((o) => opt(o.value, o.label, cur)).join('');
+          } else {
+            for (const e of eqOpts) {
+              const os = recipeOptions(meta?.recipes ?? [], e.value);
+              if (!os.length) continue;
+              if (os.some((o) => o.value === cur)) found = true;
+              body += `<optgroup label="${esc(e.label)}">${os.map((o) => opt(o.value, o.label, cur)).join('')}</optgroup>`;
             }
-            const known = new Set((meta?.equipment ?? []).map((e) => e.equipment_id));
-            const orphan = (meta?.recipes ?? []).filter((r) => !known.has(r.equipment_id));
-            if (orphan.length) body += `<optgroup label="장비DB 에 없는 장비">${orphan.map((r) => opt(r.recipe_id, r.recipe_id)).join('')}</optgroup>`;
           }
-          // 목록에 없는 값(예시·옛 입력)도 잃지 않는다 — 엔진이 오류 문구로 알려준다.
-          if (value && !body.includes(`value="${esc(value)}"`)) body += opt(value, `${value} (목록에 없음)`);
-          return `<select data-key="${col.key}">${body}</select>`;
+          if (cur && !found) body += opt(cur, eqOf.has(cur) ? `${recipeLabel(cur)} — 다른 장비의 레시피` : `${cur} (가격 DB 에 없음)`, cur);
+          return `<select data-lf-in="recipeId" aria-label="품목 ${i + 1} 층 ${j + 1} 레시피">${body}</select>`;
         };
-        const cellHtml = (col: Col, value: string) =>
-          `<td style="min-width:${col.w ?? '5rem'}">${col.kind ? selectHtml(col, value) : `<input data-key="${col.key}" value="${esc(value)}" />`}</td>`;
+        const subSelect = (c: Card, i: number) => {
+          const cur = c.substrateId.trim();
+          let body = opt('', '기판 없음', cur);
+          body += subOpts.map((o) => opt(o.value, o.label, cur)).join('');
+          if (cur && !subOpts.some((o) => o.value === cur)) body += opt(cur, `${cur} (목록에 없음)`, cur);
+          return `<select data-f="substrateId" aria-label="품목 ${i + 1} 함께 청구할 기판">${body}</select>`;
+        };
+        const marginSelect = (c: Card, i: number) => {
+          const known = MARGINS.some((m) => m.value === c.margin);
+          const head = known ? '' : opt(c.margin, c.margin ? `${c.margin} (엑셀 값 아님)` : '마진 선택', c.margin);
+          return `<select data-f="margin" aria-label="품목 ${i + 1} 마진">${head}${MARGINS.map((m) => opt(m.value, m.label, c.margin)).join('')}</select>`;
+        };
 
-        const itemsBody = () => $('qc-items').querySelector('tbody')!;
-        const layersBody = () => $('qc-layers').querySelector('tbody')!;
+        // ── 카드 HTML ───────────────────────────────────────────────────
+        const layerRow = (c: Card, i: number, l: Card['layers'][number], j: number, n: number) => `
+          <tr data-lk="${l.key}">
+            <td class="qc-lno">${j + 1}</td>
+            <td class="qc-lrecipe" data-lf="recipeId">${recipeSelect(c, i, l, j)}</td>
+            <td data-lf="thicknessNm"><input data-lf-in="thicknessNm" value="${esc(l.thicknessNm)}" inputmode="decimal" aria-label="품목 ${i + 1} 층 ${j + 1} 두께 nm" /></td>
+            <td data-lf="repeat"><input data-lf-in="repeat" value="${esc(l.repeat)}" inputmode="numeric" aria-label="품목 ${i + 1} 층 ${j + 1} 반복" /></td>
+            <td data-lf="tempC"><input data-lf-in="tempC" value="${esc(l.tempC)}" inputmode="decimal" placeholder="레시피 기본" aria-label="품목 ${i + 1} 층 ${j + 1} 표시 온도" /></td>
+            <td class="qc-row-tools">
+              <button type="button" class="qc-icon" data-act="lup" aria-label="층 ${j + 1} 위로"${j === 0 ? ' disabled' : ''}>↑</button>
+              <button type="button" class="qc-icon" data-act="ldown" aria-label="층 ${j + 1} 아래로"${j === n - 1 ? ' disabled' : ''}>↓</button>
+              <button type="button" class="qc-icon qc-x" data-act="ldel" aria-label="층 ${j + 1} 지우기">✕</button>
+            </td>
+          </tr>
+          <tr class="qc-lmsg" data-lmsg="${l.key}" hidden><td></td><td colspan="5"></td></tr>`;
 
-        const renderHeads = () => {
-          $('qc-items').querySelector('thead')!.innerHTML =
-            `<tr><th>번호</th>${ITEM_COLS.map((c) => `<th>${esc(c.label)}</th>`).join('')}<th></th></tr>`;
-          $('qc-layers').querySelector('thead')!.innerHTML =
-            `<tr>${LAYER_COLS.map((c) => `<th>${esc(c.label)}</th>`).join('')}<th></th></tr>`;
-        };
-        const renumber = () => {
-          itemsBody().querySelectorAll('tr').forEach((tr, i) => { tr.querySelector('.qc-no')!.textContent = String(i + 1); });
-          $<HTMLButtonElement>('qc-add-item').disabled = itemsBody().children.length >= MAX_ITEMS;
-        };
-        const addItem = (v: Record<string, unknown> = {}) => {
-          if (itemsBody().children.length >= MAX_ITEMS) return;
-          const tr = document.createElement('tr');
-          tr.innerHTML = `<td class="qc-no num"></td>${ITEM_COLS.map((c) => cellHtml(c, v[c.key] == null ? '' : String(v[c.key]))).join('')}` +
-            `<td><button type="button" class="qc-del" data-del>삭제</button></td>`;
-          itemsBody().appendChild(tr);
-          renumber();
-        };
-        const addLayer = (v: Record<string, unknown> = {}) => {
-          const tr = document.createElement('tr');
-          tr.innerHTML = `${LAYER_COLS.map((c) => cellHtml(c, v[c.key] == null ? '' : String(v[c.key]))).join('')}` +
-            `<td><button type="button" class="qc-del" data-del>삭제</button></td>`;
-          layersBody().appendChild(tr);
-        };
-        const readRow = (tr: Element) => {
-          const o: Record<string, unknown> = {};
-          tr.querySelectorAll<HTMLInputElement | HTMLSelectElement>('[data-key]').forEach((el) => { o[el.dataset.key!] = conv(el.value); });
-          return o;
-        };
-        const readItems = () => Array.from(itemsBody().querySelectorAll('tr')).map((tr, i) => ({ no: i + 1, ...readRow(tr) }));
-        const readLayers = () => Array.from(layersBody().querySelectorAll('tr')).map(readRow);
+        const advIsOpen = (c: Card, keys: string[]) => advOpen.get(c.key) ?? keys.some((k) => String((c as any)[k] ?? '').trim() !== '');
+        const timesSet = (c: Card) => ['loadingMin', 'setupMin', 'waitMin'].some((k) => String((c as any)[k] ?? '').trim() !== '');
 
+        const filmBody = (c: Card, i: number) => `
+          <div class="qc-grid">
+            <label class="qc-field qc-wide" data-fw="equipment">장비${eqSelect(c, i)}</label>
+            <label class="qc-field" data-fw="qty">횟수<span class="qc-suffix"><input data-f="qty" value="${esc(c.qty)}" inputmode="numeric" aria-label="품목 ${i + 1} 횟수" /><span>회</span></span></label>
+            <label class="qc-field" data-fw="margin">마진${marginSelect(c, i)}</label>
+            ${c.margin === '직접입력' ? `<label class="qc-field" data-fw="directMarkup">가산율 (원가 × 비율)<input data-f="directMarkup" value="${esc(c.directMarkup)}" inputmode="decimal" placeholder="예: 0.3" aria-label="품목 ${i + 1} 가산율" /></label>` : ''}
+            <div class="qc-field qc-wide" data-fw="plasma">플라즈마 클리닝
+              <div class="qc-inline">
+                <label class="qc-check"><input type="checkbox" data-f="plasma"${c.plasma === 'Y' ? ' checked' : ''} /> 포함</label>
+                ${c.plasma === 'Y' ? `<span class="qc-suffix" data-fw="plasmaMin"><input data-f="plasmaMin" value="${esc(c.plasmaMin)}" inputmode="decimal" placeholder="기본값" aria-label="품목 ${i + 1} 플라즈마 분" style="width:6rem" /><span>분</span></span>` : ''}
+              </div>
+            </div>
+          </div>
+          <div class="qc-layers" data-fw="layers">
+            <p class="qc-layers-title">층 — 위에서부터 증착 순서입니다. 한 품목에는 한 장비의 레시피만 넣을 수 있습니다.</p>
+            <table class="qc-table qc-ltable">
+              <thead><tr><th class="qc-lno">#</th><th>레시피</th><th>두께 (nm)</th><th>반복</th><th>표시 온도 (°C)</th><th><span class="qc-sr">순서·지우기</span></th></tr></thead>
+              <tbody>${c.layers.map((l, j) => layerRow(c, i, l, j, c.layers.length)).join('')}</tbody>
+            </table>
+            <button type="button" class="qc-link" data-act="ladd" style="margin:0.4rem 0 0 0.25rem">+ 층 추가</button>
+          </div>
+          <div class="qc-grid">
+            <label class="qc-field qc-wide" data-fw="substrateId">기판도 함께 청구${subSelect(c, i)}</label>
+            ${c.substrateId.trim() ? `<label class="qc-field" data-fw="substratePerRun">회당 기판 장수<input data-f="substratePerRun" value="${esc(c.substratePerRun)}" inputmode="numeric" aria-label="품목 ${i + 1} 회당 기판 장수" /></label>` : ''}
+            <label class="qc-field qc-full" data-fw="extraSpec">견적서 규격에 덧붙일 글<input data-f="extraSpec" value="${esc(c.extraSpec)}" placeholder="예: 양면 증착" aria-label="품목 ${i + 1} 덧붙일 규격" /></label>
+          </div>
+          <details class="qc-adv" data-adv${advIsOpen(c, ['loadingMin', 'setupMin', 'waitMin']) ? ' open' : ''}>
+            <summary>공정 시간 조정 · 원문 메모 <span class="qc-sub">${timesSet(c) ? '시간을 직접 넣음' : '비우면 레시피·장비 기본값'}${c.rawText.trim() ? ' · 원문 메모 있음' : ''}</span></summary>
+            <div class="qc-grid">
+              <label class="qc-field" data-fw="loadingMin">로딩 분<input data-f="loadingMin" value="${esc(c.loadingMin)}" inputmode="decimal" placeholder="기본값" /></label>
+              <label class="qc-field" data-fw="setupMin">셋업 분<input data-f="setupMin" value="${esc(c.setupMin)}" inputmode="decimal" placeholder="기본값" /></label>
+              <label class="qc-field" data-fw="waitMin">대기 분<input data-f="waitMin" value="${esc(c.waitMin)}" inputmode="decimal" placeholder="0" /></label>
+              <label class="qc-field qc-full" data-fw="rawText">원문 메모 (계산·견적서에 쓰지 않음)<input data-f="rawText" value="${esc(c.rawText)}" placeholder="고객이 쓴 표현을 적어 두는 칸" /></label>
+            </div>
+          </details>`;
+
+        const directBody = (c: Card, i: number) => {
+          const totalMode = c.method === '총액입력';
+          return `
+          <div class="qc-grid">
+            <label class="qc-field" data-fw="qty">수량<input data-f="qty" value="${esc(c.qty)}" inputmode="decimal" aria-label="품목 ${i + 1} 수량" /></label>
+            <label class="qc-field" data-fw="unit">단위<input data-f="unit" value="${esc(c.unit)}" list="qc-units" aria-label="품목 ${i + 1} 단위" /></label>
+            <label class="qc-field qc-wide" data-fw="amount">${totalMode ? '이 줄 전체 금액 (원)' : '1개 단가 (원)'}<input data-f="amount" value="${esc(c.amount)}" inputmode="numeric" placeholder="${totalMode ? '예: 150,000' : '예: 50,000'}" aria-label="품목 ${i + 1} ${totalMode ? '전체 금액' : '단가'}" /></label>
+            <fieldset class="qc-field qc-wide" data-fw="vat"><legend>부가세</legend>
+              <div class="qc-inline">
+                <label class="qc-check"><input type="radio" name="vat-${c.key}" data-f="vat" value="별도"${c.vat === '별도' ? ' checked' : ''} /> 별도 (금액에 더함)</label>
+                <label class="qc-check"><input type="radio" name="vat-${c.key}" data-f="vat" value="포함"${c.vat === '포함' ? ' checked' : ''} /> 포함 (금액 안에 있음)</label>
+              </div>
+            </fieldset>
+            <label class="qc-field qc-full" data-fw="extraSpec">견적서 규격 칸<input data-f="extraSpec" value="${esc(c.extraSpec)}" placeholder="예: XPS 3포인트 · 결과 보고서 포함" aria-label="품목 ${i + 1} 규격" /></label>
+          </div>
+          <details class="qc-adv" data-adv${advIsOpen(c, []) ? ' open' : ''}>
+            <summary>원문 메모${c.rawText.trim() ? ' <span class="qc-sub">내용 있음</span>' : ''}</summary>
+            <div class="qc-grid">
+              <label class="qc-field qc-full" data-fw="rawText">원문 메모 (계산·견적서에 쓰지 않음)<input data-f="rawText" value="${esc(c.rawText)}" placeholder="고객이 쓴 표현을 적어 두는 칸" /></label>
+            </div>
+          </details>`;
+        };
+
+        const cardHtml = (c: Card, i: number) => {
+          const film = c.method === '박막자동';
+          const m = METHODS.find((x) => x.value === c.method) ?? METHODS[0];
+          const note = notes.get(c.key);
+          return `<article class="qc-item" data-k="${c.key}">
+            <div class="qc-item-head">
+              <span class="qc-no" aria-hidden="true">${i + 1}</span>
+              <label class="qc-field" data-fw="name">품명 (견적서에 그대로 나갑니다)<input data-f="name" value="${esc(c.name)}" placeholder="${film ? '예: Sputter Ti/Pt' : '예: XPS 분석'}" aria-label="품목 ${i + 1} 품명" /></label>
+              <div class="qc-tools">
+                <button type="button" class="qc-icon" data-act="up" aria-label="품목 ${i + 1} 위로"${i === 0 ? ' disabled' : ''}>↑</button>
+                <button type="button" class="qc-icon" data-act="down" aria-label="품목 ${i + 1} 아래로"${i === cards.length - 1 ? ' disabled' : ''}>↓</button>
+                <button type="button" class="qc-del" data-act="del">삭제</button>
+              </div>
+            </div>
+            <div class="qc-method-row" data-fw="method">
+              <div class="qc-methods" role="radiogroup" aria-label="품목 ${i + 1} 가격 방식">
+                ${METHODS.map((x) => `<button type="button" role="radio" aria-checked="${x.value === c.method}" data-act="method" data-v="${esc(x.value)}">${esc(x.label)}</button>`).join('')}
+              </div>
+              <p class="qc-sub">${esc(m.help)}</p>
+            </div>
+            ${film ? filmBody(c, i) : directBody(c, i)}
+            ${note ? `<p class="qc-note">${esc(note)}</p>` : ''}
+            <div class="qc-result" data-result></div>
+          </article>`;
+        };
+
+        // ── 다시 그리기(포커스 유지) ─────────────────────────────────────
+        type FocusMark = { k?: string; lk?: string; f?: string; lf?: string; act?: string; v?: string; pos: number | null } | null;
+        const rememberFocus = (): FocusMark => {
+          const a = document.activeElement as HTMLInputElement | null;
+          if (!a || !cardsEl.contains(a)) return null;
+          let pos: number | null = null;
+          try { pos = typeof a.selectionStart === 'number' ? a.selectionStart : null; } catch { pos = null; }
+          return {
+            k: (a.closest('[data-k]') as HTMLElement | null)?.dataset.k, lk: (a.closest('[data-lk]') as HTMLElement | null)?.dataset.lk,
+            f: a.dataset.f, lf: a.dataset.lfIn, act: a.dataset.act, v: a.dataset.v, pos,
+          };
+        };
+        const restoreFocus = (m: FocusMark) => {
+          if (!m?.k) return;
+          const scope = m.lk ? `[data-k="${m.k}"] [data-lk="${m.lk}"]` : `[data-k="${m.k}"]`;
+          const inner = m.f ? `[data-f="${m.f}"]` : m.lf ? `[data-lf-in="${m.lf}"]` : m.act ? `[data-act="${m.act}"]${m.v ? `[data-v="${m.v}"]` : ''}` : '';
+          const el = cardsEl.querySelector<HTMLElement>(`${scope} ${inner}`.trim());
+          if (!el) return;
+          el.focus({ preventScroll: true });
+          if (m.pos !== null && el instanceof HTMLInputElement) { try { el.setSelectionRange(m.pos, m.pos); } catch { /* number 등 */ } }
+        };
+
+        const renderCards = () => {
+          const mark = rememberFocus();
+          cardsEl.innerHTML = cards.length
+            ? cards.map(cardHtml).join('')
+            : cardsLoading ? '<p class="qc-empty">견적을 불러오는 중…</p>'
+              : '<p class="qc-empty">품목이 없습니다 — 아래 버튼으로 품목을 추가하세요.</p>';
+          restoreFocus(mark);
+          const full = cards.length >= MAX_ITEMS;
+          document.querySelectorAll<HTMLButtonElement>('[data-add]').forEach((b) => { b.disabled = full; });
+          $('qc-addnote').textContent = full ? `품목은 ${MAX_ITEMS}개까지 넣을 수 있습니다(엑셀과 같음).` : '';
+          renderResults();
+        };
+
+        // ── 계산 결과 → 카드·칸 표시 ─────────────────────────────────────
+        const BD: [string, string][] = [
+          ['layerCount', '층 수'], ['equipmentId', '장비 ID'], ['materialCost', '재료비/회'], ['depositMin', '증착시간/회'],
+          ['depositCost', '증착장비비/회'], ['loadingMin', '로딩 분/회'], ['setupMin', '셋업 분/회'], ['plasmaMin', '플라즈마 분/회'],
+          ['waitMin', '대기 분/회'], ['ratePerMin', '장비요율'], ['substrateCost', '기판원가/회'], ['cost', '원가/회'],
+          ['markup', '가산율'], ['markupAmount', '가산금액/회'], ['priceBeforeFloor', '절삭 전 단가'],
+        ];
+        const tempText = (v: unknown) => (typeof v === 'number' ? (v === 30 ? 'R.T' : `${fmt(v)}°C`) : '');
+
+        const markField = (art: HTMLElement, field: string | null) => {
+          if (!field) return;
+          const adv = art.querySelector<HTMLDetailsElement>('[data-adv]');
+          if (field === 'times') {
+            ['plasmaMin', 'loadingMin', 'setupMin', 'waitMin'].forEach((f) => art.querySelector(`[data-fw="${f}"]`)?.classList.add('is-bad'));
+            if (adv) adv.open = true;
+            return;
+          }
+          if ((field === 'loadingMin' || field === 'setupMin' || field === 'waitMin') && adv) adv.open = true;
+          const el = art.querySelector(`[data-fw="${field}"]`);
+          el?.classList.add('is-bad');
+          if (field === 'method') el?.querySelector('.qc-methods')?.classList.add('is-bad');
+          // 마진 문구는 '직접 입력'의 가산율 칸 문제일 때도 같은 문구다
+          if (field === 'margin') art.querySelector('[data-fw="directMarkup"]')?.classList.add('is-bad');
+        };
+
+        const bdHtml = (c: Card, r: any) => c.method !== '박막자동' ? ''
+          : `<details class="qc-bd" data-bd${bdOpen.get(c.key) ? ' open' : ''}><summary>원가 내역 (관리자만 보임)</summary><table class="qc-table">` +
+            BD.map(([k, l]) => `<tr><th>${esc(l)}</th><td class="num">${fmt(r?.breakdown?.[k])}</td></tr>`).join('') + '</table></details>';
+        const resultHtml = (c: Card, i: number, r: any) => {
+          const st = String(r?.status ?? '');
+          if (st === '') return '<p class="qc-sub">비어 있는 품목 — 계산에서 빠집니다.</p>';
+          if (st !== '정상') {
+            const hint = (STATUS_HINT as Record<string, string>)[st];
+            return `<p class="qc-err">✕ ${esc(st)}</p>${hint ? `<p class="qc-sub">${esc(hint)}</p>` : ''}${bdHtml(c, r)}`;
+          }
+          const film = c.method === '박막자동';
+          const unit = film ? '회' : String(lastItems[i]?.unit ?? '');
+          const qty = lastItems[i]?.qty;
+          return `<div class="qc-nums"><span class="qc-okmark">✓ 계산됨</span>
+              <span>단가 ${won(r.unitPrice)} × ${esc(fmt(qty))}${esc(unit ? ` ${unit}` : '')}</span>
+              <span>공급가액 ${won(r.supply)}</span><span>세액 ${won(r.vat)}</span><strong>합계 ${won(r.total)}</strong></div>
+            ${r.spec ? `<div class="qc-spec"><span class="qc-sub">견적서 규격</span><pre>${esc(r.spec)}</pre></div>` : ''}
+            ${film ? bdHtml(c, r) : ''}`;
+        };
+
+        const renderResults = () => {
+          cardsEl.classList.toggle('is-stale', pending && !!last);
+          const match = !!last && lastStruct === structVer;
+          cards.forEach((c, i) => {
+            const art = cardsEl.querySelector<HTMLElement>(`[data-k="${c.key}"]`);
+            if (!art) return;
+            art.querySelectorAll('.is-bad').forEach((el) => el.classList.remove('is-bad'));
+            art.querySelectorAll<HTMLElement>('[data-lmsg]').forEach((el) => { el.hidden = true; });
+            const box = art.querySelector<HTMLElement>('[data-result]')!;
+            if (!match) {
+              art.classList.remove('is-bad');
+              box.innerHTML = last || pending ? '<p class="qc-sub">계산 중…</p>' : '';
+              return;
+            }
+            const r = last.items?.[i];
+            const st = String(r?.status ?? '');
+            box.innerHTML = resultHtml(c, i, r);
+            art.classList.toggle('is-bad', st !== '' && st !== '정상');
+            markField(art, fieldForItemStatus(st));
+            // 층 — 상태·기본 온도
+            (last.layers ?? []).forEach((lr: any, k: number) => {
+              const ref = lastRefs[k];
+              if (!ref || ref[0] !== i) return;
+              const l = c.layers[ref[1]];
+              if (!l) return;
+              const row = art.querySelector<HTMLElement>(`[data-lk="${l.key}"]`);
+              const temp = row?.querySelector<HTMLInputElement>('[data-lf-in="tempC"]');
+              const applied = tempText(lr.tempApplied);
+              if (temp) temp.placeholder = applied ? `기본 ${applied}` : '레시피 기본';
+              const ls = String(lr.status ?? '');
+              if (ls === '' || ls === '정상') return;
+              const lf = fieldForLayerStatus(ls);
+              if (lf === 'name') markField(art, 'name');
+              else if (lf) row?.querySelector(`[data-lf="${lf}"]`)?.classList.add('is-bad');
+              const msg = art.querySelector<HTMLElement>(`[data-lmsg="${l.key}"]`);
+              if (msg) {
+                const hint = (STATUS_HINT as Record<string, string>)[ls];
+                (msg.lastElementChild as HTMLElement).textContent = `✕ ${ls}${hint ? ` — ${hint}` : ''}`;
+                msg.hidden = false;
+              }
+            });
+            // 공정 시간 — 비워 둔 칸에 실제로 쓴 기본값을 흐리게 보여 준다
+            if (c.method === '박막자동' && st === '정상') {
+              const bd = r?.breakdown ?? {};
+              for (const k of ['loadingMin', 'setupMin', 'plasmaMin']) {
+                const inp = art.querySelector<HTMLInputElement>(`[data-f="${k}"]`);
+                if (inp && typeof bd[k] === 'number') inp.placeholder = `기본 ${fmt(bd[k])}`;
+              }
+            }
+          });
+        };
+
+        // ── 오른쪽 합계 ─────────────────────────────────────────────────
+        const setState = (text: string, tone: '' | 'ok' | 'bad' | 'busy' = '') => {
+          const el = $('qc-state');
+          el.textContent = text;
+          el.className = `qc-state${tone ? ` is-${tone}` : ''}`;
+        };
+        const renderSummary = () => {
+          const probs = $('qc-problems');
+          probs.hidden = true;
+          probs.innerHTML = '';
+          const ok = !!last && last.status === '정상';
+          $('qc-supply').textContent = ok ? won(last.supply) : '—';
+          $('qc-vat').textContent = ok ? won(last.vat) : '—';
+          $('qc-total').textContent = ok ? won(last.total) : '—';
+          $('qc-korean').textContent = ok && last.totalKorean ? `일금 ${last.totalKorean} 원정` : '';
+          $('qc-amounts').classList.toggle('is-stale', (pending || !!calcErr) && ok);
+          $<HTMLButtonElement>('qc-preview').disabled = !(fresh && ok);
+          if (!meta) { setState(metaTried ? '가격 DB 가 없어 계산할 수 없습니다.' : '가격 DB 불러오는 중…', metaTried ? 'bad' : 'busy'); return; }
+          if (calcErr) { setState(calcErr, 'bad'); return; }
+          if (pending) { setState('계산 중…', 'busy'); return; }
+          if (!last || last.status === '입력 대기') { setState('품목을 넣으면 금액이 계산됩니다.'); return; }
+          if (last.policyStatus && last.policyStatus !== '정상') {
+            setState(`가격 DB(엑셀 가격정책 탭)를 확인해야 합니다 — ${last.policyStatus}`, 'bad');
+            return;
+          }
+          if (ok) { setState(!EDIT ? '✓ 계산됨' : lockedNow ? '✓ 계산됨 (결제 완료 — 저장 잠김)' : '✓ 계산됨 — 저장할 수 있습니다.', 'ok'); return; }
+          // 최소청구·재료비 정책 문구는 정책 상태가 '정상'이어도 품목마다 붙는다 — 칸이 아니라 엑셀 가격정책을 고쳐야 한다
+          const policyItems = [...new Set((last.items ?? []).map((x: any) => String(x?.status ?? '')).filter((x: string) => isPolicyStatus(x)))];
+          if (policyItems.length) { setState(`가격 DB(엑셀 가격정책 탭)를 확인해야 합니다 — ${policyItems.join(' / ')}`, 'bad'); return; }
+          const list = problemsOf(last, lastRefs);
+          setState(list.length ? `고칠 곳 ${list.length}곳` : `확인 필요 — ${last.status}`, 'bad');
+          if (list.length) {
+            probs.innerHTML = list.slice(0, 8).map((p) => `<li><button type="button" data-goto="${p.card}" data-goto-l="${p.layer ?? ''}"` +
+              ` data-goto-f="${esc((p.layer !== null ? fieldForLayerStatus(p.status) : fieldForItemStatus(p.status)) ?? '')}">` +
+              `품목 ${p.card + 1}${p.layer !== null ? ` · ${p.layer + 1}번째 층` : ''} — ${esc(p.status)}</button></li>`).join('') +
+              (list.length > 8 ? `<li class="qc-sub">외 ${list.length - 8}곳</li>` : '');
+            probs.hidden = false;
+          }
+        };
+
+        // ── 계산(자동) ──────────────────────────────────────────────────
+        const calc = async () => {
+          if (calcTimer) clearTimeout(calcTimer);
+          if (!meta) { pending = false; renderResults(); renderSummary(); onFreshChange(); return; }
+          const { items, layers, layerRefs } = inputFromCards(cards);
+          const my = ++calcNo;
+          const sv = structVer;
+          pending = true;
+          calcErr = '';
+          renderSummary();
+          try {
+            const res = await fetch('/api/admin/quote-calc', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ items, layers }),
+            });
+            const j = await res.json().catch(() => ({}));
+            if (my !== calcNo) return;   // 그사이 입력이 바뀌었다 — 새 계산이 이미 예약돼 있다
+            pending = false;
+            if (res.status === 401) { calcErr = '로그인이 만료되었습니다 — /admin 에서 다시 로그인하세요.'; renderSummary(); onFreshChange(); return; }
+            if (!j.ok) { calcErr = `계산 실패: ${j.hint ?? j.error ?? res.status}`; renderSummary(); onFreshChange(); return; }
+            last = j.result;
+            lastItems = items;
+            lastLayers = layers;
+            lastRefs = layerRefs;
+            lastStruct = sv;
+            fresh = last.status === '정상';
+            renderResults();
+            renderSummary();
+            onFreshChange();
+          } catch (e) {
+            if (my !== calcNo) return;
+            pending = false;
+            calcErr = `계산 실패: ${e}`;
+            renderSummary();
+            onFreshChange();
+          }
+        };
+        const scheduleCalc = (ms = 450) => {
+          if (calcTimer) clearTimeout(calcTimer);
+          calcTimer = setTimeout(() => { void calc(); }, ms);
+        };
+        /** 품목·층 입력이 바뀌었다 — 이전 결과로는 저장·견적서를 못 하게 막고 다시 계산을 예약한다 */
+        const changed = (structural = false) => {
+          calcNo++;
+          if (structural) structVer++;
+          fresh = false;
+          pending = true;
+          calcErr = '';
+          cardsEl.classList.toggle('is-stale', !!last);
+          renderSummary();
+          onFreshChange();
+          scheduleCalc();
+        };
+        const structural = () => { changed(true); renderCards(); };
+
+        // ── 카드 입력 이벤트(위임) ───────────────────────────────────────
+        const cardIndexOf = (el: Element) => {
+          const k = Number((el.closest('[data-k]') as HTMLElement | null)?.dataset.k);
+          return cards.findIndex((c) => c.key === k);
+        };
+        const layerIndexOf = (c: Card, el: Element) => {
+          const lk = Number((el.closest('[data-lk]') as HTMLElement | null)?.dataset.lk);
+          return c.layers.findIndex((l) => l.key === lk);
+        };
+        cardsEl.addEventListener('input', (e) => {
+          const t = e.target;
+          if (!(t instanceof HTMLInputElement) || t.type === 'checkbox' || t.type === 'radio') return;
+          const ci = cardIndexOf(t);
+          if (ci < 0) return;
+          const c = cards[ci];
+          if (t.dataset.f) { (c as any)[t.dataset.f] = t.value; changed(false); return; }
+          if (t.dataset.lfIn) {
+            const li = layerIndexOf(c, t);
+            if (li < 0) return;
+            (c.layers[li] as any)[t.dataset.lfIn] = t.value;
+            changed(false);
+          }
+        });
+        cardsEl.addEventListener('change', (e) => {
+          const t = e.target;
+          if (!(t instanceof HTMLSelectElement) && !(t instanceof HTMLInputElement)) return;
+          const ci = cardIndexOf(t);
+          if (ci < 0) return;
+          const c = cards[ci];
+          if (t instanceof HTMLSelectElement) {
+            if (t.dataset.f === 'equipmentId') {
+              const next = t.value;
+              // '장비 선택'(빈 값)으로 돌리면 레시피는 그대로 둔다 — 목록이 전체로 바뀔 뿐.
+              // 다른 장비의 레시피가 든 층이 있으면 비우기 전에 묻는다(키보드로 목록을 훑다 지워지지 않게) — 취소하면 원래 값.
+              const foreign = next ? c.layers.filter((l) => l.recipeId.trim() && eqOf.get(l.recipeId.trim()) !== next).length : 0;
+              if (foreign && !confirm(`장비를 바꾸면 다른 장비의 레시피가 든 층 ${foreign}개의 레시피를 비웁니다. 바꿀까요?`)) {
+                t.value = c.equipmentId;
+                return;
+              }
+              c.equipmentId = next;
+              const n = next ? clearForeignRecipes(c, eqOf) : 0;
+              if (n) notes.set(c.key, `다른 장비의 레시피 ${n}개를 비웠습니다. 다시 고르세요.`); else notes.delete(c.key);
+              structural();
+              return;
+            }
+            if (t.dataset.f) {
+              (c as any)[t.dataset.f] = t.value;
+              if (t.dataset.f === 'margin' || t.dataset.f === 'substrateId') structural(); else changed(false);
+              return;
+            }
+            if (t.dataset.lfIn === 'recipeId') {
+              const li = layerIndexOf(c, t);
+              if (li < 0) return;
+              c.layers[li].recipeId = t.value;
+              // 장비를 안 고른 채 레시피를 고르면 그 레시피의 장비로 정한다(이후 목록은 그 장비 것만)
+              if (!c.equipmentId && t.value && eqOf.has(t.value)) { c.equipmentId = eqOf.get(t.value) ?? ''; structural(); } else changed(false);
+            }
+            return;
+          }
+          if (t.type === 'checkbox' && t.dataset.f === 'plasma') { c.plasma = t.checked ? 'Y' : 'N'; structural(); return; }
+          if (t.type === 'radio' && t.dataset.f === 'vat') { c.vat = t.value; changed(false); }
+        });
+        // [공정 시간 조정] 펼침 상태 기억 — toggle 은 거품이 일지 않아 잡기(capture)로 받는다
+        cardsEl.addEventListener('toggle', (e) => {
+          const d = e.target as HTMLDetailsElement;
+          const which = d.matches?.('[data-adv]') ? advOpen : d.matches?.('[data-bd]') ? bdOpen : null;
+          if (!which) return;
+          const ci = cardIndexOf(d);
+          if (ci >= 0) which.set(cards[ci].key, d.open);
+        }, true);
+        const totalLayers = () => cards.reduce((n, c) => n + (c.method === '박막자동' ? c.layers.length : 0), 0);
+        const focusIn = (key: number, sel: string) => {
+          const el = cardsEl.querySelector<HTMLElement>(`[data-k="${key}"] ${sel}`);
+          el?.focus({ preventScroll: false });
+        };
+        cardsEl.addEventListener('click', (e) => {
+          const b = (e.target as HTMLElement).closest<HTMLButtonElement>('button[data-act]');
+          if (!b || b.disabled) return;
+          const ci = cardIndexOf(b);
+          if (ci < 0) return;
+          const c = cards[ci];
+          const act = b.dataset.act;
+          if (act === 'method') {
+            const v = b.dataset.v ?? '';
+            if (v === c.method) return;
+            c.method = v;
+            if (v === '박막자동' && !c.layers.length) c.layers.push(newLayer());
+            structural();
+            return;
+          }
+          if (act === 'up' || act === 'down') {
+            const j = ci + (act === 'up' ? -1 : 1);
+            if (j < 0 || j >= cards.length) return;
+            [cards[ci], cards[j]] = [cards[j], cards[ci]];
+            structural();
+            return;
+          }
+          if (act === 'del') {
+            if (!isBlankCard(c) && !confirm(`품목 ${ci + 1}${c.name.trim() ? ` "${c.name.trim()}"` : ''}을(를) 지울까요?`)) return;
+            cards.splice(ci, 1);
+            notes.delete(c.key);
+            advOpen.delete(c.key);
+            structural();
+            return;
+          }
+          if (act === 'ladd') {
+            if (totalLayers() >= MAX_LAYERS) { notes.set(c.key, `층은 모든 품목을 합쳐 ${MAX_LAYERS}개까지 넣을 수 있습니다(엑셀과 같음).`); renderCards(); return; }
+            const l = newLayer();
+            c.layers.push(l);
+            structural();
+            focusIn(c.key, `[data-lk="${l.key}"] [data-lf-in="recipeId"]`);
+            return;
+          }
+          const li = layerIndexOf(c, b);
+          if (li < 0) return;
+          if (act === 'lup' || act === 'ldown') {
+            const lj = li + (act === 'lup' ? -1 : 1);
+            if (lj < 0 || lj >= c.layers.length) return;
+            [c.layers[li], c.layers[lj]] = [c.layers[lj], c.layers[li]];
+            structural();
+            return;
+          }
+          if (act === 'ldel') {
+            c.layers.splice(li, 1);
+            if (!c.layers.length) c.layers.push(newLayer());
+            structural();
+          }
+        });
+        document.querySelectorAll<HTMLButtonElement>('[data-add]').forEach((b) => b.addEventListener('click', () => {
+          if (cards.length >= MAX_ITEMS) return;
+          const c = newCard(b.dataset.add ?? '박막자동');
+          cards.push(c);
+          structural();
+          focusIn(c.key, '[data-f="name"]');
+        }));
+        // 오른쪽 '고칠 곳' → 그 카드·칸으로
+        $('qc-problems').addEventListener('click', (e) => {
+          const b = (e.target as HTMLElement).closest<HTMLElement>('[data-goto]');
+          if (!b) return;
+          const c = cards[Number(b.dataset.goto)];
+          if (!c) return;
+          const art = cardsEl.querySelector<HTMLElement>(`[data-k="${c.key}"]`);
+          if (!art) return;
+          const li = b.dataset.gotoL === '' ? null : Number(b.dataset.gotoL);
+          const f = b.dataset.gotoF ?? '';
+          const pickIn = (root: ParentNode, sel: string) => root.querySelector<HTMLElement>(sel);
+          let target: HTMLElement | null = null;
+          if (li !== null && c.layers[li]) {
+            const row = art.querySelector<HTMLElement>(`[data-lk="${c.layers[li].key}"]`);
+            if (row) target = f === 'name' ? pickIn(art, '[data-f="name"]')
+              : f ? pickIn(row, `td[data-lf="${f}"] input, td[data-lf="${f}"] select`) : pickIn(row, 'select, input');
+          } else {
+            const SEL: Record<string, string> = {
+              layers: '[data-lf-in="recipeId"]', times: '[data-f="loadingMin"]', equipment: '[data-f="equipmentId"]',
+              method: '[data-act="method"][aria-checked="true"]', vat: '[data-f="vat"]', plasma: '[data-f="plasma"]',
+              margin: c.margin === '직접입력' ? '[data-f="directMarkup"]' : '[data-f="margin"]',
+            };
+            target = (f && pickIn(art, SEL[f] ?? `[data-fw="${f}"] input, [data-fw="${f}"] select`)) || pickIn(art, '[data-f="name"]');
+          }
+          for (let d = target?.closest('details'); d; d = d.parentElement?.closest('details') ?? null) (d as HTMLDetailsElement).open = true;
+          (target ?? art).scrollIntoView({ block: 'center', behavior: reduceMotion ? 'auto' : 'smooth' });
+          target?.focus({ preventScroll: true });
+        });
+
+        // ── 견적서 정보 ─────────────────────────────────────────────────
         const infoEls = () => Array.from(document.querySelectorAll<HTMLInputElement>('[data-info]'));
         const readInfo = () => Object.fromEntries(infoEls().map((el) => [el.dataset.info!, el.value.trim()])) as Record<string, string>;
         const setInfo = (v: Record<string, unknown>) => infoEls().forEach((el) => { if (el.dataset.info! in v) el.value = String(v[el.dataset.info!] ?? ''); });
@@ -390,153 +1001,78 @@ const qvText = editId ? JSON.stringify({ ko: siteData.ko.quote.view, en: siteDat
           delivery: meta?.defaults.delivery ?? '', validDays: meta?.defaults.validDays ?? '',
         });
 
-        // 입력이 바뀌면 이전 결과로 견적서를 뽑지 못하게 막는다(화면과 문서가 어긋나는 사고 방지).
-        const stale = () => {
-          calcNo++;
-          $<HTMLButtonElement>('qc-preview').disabled = true;
-          if (last) $('qc-note').textContent = '입력이 바뀌었습니다 — 다시 계산하세요.';
-          fresh = false;
-          onFreshChange();
+        const showOrphans = (list: { itemNo: unknown; recipeId: string; thicknessNm: string }[]) => {
+          const el = $('qc-orphans');
+          el.textContent = list.length
+            ? `어느 품목에도 연결되지 않은 층 ${list.length}개는 계산에서 뺐습니다: ` +
+              list.map((o) => `${recipeLabel(o.recipeId) || '레시피 없음'} ${o.thicknessNm ? `${o.thicknessNm} nm` : ''}`.trim()).join(', ') +
+              ' — 필요하면 박막 증착 품목에 다시 넣으세요.'
+            : '';
+          el.hidden = !list.length;
         };
-        // 편집 모드의 메모·견적서 언어(data-nostale)는 계산 입력이 아니다 — 계산기 모드에는 그런 요소가 없다.
-        const inputChanged = (e: Event) => { if (!(e.target as HTMLElement)?.closest?.('[data-nostale]')) stale(); };
-        root.addEventListener('input', inputChanged);
-        root.addEventListener('change', inputChanged);
-        root.addEventListener('click', (e) => {
-          const t = e.target as HTMLElement;
-          if (t.matches('[data-del]')) { t.closest('tr')!.remove(); renumber(); stale(); }
-        });
-
-        const reset = () => {
-          calcNo++;
-          itemsBody().innerHTML = '';
-          layersBody().innerHTML = '';
-          addItem();
-          addLayer({ itemNo: 1, order: 1, repeat: 1 });
-          setInfo(infoDefaults());
-          last = null;
-          $('qc-result').hidden = true;
-          $('qc-note').textContent = '';
-          $<HTMLButtonElement>('qc-preview').disabled = true;
-          fresh = false;
-          onFreshChange();
+        const fillNote = (text: string) => {
+          const el = $('qc-fillnote');
+          el.textContent = text;
+          el.hidden = !text;
         };
 
-        // 예시 — 입력만 채운다. 기대 금액은 여기 적지 않는다(계산은 서버가 한다).
-        // ⚠️ 레시피는 불러온 목록의 첫 번째 활성 레시피를 런타임에 고른다 — 실제 레시피 ID·장비 이름을
-        //    코드에 적지 않는다(공개 저장소). 활성 레시피가 없으면 예시 버튼을 끈다.
-        const exampleRecipe = () => (meta?.recipes ?? []).find((r) => r.active === 1) ?? null;
-        const example = () => {
-          const r = exampleRecipe();
-          if (!r) return;
-          itemsBody().innerHTML = '';
-          layersBody().innerHTML = '';
-          addItem({ name: `${r.material_name} 20nm 증착`, method: '박막자동', qty: 2, unit: '회', vat: '별도', margin: '기본', plasma: 'N',
-            rawText: `${r.material_name} 20nm 2회, 플라즈마 미포함, 기본 마진` });
-          addItem({ name: '샘플박스', method: '단가입력', qty: 1, unit: 'BOX', amount: 40000, vat: '별도', rawText: '샘플박스 1 BOX, 부가세 별도' });
-          addLayer({ itemNo: 1, order: 1, recipeId: r.recipe_id, thicknessNm: 20, repeat: 1 });
-          setInfo({ ...infoDefaults(), customer: '예시 고객', ref: '내부 검증', title: '박막 증착 및 샘플박스' });
-          stale();
-        };
-
-        // ── 결과 표시 ──────────────────────────────────────────────────
-        const BD: [string, string][] = [
-          ['layerCount', '층 수'], ['equipmentId', '장비 ID'], ['materialCost', '재료비/회'], ['depositMin', '증착시간/회'],
-          ['depositCost', '증착장비비/회'], ['loadingMin', '로딩 분/회'], ['setupMin', '셋업 분/회'], ['plasmaMin', '플라즈마 분/회'],
-          ['waitMin', '대기 분/회'], ['ratePerMin', '장비요율'], ['substrateCost', '기판원가/회'], ['cost', '원가/회'],
-          ['markup', '가산율'], ['markupAmount', '가산금액/회'], ['priceBeforeFloor', '절삭 전 단가'],
-        ];
-        const st = (s: string) => (s === '정상' ? `<span class="qc-ok">정상</span>` : s === '' ? '' : `<span class="qc-bad">${esc(s)}</span>`);
-
-        const showResult = (r: any, items: any[]) => {
-          $('qc-result').hidden = false;
-          const banner = $('qc-banner');
-          const good = r.status === '정상';
-          banner.className = `mt-4 rounded-lg border p-4 text-sm font-semibold ${good ? 'border-ok/30 bg-ok/10 text-ok'
-            : r.status === '입력 대기' ? 'border-ink/10 bg-ink/[0.03] text-ink/60' : 'border-danger/30 bg-danger/10 text-danger'}`;
-          banner.textContent = `견적 상태: ${r.status}` + (r.policyStatus !== '정상' ? ` · 가격 정책: ${r.policyStatus}` : '');
-
-          $('qc-r-items').innerHTML =
-            `<thead><tr><th>번호</th><th>품명</th><th>상태</th><th>규격</th><th>단가</th><th>공급가액</th><th>세액</th><th>합계</th><th>원가 내역</th></tr></thead><tbody>` +
-            r.items.map((it: any, i: number) => it.status === '' ? '' :
-              `<tr><td class="num">${esc(it.no)}</td><td>${esc(items[i]?.name)}</td><td>${st(it.status)}</td><td class="pre">${esc(it.spec)}</td>` +
-              `<td class="num">${fmt(it.unitPrice)}</td><td class="num">${fmt(it.supply)}</td><td class="num">${fmt(it.vat)}</td><td class="num">${fmt(it.total)}</td>` +
-              `<td>${items[i]?.method === '박막자동' ? `<details><summary class="cursor-pointer text-ink/55">펼치기</summary>` +
-                `<table class="qc-table mt-2">${BD.map(([k, l]) => `<tr><th>${esc(l)}</th><td class="num">${fmt(it.breakdown?.[k])}</td></tr>`).join('')}</table></details>` : ''}</td></tr>`,
-            ).join('') + '</tbody>';
-
-          $('qc-r-layers').innerHTML =
-            `<thead><tr><th>품목</th><th>순서</th><th>레시피</th><th>상태</th><th>규격</th></tr></thead><tbody>` +
-            r.layers.map((l: any) => l.status === '' ? '' :
-              `<tr><td class="num">${esc(l.itemNo)}</td><td class="num">${esc(l.order)}</td><td>${esc(l.recipeId)}</td><td>${st(l.status)}</td><td class="pre">${esc(l.spec)}</td></tr>`,
-            ).join('') + '</tbody>';
-
-          $('qc-total').innerHTML = good
-            ? `공급가액 <b>₩${fmt(r.supply)}</b> · 세액 <b>₩${fmt(r.vat)}</b> · 합계 <b>₩${fmt(r.total)}</b><br><span class="text-ink/60">일금 ${esc(r.totalKorean)} 원정</span>`
-            : '<span class="text-ink/55">오류가 있어 금액을 내보내지 않습니다(엑셀과 같음).</span>';
-        };
-
-        const calc = async () => {
-          const items = readItems();
-          const layers = readLayers();
-          const my = ++calcNo;
-          const dropped = () => {
-            if (my === calcNo) return false;
-            $('qc-note').textContent = '입력이 바뀌어 이 계산 결과는 버렸습니다 — 다시 계산하세요.';
-            return true;
-          };
-          $('qc-note').textContent = '계산 중…';
-          try {
-            const res = await fetch('/api/admin/quote-calc', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ items, layers }),
-            });
-            const j = await res.json().catch(() => ({}));
-            if (dropped()) return;
-            if (res.status === 401) { $('qc-note').textContent = '로그인이 만료되었습니다 — /admin 에서 다시 로그인하세요.'; return; }
-            if (!j.ok) { $('qc-note').textContent = `계산 실패: ${j.hint ?? j.error ?? res.status}`; return; }
-            last = j.result;
-            lastItems = items;
-            lastLayers = layers;
-            showResult(last, items);
-            $('qc-note').textContent = '';
-            $<HTMLButtonElement>('qc-preview').disabled = last.status !== '정상';
-            fresh = last.status === '정상';
-            onFreshChange();
-          } catch (e) {
-            if (dropped()) return;
-            $('qc-note').textContent = `계산 실패: ${e}`;
-          }
-        };
-
-        // 편집 모드 견적서 옵션(언어·도장·안내) — 계산기 모드는 {} 라 지금과 같은 문서
+        // ── 견적서 미리보기 ─────────────────────────────────────────────
+        // 편집 모드 견적서 옵션(언어·도장·안내) — 계산기 모드는 {} 라 예상 표시 없는 기본 견적서
         let editDocOpts: () => Record<string, string> = () => ({});
         const preview = () => {
-          if (!last || last.status !== '정상') return;
-          const info = readInfo();
+          if (!last || last.status !== '정상' || !fresh) return;
           const html = buildQuoteDoc({
             ...editDocOpts(),
-            info: info as any,
+            info: readInfo() as any,
             items: last.items.map((it: any, i: number) => it.status !== '정상' ? null : {
               name: String(lastItems[i]?.name ?? ''), spec: it.spec, qty: lastItems[i]?.qty, unit: lastItems[i]?.unit,
               unitPrice: it.unitPrice, supply: it.supply, vat: it.vat,
             }),
             supply: last.supply, vat: last.vat, total: last.total, totalKorean: last.totalKorean,
           });
-          if (!openDoc(html)) $('qc-note').textContent = '팝업이 차단되었습니다 — 이 사이트의 팝업을 허용해 주세요.';
+          $('qc-note').textContent = openDoc(html) ? '' : '팝업이 차단되었습니다 — 이 사이트의 팝업을 허용해 주세요.';
         };
-
-        $('qc-add-item').addEventListener('click', () => { addItem(); stale(); });
-        $('qc-add-layer').addEventListener('click', () => {
-          const n = layersBody().children.length;
-          addLayer({ itemNo: 1, order: n + 1, repeat: 1 });
-          stale();
-        });
-        $('qc-calc').addEventListener('click', calc);
-        if (!EDIT) $('qc-reset').addEventListener('click', reset);
-        $('qc-example').addEventListener('click', example);
         $('qc-preview').addEventListener('click', preview);
+        $('qc-calc').addEventListener('click', () => { void calc(); });
+
+        // ── 계산기 모드 ─────────────────────────────────────────────────
+        const exampleRecipe = () => (meta?.recipes ?? []).find((r) => isActive(r.active)) ?? null;
+        const clearResult = () => {
+          last = null;
+          lastStruct = -1;
+          calcErr = '';
+        };
+        const reset = () => {
+          cards = [newCard('박막자동')];
+          notes.clear();
+          advOpen.clear();
+          clearResult();
+          setInfo(infoDefaults());
+          showOrphans([]);
+          fillNote('');
+          structural();
+        };
+        // 예시 — 입력만 채운다. 레시피는 불러온 목록의 첫 번째 사용 중 레시피를 런타임에 고른다
+        // (실제 레시피 ID·장비 이름을 코드에 적지 않는다 — 공개 저장소).
+        const example = () => {
+          const r = exampleRecipe();
+          if (!r) return;
+          const c1 = newCard('박막자동', {
+            name: `${r.material_name} 20nm 증착`, qty: '2', margin: '기본', plasma: 'N', equipmentId: String(r.equipment_id),
+            rawText: `${r.material_name} 20nm 2회, 플라즈마 미포함, 기본 마진`,
+          });
+          c1.layers = [newLayer({ recipeId: String(r.recipe_id), thicknessNm: '20' })];
+          const c2 = newCard('단가입력', { name: '샘플박스', qty: '1', unit: 'BOX', amount: '40000', vat: '별도', rawText: '샘플박스 1 BOX, 부가세 별도' });
+          cards = [c1, c2];
+          notes.clear();
+          advOpen.clear();
+          setInfo({ ...infoDefaults(), customer: '예시 고객', ref: '내부 검증', title: '박막 증착 및 샘플박스' });
+          structural();
+        };
+        if (!EDIT) {
+          $('qc-reset').addEventListener('click', reset);
+          $('qc-example').addEventListener('click', example);
+        }
 
         // ── 편집 모드 (/admin/quote?id=INQ-…) ───────────────────────────
         let startEdit: () => Promise<void> = async () => {};
@@ -551,7 +1087,6 @@ const qvText = editId ? JSON.stringify({ ko: siteData.ko.quote.view, en: siteDat
           injectQuoteViewStyle(document);
           const STATUS_KO: Record<string, string> = { new: '신규', quoted: '견적 발송', replied: '회신 완료', paid: '결제 완료', closed: '종료' };
           const VIEW_KO: Record<string, string> = { estimate: '예상 견적', reviewing: '담당자 확인 중', confirmed: '확정 견적' };
-          const won = (n: unknown) => (typeof n === 'number' ? `₩${n.toLocaleString('ko-KR')}` : '—');
           const who = (src: string) => (src === 'auto' ? '자동' : '담당자');
           const revTotal = (r: { kind: string; total: number | null }) => (r.kind === 'manual' || r.total == null ? '담당자 확인' : won(r.total));
 
@@ -564,6 +1099,12 @@ const qvText = editId ? JSON.stringify({ ko: siteData.ko.quote.view, en: siteDat
           onFreshChange = () => {
             const ok = fresh && !locked && !busy && !!L && last?.status === '정상';
             saveBtns().forEach((b) => { b.disabled = !ok; });
+            $('qe-why').textContent = ok ? ''
+              : locked ? '결제가 끝난 견적이라 저장할 수 없습니다.'
+              : busy ? '저장 중…'
+              : !L ? '문의를 불러오는 중…'
+              : pending ? '계산이 끝나면 저장할 수 있습니다.'
+              : '계산 결과가 정상이어야 저장할 수 있습니다.';
           };
           const msg = (html: string, tone: 'ok' | 'warn' | 'bad' | '' = '') => {
             const m = $('qe-msg');
@@ -572,6 +1113,7 @@ const qvText = editId ? JSON.stringify({ ko: siteData.ko.quote.view, en: siteDat
             m.hidden = !html;
           };
           const confirmedNow = () => typeof L?.inquiry?.quoted_amount === 'number' && L.inquiry.quoted_amount > 0;
+          const usdConfirmed = () => confirmedNow() && String(L?.inquiry?.quote_currency ?? '').toUpperCase() === 'USD';
           editDocOpts = () => {
             const lang = ($<HTMLSelectElement>('qe-lang').value === 'en' ? 'en' : 'ko') as 'ko' | 'en';
             const T = QV[lang];
@@ -583,7 +1125,7 @@ const qvText = editId ? JSON.stringify({ ko: siteData.ko.quote.view, en: siteDat
 
           const showView = (view: any) => {
             const html = renderQuoteBox(view, QV.ko);
-            $('qe-view').innerHTML = html || '<p class="qe-sub">고객 화면에 표시되는 견적이 없습니다.</p>';
+            $('qe-view').innerHTML = html || '<p class="qc-sub">고객 화면에 표시되는 견적이 없습니다.</p>';
             $('qe-view-wrap').hidden = false;
             $('qe-view').querySelector('[data-qv-doc]')?.addEventListener('click', () => {
               const o = docOptions(view, QV.ko, 'ko');
@@ -631,9 +1173,20 @@ const qvText = editId ? JSON.stringify({ ko: siteData.ko.quote.view, en: siteDat
             $('qe-raw').hidden = !q.details;
 
             locked = !!q.paid_at;
+            lockedNow = locked;
             const lk = $('qe-lock');
             lk.textContent = locked ? '결제가 끝난 견적이라 저장할 수 없습니다(편집 잠금). 계산·미리보기는 할 수 있습니다.' : '';
             lk.hidden = !locked;
+
+            // 저장 버튼 설명 — 지금 문의 상태에 맞춰
+            $('qe-rule-save').textContent = usdConfirmed()
+              ? '[저장] 새 개정으로 쌓이고 고객 화면에 바로 보입니다. USD 로 확정된 문의라 확정 금액은 바뀌지 않습니다(견적 탭에서 고치세요).'
+              : confirmedNow()
+                ? '[저장] 이미 확정된 문의라 확정 금액도 이 합계로 바뀝니다. 고객 화면에 바로 보입니다.'
+                : "[저장] 새 개정으로 쌓이고, 고객 조회 화면에 '예상 견적(담당자 수정)'으로 바로 보입니다.";
+            $('qe-rule-confirm').textContent = usdConfirmed()
+              ? "[저장 + 견적 확정] 원화(KRW) 확정으로 바뀌어 고객 화면의 PayPal 결제 버튼이 사라집니다. 상태는 '견적 발송'."
+              : "[저장 + 견적 확정] 확정 금액이 이 합계(원화)가 되고, 상태는 '견적 발송', 고객 화면은 '확정 견적'이 됩니다.";
 
             const curRev = j.current?.rev;
             $('qe-history').innerHTML = revs.length
@@ -646,47 +1199,56 @@ const qvText = editId ? JSON.stringify({ ko: siteData.ko.quote.view, en: siteDat
             $('qe-view-wrap').hidden = true;
             if (j.view) showView(j.view);
             onFreshChange();
+            renderSummary();   // 잠김 여부가 합계 칸 문구에도 반영되게
           };
 
           /** 칸 채우기 — 불러온 개정의 입력(없으면 접수 사본으로 만든 입력)과 견적 정보 */
           const fill = (j: Loaded) => {
-            calcNo++;
             const input = j.current?.input ?? j.prefill?.input ?? null;
-            itemsBody().innerHTML = '';
-            layersBody().innerHTML = '';
-            const its = Array.isArray(input?.items) ? input.items.slice(0, MAX_ITEMS) : [];
-            const ls = Array.isArray(input?.layers) ? input.layers : [];
-            if (its.length) its.forEach((v: any) => addItem(v ?? {})); else addItem();
-            if (ls.length) ls.forEach((v: any) => addLayer(v ?? {})); else addLayer({ itemNo: 1, order: 1, repeat: 1 });
+            const got = cardsFromInput(input, meta?.recipes ?? []);
+            cardsLoading = false;
+            cards = got.cards.length ? got.cards : [newCard('박막자동')];
+            notes.clear();
+            advOpen.clear();
+            clearResult();
+            showOrphans(got.orphans);
             const info = { ...(j.current?.info ?? j.defaultInfo) };
             const prev = String(info.date ?? '');
             info.date = serverDefaults.date;
             if (!String(info.quoteNo ?? '').trim()) info.quoteNo = EDIT;
             setInfo(info);
             const pd = $('qe-prevdate');
-            pd.textContent = j.current?.info && prev ? `직전 견적일 ${prev}` : '';
+            pd.textContent = j.current?.info && prev ? `직전 견적일 ${prev} — 견적일은 오늘로 바꿔 두었습니다.` : '';
             pd.hidden = !pd.textContent;
             $<HTMLInputElement>('qe-note').value = '';
             $<HTMLSelectElement>('qe-lang').value = j.inquiry.locale === 'en' ? 'en' : 'ko';
-            last = null;
-            $('qc-result').hidden = true;
-            $<HTMLButtonElement>('qc-preview').disabled = true;
-            fresh = false;
-            const why = !j.current && j.prefill?.manualAdmin?.length ? ` 자동 계산이 안 된 항목: ${j.prefill.manualAdmin.join(' / ')}` : '';
-            $('qc-note').textContent = (j.current ? `개정 ${j.current.rev}을(를) 불러왔습니다 — 계산을 눌러 확인하세요.`
-              : j.prefill ? '접수 내용으로 칸을 채웠습니다 — 계산을 눌러 확인하세요.' : '불러올 견적 입력이 없습니다 — 직접 입력하세요.') + why;
-            onFreshChange();
+            const reasons: string[] = j.current
+              ? (j.current.source === 'auto' && j.current.kind === 'manual' ? j.current.manualAdmin ?? [] : [])
+              : j.prefill?.manualAdmin ?? [];
+            const head = j.current ? `개정 ${j.current.rev}을(를) 불러왔습니다.`
+              : j.prefill ? '접수 내용으로 품목을 채웠습니다.' : '불러올 견적 입력이 없습니다 — 품목을 직접 넣으세요.';
+            fillNote(reasons.length
+              ? `${head} 자동 계산이 안 된 항목: ${reasons.join(' / ')} — 필요한 줄을 [+ 금액 입력 품목]으로 추가하세요.`
+              : head);
+            structural();
+          };
+
+          /** 처음 불러오기에 실패하면 품목 칸에도 알린다(불러오기 전 안내가 그대로 남지 않게) */
+          const loadFailed = () => {
+            if (!cardsLoading) return;
+            cardsEl.innerHTML = '<p class="qc-empty">문의를 불러오지 못했습니다 — 위 안내를 확인하세요.</p>';
           };
 
           /** GET — rev 가 있으면 그 개정. doFill 이 거짓이면 패널·이력·기준 개정만 새로 고친다(칸은 그대로). */
           const load = async (rev: number | null, doFill: boolean) => {
             const res = await fetch(`/api/admin/quote-rev?id=${encodeURIComponent(EDIT)}${rev ? `&rev=${rev}` : ''}`, { cache: 'no-store' });
             const j = await res.json().catch(() => ({}));
-            if (res.status === 401) { $('qe-load').textContent = '로그인이 만료되었습니다 — /admin 에서 다시 로그인하세요.'; return false; }
+            if (res.status === 401) { $('qe-load').textContent = '로그인이 만료되었습니다 — /admin 에서 다시 로그인하세요.'; $('qe-load').hidden = false; loadFailed(); return false; }
             if (!j.ok) {
               $('qe-load').textContent = j.error === 'not_found' ? '이 접수번호의 문의가 없습니다.'
                 : j.error === 'not_quote' ? '견적 요청이 아닌 문의입니다.' : `불러오기 실패 (${j.error ?? res.status})`;
               $('qe-load').hidden = false;
+              loadFailed();
               return false;
             }
             L = j as Loaded;
@@ -704,6 +1266,7 @@ const qvText = editId ? JSON.stringify({ ko: siteData.ko.quote.view, en: siteDat
               const el = $('qe-load');
               el.textContent = '불러오기 실패 — 새로고침하세요';
               el.hidden = false;
+              loadFailed();
               return false;
             }
           };
@@ -711,14 +1274,13 @@ const qvText = editId ? JSON.stringify({ ko: siteData.ko.quote.view, en: siteDat
           const save = async (confirmIt: boolean) => {
             if (!L || !fresh || locked || busy || last?.status !== '정상') return;
             // USD 로 확정된 문의는 확정 저장하면 원화 확정으로 바뀐다(서버 동작 그대로) — PayPal 버튼이 사라지니 먼저 알린다
-            const usdConfirmed = String(L.inquiry.quote_currency ?? '').toUpperCase() === 'USD'
-              && typeof L.inquiry.quoted_amount === 'number' && L.inquiry.quoted_amount > 0;
-            const usdWarn = usdConfirmed
+            const usdWarn = usdConfirmed()
               ? '이 문의는 USD 로 확정돼 있습니다. 확정 저장하면 원화(KRW) 확정으로 바뀌고 고객 화면의 PayPal 결제 버튼이 사라집니다.\n\n' : '';
             if (confirmIt && !confirm(`${usdWarn}고객 화면이 '확정 견적'으로 바뀝니다. 확정할까요?`)) return;
             busy = true;
             onFreshChange();
             msg('저장 중…');
+            const calcAtSave = calcNo;   // 저장하는 동안 입력이 바뀌면 이 번호가 올라간다
             try {
               const res = await fetch('/api/admin/quote-rev', {
                 method: 'POST',
@@ -737,6 +1299,7 @@ const qvText = editId ? JSON.stringify({ ko: siteData.ko.quote.view, en: siteDat
                   msg(`저장됨 — 개정 ${esc(j.rev)} · 고객 조회 화면에 반영됨 (합계 ${esc(won(j.total))})${warn}`, j.warning ? 'warn' : 'ok');
                 }
                 $<HTMLInputElement>('qe-note').value = '';
+                fillNote('');   // '개정 N을 불러왔습니다' 안내는 저장 뒤에는 맞지 않는다
                 await loadSafe(null, false);
                 if (j.view) showView(j.view);
                 return;
@@ -756,11 +1319,14 @@ const qvText = editId ? JSON.stringify({ ko: siteData.ko.quote.view, en: siteDat
                 return;
               }
               if (j.error === 'engine') {
-                // 서버 재계산 결과가 '정상'이 아님 — 계산 결과와 같은 방식으로 보여준다(저장 안 됨)
-                last = j.result;
-                showResult(j.result, lastItems);
-                fresh = false;
-                $<HTMLButtonElement>('qc-preview').disabled = true;
+                // 서버 재계산 결과가 '정상'이 아님 — 계산 결과와 같은 방식으로 보여준다(저장 안 됨).
+                // 그사이 입력이 바뀌었으면 화면은 새 입력의 계산을 따른다(옛 결과로 덮지 않는다).
+                if (calcNo === calcAtSave) {
+                  last = j.result;
+                  fresh = false;
+                  renderResults();
+                  renderSummary();
+                }
                 msg(`저장하지 않았습니다 — 서버 계산 결과: ${esc(j.status)}`, 'bad');
                 return;
               }
@@ -773,8 +1339,8 @@ const qvText = editId ? JSON.stringify({ ko: siteData.ko.quote.view, en: siteDat
             }
           };
 
-          $('qe-save').addEventListener('click', () => save(false));
-          $('qe-save-confirm').addEventListener('click', () => save(true));
+          $('qe-save').addEventListener('click', () => { void save(false); });
+          $('qe-save-confirm').addEventListener('click', () => { void save(true); });
           $('qc-reset').addEventListener('click', () => { if (L) fill(L); });
           $('qe-history').addEventListener('click', async (e) => {
             const b = (e.target as HTMLElement).closest('[data-load-rev]') as HTMLElement | null;
@@ -784,10 +1350,12 @@ const qvText = editId ? JSON.stringify({ ko: siteData.ko.quote.view, en: siteDat
             await loadSafe(Number(b.dataset.loadRev), true);
           });
           startEdit = async () => { await loadSafe(null, true); };
+          onFreshChange();
         }
 
         // ── 시작: 메타(이름 목록)만 받는다 ──────────────────────────────
-        renderHeads();
+        renderCards();
+        renderSummary();
         (async () => {
           try {
             const res = await fetch('/api/admin/quote-calc');
@@ -799,6 +1367,9 @@ const qvText = editId ? JSON.stringify({ ko: siteData.ko.quote.view, en: siteDat
               $('qc-meta').textContent = '가격 DB 없음';
             } else {
               meta = j as Meta;
+              eqOf = new Map(meta.recipes.map((r) => [String(r.recipe_id), String(r.equipment_id)]));
+              eqOpts = equipmentOptions(meta.equipment, meta.recipes);
+              subOpts = substrateOptions(meta.substrates);
               const lg = meta.importLog;
               $('qc-meta').textContent = `가격 DB: 레시피 ${meta.recipes.length} · 장비 ${meta.equipment.length} · 기판 ${meta.substrates.length}` +
                 (lg ? ` · 가져옴 ${lg.imported_at} · ${lg.rules_version} · sha256 ${lg.sha256}` : '');
@@ -806,9 +1377,10 @@ const qvText = editId ? JSON.stringify({ ko: siteData.ko.quote.view, en: siteDat
           } catch (e) {
             $('qc-meta').textContent = `가격 DB 확인 실패: ${e}`;
           }
-          $<HTMLButtonElement>('qc-example').disabled = !exampleRecipe();
-          reset();
-          await startEdit();
+          metaTried = true;
+          if (!EDIT) $<HTMLButtonElement>('qc-example').disabled = !exampleRecipe();
+          if (EDIT) await startEdit(); else reset();
+          renderSummary();
         })();
       }
     </script>
