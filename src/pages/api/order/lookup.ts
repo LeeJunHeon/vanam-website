@@ -79,6 +79,11 @@ export const POST: APIRoute = async ({ request }) => {
           id: q.id,
           type: q.type,
           status: q.status,
+          // 견적서 '귀하'·요청서 요청자 칸용 — 접수번호 + 이메일을 아는 본인에게만 나간다(주문 조회의 배송지와 같은 기준).
+          // (허용목록에서 빠지면 오류 없이 null 이 된다 — 지뢰 ㉟)
+          name: q.name ?? null,
+          company: q.company ?? null,
+          phone: q.phone ?? null,
           // 접수 당시 언어로 굳은 product_name 대신, 화면이 보고 있는 언어로 다시 그리기 위해
           // 상품 id 도 함께 내려준다. (허용목록에서 빠지면 오류 없이 null 이 된다 — 지뢰 ㉟)
           product_sku: q.product_sku ?? null,
@@ -137,6 +142,9 @@ export const POST: APIRoute = async ({ request }) => {
       paid_at: o.paid_at,
       pay_method: o.pay_method,
       created_at: o.created_at,
+      // 주문서 '귀하' 줄용 — 본인 확인(주문번호 + 이메일)을 통과한 요청에만 나간다
+      buyer_name: o.buyer_name ?? null,
+      buyer_company: o.buyer_company ?? null,
       needs_shipping: o.needs_shipping,
       // 배송지 표시용 — DB(SELECT *)에는 있었지만 허용목록에서 빠져
       // 조회 화면이 빈 값을 조합해 "·" 만 남던 결함(지뢰 ㉟형)의 수정.

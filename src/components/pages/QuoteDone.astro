@@ -31,7 +31,6 @@ const t = isKo
       expired: '제출 내용은 요청하신 브라우저에서만 표시됩니다. 지금은 내용을 확인할 수 없지만, 접수번호와 이메일로 진행 상태를 조회하실 수 있습니다.',
       lookup: '진행 상태 조회', shop: '제품 보기', contact: '문의하기',
       labels: { product: '요청 상품', name: '이름', company: '소속', email: '이메일', phone: '연락처', material: '소재', method: '공정', substrate: '기판' },
-      docTitle: '견적 요청서',
     }
   : {
       meta: 'Quote request received | VanaM',
@@ -47,7 +46,6 @@ const t = isKo
       expired: 'The submitted content is only shown in the browser you used. You can still check the status with the reference number and your email.',
       lookup: 'Check status', shop: 'Products', contact: 'Contact',
       labels: { product: 'Requested item', name: 'Name', company: 'Company', email: 'Email', phone: 'Phone', material: 'Material', method: 'Process', substrate: 'Substrate' },
-      docTitle: 'Quote Request',
     };
 ---
 
@@ -62,8 +60,6 @@ const t = isKo
 
     <div id="qd-root" class="mt-10 rounded-xl border border-ink/10 bg-ink/[0.02] p-8"
       data-labels={JSON.stringify(t.labels)}
-      data-doc-title={t.docTitle}
-      data-print-label={t.print}
       data-qv={JSON.stringify(QV)}>
       <div>
         <p class="text-sm text-ink/45">{t.refNo}</p>
@@ -105,7 +101,8 @@ const t = isKo
 
 <script>
   import { renderQuoteBox, docOptions, injectQuoteViewStyle } from '../../lib/quote-view-render.js';
-  import { buildQuoteDoc, openQuoteDoc } from '../../lib/quote-doc';
+  // 서류는 견적서·요청서 모두 엑셀 틀(src/lib/doc-excel.js) — 견적 폼의 [견적 요청서 다운로드]와 같은 요청서
+  import { buildQuoteDoc, buildRequestDoc, openDoc, requestDocFrom, ymdLocal } from '../../lib/quote-doc';
   // 접수번호는 URL 로, 제출 내용은 세션으로 받는다.
   const root = document.getElementById('qd-root')!;
   const L: Record<string, string> = JSON.parse(root.dataset.labels || '{}');
@@ -149,35 +146,19 @@ const t = isKo
     }
     (document.getElementById('qd-summary') as HTMLElement).hidden = false;
 
-    // 인쇄 — 장바구니 견적 요청서와 같은 방식(새 창 + print → 브라우저에서 PDF 저장 가능)
+    // 요청서 인쇄 — 견적 폼의 [견적 요청서 다운로드]와 같은 요청서(엑셀 틀). 접수 때 폼이 만든 데이터(raw.doc)를 그대로 쓴다.
+    // 데이터가 없는 세션(이 화면이 바뀌기 전에 접수한 창)은 저장된 문장을 '요청 내용' 한 칸에 싣는다.
+    // 자동 인쇄하지 않는다 — 먼저 요청서를 눈으로 확인하고, 창 안의 버튼으로 직접 인쇄한다.
     document.getElementById('qd-print')?.addEventListener('click', () => {
-      const esc2 = (v: string) => v.replace(/&/g, '&amp;').replace(/</g, '&lt;');
-      const rows = pairs.map((p) => `<tr><th>${esc2(p.l)}</th><td>${esc2(p.v)}</td></tr>`).join('');
-      const html = `<!doctype html><html><head><meta charset="utf-8"><title>${esc2(root.dataset.docTitle!)} ${esc2(id)}</title>
-<style>
-  body{font-family:'Pretendard',-apple-system,sans-serif;color:#111;margin:40px;line-height:1.6}
-  h1{font-size:20px;margin:0 0 4px}
-  .sub{color:#666;font-size:12px;margin:0 0 24px}
-  table{border-collapse:collapse;width:100%;font-size:13px}
-  th,td{border:1px solid #ddd;padding:8px 10px;text-align:left;vertical-align:top}
-  th{background:#f6f6f6;width:120px;font-weight:600}
-  pre{white-space:pre-wrap;font-family:inherit;font-size:13px;border:1px solid #ddd;padding:12px;margin-top:16px;background:#fafafa}
-  .noprint{margin:0 0 22px}
-  .noprint button{font:inherit;font-size:13px;padding:8px 14px;border:1px solid #bbb;border-radius:8px;background:#f6f6f6;cursor:pointer}
-  @media print{.noprint{display:none}}
-</style></head><body>
-<div class="noprint"><button type="button" id="qd-doc-print">🖨 ${esc2(root.dataset.printLabel || 'Print')}</button></div>
-<h1>VANAM — ${esc2(root.dataset.docTitle!)}</h1>
-<p class="sub">${esc2(id)} · ${esc2((d.at || '').slice(0, 10))}</p>
-<table>${rows}</table>
-${det ? `<pre>${esc2(det)}</pre>` : ''}
-</body></html>`;
-      const w2 = window.open('', '_blank');
-      if (!w2) return; // 팝업 차단 시 조용히 중단 — 버튼으로 재시도 가능
-      w2.document.write(html);
-      w2.document.close();
-      // 자동 인쇄하지 않는다 — 먼저 요청서를 눈으로 확인하고, 창 안의 버튼으로 직접 인쇄한다.
-      w2.document.getElementById('qd-doc-print')?.addEventListener('click', () => w2.print());
+      const saved = (d as Record<string, unknown>).doc;
+      const o = saved && typeof saved === 'object'
+        ? saved as Record<string, unknown>
+        : requestDocFrom({
+            lang: document.documentElement.lang === 'ko' ? 'ko' : 'en', id, date: ymdLocal(d.at),
+            requester: { company: d.company, name: d.name, phone: d.phone, email: d.email },
+            product: d.product, dj: null, detailsText: det,
+          });
+      openDoc(buildRequestDoc(o)); // 팝업 차단 시 조용히 중단 — 버튼으로 재시도 가능
     });
   } else {
     (document.getElementById('qd-expired') as HTMLElement).hidden = false;
@@ -207,7 +188,7 @@ ${det ? `<pre>${esc2(det)}</pre>` : ''}
         qvBox.querySelector('[data-qv-doc]')?.addEventListener('click', () => {
           const o = docOptions(view, QVT, lang);
           if (!o) return;
-          const ok = openQuoteDoc(buildQuoteDoc({ ...o, logoUrl: new URL('/logo.png', location.href).href }));
+          const ok = openDoc(buildQuoteDoc(o));
           const msg = qvBox.querySelector('[data-qv-msg]') as HTMLElement | null;
           if (msg) { msg.textContent = ok ? '' : QVT.popupBlocked; msg.hidden = ok; }
         });

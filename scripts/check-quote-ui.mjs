@@ -4,7 +4,7 @@
 // 제품 페이지 10개(ko 포함)에서:
 //   · [예상 견적 보기](#quote-estimate-run) 있음·hidden · 결과 상자(#quote-estimate-result) hidden
 //   · name="estimateSeenKrw" 정확히 1개
-//   · [견적서 다운로드](#quote-print) 있음·hidden 아님 · 다운로드 안내(#q-download-hint) 있음
+//   · [견적 요청서 다운로드](#quote-print) 있음·hidden 아님 · 다운로드 안내(#q-download-hint) 있음
 //   · 기판 등급 칸: #q-grade disabled · #q-grade-wrap hidden · 옵션 = SUBSTRATE_GRADES
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';

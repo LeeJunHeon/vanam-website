@@ -73,29 +73,8 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
       data-msg-seq-value={q.msgSeqValue}
       data-msg-prefilm={q.msgPreFilmNote}
       data-label-send={simple ? q.submitOrder : q.submit}
-      data-sheet-title={q.sheetTitle}
-      data-sheet-notsent={q.sheetNotSent}
-      data-sheet-orsubmit={q.sheetOrSubmit}
       data-sheet-mail={company.email || 'hello@vanam.co.kr'}
-      data-sheet-issued={q.sheetIssued}
-      data-sheet-supplier-label={q.sheetSupplier}
-      data-sheet-amount={q.sheetAmount}
-      data-sheet-vat={q.sheetVat}
-      data-sheet-pending={q.sheetPending}
-      data-supplier={JSON.stringify({
-        name: isKo ? company.nameKo : company.nameEn,
-        ceo: isKo ? company.ceoKo : (company.ceoEn || company.ceoKo),
-        bizNo: company.bizNo,
-        address: isKo ? company.addressKo : (company.addressEn || company.addressKo),
-        tel: company.tel,
-        email: company.email,
-      })}
-      data-sheet-print={q.downloadSheet}
-      data-lbl-name={c.name}
-      data-lbl-company={c.company}
-      data-lbl-email={c.email}
-      data-lbl-phone={c.phone}
-      data-lbl-product={q.productLabel}
+      data-msg-popup={site.quote.view.popupBlocked}
       data-lbl-material2={q.lblMaterial}
       data-lbl-method2={q.lblMethod}
       data-lbl-substrate2={q.lblSubstrate}
@@ -465,7 +444,7 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
           data-language="auto"
         ></div>
 
-        {/* 다운로드 안내 — '견적서 다운로드'는 전송이 아니라는 점을 버튼 옆에서 분명히 한다 */}
+        {/* 다운로드 안내 — '견적 요청서 다운로드'는 전송이 아니라는 점을 버튼 옆에서 분명히 한다 */}
         {!simple && <p id="q-download-hint" class="text-sm leading-relaxed text-ink/45">{q.downloadHint}</p>}
         {!simple && <QuoteEstimate part="panel" />}
 
@@ -534,8 +513,8 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
   // 보안 확인 위젯 — 로드 실패 시 자동 재시도·안내까지 여기서 처리한다
   import { mountTurnstile, resetTurnstile } from '../lib/turnstile-client';
   mountTurnstile();
-  // 견적서·요청서 인쇄물은 조회 화면과 **같은 템플릿**을 쓴다 (src/lib/quote-sheet.ts)
-  import { buildQuoteSheet, openQuoteSheet } from '../lib/quote-sheet';
+  // 견적 요청서 — 견적서·주문서와 같은 엑셀 틀(src/lib/doc-excel.js). 완료·조회 화면도 같은 requestDocFrom 을 쓴다.
+  import { buildRequestDoc, openDoc, requestDocFrom, ymdLocal } from '../lib/quote-doc';
 
   // Turnstile 전역 API 타입
   declare global {
@@ -777,7 +756,7 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
 
   // ── 버튼 게이팅 ────────────────────────────────────
   // 필수 입력·동의·보안확인이 모두 끝나야 버튼이 열린다(웨이퍼 주문서와 동일한 방식).
-  // '견적서 다운로드'도 같은 게이트를 쓰되, 전송이 아니므로 개인정보 동의·보안확인은 빼고 본다.
+  // '견적 요청서 다운로드'도 같은 게이트를 쓰되, 전송이 아니므로 개인정보 동의·보안확인은 빼고 본다.
   // ⚠️ printBtn 은 여기서 선언한다. 사용처(syncGate)보다 아래에서 선언하면 TDZ 로 스크립트가 통째로 죽는다(전례 있음).
   const submitBtn = document.getElementById("quote-submit") as HTMLButtonElement | null;
   const printBtn = document.getElementById("quote-print") as HTMLButtonElement | null;
@@ -1088,6 +1067,22 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
     return { data, lines };
   }
 
+  // 견적 요청서 데이터 — [견적 요청서 다운로드](접수 전, id 없음)와 완료 화면(접수 후)이 **같은 함수**로 만든다.
+  // 조회 화면도 저장된 구조화 사본(details_json)으로 같은 함수를 부른다(src/lib/doc-excel.js requestDocFrom).
+  function requestDoc(d: Record<string, string>, id: string) {
+    let dj: unknown = null;
+    try { dj = JSON.parse(d.detailsJson || "null"); } catch { dj = null; }
+    return requestDocFrom({
+      lang: document.documentElement.lang === "ko" ? "ko" : "en",
+      id, draft: !id, date: ymdLocal(),
+      requester: { company: d.company, name: d.name, phone: d.phone, email: d.email },
+      product: String(d.productName ?? ""),
+      dj, detailsText: String(d.details ?? ""),
+      sizeMap: JSON.parse(M.mapSize || "{}"), deliveryMap: JSON.parse(M.mapDelivery || "{}"),
+      supportEmail: M.sheetMail || "",
+    });
+  }
+
   form?.addEventListener("submit", async (e) => {
     e.preventDefault();
     setStatus("", true);
@@ -1131,6 +1126,8 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
         details: String(data.details ?? ""),
         // 이번 접수로 견적 개정이 저장됐을 때만 완료 페이지가 조회 API 를 부른다(스위치 꺼짐이면 호출 없음)
         quote: j.quote === true,
+        // 완료 화면 [요청서 인쇄] — 다운로드와 같은 데이터(접수번호만 채워진다)
+        doc: j.id ? requestDoc(data, j.id) : null,
       };
       form.reset();
       // 공정 빌더는 풀 모드에만 존재 — simple(웨이퍼 주문) 폼에서는 null 이라
@@ -1161,8 +1158,8 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
     }
   });
 
-  // ── 견적서 다운로드 — 서버로 보내지 않는다 ──────────────────────────────
-  // 작성한 내용 그대로 인쇄용 요청서를 새 창에 띄운다. 고객이 PDF 로 저장해 두었다가
+  // ── 견적 요청서 다운로드 — 서버로 보내지 않는다 ──────────────────────────────
+  // 작성한 내용 그대로 견적 요청서(엑셀 틀)를 새 창에 띄운다. 고객이 PDF 로 저장해 두었다가
   // 원할 때 메일로 보낼 수 있게 하는 용도다. 접수번호가 없으므로 "아직 접수되지 않음"을 명시한다.
   // 내용 조립은 '견적 요청'과 **같은 buildQuote()** 를 쓴다(두 벌로 나뉘면 반드시 어긋난다).
   printBtn?.addEventListener("click", () => {
@@ -1176,33 +1173,7 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
     { const bad = collectIssues(false); if (bad) { flagInvalid(bad); return; } }
     const built = buildQuote();
     if (!built) return;
-    const d = built.data;
-    const today = new Date().toISOString().slice(0, 10);
-
     // 연락처는 고객이 직접 저장·발송하는 문서이므로 채워서 낸다(브라우저에 남기지 않는다).
-    const rows: [string, string][] = ([
-      [M.lblProduct || "Product", String(d.productName ?? "")],
-      [M.lblName || "Name", String(d.name ?? "")],
-      [M.lblCompany || "Company", String(d.company ?? "")],
-      [M.lblEmail || "Email", String(d.email ?? "")],
-      [M.lblPhone || "Phone", String(d.phone ?? "")],
-    ] as [string, string][]).filter(([, v]) => v.trim());
-
-    openQuoteSheet(buildQuoteSheet({
-      title: M.sheetTitle || "Quote Request",
-      issuedLabel: M.sheetIssued || "",
-      issued: today,
-      supplierLabel: M.sheetSupplierLabel || "",
-      supplier: JSON.parse(M.supplier ?? "{}"),
-      rows,
-      // 요청 내용은 조회 화면과 같은 자리(표 아래 본문)에 둔다
-      details: built.lines.map((l) => `${l.l}: ${l.v}`).join("\n"),
-      amountLabel: M.sheetAmount || "",
-      vatLabel: M.sheetVat || "",
-      // 아직 접수 전이라 금액이 없다 — 칸은 같은 자리에 두고 '산정 중' 문구를 넣는다
-      amount: M.sheetPending || "",
-      footNote: `${M.sheetNotsent ?? ""} ${M.sheetMail ?? ""} / ${M.sheetOrsubmit ?? ""}`,
-      printLabel: M.sheetPrint || "Print",
-    }));
+    if (!openDoc(buildRequestDoc(requestDoc(built.data, "")))) setStatus(M.msgPopup || "", false);
   });
 </script>

@@ -245,7 +245,7 @@ const qvText = editId ? JSON.stringify({ ko: siteData.ko.quote.view, en: siteDat
     </style>
 
     <script>
-      import { buildQuoteDoc, openQuoteDoc } from '../../lib/quote-doc';
+      import { buildQuoteDoc, openDoc } from '../../lib/quote-doc';
       import { renderQuoteBox, docOptions, injectQuoteViewStyle, kstStamp } from '../../lib/quote-view-render.js';
 
       const root = document.getElementById('qc');
@@ -523,9 +523,8 @@ const qvText = editId ? JSON.stringify({ ko: siteData.ko.quote.view, en: siteDat
               unitPrice: it.unitPrice, supply: it.supply, vat: it.vat,
             }),
             supply: last.supply, vat: last.vat, total: last.total, totalKorean: last.totalKorean,
-            logoUrl: new URL('/logo.png', location.href).href,
           });
-          if (!openQuoteDoc(html)) $('qc-note').textContent = '팝업이 차단되었습니다 — 이 사이트의 팝업을 허용해 주세요.';
+          if (!openDoc(html)) $('qc-note').textContent = '팝업이 차단되었습니다 — 이 사이트의 팝업을 허용해 주세요.';
         };
 
         $('qc-add-item').addEventListener('click', () => { addItem(); stale(); });
@@ -576,8 +575,9 @@ const qvText = editId ? JSON.stringify({ ko: siteData.ko.quote.view, en: siteDat
           editDocOpts = () => {
             const lang = ($<HTMLSelectElement>('qe-lang').value === 'en' ? 'en' : 'ko') as 'ko' | 'en';
             const T = QV[lang];
+            // 확정 견적은 표시·안내 없이 엑셀 견적서와 똑같이(10-01 결정) — 고객 조회 화면의 견적서와 같다
             return confirmedNow()
-              ? { lang, stamp: '', note: T.docNoteConfirmed, fxNote: '' }
+              ? { lang, stamp: '', note: '', fxNote: '' }
               : { lang, stamp: T.docStamp, note: T.docNoteEstimate, fxNote: '' };
           };
 
@@ -588,7 +588,7 @@ const qvText = editId ? JSON.stringify({ ko: siteData.ko.quote.view, en: siteDat
             $('qe-view').querySelector('[data-qv-doc]')?.addEventListener('click', () => {
               const o = docOptions(view, QV.ko, 'ko');
               if (!o) return;
-              if (!openQuoteDoc(buildQuoteDoc({ ...o, logoUrl: new URL('/logo.png', location.href).href } as any))) {
+              if (!openDoc(buildQuoteDoc(o as any))) {
                 const m = $('qe-view').querySelector('[data-qv-msg]') as HTMLElement | null;
                 if (m) { m.textContent = QV.ko.popupBlocked; m.hidden = false; }
               }

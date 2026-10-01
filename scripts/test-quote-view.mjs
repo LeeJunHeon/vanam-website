@@ -17,13 +17,15 @@ const KO = site.ko.quote.view, EN = site.en.quote.view;
 
 // site.json 키가 빠짐없이 있는지(ko·en)
 const VIEW_KEYS = ['estimate', 'estimateByStaff', 'confirmed', 'reviewing', 'reviewingIntro', 'totalMain', 'totalMeta', 'valid', 'notice', 'updated',
-  'docBtn', 'refresh', 'liveNote', 'approx', 'docStamp', 'docNoteEstimate', 'docNoteConfirmed', 'popupBlocked'];
+  'docBtn', 'refresh', 'liveNote', 'approx', 'docStamp', 'docNoteEstimate', 'popupBlocked'];
 const EST_KEYS = ['button', 'calculating', 'title', 'totalMain', 'totalMeta', 'valid', 'notice', 'manualTitle', 'manualIntro', 'manualCta',
   'invalidTitle', 'invalidIntro', 'fail', 'unavailable', 'tooMany'];
 for (const loc of ['ko', 'en']) {
   eq(`site.json ${loc} quote.view 키`, VIEW_KEYS.filter((k) => typeof site[loc].quote.view?.[k] !== 'string' || !site[loc].quote.view[k]), []);
   eq(`site.json ${loc} quote.estimate 키`, EST_KEYS.filter((k) => typeof site[loc].quote.estimate?.[k] !== 'string' || !site[loc].quote.estimate[k]), []);
   eq(`site.json ${loc} quote.form 등급 키`, ['grade', 'gradePlaceholder'].filter((k) => !site[loc].quote.form?.[k]), []);
+  // 확정 견적서는 엑셀과 같게 안내 문구가 없다(10-01) — 문구가 남아 있으면 다시 붙이게 된다
+  eq(`site.json ${loc} 확정 견적 안내 키 없음`, 'docNoteConfirmed' in site[loc].quote.view, false);
   // 예전 한 줄 금액 문구(total)는 totalMain·totalMeta 로 나뉘었다 — 남아 있으면 어느 쪽을 쓰는지 헷갈린다
   eq(`site.json ${loc} 옛 total 키 없음`, ['view', 'estimate'].filter((b) => 'total' in (site[loc].quote[b] ?? {})), []);
   // 금액 자리: 원화·달러가 금액 줄 어딘가에 한 번씩
@@ -111,7 +113,7 @@ const CONF_NODOC = { ...CONF, doc: null, totalKrw: null, totalKrwText: null, tot
   const de = docOptions(EST, EN, 'en');
   eq('docOptions estimate en: fxNote = approx + USD', [de.lang, de.stamp, de.fxNote], ['en', EN.docStamp, `${EN.approx} $0.08`]);
   const dc = docOptions(CONF, KO, 'ko');
-  eq('docOptions confirmed: stamp 없음 · note 확정', [dc.stamp, dc.note, dc.fxNote], ['', KO.docNoteConfirmed, '']);
+  eq('docOptions confirmed: 표시·안내 없음(엑셀 견적서와 같음)', [dc.stamp, dc.note, dc.fxNote], ['', '', '']);
   eq('docOptions: doc 없음·reviewing → null', [docOptions(REV, KO, 'ko'), docOptions(CONF_NODOC, KO, 'ko'), docOptions(null, KO, 'ko')], [null, null, null]);
   eq('docOptions: logoUrl 은 호출부 몫', 'logoUrl' in d, false);
 }

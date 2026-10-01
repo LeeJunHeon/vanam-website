@@ -2,7 +2,7 @@
 //
 //   renderQuoteBox(view, T, opts) → HTML 문자열 (view 없으면 '')
 //   totalLine(T, krw, usd)        → 금액 줄 HTML(큰 금액 + 작은 설명) — 제품 페이지 예상 견적도 같이 쓴다
-//   docOptions(view, T, lang)     → buildQuoteDoc 에 넘길 견적서 데이터(logoUrl 은 호출부가 붙인다) · 견적서가 없으면 null
+//   docOptions(view, T, lang)     → buildQuoteDoc 에 넘길 견적서 데이터(로고는 quote-doc.ts 가 붙인다) · 견적서가 없으면 null
 //
 // view 는 서버가 준 inquiry.quote(src/lib/quote-revision.js 의 customerQuoteView)다. 금액은 view 값을 그대로 쓴다
 // — 화면에서 계산하지 않는다. view 의 허용 키만 읽고, 넣는 값은 전부 이스케이프한다.
@@ -122,7 +122,7 @@ export function renderQuoteBox(view, T, opts = {}) {
 }
 
 /**
- * 견적서 데이터 — buildQuoteDoc 에 넘긴다(logoUrl 은 호출부가 붙인다). 견적서가 없으면 null.
+ * 견적서 데이터 — buildQuoteDoc 에 넘긴다(로고는 quote-doc.ts 가 붙인다). 견적서가 없으면 null.
  * @param {any} view inquiry.quote @param {Record<string, string>} T @param {'ko'|'en'} lang
  */
 export function docOptions(view, T, lang) {
@@ -136,6 +136,7 @@ export function docOptions(view, T, lang) {
   if (view.state === 'estimate') {
     return { ...base, stamp: T.docStamp, note: T.docNoteEstimate, fxNote: en && view.totalUsdText ? `${T.approx} ${view.totalUsdText}` : '' };
   }
-  if (view.state === 'confirmed') return { ...base, stamp: '', note: T.docNoteConfirmed, fxNote: '' };
+  // 확정 견적은 표시·안내 없이 엑셀 견적서와 똑같이(10-01 결정)
+  if (view.state === 'confirmed') return { ...base, stamp: '', note: '', fxNote: '' };
   return null;
 }

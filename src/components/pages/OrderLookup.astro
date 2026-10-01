@@ -53,8 +53,6 @@ const t = isKo
       dicing: '다이싱', dicingYes: '필요', dicingNo: '불필요', boxUnit: '박스',
       orderNo: '주문번호', vat: '(부가세 포함)',
       ordSheetBtn: '주문서 인쇄 · PDF 저장',
-      ordSheetTitle: '주문서',
-      ordSheetFoot: '본 주문서는 웹사이트 주문 조회 화면에서 출력된 문서로 별도 직인이 없습니다. 표시 금액은 주문 시점 환율로 확정된 값입니다. 문의는 아래 연락처로 부탁드립니다.',
       noShip: '실물 배송 없음 (결과는 이메일로 안내)',
       help: '주문번호를 잊으셨나요? 아래로 연락 주시면 확인해 드립니다.',
       inq: {
@@ -68,12 +66,8 @@ const t = isKo
         wQty: '수량', wQtyOne: '{n}박스', wQtyMany: '{n}박스',
         wDicing: '다이싱', wYes: '필요', wNo: '불필요', wPerBox: '/박스',
         sheetBtn: '견적서 인쇄 · PDF 저장',
-        sheetTitle: '견적서',
-        sheetSupplier: '공급자',
-        sheetIssued: '발행일',
-        sheetStatus: '진행 상태',
+        reqSheetBtn: '요청서 인쇄 · PDF 저장',
         sheetBank: '입금 계좌',
-        sheetFoot: '본 견적서는 웹사이트 조회 화면에서 출력된 문서로 별도 직인이 없습니다. 문의는 아래 연락처로 부탁드립니다.',
         pending: '산정 중입니다 — 견적이 확정되면 이메일로 안내드립니다.',
         st: { new: '접수됨 (검토 대기)', quoted: '견적 완료', replied: '회신 완료', paid: '결제 완료', closed: '종료' },
       } as Record<string, unknown>,
@@ -110,8 +104,6 @@ const t = isKo
       dicing: 'Dicing', dicingYes: 'Required', dicingNo: 'Not required', boxUnit: 'box',
       orderNo: 'Order no.', vat: '(VAT included)',
       ordSheetBtn: 'Print order sheet (PDF)',
-      ordSheetTitle: 'Order sheet',
-      ordSheetFoot: 'This order sheet was generated from the online order lookup page and carries no company seal. The amount shown was fixed at the exchange rate applied when the order was placed. Please use the contact below for any questions.',
       noShip: 'No physical delivery (results sent by email)',
       help: 'Lost your order number? Contact us and we will look it up for you.',
       inq: {
@@ -125,12 +117,8 @@ const t = isKo
         wQty: 'Quantity', wQtyOne: '{n} box', wQtyMany: '{n} boxes',
         wDicing: 'Dicing', wYes: 'Required', wNo: 'Not required', wPerBox: '/box',
         sheetBtn: 'Print quotation (PDF)',
-        sheetTitle: 'Quotation',
-        sheetSupplier: 'Supplier',
-        sheetIssued: 'Issued',
-        sheetStatus: 'Status',
+        reqSheetBtn: 'Print request (PDF)',
         sheetBank: 'Bank account',
-        sheetFoot: 'This quotation was generated from the online lookup page and carries no company seal. Please use the contact below for any questions.',
         pending: 'Being prepared — we will email you once the quote is ready.',
         st: { new: 'Received (in review)', quoted: 'Quote ready', replied: 'Replied', closed: 'Closed', paid: 'Paid' },
       } as Record<string, unknown>,
@@ -176,22 +164,13 @@ const inputClass =
       data-product-names={JSON.stringify(productNames)}
       data-map-size={JSON.stringify(sizeMap)}
       data-map-delivery={JSON.stringify(deliveryMap)}
-      data-supplier={JSON.stringify({
-        name: isKo ? company.nameKo : company.nameEn,
-        ceo: isKo ? company.ceoKo : (company.ceoEn || company.ceoKo),
-        bizNo: company.bizNo,
-        address: isKo ? company.addressKo : (company.addressEn || company.addressKo),
-        tel: company.tel,
-        email: company.email,
-      })}
       data-pay={JSON.stringify({ tracking: t.tracking, trackingCourier: t.trackingCourier, trackingNo: t.trackingNo, paidDone: t.paidDone, paidAt: t.paidAt, mApproved: t.mApproved, mCreate: t.mCreate, mHeld: t.mHeld, mDeclined: t.mDeclined, mCapture: t.mCapture, mError: t.mError, mPaid: t.mPaid, mSetup: t.mSetup, payTitle: t.payTitle, payNote: t.payNote })}
       data-copy={JSON.stringify({
         status: t.status, amount: t.amount, ordered: t.ordered,
         items: t.items, shipTo: t.shipTo, taxYes: t.taxYes, noShip: t.noShip,
         dicing: t.dicing, dicingYes: t.dicingYes, dicingNo: t.dicingNo, boxUnit: t.boxUnit,
         orderNo: t.orderNo, vat: t.vat,
-        ordSheetBtn: t.ordSheetBtn, ordSheetTitle: t.ordSheetTitle, ordSheetFoot: t.ordSheetFoot,
-        sheetIssued: t.inq.sheetIssued, sheetSupplier: t.inq.sheetSupplier, sheetStatus: t.inq.sheetStatus,
+        ordSheetBtn: t.ordSheetBtn,
       })}>
       <div>
         <label for="lk-id" class="block text-sm font-medium text-ink/80">{t.orderNo} *</label>
@@ -219,14 +198,16 @@ const inputClass =
 </BaseLayout>
 
 <script>
-  import { buildQuoteSheet, openQuoteSheet } from '../../lib/quote-sheet';
   // 견적 요약 상자·엑셀형 견적서 — 금액은 서버가 준 inquiry.quote 만 쓴다(화면에서 계산하지 않는다)
   import { renderQuoteBox, docOptions, injectQuoteViewStyle } from '../../lib/quote-view-render.js';
-  import { buildQuoteDoc, openQuoteDoc } from '../../lib/quote-doc';
+  // 서류(견적서·요청서·주문서)는 모두 엑셀 「견적서」 틀(src/lib/doc-excel.js)
+  import {
+    buildQuoteDoc, buildRequestDoc, buildOrderDoc, openDoc,
+    quoteFromAmount, requestDocFrom, orderDocFrom, docContact, ymdLocal,
+  } from '../../lib/quote-doc';
   const form = document.getElementById('lookup-form') as HTMLFormElement | null;
   if (form) {
     const M = form.dataset;
-    // 견적서 인쇄물은 견적 폼과 **같은 템플릿**을 쓴다 (src/lib/quote-sheet.ts)
     const P = JSON.parse(M.pay || '{}') as Record<string, string>;
     const P2 = P;   // 결과 렌더 템플릿에서도 동일 문자열 사용
     const ST: Record<string, string> = JSON.parse(M.labels ?? '{}');
@@ -514,6 +495,8 @@ const inputClass =
               </div>`;
           // 견적 상자에 [견적서 보기]가 있으면 아래 예전 [견적서 인쇄]는 그리지 않는다(같은 문서를 여는 버튼이 둘이 되지 않게)
           const hasDocBtn = qvBox.includes('data-qv-doc');
+          // 담당자가 금액만 넣은 견적(편집기 개정 없음)이 있으면 [견적서 인쇄], 아직 금액이 없으면 [요청서 인쇄]
+          const hasAmount = q.quoted_amount != null && Number(q.quoted_amount) > 0;
           const amountBlock = qvBox && (qvState === 'estimate' || qvState === 'reviewing')
             ? `<div class="mt-5 border-t border-ink/10 pt-1">${qvBox}</div>`
             : amountRow + (qvBox ? qvBox : '');
@@ -547,7 +530,7 @@ const inputClass =
                 <p class="mt-5 rounded-lg border border-ink/10 bg-ink/[0.03] p-4 text-sm leading-relaxed text-ink/70"><span class="text-ink/45">${esc(INQ.sheetBank)}</span><br>${esc(q.quote_bank)}</p>` : ''}
               ${q.quote_note ? `
                 <p class="mt-5 rounded-lg bg-ink/[0.05] p-4 text-sm leading-relaxed text-ink/65">${esc(q.quote_note)}</p>` : ''}
-              ${hasDocBtn ? '' : `<button type="button" id="inq-sheet" class="mt-5 v-btn-ghost-sm">🖨 ${esc(INQ.sheetBtn)}</button>`}
+              ${hasDocBtn ? '' : `<button type="button" id="inq-sheet" class="mt-5 v-btn-ghost-sm">🖨 ${esc(hasAmount ? INQ.sheetBtn : INQ.reqSheetBtn)}</button>`}
               ${q.paid_at ? `
                 <p class="mt-5 rounded-lg border border-ok/25 bg-ok/10 p-3 text-center text-sm font-semibold text-ok">✅ ${P2.paidAt} — ${when(q.paid_at)}</p>` : ''}
               ${!q.paid_at && q.quote_currency === 'USD' && Number(q.quoted_amount) > 0 && q.status !== 'closed' ? payBlock(q.id) : ''}
@@ -555,62 +538,52 @@ const inputClass =
           resEl.hidden = false;
 
           // 엑셀형 견적서(견적 요약에 견적서가 있을 때) — 팝업이 막히면 상자 안에 안내
-          const openDoc = (): boolean => {
+          const openSavedDoc = (): boolean => {
             const o = docOptions(qv, QVT, PAGE_LANG);
             if (!o) return false;
-            const ok = openQuoteDoc(buildQuoteDoc({ ...o, logoUrl: new URL('/logo.png', location.href).href }));
+            const ok = openDoc(buildQuoteDoc(o));
             const msg = resEl.querySelector('[data-qv-msg]') as HTMLElement | null;
             if (msg) { msg.textContent = ok ? '' : QVT.popupBlocked; msg.hidden = ok; }
             return true;
           };
-          resEl.querySelector('[data-qv-doc]')?.addEventListener('click', () => { openDoc(); });
+          resEl.querySelector('[data-qv-doc]')?.addEventListener('click', () => { openSavedDoc(); });
           // 최신 견적 다시 보기 — 같은 접수번호·이메일로 다시 조회한다
           resEl.querySelector('[data-qv-refresh]')?.addEventListener('click', () => { form.requestSubmit(); });
 
-          // 견적서 인쇄 — 접수 확인 페이지를 이미 닫았거나 나중에 다시 찾은 고객이
-          // 조회 화면에서 바로 견적서를 뽑을 수 있어야 한다(구매팀에 넘길 서류가 된다).
-          // 자동 인쇄하지 않는다 — 창 안의 버튼을 눌러야 인쇄창이 뜬다.
-          // 견적 요약에 견적서(doc)가 있으면 엑셀형 견적서를, 없으면 예전 요청서 양식을 쓴다.
+          // 견적서·요청서 인쇄 — 접수 확인 페이지를 이미 닫았거나 나중에 다시 찾은 고객이
+          // 조회 화면에서 바로 서류를 뽑을 수 있어야 한다(구매팀에 넘길 서류가 된다).
+          // 자동 인쇄하지 않는다 — 창 안의 버튼을 눌러야 인쇄창이 뜬다. 모든 서류는 엑셀 「견적서」 틀이다.
+          //   견적 요약에 견적서(doc)가 있으면 → 그 견적서
+          //   금액만 있는 예전 방식 견적 → 엑셀 견적서 품목 1줄(요청 상품 · 1식, 금액은 부가세 포함으로 보고 공급가액·세액을 나눈다)
+          //   금액이 아직 없으면 → 견적 요청서(견적 폼의 [견적 요청서 다운로드]와 같은 함수)
           document.getElementById('inq-sheet')?.addEventListener('click', () => {
-            if (qv?.doc && openDoc()) return;
-            // 웨이퍼 문의면 수량·다이싱을 인쇄물에도 별도 행으로 싣는다(구매팀에 그대로 넘어가는 서류다).
-            let wf: Record<string, any> | null = null;
-            try { wf = JSON.parse(String(q.details_json ?? '{}'))?.wafer ?? null; } catch { wf = null; }
-            const wFee = Number(wf?.dicingFeeKrw) || 0;
-            const rows: [string, string][] = ([
-              [String(INQ.title), String(q.id)],
-              [String(INQ.received), String(when(q.created_at))],
-              [String(INQ.sheetStatus), String(INQ.st?.[q.status] ?? q.status)],
-              [String(INQ.product), String(PNAMES[String(q.product_sku ?? '')] ?? q.product_name ?? q.material ?? '')],
-              [String(INQ.method), String(q.method ?? '')],
-              [String(INQ.substrate), dSub],
-              ...(wf
-                ? ([
-                    [String(INQ.wQty), qtyBox(wf.qty)],
-                    [String(INQ.wDicing), wf.dicing
-                      ? `${INQ.wYes} (+₩${wFee.toLocaleString('ko-KR')}${INQ.wPerBox} × ${Number(wf.qty) || 1})`
-                      : String(INQ.wNo)],
-                  ] as [string, string][])
-                : []),
-            ] as [string, string][]).filter(([, v]) => v.trim());
-
-            openQuoteSheet(buildQuoteSheet({
-              title: String(INQ.sheetTitle),
-              issuedLabel: String(INQ.sheetIssued),
-              issued: new Date().toISOString().slice(0, 10),
-              supplierLabel: String(INQ.sheetSupplier),
-              supplier: JSON.parse(M.supplier ?? '{}'),
-              rows,
-              details: dTxt,
-              amountLabel: String(INQ.amount),
-              vatLabel: String(INQ.vat),
-              amount: amt ?? String(INQ.pending),
-              bankLabel: String(INQ.sheetBank),
-              bank: String(q.quote_bank ?? ''),
-              memo: String(q.quote_note ?? ''),
-              footNote: String(INQ.sheetFoot),
-              printLabel: String(INQ.sheetBtn),
-            }));
+            if (qv?.doc && openSavedDoc()) return;
+            let dj: Record<string, any> | null = null;
+            try { dj = JSON.parse(String(q.details_json ?? 'null')); } catch { dj = null; }
+            const wf = dj && typeof dj.wafer === 'object' ? dj.wafer : null;
+            const pName = String(PNAMES[String(q.product_sku ?? '')] ?? q.product_name ?? q.material ?? '');
+            if (hasAmount) {
+              // 규격 칸 — 웨이퍼 문의는 수량·다이싱, 공정 견적은 공정·기판
+              const wFee = Number(wf?.dicingFeeKrw) || 0;
+              const spec = wf
+                ? [qtyBox(wf.qty), `${INQ.wDicing}: ${wf.dicing
+                  ? `${INQ.wYes} (+₩${wFee.toLocaleString('ko-KR')}${INQ.wPerBox} × ${Number(wf.qty) || 1})`
+                  : INQ.wNo}`].join(' · ')
+                : [String(q.method ?? ''), dSub].filter((x) => x.trim()).join(' · ');
+              openDoc(buildQuoteDoc(quoteFromAmount({
+                lang: PAGE_LANG, id: String(q.id), date: ymdLocal(),
+                customer: [q.company, q.name].map((x: unknown) => String(x ?? '').trim()).filter(Boolean).join(' '),
+                title: pName, spec, amount: Number(q.quoted_amount), currency: String(q.quote_currency ?? 'KRW'),
+                bank: String(q.quote_bank ?? ''), memo: String(q.quote_note ?? ''), contact: docContact(PAGE_LANG),
+              })));
+              return;
+            }
+            openDoc(buildRequestDoc(requestDocFrom({
+              lang: PAGE_LANG, id: String(q.id), draft: false, date: ymdLocal(q.created_at),
+              statusText: String(INQ.st?.[q.status] ?? q.status ?? ''),
+              requester: { company: q.company, name: q.name, phone: q.phone, email: String(data.email ?? '') },
+              product: pName, dj, detailsText: dTxt, sizeMap: SIZE_MAP, deliveryMap: DELIV_MAP,
+            })));
           });
 
           initPP(data.email as string);
@@ -685,49 +658,14 @@ const inputClass =
           </div>`;
         resEl.hidden = false;
 
-        // 주문서 인쇄 — 견적서와 **같은 템플릿**(src/lib/quote-sheet.ts)을 쓴다.
-        // 구매팀에 넘길 서류이므로 항목마다 다이싱 여부를 원화 확정 금액으로 적는다.
+        // 주문서 인쇄 — 견적서와 같은 엑셀 틀(src/lib/doc-excel.js). 금액은 원화(부가세 포함), PayPal 이면 USD 금액을 결제 칸에.
+        // 구매팀에 넘길 서류이므로 웨이퍼 다이싱은 원화 확정 금액으로 별도 줄에 적는다.
         // 자동 인쇄하지 않는다 — 창 안의 버튼을 눌러야 인쇄창이 뜬다.
         document.getElementById('ord-sheet')?.addEventListener('click', () => {
-          const body = [
-            String(C.items),
-            ...items.map((i: any) => {
-              const head = `· ${i.name} × ${i.qty} — ${wonOf(i.subtotal)}`;
-              if (!String(i.sku ?? '').startsWith('wafer:')) return head;
-              const on = Number(i.dicing) === 1;
-              const fee = Number(i.dicing_fee) || 0;
-              return `${head}\n    ${C.dicing}: ${on ? `${C.dicingYes} (+${wonOf(fee)}/${C.boxUnit} × ${i.qty})` : C.dicingNo}`;
-            }),
-          ].join('\n');
-
-          const addrLine = o.needs_shipping
-            ? [`[${o.ship_country}] ${[o.ship_name, o.ship_phone].filter(Boolean).join(' · ')}`,
-               [o.ship_zip ? `(${o.ship_zip})` : '', addr].filter(Boolean).join(' ')].filter(Boolean).join('\n')
-            : String(C.noShip);
-          // 결제는 USD 로 이뤄지지만 서류에는 원화 총액도 함께 적는다(세금·회계 대조용).
-          const usdTotal = Number(o.amount_usd) > 0
-            ? `$${Number(o.amount_usd).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-            : usdOf(o.amount, o.currency);
-
-          openQuoteSheet(buildQuoteSheet({
-            title: String(C.ordSheetTitle),
-            issuedLabel: String(C.sheetIssued),
-            issued: new Date().toISOString().slice(0, 10),
-            supplierLabel: String(C.sheetSupplier),
-            supplier: JSON.parse(M.supplier ?? '{}'),
-            rows: ([
-              [String(C.orderNo), String(o.id)],
-              [String(C.ordered), when(o.created_at)],
-              [String(C.sheetStatus), String(ST[o.status] ?? o.status)],
-              [String(C.shipTo), addrLine],
-            ] as [string, string][]).filter(([, v]) => v.trim()),
-            details: body,
-            amountLabel: String(C.amount),
-            vatLabel: String(C.vat),
-            amount: `${usdTotal} (${wonOf(o.amount)})`,
-            footNote: String(C.ordSheetFoot),
-            printLabel: String(C.ordSheetBtn),
-          }));
+          openDoc(buildOrderDoc(orderDocFrom({
+            lang: PAGE_LANG, order: o, items, statusText: String(ST[o.status] ?? o.status ?? ''),
+            noShipText: String(C.noShip ?? ''), email: String(data.email ?? ''),
+          })));
         });
 
         initPP(data.email as string);
