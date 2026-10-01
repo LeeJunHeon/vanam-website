@@ -26,6 +26,7 @@ export const REASON = {
   noRecipe: '레시피 없음',
   chooseEquipment: '장비 선택 필요',
   noDeposition: '붙일 증착 품목 없음',
+  overLimit: '자동 계산 범위를 넘는 수치(두께·시간)',
 };
 
 /**

@@ -12,6 +12,7 @@
 //
 // 엑셀과 일부러 다르게 둔 것:
 //   - 칸 높이는 '최소' 높이다. 긴 글(요청 사항 등)은 칸이 늘어나고, 줄이 많으면 2쪽으로 넘어가며 표 머리가 다시 나온다.
+//   - 아래 표(품목·공정 순서)는 넣은 줄만큼만 그린다. 엑셀처럼 빈 줄(15줄)로 채우지 않는다(10-01 사용자 요청).
 //   - 예상 견적은 견적번호 줄 오른쪽에 굵은 글자 + 맨 아래 작은 안내(stamp·note). 확정 견적은 둘 다 없다(엑셀과 같음).
 //   - 직인 그림은 넣지 않는다 — 누구나 내려받는 웹 문서라 대표자 옆 "(인)" 글자만 둔다.
 //
@@ -138,10 +139,11 @@ export const STYLE = `
   .gap{height:${mm(15.75)}}
   .items th{text-align:center;font-weight:700;background:${FILL};font-size:${fz(10)}}
   .items td{font-size:${fz(10)}}
+  .items tr{break-inside:avoid}
   .items .t{font-size:${fz(9)};white-space:pre-line}
   .items .num{text-align:right;white-space:nowrap}
-  .items tfoot td{font-size:${fz(9)}}
-  .items tfoot .lab{text-align:center;font-weight:700;background:${FILL};font-size:${fz(10)}}
+  .items .tot td{font-size:${fz(9)}}
+  .items .tot .lab{text-align:center;font-weight:700;background:${FILL};font-size:${fz(10)}}
   .note{margin:3mm 0 0;font-size:${fz(8.5)};line-height:1.5;white-space:pre-line}
   @media print{body{background:#fff}.page{margin:0;box-shadow:none;width:auto;min-height:0;padding:0}.noprint{display:none}}
 `;
@@ -258,28 +260,24 @@ function infoBox(rows, total) {
 }
 
 /**
- * 표(엑셀 14~30행): 머리 22.5pt · 본문(첫 두 줄 36pt, 나머지 22.5pt) · 합계 22.5pt.
- * 줄이 minRows 보다 적으면 빈 줄로 채운다(엑셀처럼 칸 유지). 많으면 그만큼 늘고, 2쪽으로 넘어가면 머리(thead)가 다시 나온다.
- * @param {{cols:string[][], head:string[], rows:{v:string, k?:string}[][], minRows:number, foot?:{label:string, span:number, cells:string[]}}} t
+ * 표(엑셀 14~30행 모양): 머리 · 본문 · 합계. 본문은 **넣은 줄만큼만** 그린다 — 빈 줄로 채우지 않는다(10-01 사용자 요청).
+ * 줄 높이는 엑셀 기본 22.5pt 를 최소로 하고, 두 줄 이상인 칸은 그만큼 늘어난다.
+ * 줄이 많으면 2쪽으로 넘어가며 머리(thead)가 다시 나온다(줄 하나가 두 쪽에 걸쳐 잘리지 않게 한다). 줄이 없으면 표를 그리지 않는다.
+ * 합계 줄은 본문 마지막 줄로 둔다 — tfoot 은 브라우저가 인쇄할 때 쪽마다 되풀이해, 1쪽 아래에 '합계'가 끼어 보인다.
+ * @param {{cols:string[][], head:string[], rows:{v:string, k?:string}[][], foot?:{label:string, span:number, cells:string[]}}} t
  */
 function table(t) {
+  if (!t.rows.length) return '';
   const colg = `<colgroup>${t.cols.map((cs) => `<col style="width:${pct(cs, ALL)}">`).join('')}</colgroup>`;
-  const n = Math.max(t.minRows, t.rows.length);
-  const body = [];
-  for (let i = 0; i < n; i++) {
-    const h = `height:${mm(i < 2 ? 36 : 22.5)}`;
-    const row = t.rows[i];
-    body.push(row
-      ? `<tr style="${h}">${row.map((c) => `<td${c.k ? ` class="${c.k}"` : ''}>${esc(c.v)}</td>`).join('')}</tr>`
-      : `<tr style="${h}">${t.cols.map(() => '<td></td>').join('')}</tr>`);
-  }
+  const h = `height:${mm(22.5)}`;
+  const body = t.rows.map((row) => `<tr style="${h}">${row.map((c) => `<td${c.k ? ` class="${c.k}"` : ''}>${esc(c.v)}</td>`).join('')}</tr>`);
   const foot = t.foot
-    ? `<tfoot><tr style="height:${mm(22.5)}"><td class="lab" colspan="${t.foot.span}">${esc(t.foot.label)}</td>` +
-      `${t.foot.cells.map((v) => `<td class="num">${esc(v)}</td>`).join('')}</tr></tfoot>`
+    ? `<tr class="tot" style="${h}"><td class="lab" colspan="${t.foot.span}">${esc(t.foot.label)}</td>` +
+      `${t.foot.cells.map((v) => `<td class="num">${esc(v)}</td>`).join('')}</tr>`
     : '';
   return `<table class="box items">${colg}
-    <thead><tr style="height:${mm(22.5)}">${t.head.map((x) => `<th>${esc(x)}</th>`).join('')}</tr></thead>
-    <tbody>${body.join('')}</tbody>${foot}
+    <thead><tr style="${h}">${t.head.map((x) => `<th>${esc(x)}</th>`).join('')}</tr></thead>
+    <tbody>${body.join('')}${foot}</tbody>
   </table>`;
 }
 
@@ -299,9 +297,7 @@ function page({ lang, docTitle, head, r7left, r7mark, info, tableHtml, note }) {
     ${head}
   </div>
   <div class="r7"><span>${esc(r7left)}</span><span class="mark">${esc(r7mark ?? '')}</span></div>
-  ${info}
-  <div class="gap"></div>
-  ${tableHtml}${note ? `\n  <p class="note">${esc(note)}</p>` : ''}
+  ${info}${tableHtml ? `\n  <div class="gap"></div>\n  ${tableHtml}` : ''}${note ? `\n  <p class="note">${esc(note)}</p>` : ''}
 </div>
 </body></html>`;
 }
@@ -321,7 +317,7 @@ const TBC = 'To be confirmed';
  * 견적서 HTML — 엑셀 「견적서」 탭과 같은 배치.
  * o: { info, items, supply, vat, total, totalKorean, logoUrl, lang?, stamp?, note?, fxNote?, currency? }
  *   info  = { customer, ref, title, date, quoteNo, manager, contact, delivery, validDays, payment }
- *   items = 품목 줄(입력 순서, 최대 15줄 표시 — 엑셀과 같음). null 은 빈 줄.
+ *   items = 품목 줄(입력 순서). 넣은 품목만 줄로 그린다(null 은 건너뜀).
  *   stamp → 견적번호 줄 오른쪽 굵은 글자(예: 예상 견적 · 확정 전) — 상자를 그리지 않는다(머리 칸 너비를 건드리지 않게)
  *   note·fxNote → 품목표 아래 작은 글씨(같은 쪽 안)
  *   currency 'USD' → 금액 칸에 $ (한글 금액 없음)
@@ -332,10 +328,10 @@ export function buildQuoteHtml(o, company) {
   const i = o?.info ?? {};
   const isUsd = String(o?.currency ?? '').toUpperCase() === 'USD';
   const amt = (n) => (isUsd ? usd(n) : money(n));
-  const rows = (o?.items ?? []).slice(0, 15).map((it) => (it
-    ? [{ v: it.name, k: 't' }, { v: it.spec, k: 't' }, { v: `${it.qty ?? ''} ${en ? unitEn(it.qty, it.unit) : (it.unit ?? '')}`.trim(), k: 'c' },
-      { v: amt(it.unitPrice), k: 'num' }, { v: amt(it.supply), k: 'num' }, { v: amt(it.vat), k: 'num' }]
-    : null));
+  // 품목은 넣은 줄만(빈 줄 null 은 건너뛴다). 품목 수 상한(15)은 계산 엔진이 이미 지킨다.
+  const rows = (o?.items ?? []).filter(Boolean).map((it) => [{ v: it.name, k: 't' }, { v: it.spec, k: 't' },
+    { v: `${it.qty ?? ''} ${en ? unitEn(it.qty, it.unit) : (it.unit ?? '')}`.trim(), k: 'c' },
+    { v: amt(it.unitPrice), k: 'num' }, { v: amt(it.supply), k: 'num' }, { v: amt(it.vat), k: 'num' }]);
   const days = str(i.validDays);
   const note = [o?.fxNote, o?.note].map(str).filter(Boolean).join('\n');
   if (!en) {
@@ -348,7 +344,7 @@ export function buildQuoteHtml(o, company) {
         ['견적 유효기간', days ? `견적일로부터 ${days} 일간` : '']],
       isUsd ? { label: '합계 금액\n(공급가액+세액)', amount: amt(o?.total) }
         : { label: '합계 금액\n(공급가액+세액)', words: str(o?.totalKorean), amount: money(o?.total) }),
-      tableHtml: table({ cols: QCOLS, head: ['품명', '규격/사양', '수량', '단가', '공급가액', '세액'], rows, minRows: 15,
+      tableHtml: table({ cols: QCOLS, head: ['품명', '규격/사양', '수량', '단가', '공급가액', '세액'], rows,
         foot: { label: '최종 합계', span: 4, cells: [amt(o?.supply), amt(o?.vat)] } }),
       note,
     });
@@ -363,7 +359,7 @@ export function buildQuoteHtml(o, company) {
     info: infoBox([['Title', str(i.title)], ['Delivery', str(i.delivery) || TBC],
       ['Payment terms', str(i.payment) || TBC], ['Validity', days ? `Valid for ${days} days from the quote date` : TBC]],
     { label: 'Total amount\n(supply + VAT)', amount: isUsd ? amt(o?.total) : `₩${money(o?.total)}` }),
-    tableHtml: table({ cols: QCOLS, head: ['Item', 'Specification', 'Qty', 'Unit price', 'Supply amount', 'VAT'], rows, minRows: 15,
+    tableHtml: table({ cols: QCOLS, head: ['Item', 'Specification', 'Qty', 'Unit price', 'Supply amount', 'VAT'], rows,
       foot: { label: 'Total', span: 4, cells: [amt(o?.supply), amt(o?.vat)] } }),
     note,
   });
@@ -408,8 +404,8 @@ const REQ = {
     company: '소     속', name: '성     명', phone: '연 락 처', email: '이 메 일',
     product: '요청 상품', samples: '샘플 수량', qty: '수     량', delivery: '기판 전달', due: '완료 희망',
     no: '접수번호', notSent: '(아직 보내지 않은 요청서)', markDraft: '접수 전',
-    substrate: '기     판', preFilm: '박막 증착 여부', analysis: '분석 요청', notes: '요청 사항', ship: '배 송 지', body: '요청 내용',
-    yes: '있음', none: '없음',
+    substrate: '기 판', preFilm: '박막 증착 여부', analysis: '분석 요청', notes: '요청 사항', ship: '배 송 지', body: '요청 내용',
+    yes: '있음', none: '없음', staffNote: '담당자 안내', bank: '입금 계좌', substrateShort: '기판',
     stepHead: ['단계', '공정', '물질 · 가스', '두께 · 시간', '기타 조건'],
     itemHead: ['품명', '규격 · 옵션', '수량', '비고'],
     dicing: '다이싱', dicingYes: (fee, q) => `필요 (+₩${fee.toLocaleString('ko-KR')}/박스 × ${q})`, dicingNo: '불필요',
@@ -424,7 +420,7 @@ const REQ = {
     product: 'Item', samples: 'Samples', qty: 'Quantity', delivery: 'Delivery', due: 'Target date',
     no: 'Reference No.', notSent: '(not submitted yet)', markDraft: 'NOT SUBMITTED',
     substrate: 'Substrate', preFilm: 'Existing film', analysis: 'Analysis', notes: 'Notes', ship: 'Ship to', body: 'Request',
-    yes: 'Yes', none: 'No',
+    yes: 'Yes', none: 'No', staffNote: 'Note from us', bank: 'Bank account', substrateShort: 'Substrate',
     stepHead: ['Step', 'Process', 'Material · Gas', 'Thickness · Time', 'Other conditions'],
     itemHead: ['Item', 'Specification · Option', 'Qty', 'Remarks'],
     dicing: 'Dicing', dicingYes: (fee, q) => `Required (+₩${fee.toLocaleString('en-US')}/box × ${q})`, dicingNo: 'Not required',
@@ -435,6 +431,9 @@ const REQ = {
   },
 };
 
+/** 공정 단계의 수치 + 단위('10' 'nm' → '10 nm', 수치가 없으면 '') */
+const stepValue = (s) => [str(s?.value), str(s?.value) ? str(s?.unit) : ''].filter(Boolean).join(' ');
+
 /**
  * 견적 요청서 데이터 — 견적 폼(접수 전)·완료 화면·조회 화면이 **같은 함수**로 만든다(세 곳의 요청서가 어긋나지 않게).
  * dj = 접수 때 함께 저장하는 구조화 사본(details_json / 폼의 detailsJson): 라벨이 붙기 전의 값.
@@ -444,9 +443,19 @@ const REQ = {
  * 코드값(전달 방식·기판 크기)은 호출부가 넘긴 지도(보는 언어 라벨)로 바꾼다. 자유 입력은 번역하지 않는다.
  * @param {{lang:'ko'|'en', id?:string, draft?:boolean, date:string, statusText?:string,
  *   requester?:{company?:string,name?:string,phone?:string,email?:string}, product?:string,
- *   dj?:any, detailsText?:string, sizeMap?:Record<string,string>, deliveryMap?:Record<string,string>, supportEmail?:string}} a
+ *   dj?:any, detailsText?:string, sizeMap?:Record<string,string>, deliveryMap?:Record<string,string>, supportEmail?:string,
+ *   staffNote?:string, bank?:string}} a
+ *   staffNote·bank = 담당자가 금액 없이 남긴 안내·입금 계좌(조회 화면) — 있으면 정보 칸 맨 아래 줄로 싣는다.
  */
 export function requestDocFrom(a) {
+  const doc = requestDocCore(a);
+  const L = REQ[doc.lang];
+  const extra = [[L.staffNote, str(a.staffNote)], [L.bank, str(a.bank)]].filter(([, v]) => v);
+  return extra.length ? { ...doc, info: [...doc.info, ...extra] } : doc;
+}
+
+/** @param {any} a requestDocFrom 과 같은 인자 */
+function requestDocCore(a) {
   const lang = a.lang === 'en' ? 'en' : 'ko';
   const L = REQ[lang];
   const dj = a.dj && typeof a.dj === 'object' ? a.dj : null;
@@ -495,14 +504,35 @@ export function requestDocFrom(a) {
       ...base, kind: 'process',
       qty: str(dj.sampleCount), delivery: deliveryMap[str(dj.delivery)] ?? str(dj.delivery), due: str(dj.completionDate),
       info,
-      steps: dj.seq.map((s) => ({
-        process: str(s?.process), material: str(s?.material),
-        value: [str(s?.value), str(s?.value) ? str(s?.unit) : ''].filter(Boolean).join(' '), etc: str(s?.etc),
-      })),
+      steps: dj.seq.map((s) => ({ process: str(s?.process), material: str(s?.material), value: stepValue(s), etc: str(s?.etc) })),
       items: [],
     };
   }
   return { ...base, kind: 'process', qty: '', delivery: '', due: '', info: [[L.body, str(a.detailsText)]], steps: [], items: [] };
+}
+
+/**
+ * 금액만 있는 예전 견적(품목 1줄)의 규격 칸 — 요청 내용을 줄로 적는다(예전 단순 견적서가 요청 본문을 같이 싣던 것을 대신).
+ *   공정 견적: 단계마다 '공정 물질 두께' 한 줄 + 마지막 줄 '기판: …'
+ *   웨이퍼 문의: 'N박스 · 다이싱: …'
+ *   구조화 사본이 없는 옛 건: fallback(공정 · 기판) 그대로
+ * @param {{lang:'ko'|'en', dj?:any, sizeMap?:Record<string,string>, fallback?:string}} a
+ */
+export function specFromDetails(a) {
+  const L = REQ[a.lang === 'en' ? 'en' : 'ko'];
+  const dj = a.dj && typeof a.dj === 'object' ? a.dj : null;
+  if (dj?.wafer && typeof dj.wafer === 'object') {
+    const q = Number(dj.wafer.qty) || 1;
+    const fee = Number(dj.wafer.dicingFeeKrw) || 0;
+    return `${L.boxes(q)} · ${L.dicing}: ${dj.wafer.dicing ? L.dicingYes(fee, q) : L.dicingNo}`;
+  }
+  if (dj && Array.isArray(dj.seq) && dj.seq.length) {
+    const size = (a.sizeMap ?? {})[str(dj.substrateSize)] ?? str(dj.substrateSize);
+    const substrate = [str(dj.substrateType), size, str(dj.substrateGrade)].filter(Boolean).join(' / ');
+    const steps = dj.seq.map((s) => [str(s?.process), str(s?.material), stepValue(s)].filter(Boolean).join(' '));
+    return [...steps, substrate ? `${L.substrateShort}: ${substrate}` : ''].filter(Boolean).join('\n');
+  }
+  return str(a.fallback);
 }
 
 /**
@@ -517,9 +547,9 @@ export function buildRequestHtml(o) {
   const product = o?.kind === 'product';
   const draft = Boolean(o?.draft);
   const tableHtml = product
-    ? table({ cols: PCOLS, head: L.itemHead, minRows: 10,
+    ? table({ cols: PCOLS, head: L.itemHead,
       rows: (o?.items ?? []).map((it) => [{ v: str(it.name), k: 't' }, { v: str(it.spec), k: 't' }, { v: str(it.qty), k: 'c' }, { v: str(it.note), k: 't' }]) })
-    : table({ cols: RCOLS, head: L.stepHead, minRows: 10,
+    : table({ cols: RCOLS, head: L.stepHead,
       rows: (o?.steps ?? []).map((s, k) => [{ v: String(k + 1), k: 'c' }, { v: str(s.process), k: 't' },
         { v: str(s.material), k: 't' }, { v: str(s.value), k: 't' }, { v: str(s.etc), k: 't' }]) });
   return page({
@@ -545,11 +575,11 @@ export function buildRequestHtml(o) {
 const OCOLS = [['B', 'C', 'D'], ['E', 'F', 'G'], ['H', 'I'], ['J', 'K', 'L'], ['M', 'N', 'O', 'P']];
 const ORD = {
   ko: {
-    title: '주문서', no: '주문번호', status: '주문 상태', pay: '결     제', ship: '배 송 지', tax: '세금계산서',
+    title: '주문서', no: '주문번호', status: '주문 상태', pay: '결 제', ship: '배 송 지', tax: '세금계산서',
     taxYes: '요청함', taxNo: '요청 안 함', bank: '계좌이체', paypal: 'PayPal (USD)',
     paidBank: (d) => `${d} 입금 확인`, paidPaypal: (d) => `${d} 결제`,
     total: '합계 금액\n(부가세 포함)', head: ['품명', '규격 · 옵션', '수량', '단가', '금액(부가세 포함)'], foot: '합계',
-    dicing: '다이싱', perBox: '박스당', boxes: (q) => `${q}박스`,
+    dicing: '다이싱', perBox: '박스당', noDicing: '다이싱 불필요', boxes: (q) => `${q}박스`,
     notePaypal: 'PayPal 결제는 주문 시점 환율로 정해진 USD 금액으로 이뤄지며, 표의 금액은 원화(부가세 포함) 기준입니다.',
   },
   en: {
@@ -557,7 +587,7 @@ const ORD = {
     taxYes: 'Requested', taxNo: 'Not requested', bank: 'Bank transfer', paypal: 'PayPal (USD)',
     paidBank: (d) => `paid on ${d}`, paidPaypal: (d) => `paid on ${d}`,
     total: 'Total amount\n(VAT incl.)', head: ['Item', 'Specification · Option', 'Qty', 'Unit price', 'Amount (VAT incl.)'], foot: 'Total',
-    dicing: 'Dicing', perBox: 'per box', boxes: (q) => `${q} ${q === 1 ? 'box' : 'boxes'}`,
+    dicing: 'Dicing', perBox: 'per box', noDicing: 'No dicing', boxes: (q) => `${q} ${q === 1 ? 'box' : 'boxes'}`,
     notePaypal: 'PayPal payments are made in USD at the exchange rate fixed when the order was placed. Amounts in this sheet are in KRW, VAT included.',
   },
 };
@@ -579,7 +609,7 @@ export function orderDocFrom(a) {
     const fee = wafer && Number(i?.dicing) === 1 ? Number(i?.dicing_fee) || 0 : 0;
     const subtotal = Number.isFinite(Number(i?.subtotal)) ? Number(i.subtotal) : (unit + fee) * qty;
     const qtyText = wafer ? L.boxes(qty) : String(qty);
-    rows.push({ name: str(i?.name), spec: '', qty: qtyText, unitPrice: unit, amount: subtotal - fee * qty });
+    rows.push({ name: str(i?.name), spec: wafer && fee === 0 ? L.noDicing : '', qty: qtyText, unitPrice: unit, amount: subtotal - fee * qty });
     if (fee > 0) rows.push({ name: L.dicing, spec: L.perBox, qty: qtyText, unitPrice: fee, amount: fee * qty });
   }
   const paidDate = o.paid_at ? (lang === 'en' ? dateEn(ymdLocal(o.paid_at)) : dateKr(ymdLocal(o.paid_at))) : '';
@@ -628,7 +658,7 @@ export function buildOrderHtml(o, company) {
     r7left: `${L.no} : ${str(o?.id)}`, r7mark: '',
     info: infoBox((o?.info ?? []).map(([l, v]) => [str(l), str(v)]),
       en ? { label: L.total, amount: `₩${money(o?.total)}` } : { label: L.total, words: str(o?.totalKorean), amount: money(o?.total) }),
-    tableHtml: table({ cols: OCOLS, head: L.head, rows, minRows: 10, foot: { label: L.foot, span: 4, cells: [money(o?.total)] } }),
+    tableHtml: table({ cols: OCOLS, head: L.head, rows, foot: { label: L.foot, span: 4, cells: [money(o?.total)] } }),
     note: str(o?.note),
   });
 }

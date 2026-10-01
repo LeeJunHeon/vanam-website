@@ -109,15 +109,16 @@ try {
   if (login.status !== 200 || !m) throw new Stop(`관리자 로그인 실패 (${login.status})`);
   cookie = `vanam_admin=${m[1]}`;
 
-  // 나오면 안 되는 문자열(실제 ID) — 개수만 출력
+  // 나오면 안 되는 문자열(실제 ID · 장비 이름) — 개수만 출력
   const meta = await call('GET', '/api/admin/quote-calc', null, { admin: true });
   if (meta.status === 503) throw new Stop(`가격 DB 없음(503: ${meta.json?.error ?? ''}) — 가져오기를 추측해서 실행하지 않는다. 멈추고 보고.`);
   if (!meta.json?.ok) throw new Stop(`/api/admin/quote-calc GET 실패 (${meta.status})`);
   for (const r of meta.json.recipes ?? []) { ids.add(r.recipe_id); ids.add(r.equipment_id); }
-  for (const e of meta.json.equipment ?? []) ids.add(e.equipment_id);
+  // 장비 이름도 고객 응답·저장소에 나오면 안 된다(10-01 출시 전 점검에서 추가)
+  for (const e of meta.json.equipment ?? []) { ids.add(e.equipment_id); ids.add(e.equipment_name); }
   for (const s of meta.json.substrates ?? []) ids.add(s.catalog_id);
   ids.delete(undefined); ids.delete(null); ids.delete('');
-  console.log(`실제 ID 문자열 ${ids.size}개를 금지 목록으로 사용`);
+  console.log(`실제 ID·장비 이름 문자열 ${ids.size}개를 금지 목록으로 사용`);
 
   // 스위치 원래 상태 기억 → 켬
   const st = await call('GET', '/api/admin/quote-auto', null, { admin: true });

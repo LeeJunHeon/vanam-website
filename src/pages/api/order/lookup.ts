@@ -102,6 +102,8 @@ export const POST: APIRoute = async ({ request }) => {
           quote_bank: (q as Record<string, unknown>).quote_bank ?? null,
           paid_at: (q as Record<string, unknown>).paid_at ?? null,
           created_at: q.created_at,
+          // 금액만 있는 예전 견적의 견적일(담당자가 금액을 저장한 때) — 견적서를 오늘 날짜로 찍지 않게
+          updated_at: (q as Record<string, unknown>).updated_at ?? null,
           quote,
         },
       });

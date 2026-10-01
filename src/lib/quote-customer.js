@@ -20,6 +20,12 @@ export const MAX_FORM_ERRORS = 30;
 
 /** 이 수량 이상이면 담당자 확인 — 1회 투입 장수 표가 오면 planRuns 만 바꾸면 된다. */
 export const SAMPLE_MANUAL_MIN = 10;
+/**
+ * 자동 계산 범위(10-01 출시 전 점검). 이보다 큰 두께·시간은 오타·장난 입력일 가능성이 커서
+ * 금액을 내지 않고 담당자 확인으로 돌린다(그 단계만 '담당자 확인' 항목이 되고, 고객에게 금액은 보이지 않는다).
+ */
+export const AUTO_MAX_NM = 10000;   // 10 µm
+export const AUTO_MAX_MIN = 1440;   // 24시간
 
 /** 두께(nm) 단위 공정 · 시간(min) 단위 공정 — src/lib/processes.ts 의 단위와 같다 */
 const NM_PROCESSES = ['Sputter', 'ALD', 'Evaporator'];
@@ -262,6 +268,18 @@ export function estimateForCustomer({ form, priceDb, computeQuote, formatUsd, us
   const runsPlan = planRuns(sampleCount);
   if (runsPlan.manual) addManual({ code: 'samples' });
 
+  // 자동 계산 범위를 넘는 두께·시간 → 그 단계는 담당자 확인(엔진도 돌리지 않는다 — 터무니없는 금액을 저장하지 않게)
+  let overLimit = false;
+  (Array.isArray(form.steps) ? form.steps : []).forEach((s, i) => {
+    const p = String(s?.process ?? '');
+    const nm = NM_PROCESSES.includes(p);
+    const v = nm ? parseThickness(s?.value) : MIN_PROCESSES.includes(p) ? conv(s?.value) : null;
+    if (typeof v === 'number' && v > (nm ? AUTO_MAX_NM : AUTO_MAX_MIN)) {
+      addManual({ code: 'step', step: i + 1, process: p, material: String(s?.material ?? ''), reason: 'overLimit' });
+      overLimit = true;
+    }
+  });
+
   // 기판 (구매 요청일 때만)
   let substrate = { status: 'notPurchase', matched: [] };
   let substrateId = null;
@@ -294,7 +312,7 @@ export function estimateForCustomer({ form, priceDb, computeQuote, formatUsd, us
     else addManual({ code: 'step', step: e.step, process: e.process, material: e.material, reason: e.kind });
   }
 
-  const result = mapped?.items.length ? computeQuote(priceDb, { items: mapped.items, layers: mapped.layers }) : null;
+  const result = mapped?.items.length && !overLimit ? computeQuote(priceDb, { items: mapped.items, layers: mapped.layers }) : null;
   // 입력은 검증했으니 남은 엔진 오류는 가격 자료 쪽이다
   if (result && result.status !== '정상') addManual({ code: 'pricing', engineStatus: String(result.status) });
 
@@ -303,7 +321,8 @@ export function estimateForCustomer({ form, priceDb, computeQuote, formatUsd, us
 
   /** @type {any} */
   let customer;
-  if (manual.length || !result) customer = { kind: 'manual', manual: manual.map((e) => manualLabel(e, locale)) };
+  // 같은 단계가 사유 둘(예: 가격 자료 없음 + 범위 초과)로 들어와도 고객 문구는 한 번만(사유는 고객에게 보이지 않는다)
+  if (manual.length || !result) customer = { kind: 'manual', manual: [...new Set(manual.map((e) => manualLabel(e, locale)))] };
   else {
     const total = /** @type {number} */ (result.total);
     customer = {

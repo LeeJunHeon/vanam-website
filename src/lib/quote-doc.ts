@@ -11,7 +11,7 @@ import company from '../data/company.json';
 import docLogo from '../assets/brand/logo-light.png';
 import { buildQuoteHtml, buildRequestHtml, buildOrderHtml, fitCells, telKr } from './doc-excel.js';
 
-export { money, telKr, koreanAmount, ymdLocal, quoteFromAmount, requestDocFrom, orderDocFrom } from './doc-excel.js';
+export { money, telKr, koreanAmount, ymdLocal, quoteFromAmount, requestDocFrom, orderDocFrom, specFromDetails } from './doc-excel.js';
 
 export type QuoteDocInfo = {
   customer: string;   // 고객(귀하)
@@ -38,7 +38,7 @@ export type QuoteDocItem = {
 
 export type QuoteDocInput = {
   info: QuoteDocInfo;
-  /** 품목 줄(입력 순서 그대로). 15줄보다 적으면 빈 줄로 채운다. */
+  /** 품목 줄(입력 순서 그대로). 넣은 줄만 그린다 — 빈 줄(null)은 건너뛰고, 빈 줄로 채우지 않는다. */
   items: (QuoteDocItem | null)[];
   supply: number;
   vat: number;

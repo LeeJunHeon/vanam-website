@@ -203,7 +203,7 @@ const inputClass =
   // 서류(견적서·요청서·주문서)는 모두 엑셀 「견적서」 틀(src/lib/doc-excel.js)
   import {
     buildQuoteDoc, buildRequestDoc, buildOrderDoc, openDoc,
-    quoteFromAmount, requestDocFrom, orderDocFrom, docContact, ymdLocal,
+    quoteFromAmount, requestDocFrom, orderDocFrom, docContact, ymdLocal, specFromDetails,
   } from '../../lib/quote-doc';
   const form = document.getElementById('lookup-form') as HTMLFormElement | null;
   if (form) {
@@ -486,7 +486,7 @@ const inputClass =
           // 견적 요약(자동 견적·담당자 개정) — 예상·검토 중이면 금액 줄 자리에, 확정이면 금액 줄 아래에 상자를 둔다
           const qv = q.quote ?? null;
           const qvState = String(qv?.state ?? '');
-          const qvBox = renderQuoteBox(qv, QVT, { refresh: true });
+          const qvBox = renderQuoteBox(qv, QVT);
           if (qvBox) injectQuoteViewStyle(document);
           const amountRow = `
               <div class="mt-5 flex items-center justify-between border-t border-ink/10 pt-5">
@@ -497,6 +497,8 @@ const inputClass =
           const hasDocBtn = qvBox.includes('data-qv-doc');
           // 담당자가 금액만 넣은 견적(편집기 개정 없음)이 있으면 [견적서 인쇄], 아직 금액이 없으면 [요청서 인쇄]
           const hasAmount = q.quoted_amount != null && Number(q.quoted_amount) > 0;
+          // 일반 문의(상품·공정 없음)는 금액이 없으면 뽑을 서류가 없다 — 버튼을 그리지 않는다
+          const canPrint = hasAmount || q.type !== 'general';
           const amountBlock = qvBox && (qvState === 'estimate' || qvState === 'reviewing')
             ? `<div class="mt-5 border-t border-ink/10 pt-1">${qvBox}</div>`
             : amountRow + (qvBox ? qvBox : '');
@@ -530,7 +532,8 @@ const inputClass =
                 <p class="mt-5 rounded-lg border border-ink/10 bg-ink/[0.03] p-4 text-sm leading-relaxed text-ink/70"><span class="text-ink/45">${esc(INQ.sheetBank)}</span><br>${esc(q.quote_bank)}</p>` : ''}
               ${q.quote_note ? `
                 <p class="mt-5 rounded-lg bg-ink/[0.05] p-4 text-sm leading-relaxed text-ink/65">${esc(q.quote_note)}</p>` : ''}
-              ${hasDocBtn ? '' : `<button type="button" id="inq-sheet" class="mt-5 v-btn-ghost-sm">🖨 ${esc(hasAmount ? INQ.sheetBtn : INQ.reqSheetBtn)}</button>`}
+              ${hasDocBtn || !canPrint ? '' : `<button type="button" id="inq-sheet" class="mt-5 v-btn-ghost-sm">🖨 ${esc(hasAmount ? INQ.sheetBtn : INQ.reqSheetBtn)}</button>
+                <p class="mt-2 text-sm text-danger" data-doc-msg hidden></p>`}
               ${q.paid_at ? `
                 <p class="mt-5 rounded-lg border border-ok/25 bg-ok/10 p-3 text-center text-sm font-semibold text-ok">✅ ${P2.paidAt} — ${when(q.paid_at)}</p>` : ''}
               ${!q.paid_at && q.quote_currency === 'USD' && Number(q.quoted_amount) > 0 && q.status !== 'closed' ? payBlock(q.id) : ''}
@@ -547,8 +550,6 @@ const inputClass =
             return true;
           };
           resEl.querySelector('[data-qv-doc]')?.addEventListener('click', () => { openSavedDoc(); });
-          // 최신 견적 다시 보기 — 같은 접수번호·이메일로 다시 조회한다
-          resEl.querySelector('[data-qv-refresh]')?.addEventListener('click', () => { form.requestSubmit(); });
 
           // 견적서·요청서 인쇄 — 접수 확인 페이지를 이미 닫았거나 나중에 다시 찾은 고객이
           // 조회 화면에서 바로 서류를 뽑을 수 있어야 한다(구매팀에 넘길 서류가 된다).
@@ -556,34 +557,37 @@ const inputClass =
           //   견적 요약에 견적서(doc)가 있으면 → 그 견적서
           //   금액만 있는 예전 방식 견적 → 엑셀 견적서 품목 1줄(요청 상품 · 1식, 금액은 부가세 포함으로 보고 공급가액·세액을 나눈다)
           //   금액이 아직 없으면 → 견적 요청서(견적 폼의 [견적 요청서 다운로드]와 같은 함수)
+          // 팝업이 막히면 버튼 아래에 안내(문구는 견적 상자와 같은 popupBlocked)
+          const docMsg = (ok: boolean) => {
+            const m = resEl.querySelector('[data-doc-msg]') as HTMLElement | null;
+            if (m) { m.textContent = ok ? '' : QVT.popupBlocked; m.hidden = ok; }
+          };
           document.getElementById('inq-sheet')?.addEventListener('click', () => {
             if (qv?.doc && openSavedDoc()) return;
             let dj: Record<string, any> | null = null;
             try { dj = JSON.parse(String(q.details_json ?? 'null')); } catch { dj = null; }
-            const wf = dj && typeof dj.wafer === 'object' ? dj.wafer : null;
             const pName = String(PNAMES[String(q.product_sku ?? '')] ?? q.product_name ?? q.material ?? '');
             if (hasAmount) {
-              // 규격 칸 — 웨이퍼 문의는 수량·다이싱, 공정 견적은 공정·기판
-              const wFee = Number(wf?.dicingFeeKrw) || 0;
-              const spec = wf
-                ? [qtyBox(wf.qty), `${INQ.wDicing}: ${wf.dicing
-                  ? `${INQ.wYes} (+₩${wFee.toLocaleString('ko-KR')}${INQ.wPerBox} × ${Number(wf.qty) || 1})`
-                  : INQ.wNo}`].join(' · ')
-                : [String(q.method ?? ''), dSub].filter((x) => x.trim()).join(' · ');
-              openDoc(buildQuoteDoc(quoteFromAmount({
-                lang: PAGE_LANG, id: String(q.id), date: ymdLocal(),
+              // 규격 칸 = 요청 내용(공정 순서·기판 / 웨이퍼는 수량·다이싱). 옛 건은 공정 · 기판
+              const spec = specFromDetails({ lang: PAGE_LANG, dj, sizeMap: SIZE_MAP,
+                fallback: [String(q.method ?? ''), dSub].filter((x) => x.trim()).join(' · ') });
+              // 견적일 = 담당자가 금액을 저장한 날(updated_at). 오늘 날짜로 찍으면 옛 금액이 오늘 견적처럼 보인다
+              docMsg(openDoc(buildQuoteDoc(quoteFromAmount({
+                lang: PAGE_LANG, id: String(q.id), date: ymdLocal(q.updated_at || q.created_at) || ymdLocal(),
                 customer: [q.company, q.name].map((x: unknown) => String(x ?? '').trim()).filter(Boolean).join(' '),
                 title: pName, spec, amount: Number(q.quoted_amount), currency: String(q.quote_currency ?? 'KRW'),
                 bank: String(q.quote_bank ?? ''), memo: String(q.quote_note ?? ''), contact: docContact(PAGE_LANG),
-              })));
+              }))));
               return;
             }
-            openDoc(buildRequestDoc(requestDocFrom({
+            // 금액 전 — 견적 요청서. 담당자가 금액 없이 남긴 안내·입금 계좌도 싣는다
+            docMsg(openDoc(buildRequestDoc(requestDocFrom({
               lang: PAGE_LANG, id: String(q.id), draft: false, date: ymdLocal(q.created_at),
               statusText: String(INQ.st?.[q.status] ?? q.status ?? ''),
               requester: { company: q.company, name: q.name, phone: q.phone, email: String(data.email ?? '') },
               product: pName, dj, detailsText: dTxt, sizeMap: SIZE_MAP, deliveryMap: DELIV_MAP,
-            })));
+              staffNote: String(q.quote_note ?? ''), bank: String(q.quote_bank ?? ''),
+            }))));
           });
 
           initPP(data.email as string);
@@ -654,6 +658,7 @@ const inputClass =
 
             <div class="mt-7 border-t border-ink/10 pt-6">
               <button type="button" id="ord-sheet" class="v-btn-ghost-sm">🖨 ${esc(C.ordSheetBtn)}</button>
+              <p class="mt-2 text-sm text-danger" data-doc-msg hidden></p>
             </div>
           </div>`;
         resEl.hidden = false;
@@ -662,10 +667,13 @@ const inputClass =
         // 구매팀에 넘길 서류이므로 웨이퍼 다이싱은 원화 확정 금액으로 별도 줄에 적는다.
         // 자동 인쇄하지 않는다 — 창 안의 버튼을 눌러야 인쇄창이 뜬다.
         document.getElementById('ord-sheet')?.addEventListener('click', () => {
-          openDoc(buildOrderDoc(orderDocFrom({
+          const ok = openDoc(buildOrderDoc(orderDocFrom({
             lang: PAGE_LANG, order: o, items, statusText: String(ST[o.status] ?? o.status ?? ''),
             noShipText: String(C.noShip ?? ''), email: String(data.email ?? ''),
           })));
+          // 팝업이 막히면 버튼 아래에 안내
+          const m = resEl.querySelector('[data-doc-msg]') as HTMLElement | null;
+          if (m) { m.textContent = ok ? '' : QVT.popupBlocked; m.hidden = ok; }
         });
 
         initPP(data.email as string);

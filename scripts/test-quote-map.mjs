@@ -4,7 +4,7 @@
 // 레시피·장비·기판 ID 와 금액은 실제 DB 와 겹치지 않는 가짜 값이다.
 import { mapFormToQuote, recipeCandidates, parseThickness, runsOf, conv, QuoteMapError, REASON } from '../src/lib/quote-map.js';
 import {
-  estimateForCustomer, matchSubstrate, planRuns, prettyFormula, addDays, SAMPLE_MANUAL_MIN, FORBIDDEN_CUSTOMER_KEYS,
+  estimateForCustomer, matchSubstrate, planRuns, prettyFormula, addDays, SAMPLE_MANUAL_MIN, FORBIDDEN_CUSTOMER_KEYS, AUTO_MAX_NM, AUTO_MAX_MIN,
   manualLabel, manualLabelAdmin, GRADES, GRADED_TYPES, MAX_FORM_ERRORS,
 } from '../src/lib/quote-customer.js';
 import { buildAutoRevision } from '../src/lib/quote-revision.js';
@@ -151,6 +151,19 @@ eq('어닐링 Ar → manual', cust({ steps: [S('Annealing', 'Ar', '30'), S('Sput
 eq('Evaporator Ag → manual', cust({ steps: [S('Evaporator', 'Ag', '50')], sampleCount: 1 }), { kind: 'manual', manual: ['1단계 Evaporator Ag'] });
 eq('Evaporator Te → manual', cust({ steps: [S('Sputter', 'Ti', '10'), S('Evaporator', 'Te', '20')], sampleCount: 1 }), { kind: 'manual', manual: ['2단계 Evaporator Te'] });
 eq('엔진 오류(가격 자료) → manual', cust({ steps: [S('Sputter', 'Ti', '10')], sampleCount: 1 }, badEngine), { kind: 'manual', manual: ['가격 자료 확인'] });
+// 자동 계산 범위(10-01): 두께 10,000 nm · 시간 1,440 분을 넘으면 금액 없이 담당자 확인
+eq('범위: 상수', [AUTO_MAX_NM, AUTO_MAX_MIN], [10000, 1440]);
+eq(`두께 ${AUTO_MAX_NM} nm → estimate`, cust({ steps: [S('Sputter', 'Ti', String(AUTO_MAX_NM))], sampleCount: 1 }).kind, 'estimate');
+eq(`두께 ${AUTO_MAX_NM + 1} nm → manual(그 단계)`, cust({ steps: [S('Sputter', 'Ti', '10'), S('Sputter', 'Pt', String(AUTO_MAX_NM + 1))], sampleCount: 1 }), { kind: 'manual', manual: ['2단계 Sputter Pt'] });
+{
+  let called = 0;
+  const r = est({ steps: [S('Sputter', 'Ti', '9'.repeat(300))], sampleCount: 1 }, (db, q) => { called++; return fakeEngine(db, q); });
+  eq('두께 300자리 숫자 → manual · 엔진을 부르지 않음(터무니없는 금액 저장 안 함)', [r.customer, called, r.debug.result], [{ kind: 'manual', manual: ['1단계 Sputter Ti'] }, 0, null]);
+}
+eq(`플라즈마 ${AUTO_MAX_MIN + 1} 분 → manual`, cust({ steps: [S('PlasmaCleaning (In-situ)', 'Ar', String(AUTO_MAX_MIN + 1)), S('Sputter', 'Ti', '10')], sampleCount: 1 }), { kind: 'manual', manual: ['1단계 PlasmaCleaning (In-situ) Ar'] });
+eq(`플라즈마 ${AUTO_MAX_MIN} 분 → estimate`, cust({ steps: [S('PlasmaCleaning (In-situ)', 'Ar', String(AUTO_MAX_MIN)), S('Sputter', 'Ti', '10')], sampleCount: 1 }).kind, 'estimate');
+eq('어닐링 범위 초과 + 가격 없음 → 고객 문구 한 번만', cust({ steps: [S('Sputter', 'Ti', '10'), S('Annealing', 'N2', '99999')], sampleCount: 1 }), { kind: 'manual', manual: ['2단계 Annealing N₂'] });
+eq('담당자 문구: 범위 초과 사유', manualLabelAdmin({ code: 'step', step: 2, process: 'Sputter', material: 'Pt', reason: 'overLimit' }), '2단계 Sputter Pt — 자동 계산 범위를 넘는 수치(두께·시간)');
 
 // 기판(구매 요청)
 const buy = (type, size, grade) => est({ steps: [S('Sputter', 'Ti', '10')], sampleCount: 2, delivery: 'purchase', substrateType: type, substrateSize: size, substrateGrade: grade });

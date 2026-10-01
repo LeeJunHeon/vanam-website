@@ -4,7 +4,7 @@
 import {
   formFromDetails, defaultDocInfo, buildDoc, buildAutoRevision, customerQuoteView, VIEW_FORBIDDEN_KEYS, contactFor,
 } from '../src/lib/quote-revision.js';
-import { buildInquiryChatText, buildEstimateChatLine } from '../src/lib/chat-message.js';
+import { buildInquiryChatText, buildEstimateChatLine, ESTIMATE_LINE_MAX } from '../src/lib/chat-message.js';
 
 let total = 0, failed = 0;
 function eq(label, got, want) {
@@ -157,6 +157,11 @@ eq('buildEstimateChatLine estimate 고객 화면 금액 다름', buildEstimateCh
   '💰 예상 견적(자동): ₩12,345 (부가세 포함 · 확정 전) · 고객 화면 금액 ₩11,111 과 다름');
 eq('buildEstimateChatLine manual', buildEstimateChatLine({ kind: 'manual', total: null, manualAdmin: ['분석: XPS — 가격 자료 없음', '샘플 수량 10개 이상'] }),
   '💰 예상 견적(자동): 담당자 확인 필요 — 분석: XPS — 가격 자료 없음 / 샘플 수량 10개 이상');
+{
+  const many = Array.from({ length: 30 }, (_, i) => `${i + 1}단계 X`);
+  const line = buildEstimateChatLine({ kind: 'manual', total: null, manualAdmin: many });
+  eq('buildEstimateChatLine manual 사유 많음 → 앞 8개 + 외 N건', [ESTIMATE_LINE_MAX, line.endsWith('8단계 X 외 22건'), line.includes('9단계 X')], [8, true, false]);
+}
 
 // ── 알림 본문: estimateLine 이 없으면 수정 전과 바이트 단위로 같다 ──────────────
 // 아래 기대값은 수정 전 chat-message.js 의 출력을 그대로 떠서 고정한 것이다(가짜 입력).

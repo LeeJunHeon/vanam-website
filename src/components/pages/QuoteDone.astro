@@ -83,6 +83,7 @@ const t = isKo
         </div>
         <button id="qd-print"
           class="mt-5 v-btn-ghost-sm">🖨 {t.print}</button>
+        <p id="qd-print-msg" class="mt-2 text-sm text-danger" hidden></p>
       </div>
 
       <p id="qd-expired" hidden class="mt-6 border-t border-ink/10 pt-6 text-sm leading-relaxed text-ink/50">{t.expired}</p>
@@ -158,7 +159,10 @@ const t = isKo
             requester: { company: d.company, name: d.name, phone: d.phone, email: d.email },
             product: d.product, dj: null, detailsText: det,
           });
-      openDoc(buildRequestDoc(o)); // 팝업 차단 시 조용히 중단 — 버튼으로 재시도 가능
+      const ok = openDoc(buildRequestDoc(o));
+      // 팝업이 막히면 버튼 아래에 안내(문구는 조회 화면과 같은 site.json quote.view.popupBlocked)
+      const msg = document.getElementById('qd-print-msg');
+      if (msg) { msg.textContent = ok ? '' : String(JSON.parse(root.dataset.qv || '{}').popupBlocked ?? ''); msg.hidden = ok; }
     });
   } else {
     (document.getElementById('qd-expired') as HTMLElement).hidden = false;

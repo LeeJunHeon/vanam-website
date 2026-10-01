@@ -17,13 +17,15 @@ const KO = site.ko.quote.view, EN = site.en.quote.view;
 
 // site.json 키가 빠짐없이 있는지(ko·en)
 const VIEW_KEYS = ['estimate', 'estimateByStaff', 'confirmed', 'reviewing', 'reviewingIntro', 'totalMain', 'totalMeta', 'valid', 'notice', 'updated',
-  'docBtn', 'refresh', 'liveNote', 'approx', 'docStamp', 'docNoteEstimate', 'popupBlocked'];
+  'docBtn', 'approx', 'docStamp', 'docNoteEstimate', 'popupBlocked'];
 const EST_KEYS = ['button', 'calculating', 'title', 'totalMain', 'totalMeta', 'valid', 'notice', 'manualTitle', 'manualIntro', 'manualCta',
   'invalidTitle', 'invalidIntro', 'fail', 'unavailable', 'tooMany'];
 for (const loc of ['ko', 'en']) {
   eq(`site.json ${loc} quote.view 키`, VIEW_KEYS.filter((k) => typeof site[loc].quote.view?.[k] !== 'string' || !site[loc].quote.view[k]), []);
   eq(`site.json ${loc} quote.estimate 키`, EST_KEYS.filter((k) => typeof site[loc].quote.estimate?.[k] !== 'string' || !site[loc].quote.estimate[k]), []);
   eq(`site.json ${loc} quote.form 등급 키`, ['grade', 'gradePlaceholder'].filter((k) => !site[loc].quote.form?.[k]), []);
+  // '최신 견적 다시 보기' 줄은 없앴다(10-01) — 문구가 남아 있으면 다시 붙이게 된다
+  eq(`site.json ${loc} 다시 보기 문구 없음`, ['refresh', 'liveNote'].filter((k) => k in site[loc].quote.view), []);
   // 확정 견적서는 엑셀과 같게 안내 문구가 없다(10-01) — 문구가 남아 있으면 다시 붙이게 된다
   eq(`site.json ${loc} 확정 견적 안내 키 없음`, 'docNoteConfirmed' in site[loc].quote.view, false);
   // 예전 한 줄 금액 문구(total)는 totalMain·totalMeta 로 나뉘었다 — 남아 있으면 어느 쪽을 쓰는지 헷갈린다
@@ -58,7 +60,7 @@ const CONF_NODOC = { ...CONF, doc: null, totalKrw: null, totalKrwText: null, tot
 
 // estimate
 {
-  const h = renderQuoteBox(EST, KO, { refresh: true });
+  const h = renderQuoteBox(EST, KO);
   const put = (t) => t.replace('{krw}', '₩110').replace('{usd}', '$0.08');
   eq('estimate: 라벨·금액 줄(view 값 그대로)·안내·유효·갱신', [
     h.includes(`>${KO.estimate}<`),
@@ -74,19 +76,18 @@ const CONF_NODOC = { ...CONF, doc: null, totalKrw: null, totalKrwText: null, tot
     at('qv-label') < at('qv-total'), at('qv-total') < at(KO.valid.slice(0, 4)), at(KO.valid.slice(0, 4)) < at(KO.updated.slice(0, 4)),
     at(KO.updated.slice(0, 4)) < at('qv-notice'), at('qv-notice') < at('data-qv-doc'),
   ], [true, true, true, true, true]);
-  eq('estimate: 견적서 버튼·새로고침 줄', [h.includes('data-qv-doc'), h.includes('data-qv-refresh'), h.includes(KO.liveNote)], [true, true, true]);
-  eq('estimate: refresh 없으면 새로고침 줄 없음', renderQuoteBox(EST, KO).includes('data-qv-refresh'), false);
+  eq('estimate: 견적서 버튼 있음 · 최신 견적 다시 보기 줄 없음(10-01 삭제)', [h.includes('data-qv-doc'), h.includes('data-qv-refresh'), h.includes('qv-live')], [true, false, false]);
   eq('estimate: byStaff 라벨', renderQuoteBox({ ...EST, byStaff: true }, KO).includes(`>${KO.estimateByStaff}<`), true);
   eq('estimate: doc 없으면 견적서 버튼 없음', renderQuoteBox({ ...EST, doc: null }, KO).includes('data-qv-doc'), false);
-  const e = renderQuoteBox(EST, EN, { refresh: true });
+  const e = renderQuoteBox(EST, EN);
   eq('estimate en: 금액 줄(달러가 큰 글씨, 원화는 설명)', [e.includes(`class="qv-amount">${EN.totalMain.replace('{usd}', '$0.08')}<`),
     e.includes(`class="qv-meta">${EN.totalMeta.replace('{krw}', '₩110')}<`)], [true, true]);
   eq('estimate en: 한글 없음(문구·값 모두 영문일 때)', /[가-힣]/.test(e), false);
 }
 // reviewing
 {
-  const h = renderQuoteBox(REV, KO, { refresh: true });
-  eq('reviewing: 라벨·안내·목록·새로고침', [h.includes(`>${KO.reviewing}<`), h.includes(KO.reviewingIntro), h.includes('<li>분석: XPS</li>'), h.includes('data-qv-refresh')], [true, true, true, true]);
+  const h = renderQuoteBox(REV, KO);
+  eq('reviewing: 라벨·안내·목록 · 다시 보기 줄 없음', [h.includes(`>${KO.reviewing}<`), h.includes(KO.reviewingIntro), h.includes('<li>분석: XPS</li>'), h.includes('data-qv-refresh')], [true, true, true, false]);
   eq('reviewing: 금액·견적서 없음', [h.includes('qv-total'), h.includes('data-qv-doc')], [false, false]);
 }
 // confirmed

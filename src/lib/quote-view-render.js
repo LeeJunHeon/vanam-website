@@ -1,6 +1,6 @@
 // 조회·완료 화면 공용 견적 상자 — 순수 함수(브라우저·node 테스트가 같이 쓴다).
 //
-//   renderQuoteBox(view, T, opts) → HTML 문자열 (view 없으면 '')
+//   renderQuoteBox(view, T)       → HTML 문자열 (view 없으면 '')
 //   totalLine(T, krw, usd)        → 금액 줄 HTML(큰 금액 + 작은 설명) — 제품 페이지 예상 견적도 같이 쓴다
 //   docOptions(view, T, lang)     → buildQuoteDoc 에 넘길 견적서 데이터(로고는 quote-doc.ts 가 붙인다) · 견적서가 없으면 null
 //
@@ -53,7 +53,6 @@ export const QV_CSS = `
 .qv-bad .qv-list li::before{background:var(--color-danger)}
 .qv-list+.qv-sub{margin-top:.75rem}
 .qv-actions{margin-top:1rem;display:flex;flex-wrap:wrap;align-items:center;gap:.75rem}
-.qv-live{font-size:.8125rem;color:color-mix(in oklab,var(--color-ink) 60%,transparent)}
 .qv-msg{margin-top:.5rem;font-size:.875rem;color:var(--color-danger)}
 .qv-box>:first-child{margin-top:0}
 `;
@@ -79,15 +78,12 @@ export function totalLine(T, krw, usd) {
 /**
  * @param {any} view inquiry.quote
  * @param {Record<string, string>} T site.json quote.view
- * @param {{refresh?: boolean}} [opts] refresh: '최신 견적 다시 보기' 줄 표시(조회 화면)
  * @returns {string}
+ * '최신 견적 다시 보기' 줄은 두지 않는다(10-01 — 같은 조회를 한 번 더 할 뿐이라 불필요). 새 견적은 조회를 다시 하면 보인다.
  */
-export function renderQuoteBox(view, T, opts = {}) {
+export function renderQuoteBox(view, T) {
   if (!view || typeof view !== 'object') return '';
   const state = String(view.state ?? '');
-  const refresh = opts.refresh
-    ? `<div class="qv-actions"><span class="qv-live">${esc(T.liveNote)}</span><button type="button" class="v-btn-ghost-sm" data-qv-refresh>${esc(T.refresh)}</button></div>`
-    : '';
   const docBtn = view.doc ? `<button type="button" class="v-btn-ghost-sm" data-qv-doc>${esc(T.docBtn)}</button>` : '';
 
   if (state === 'estimate') {
@@ -100,7 +96,6 @@ export function renderQuoteBox(view, T, opts = {}) {
       `<div class="qv-notice">${esc(T.notice)}</div>` +
       (docBtn ? `<div class="qv-actions">${docBtn}</div>` : '') +
       `<p class="qv-msg" data-qv-msg hidden></p>` +
-      refresh +
       `</div>`;
   }
   if (state === 'reviewing') {
@@ -109,7 +104,6 @@ export function renderQuoteBox(view, T, opts = {}) {
       `<p class="qv-label">${esc(T.reviewing)}</p>` +
       `<p class="qv-text">${esc(T.reviewingIntro)}</p>` +
       (items.length ? `<ul class="qv-list">${items.map((m) => `<li>${esc(m)}</li>`).join('')}</ul>` : '') +
-      refresh +
       `</div>`;
   }
   if (state === 'confirmed') {

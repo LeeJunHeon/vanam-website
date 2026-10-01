@@ -201,7 +201,7 @@ export function customerQuoteView({ revision, inquiry, locale, usdRate, formatUs
     totalUsdText: showDoc ? formatUsd(total, usdRate) : null,
     validDays,
     validUntil,
-    manual: Array.isArray(manualEntries) ? manualEntries.map((e) => manualLabel(e, locale)) : [],
+    manual: Array.isArray(manualEntries) ? [...new Set(manualEntries.map((e) => manualLabel(e, locale)))] : [],
     doc: showDoc ? doc : null,
   };
 }

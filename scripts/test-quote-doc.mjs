@@ -8,7 +8,7 @@
 //   ⑥ 칸 맞춤(fitCells) — 가짜 DOM 으로 줄이기·줄바꿈 규칙
 // 회사 정보는 가짜(실제 사업자 정보를 테스트에 쓰지 않는다). 공급자 칸 고정 글자(SUPPLIER_DOC_KO)는 엑셀 그대로인지 따로 확인한다.
 import {
-  buildQuoteHtml, buildRequestHtml, buildOrderHtml, quoteFromAmount, requestDocFrom, orderDocFrom, fitCells,
+  buildQuoteHtml, buildRequestHtml, buildOrderHtml, quoteFromAmount, requestDocFrom, orderDocFrom, fitCells, specFromDetails,
   SUPPLIER_DOC_KO, dateKr, dateEn, money, usd, telKr, telDisplay, ymdLocal, koreanAmount,
 } from '../src/lib/doc-excel.js';
 import { koreanAmount as engineKorean } from '../src/lib/quote-engine.js';
@@ -23,7 +23,8 @@ function eq(label, got, want) {
 }
 const HANGUL = /[가-힣ㄱ-ㆎ]/g;
 const hangulOf = (h) => (h.match(HANGUL) ?? []).join('');
-const tbodyRows = (h) => ((/<tbody>([\s\S]*?)<\/tbody>/.exec(h)?.[1] ?? '').match(/<tr /g) ?? []).length;
+// 본문 줄 수(합계 줄 class="tot" 은 빼고 센다)
+const tbodyRows = (h) => ((/<tbody>([\s\S]*?)<\/tbody>/.exec(h)?.[1] ?? '').match(/<tr style=/g) ?? []).length;
 const has = (h, ...ws) => ws.every((w) => h.includes(w));
 
 const FAKE = { bizNo: '000-00-00000', nameKo: '가짜상사', nameEn: 'Fake Co.', ceoKo: '홍길동', ceoEn: 'Gil-dong Hong',
@@ -50,13 +51,15 @@ const TWO = { info, items: [item(1), null, item(3)], supply: 4000, vat: 400, tot
   eq('정보 칸 4줄 + 유효기간 문장', has(h, '>견 적 명<', '>Multilayers<', '>납품기한<', '>대금 지불방식<', '>견적 유효기간<', '견적일로부터 7 일간'), true);
   eq('합계 줄: 일금 · 한글(밑줄) · 원정 · ₩ · 금액', /일금<\/td><td class="nob r"><span class="u">사천사백<\/span><\/td><td class="nob">원정<\/td><td class="nob">₩<\/td><td class="nob r">4,400<\/td>/.test(h), true);
   eq('품목표: 머리 6칸 · 최종 합계', has(h, '<th>품명</th>', '<th>규격/사양</th>', '<th>수량</th>', '<th>단가</th>', '<th>공급가액</th>', '<th>세액</th>', '>최종 합계<'), true);
-  eq('품목표: 15줄 고정(빈 줄 포함) · 줄바꿈 칸', [tbodyRows(h), h.includes('<td class="t">규격 1\n둘째 줄</td>')], [15, true]);
+  eq('품목표: 넣은 품목만(빈 줄 null 은 건너뜀) · 줄바꿈 칸', [tbodyRows(h), h.includes('<td class="t">규격 1\n둘째 줄</td>'), h.includes('<td></td>')], [2, true, false]);
   eq('품목표: 수량 = 수 + 단위', h.includes('<td class="c">3 회</td>'), true);
   eq('문서 안 스크립트·자동 인쇄 없음', [/<script/i.test(h), /\.print\(\)/.test(h)], [false, false]);
   eq('버튼(창을 연 쪽이 연결)', has(h, 'id="vn-doc-print"', 'id="vn-doc-close"', '인쇄 / PDF 저장', '>닫기<'), true);
   eq('A4 · Arial · 굵은 바깥 선', has(h, '@page{size:A4 portrait;margin:10mm}', 'font-family:Arial', '.box{border:2px solid #000}'), true);
   const many = buildQuoteHtml({ ...TWO, items: Array.from({ length: 16 }, (_, k) => item(k + 1)) }, FAKE);
-  eq('품목표: 엑셀처럼 최대 15줄', tbodyRows(many), 15);
+  eq('품목표: 품목 수만큼 줄(빈 줄로 채우지 않음)', tbodyRows(many), 16);
+  eq('표: 모든 줄 같은 최소 높이(22.5pt) · 쪽 경계에서 줄이 잘리지 않음', [(many.match(/<tr style="height:7\.64mm">/g) ?? []).length, many.includes('.items tr{break-inside:avoid}')], [17, true]);
+  eq('표: 합계는 본문 마지막 줄(tfoot 아님 — 인쇄 때 쪽마다 반복되지 않게)', [many.includes('<tfoot'), /<tr class="tot" style="height:7\.64mm"><td class="lab" colspan="4">최종 합계<\/td>[^]*<\/tr><\/tbody>/.test(many)], [false, true]);
 }
 eq('SUPPLIER_DOC_KO = 엑셀 공급자 칸 글자', SUPPLIER_DOC_KO, {
   name: '반암주식회사', ceo: '한 수 덕', address: '서울특별시 영등포구 도신로4길 21-1, 반암',
@@ -135,14 +138,14 @@ const REQ_KO = { company: '테스트대학', name: '홍길동', phone: '010-0000
   eq('요청서 데이터: 공정 → 표 줄(수치 + 단위)', draft.steps, [
     { process: 'Sputter', material: 'Ti', value: '10 nm', etc: '' }, { process: 'Annealing', material: 'N2', value: '60 min', etc: '400 °C' }]);
   eq('요청서 데이터: 정보 칸(기판 지도 · 박막 있음+메모 · 분석 · 요청 사항)', draft.info, [
-    ['기     판', 'Silicon / 4 inch / Prime'], ['박막 증착 여부', '있음 — SiO2 300 nm'], ['분석 요청', 'XPS, XRD'], ['요청 사항', '요청 <메모>']]);
+    ['기 판', 'Silicon / 4 inch / Prime'], ['박막 증착 여부', '있음 — SiO2 300 nm'], ['분석 요청', 'XPS, XRD'], ['요청 사항', '요청 <메모>']]);
   eq('요청서 데이터: 샘플 수량 · 전달(지도) · 완료 희망', [draft.qty, draft.delivery, draft.due, draft.kind], ['5', '방문 전달', '2026-11-01', 'process']);
   const h = buildRequestHtml({ ...draft, logoUrl: LOGO });
   eq('요청서(접수 전): 제목·귀중·세로 요청자', has(h, '<title>견적 요청서 2026-10-01</title>', '>견적 요청서<', '반암주식회사 귀중', '요<br>청<br>자'), true);
   eq('요청서(접수 전): 접수번호 자리 · 오른쪽 접수 전', h.includes('<span>접수번호 : (아직 보내지 않은 요청서)</span><span class="mark">접수 전</span>'), true);
   eq('요청서(접수 전): 안내에 받는 메일', h.includes('hello@example.com 로 보내 주시거나'), true);
   eq('요청서: 요청자 칸 값', has(h, '>테스트대학<', '>홍길동<', '>010-0000-0000<', '>a@example.com<', '>금속 박막<', '>방문 전달<', '>2026-11-01<'), true);
-  eq('요청서: 표 머리 · 단계 번호 가운데 · 최소 10줄', [has(h, '<th>단계</th>', '<th>물질 · 가스</th>', '<th>두께 · 시간</th>', '<td class="c">2</td>', '>60 min<'), tbodyRows(h)], [true, 10]);
+  eq('요청서: 표 머리 · 단계 번호 가운데 · 단계 수만큼 줄(2단계 → 2줄)', [has(h, '<th>단계</th>', '<th>물질 · 가스</th>', '<th>두께 · 시간</th>', '<td class="c">2</td>', '>60 min<'), tbodyRows(h)], [true, 2]);
   eq('요청서: 이스케이프 · 스크립트 없음', [h.includes('요청 &lt;메모&gt;'), /<script/i.test(h)], [true, false]);
   const many = buildRequestHtml({ ...draft, steps: Array.from({ length: 34 }, () => draft.steps[0]), logoUrl: LOGO });
   eq('요청서: 단계가 많으면 그만큼 늘어난다(2쪽은 표 머리 반복 — thead)', [tbodyRows(many), many.includes('<thead>')], [34, true]);
@@ -157,6 +160,8 @@ const REQ_KO = { company: '테스트대학', name: '홍길동', phone: '010-0000
   eq('요청서: 박막 항목이 없던 옛 접수 건은 비워 둔다(지어내지 않음)', old.info[1], ['박막 증착 여부', '']);
   const legacy = requestDocFrom({ lang: 'ko', id: 'INQ-LEGACY', date: '2026-01-01', requester: REQ_KO, product: '', dj: null, detailsText: '[공정 시퀀스]\n1. Sputter | Ti' });
   eq('요청서: 구조화 사본 없는 옛 건 → 요청 내용 한 칸', [legacy.info, legacy.steps, legacy.kind], [[['요청 내용', '[공정 시퀀스]\n1. Sputter | Ti']], [], 'process']);
+  const hl = buildRequestHtml({ ...legacy, logoUrl: LOGO });
+  eq('요청서: 줄이 없으면 표·간격을 그리지 않는다', [hl.includes('class="box items"'), hl.includes('class="gap"')], [false, false]);
   const wafer = requestDocFrom({ lang: 'ko', id: 'INQ-W', date: '2026-01-01', requester: REQ_KO, product: '4인치 웨이퍼',
     dj: { wafer: { sku: 'w1', qty: 2, dicing: true, dicingFeeKrw: 30000 } }, detailsText: '요청 상품: 4인치 웨이퍼' });
   eq('요청서: 웨이퍼 문의 → 품목 표 · 수량 박스 · 다이싱', [wafer.kind, wafer.qty, wafer.items], ['product', '2박스',
@@ -190,14 +195,14 @@ const ITEMS = [{ sku: 'wafer:si4', name: 'Si Wafer 4"', unit_price: 150000, qty:
     { name: '다이싱', spec: '박스당', qty: '2박스', unitPrice: 30000, amount: 60000 }]);
   eq('주문서: 합계 · 한글 금액 · 귀하 · 날짜', [d.total, d.totalKorean, d.customer, d.date], [360000, '삼십육만', '테스트대학 홍길동', ymdLocal('2026-10-01T03:00:00Z')]);
   eq('주문서: 결제 칸(PayPal · USD · 결제일) · 배송지 · 세금계산서', d.info, [['주문 상태', '결제 완료'],
-    ['결     제', `PayPal (USD) · $262.00 · ${dateKr(ymdLocal('2026-10-01T03:00:00Z'))} 결제`],
+    ['결 제', `PayPal (USD) · $262.00 · ${dateKr(ymdLocal('2026-10-01T03:00:00Z'))} 결제`],
     ['배 송 지', '[KR] 홍길동 · 010-0000-0000\n(00000) 서울시 어딘가 1'], ['세금계산서', '요청 안 함']]);
   eq('주문서: PayPal 안내', d.note.startsWith('PayPal 결제는'), true);
   const h = buildOrderHtml({ ...d, logoUrl: LOGO }, FAKE);
   eq('주문서 HTML: 제목 · 귀하+메일 · 번호 · 공급자 연락처', has(h, '<title>주문서 ORD-20261001-TEST</title>', '>주문서<', '테스트대학 홍길동 귀하\na@example.com',
     '<span>주문번호 : ORD-20261001-TEST</span>', '02-0000-0000  ·  fake@example.com', '<span>(인)</span>'), true);
   eq('주문서 HTML: 합계 줄(부가세 포함) · 표 머리 · 합계', has(h, '합계 금액\n(부가세 포함)', '<span class="u">삼십육만</span>', '<th>금액(부가세 포함)</th>', '>합계<', '>360,000<'), true);
-  eq('주문서 HTML: 최소 10줄 · 스크립트 없음', [tbodyRows(h), /<script/i.test(h)], [10, false]);
+  eq('주문서 HTML: 품목 줄만(웨이퍼 + 다이싱 = 2줄) · 스크립트 없음', [tbodyRows(h), /<script/i.test(h)], [2, false]);
   const bank = orderDocFrom({ lang: 'ko', order: { ...ORDER, pay_method: 'bank', paid_at: null, needs_shipping: 0, tax_invoice: 1 },
     items: [{ sku: 'p1', name: '분석', unit_price: 50000, qty: 1, subtotal: 50000 }], statusText: '결제 대기', noShipText: '실물 배송 없음', email: '' });
   eq('주문서(계좌이체): 결제 칸 · 배송 없음 · 세금계산서 · 안내 없음 · 상품 수량', [bank.info[1][1], bank.info[2][1], bank.info[3][1], bank.note, bank.items[0].qty],
@@ -210,6 +215,25 @@ const ITEMS = [{ sku: 'wafer:si4', name: 'Si Wafer 4"', unit_price: 150000, qty:
   eq('영문 주문서 한글 0자(ASCII 입력)', hangulOf(h), '');
   eq('영문 주문서: 제목 · To · 결제 · 다이싱 줄 · 합계 ₩', has(h, '<title>Order ORD-20261001-TEST</title>', '>ORDER<', 'To: Test Univ. Jane Doe\nj@example.com',
     'PayPal (USD) · $262.00 · paid on', '>Dicing<', '>per box<', '>2 boxes<', 'Total amount\n(VAT incl.)', '₩360,000', '+82-2-0000-0000  ·  fake@example.com'), true);
+}
+
+// ── 출시 전 점검(10-01) 보완 ─────────────────────────────────────────────────────────
+{
+  const noDice = orderDocFrom({ lang: 'ko', order: ORDER, items: [{ sku: 'wafer:si4', name: 'W', unit_price: 1000, qty: 2, subtotal: 2000, dicing: 0, dicing_fee: 0 }], statusText: '', noShipText: '', email: '' });
+  const noDiceEn = orderDocFrom({ lang: 'en', order: ORDER, items: [{ sku: 'wafer:si4', name: 'W', unit_price: 1000, qty: 1, subtotal: 1000 }], statusText: '', noShipText: '', email: '' });
+  const prod = orderDocFrom({ lang: 'ko', order: ORDER, items: [{ sku: 'p1', name: 'P', unit_price: 1000, qty: 1, subtotal: 1000 }], statusText: '', noShipText: '', email: '' });
+  eq('주문서: 다이싱 안 한 웨이퍼는 다이싱 불필요(예전 주문서와 같음) · 상품은 빈칸', [noDice.items.length, noDice.items[0].spec, noDiceEn.items[0].spec, prod.items[0].spec], [1, '다이싱 불필요', 'No dicing', '']);
+
+  const withStaff = requestDocFrom({ lang: 'ko', id: 'INQ-1', date: '2026-10-01', requester: {}, product: 'P', dj: DJ, sizeMap: SIZE, deliveryMap: DELIV_KO,
+    staffNote: '샘플 확인 뒤 견적 드립니다', bank: '은행 000 (가짜)' });
+  eq('요청서: 담당자 안내·입금 계좌는 정보 칸 맨 아래 줄', withStaff.info.slice(-2), [['담당자 안내', '샘플 확인 뒤 견적 드립니다'], ['입금 계좌', '은행 000 (가짜)']]);
+  eq('요청서: 안내·계좌가 없으면 줄도 없음', requestDocFrom({ lang: 'ko', id: 'INQ-1', date: '2026-10-01', dj: DJ, staffNote: '', bank: '  ' }).info.length, 4);
+  eq('요청서(영문): 안내·계좌 라벨', requestDocFrom({ lang: 'en', id: 'INQ-1', date: '2026-10-01', dj: null, detailsText: 'x', staffNote: 'n', bank: 'b' }).info.slice(-2).map(([l]) => l), ['Note from us', 'Bank account']);
+
+  eq('규격 칸(금액만 있는 견적): 공정 순서 줄 + 기판', specFromDetails({ lang: 'ko', dj: DJ, sizeMap: SIZE }), 'Sputter Ti 10 nm\nAnnealing N2 60 min\n기판: Silicon / 4 inch / Prime');
+  eq('규격 칸: 영문 기판 라벨 · 한글 0자(ASCII 입력)', hangulOf(specFromDetails({ lang: 'en', dj: DJ, sizeMap: SIZE })), '');
+  eq('규격 칸: 웨이퍼 → 수량·다이싱', specFromDetails({ lang: 'ko', dj: { wafer: { qty: 2, dicing: true, dicingFeeKrw: 30000 } } }), '2박스 · 다이싱: 필요 (+₩30,000/박스 × 2)');
+  eq('규격 칸: 구조화 사본 없는 옛 건 → 넘긴 값 그대로', [specFromDetails({ lang: 'ko', dj: null, fallback: 'Sputter · Silicon / 4 inch' }), specFromDetails({ lang: 'ko', dj: { seq: [] }, fallback: 'F' })], ['Sputter · Silicon / 4 inch', 'F']);
 }
 
 // ── ⑥ 칸 맞춤(fitCells) — 가짜 DOM: 글자 크기에 비례하는 너비 ───────────────────────────────
