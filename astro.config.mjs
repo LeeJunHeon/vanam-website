@@ -11,12 +11,18 @@ import cloudflare from '@astrojs/cloudflare';
 
 import { isNoindexPath } from './src/lib/seo-noindex';
 import { chatModeAtBuild } from './src/lib/chat-mode.js';
+import { mailModeAtBuild } from './src/lib/mail-mode.js';
 import { turnstileSitekeyAtBuild, TURNSTILE_SITEKEY_TEST } from './src/lib/turnstile-key.js';
 
 // 구글챗 알림은 "어디서 만든 빌드인가"로 켜고 끈다 (src/lib/chat-mode.js).
 // Cloudflare Workers Builds 의 main 빌드만 켜짐, 맥미니·로컬·기타 빌드는 코드에서 차단.
 const CHAT_MODE = chatModeAtBuild(process.env);
 console.log(CHAT_MODE === 'CHAT_MODE_ON' ? '구글챗 알림: 켜짐(Cloudflare main 빌드)' : '구글챗 알림: 꺼짐(로컬·기타 빌드)');
+
+// 고객 메일(접수 확인 메일)도 같은 방식 (src/lib/mail-mode.js).
+// Cloudflare main 빌드만 고객 주소로 발송, 그 밖의 빌드는 회사 주소(@vanam.co.kr)로만 — 코드에서 막는다.
+const MAIL_MODE = mailModeAtBuild(process.env);
+console.log(MAIL_MODE.endsWith('_LIVE') ? '고객 메일: 운영(고객 주소로 발송)' : '고객 메일: 테스트(@vanam.co.kr 주소로만)');
 
 // Turnstile 사이트 키도 빌드가 정한다 (src/lib/turnstile-key.js).
 // npm run local(VANAM_LOCAL_TURNSTILE=test)만 로컬 테스트 키, 그 외는 운영 키. Cloudflare 빌드에 설정이 있으면 멈춘다.
@@ -117,6 +123,8 @@ export default defineConfig({
     // src/lib/chat-send.ts 가 읽는 빌드 표식. scripts/check-chat-guard.mjs 가 번들에서 확인한다.
     define: {
       __VANAM_CHAT_MODE__: JSON.stringify(CHAT_MODE),
+      // src/lib/mail-send.ts 가 읽는 빌드 표식. scripts/check-mail-guard.mjs 가 번들에서 확인한다.
+      __VANAM_MAIL_MODE__: JSON.stringify(MAIL_MODE),
       // QuoteForm·Contact·Checkout 의 data-sitekey. scripts/check-turnstile-key.mjs 가 산출물에서 확인한다.
       __VANAM_TURNSTILE_SITEKEY__: JSON.stringify(TURNSTILE_SITEKEY),
     },

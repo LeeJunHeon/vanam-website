@@ -7,7 +7,7 @@
 //   → 빌드한 워커를 wrangler dev --local 로 띄우고, price-db-import 가 넣은
 //     로컬 D1(.wrangler/state)을 그대로 읽는다.
 //
-// 순서: ① CI 거부 → ② 빌드 → ③ 알림 꺼짐 확인 → ④ 로컬 전용 비밀값 → ⑤ .dev.vars 덮어쓰기
+// 순서: ① CI 거부 → ② 빌드 → ③ 알림 꺼짐·고객 메일 테스트 모드 확인 → ④ 로컬 전용 비밀값 → ⑤ .dev.vars 덮어쓰기
 //       → ⑥ wrangler dev (127.0.0.1:8787) → ⑦ 접속 안내
 //
 // ⚠️ 이 스크립트는 .env 의 "값"을 읽지 않는다. 키 이름만 모아 빈 값으로 덮는다.
@@ -19,6 +19,7 @@ import { createConnection, createServer } from 'node:net';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { scanDist, judgeDist, WEBHOOK_HOST } from './check-chat-guard.mjs';
+import { scanDist as scanMail, judgeDist as judgeMail } from './check-mail-guard.mjs';
 import { TURNSTILE_SITEKEY_TEST } from '../src/lib/turnstile-key.js';
 
 const HOST = '127.0.0.1';
@@ -56,6 +57,13 @@ const errs = judgeDist(scanDist(DIST), process.env);
 if (errs.length) die(`알림 게이트 실패:\n  ${errs.join('\n  ')}`);
 if (scanDist(DIST).markers[0].value !== 'CHAT_MODE_OFF') die('번들이 알림 꺼짐(CHAT_MODE_OFF)이 아닙니다.');
 console.log('✓ 번들 확인 — 구글챗 알림 꺼짐(CHAT_MODE_OFF) · 웹훅 주소 0건');
+// 고객 메일도 테스트 모드여야 띄운다 — 테스트 모드는 @vanam.co.kr 주소로만 보낸다(src/lib/mail-send.ts).
+{
+  const merrs = judgeMail(scanMail(DIST), process.env);
+  if (merrs.length) die(`고객 메일 게이트 실패:\n  ${merrs.join('\n  ')}`);
+  if (scanMail(DIST).markers[0].value !== 'MAIL_MODE_TEST') die('번들이 고객 메일 테스트 모드(MAIL_MODE_TEST)가 아닙니다.');
+  console.log('✓ 번들 확인 — 고객 메일 테스트 모드(MAIL_MODE_TEST · @vanam.co.kr 주소로만) · 비밀값 0건');
+}
 {
   const page = join('dist', 'client', 'ko', 'product', 'multilayers', 'index.html');
   if (!existsSync(page) || !readFileSync(page, 'utf8').includes(`data-sitekey="${TURNSTILE_SITEKEY_TEST}"`)) {
@@ -102,6 +110,10 @@ if (!(local.ADMIN_PASSWORD?.length >= 16) || !(local.SESSION_SECRET?.length >= 1
 const keys = [...new Set([...keysOf('.env.example'), ...keysOf('.env')])];
 const vars = Object.fromEntries(keys.map((k) => [k, '']));
 Object.assign(vars, { ADMIN_PASSWORD: local.ADMIN_PASSWORD, SESSION_SECRET: local.SESSION_SECRET, PAYPAL_ENV: 'sandbox' });
+// 확인 메일 시험용 비밀값 — 사용자가 local.vars 에 직접 넣었을 때만 옮긴다(값은 화면에 찍지 않는다).
+// 이 빌드는 테스트 모드라 넣어도 @vanam.co.kr 주소로만 나간다(코드에서 막음).
+const MAIL_KEYS = ['GMAIL_CLIENT_ID', 'GMAIL_CLIENT_SECRET', 'GMAIL_REFRESH_TOKEN', 'CF_ACCOUNT_ID', 'CF_BROWSER_TOKEN'];
+for (const k of MAIL_KEYS) if (typeof local[k] === 'string' && local[k].trim()) vars[k] = local[k].trim();
 writeFileSync(DEV_VARS,
   '# npm run local 이 매번 새로 쓴다 — 로컬 전용 값만. (.env 값은 복사하지 않는다)\n' +
   Object.entries(vars).map(([k, v]) => `${k}="${v}"`).join('\n') + '\n', { mode: 0o600 });
@@ -111,6 +123,11 @@ for (const k of ['GOOGLE_CHAT_WEBHOOK', 'PAYPAL_CLIENT_ID', 'PAYPAL_SECRET']) {
 }
 if (readFileSync(DEV_VARS, 'utf8').includes(WEBHOOK_HOST)) die(`${DEV_VARS} 에 웹훅 주소가 남아 있습니다.`);
 console.log(`✓ ${DEV_VARS} — 키 ${keys.length}개 빈 값 · 로컬 관리자 비밀값 · PAYPAL_ENV=sandbox`);
+{
+  const set = (...ks) => ks.every((k) => Boolean(vars[k]));
+  console.log(`✓ 확인 메일 — 테스트 모드(@vanam.co.kr 주소로만) · Gmail ${set('GMAIL_CLIENT_ID', 'GMAIL_CLIENT_SECRET', 'GMAIL_REFRESH_TOKEN') ? '설정 있음' : '설정 없음(보내지 않음)'}` +
+    ` · PDF ${set('CF_ACCOUNT_ID', 'CF_BROWSER_TOKEN') ? '설정 있음' : '설정 없음(조회 링크만)'}`);
+}
 
 // ⑦ 접속 안내 (서버 로그에 묻히지 않게 먼저 찍는다)
 console.log(`
@@ -121,6 +138,7 @@ console.log(`
  그다음 브라우저: http://localhost:${PORT}/admin/quote
  (관리자 쿠키가 Secure 라 http://192.168.0.132 로는 로그인이 유지되지 않는다)
  로컬 관리자 비밀번호: ${LOCAL_VARS} 의 ADMIN_PASSWORD
+ 확인 메일 시험: 견적 요청서의 이메일 칸에 @vanam.co.kr 주소를 넣는다(다른 주소는 보내지 않는다)
  종료: Ctrl+C
 ────────────────────────────────────────────────────────────`);
 if (created) console.log(`\n★ 로컬 관리자 비밀번호를 새로 만들었습니다(이번 한 번만 표시): ${local.ADMIN_PASSWORD}\n`);
