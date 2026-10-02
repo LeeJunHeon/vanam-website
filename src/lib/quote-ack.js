@@ -1,11 +1,12 @@
 // 견적 요청 접수 확인 메일 — 순수 모듈(.js). 워커(quote-ack-run.ts)와 node 테스트가 같이 쓴다.
 //
 // 공정 견적 요청(type 'quote')이 접수되면 고객에게 hello@vanam.co.kr 로 확인 메일을 보낸다(10-01 사용자 요청).
-//   내용: 정상 접수 · 담당자 확인 후 영업일 기준 2일 이내 회신 · 접수번호 · 조회 링크
+//   내용: 정상 접수 · 담당자 확인 후 영업일 기준 2일 이내 회신 · 접수번호 · 조회 링크(누르면 이메일까지 채워 바로 조회 — lookupLink)
 //   첨부: 견적 요청서(사이트의 엑셀 틀 그대로, 금액 칸 없음) PDF 하나.
 //         자동 견적이 '예상 견적'으로 나온 건이면 예상 견적서를 앞쪽에 붙인 PDF 하나(고객 완료·조회 화면과 같은 내용).
 //   일반 문의(type 'general')에는 보내지 않는다.
 // 여기서는 화면·네트워크를 만지지 않는다 — 문구·HTML 조립·판정만. 넣는 값은 전부 이스케이프한다.
+import { safeShort } from './safe-text.js';
 
 const esc = (v) =>
   String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -42,23 +43,27 @@ export function hostAllowed(live, origin) {
   return !live || /^https:\/\/(?:www\.)?vanam\.co\.kr$/.test(String(origin ?? ''));
 }
 
-/** 앞에서부터 n 글자(넘치면 …) */
-const clip = (v, n) => {
-  const s = str(v).replace(/\s+/g, ' ');
-  const cs = [...s];
-  return cs.length > n ? `${cs.slice(0, n - 1).join('')}…` : s;
-};
 /**
- * 고객이 넣은 짧은 글(이름·소속·상품)을 메일에 실을 때 — 길이를 줄이고 주소 모양은 링크가 되지 않게 바꾼다.
- * 회사 메일(hello@)로 나가는 글이라, 남의 주소로 접수해 피싱 링크를 실어 보내는 것을 막는다.
- * @param {unknown} v @param {number} n
+ * 메일의 [진행 상태 조회] 링크.
+ *   주소: 운영 빌드는 고정 주소(site) · 테스트 빌드는 요청이 들어온 주소(맥미니 로컬에서 바로 열리게 — 프로토콜+호스트 모양일 때만).
+ *   접수번호는 ?id= 로(조회 화면이 칸을 채운다) · 이메일은 # 뒤에(#e=) — # 뒤는 브라우저가 서버로 보내지 않아
+ *   서버 로그·리퍼러에 남지 않는다. 조회 화면(OrderLookup.astro)이 읽어 이메일 칸을 채우고 바로 조회한 뒤 주소창에서 지운다.
+ *   ⚠️ 이 링크는 '접수번호 + 이메일'을 다 담은 열쇠다 — 링크를 전달받은 사람도 같은 조회를 할 수 있고,
+ *   브라우저 방문 기록에는 처음 주소가 남을 수 있다(손으로 두 값을 넣어 조회하는 것과 같은 수준).
+ * @param {{ live: boolean, site: string, origin?: unknown, lang: 'ko'|'en', id: unknown, email?: unknown }} a
  */
-export function safeShort(v, n) {
-  return clip(v, n)
-    .replace(/(https?|ftp):\/\//gi, '$1[:]//')
-    .replace(/\b(www)\./gi, '$1[.]')
-    .replace(/([A-Za-z0-9-])\.(?=[A-Za-z]{2,}\b)/g, '$1[.]');
+export function lookupLink(a) {
+  const origin = String(a.origin ?? '');
+  const base = a.live ? a.site : (/^https?:\/\/[^/]+$/.test(origin) ? origin : a.site);
+  const email = str(a.email);
+  return `${base}${a.lang === 'ko' ? '/ko' : ''}/order/lookup?id=${encodeURIComponent(str(a.id))}` +
+    (email ? `#e=${encodeURIComponent(email)}` : '');
 }
+
+// 고객이 넣은 짧은 글(이름·소속·상품)을 메일에 실을 때 — 길이를 줄이고 주소 모양은 링크가 되지 않게 바꾼다.
+// 회사 메일(hello@)로 나가는 글이라, 남의 주소로 접수해 피싱 링크를 실어 보내는 것을 막는다.
+// (조회 화면도 같은 규칙을 쓴다 — 그래서 safe-text.js 로 따로 뗐다)
+export { safeShort };
 
 /** ISO 시각 → 한국 시간 'YYYY-MM-DD HH:mm' (형식이 이상하면 빈 문자열) */
 export function kstText(iso) {
@@ -96,10 +101,11 @@ const TEXT = {
     lead: '견적 요청이 정상적으로 접수되었습니다. 담당자가 요청 내용을 확인한 뒤 영업일 기준 2일 이내에 회신드리겠습니다.',
     no: '접수번호', item: '요청 상품', at: '접수 일시', atSuffix: ' (한국 시간)',
     attachQuote: '첨부: 예상 견적서와 견적 요청서(PDF 1개)',
-    attachRequest: '첨부: 견적 요청서(PDF) — 접수하신 내용을 반암 견적서 양식으로 정리했습니다.',
+    attachRequest: '첨부: 견적 요청서(PDF) — 접수하신 내용을 반암 견적서 양식에 금액 없이 정리했습니다.',
     attachNone: '견적 요청서는 아래 조회 화면에서 인쇄하거나 PDF로 저장하실 수 있습니다.',
-    lookup: '진행 상황은 접수번호와 이메일로 조회하실 수 있습니다.',
-    button: '진행 상황 조회',
+    // 버튼 이름은 사이트(완료 화면 버튼·조회 화면 '진행 상태')와 같게
+    lookup: '아래 버튼을 누르면 진행 상태를 바로 확인하실 수 있습니다.',
+    button: '진행 상태 조회',
     reply: '이 메일에 바로 답장하셔도 담당자에게 전달됩니다.',
     company: '반암주식회사',
     test: '테스트 빌드에서 보낸 메일입니다. 운영 사이트가 아니며 회사 주소(@vanam.co.kr)로만 발송됩니다.',
@@ -111,10 +117,11 @@ const TEXT = {
     hello: (who) => `Dear ${who},`,
     lead: 'Thank you for your quote request. We have received it, and our team will review it and reply within 2 business days.',
     no: 'Reference No.', item: 'Item', at: 'Received', atSuffix: ' KST',
-    attachQuote: 'Attached: the estimated quotation and your quote request (one PDF).',
-    attachRequest: 'Attached: your quote request (PDF), laid out in our quotation format.',
-    attachNone: 'You can print your quote request or save it as a PDF from the status page below.',
-    lookup: 'You can check the status with your reference number and email.',
+    // 문서 이름은 견적 폼 버튼('Download request sheet')과 같게 — request sheet
+    attachQuote: 'Attached: the estimated quotation and your request sheet (one PDF).',
+    attachRequest: 'Attached: your request sheet (PDF), laid out in our quotation format without prices.',
+    attachNone: 'You can print your request sheet or save it as a PDF from the status page below.',
+    lookup: 'Use the button below to check the status of your request at any time.',
     button: 'Check status',
     reply: 'You can reply directly to this email to reach our team.',
     company: 'VanaM Inc.',
@@ -172,8 +179,8 @@ export function ackContent(a) {
     '',
     attachLine,
     '',
-    L.lookup,
-    str(a.lookupUrl),
+    // 글 본문에는 버튼이 없다 — 버튼 이름 + 주소 한 줄
+    `${L.button}: ${str(a.lookupUrl)}`,
     '',
     L.reply,
     '',

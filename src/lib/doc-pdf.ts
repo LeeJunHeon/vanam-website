@@ -5,7 +5,8 @@
 // 비용: 무료 플랜 하루 10분 · 10초에 1건. 확인 메일 한 통에 1건만 쓴다(서류 여러 장을 PDF 하나로 — quote-ack.js mergeDocPages).
 //   너무 잦으면 429 → Retry-After 만큼(최대 12초 + 약간의 흔들림) 기다려 한 번만 다시 시도 — 마감 안에 들어올 때만.
 //   그래도 안 되면 PDF 없이 메일을 보낸다(호출부).
-// 주소: API 문서의 경로(/browser-rendering/pdf)를 먼저 쓰고, 404 면 새 이름(/browser-run/pdf)으로 한 번 더.
+// 주소: 지금 문서의 경로(/browser-run/pdf — 2026 이름 변경)를 먼저 쓰고, 404 면 옛 경로(/browser-rendering/pdf)로 한 번 더.
+//   (2026-10-02 맥미니에서 실제 토큰으로 둘 다 200 확인 — API 참조 문서에는 아직 옛 경로가 남아 있다)
 // 비밀값: CF_ACCOUNT_ID · CF_BROWSER_TOKEN(권한 'Browser Rendering - Edit' 하나만 준 API 토큰) — cloudflare:workers env 에서만 읽는다.
 //   ⚠️ 이 파일에는 빌드 환경 변수 문자열(import.meta 다음 env)을 주석으로도 쓰지 않는다(mail-send.ts 와 같은 이유).
 // 로고: 서류 로고(src/assets/brand/logo-light.png)는 정적 파일(ASSETS)에서 읽어 data: 주소로 넣는다
@@ -14,7 +15,7 @@ import { env as cfEnv } from 'cloudflare:workers';
 import { b64 } from './mail-mime.js';
 
 const PDF_MAX = 1024 * 1024; // 서류 두어 장(글꼴 포함 ≈ 250KB)이 이보다 크면 뭔가 잘못된 것 — 메일에 싣지 않는다
-const PATHS = ['browser-rendering/pdf', 'browser-run/pdf'];
+const PATHS = ['browser-run/pdf', 'browser-rendering/pdf'];
 
 export type PdfReason = 'no_credentials' | 'no_time' | 'rate_limited' | 'http_error' | 'fetch_error' | 'bad_pdf' | 'too_big';
 export type PdfResult = { ok: true; bytes: Uint8Array } | { ok: false; reason: PdfReason; status?: number };

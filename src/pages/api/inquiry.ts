@@ -18,7 +18,7 @@ import companyInfo from '../../data/company.json';
 // 구글챗은 이 통로로만 보낸다 — Cloudflare main 빌드가 아니면 코드에서 차단된다.
 import { sendChat } from '../../lib/chat-send';
 // 공정 견적 요청의 접수 확인 메일(hello@ → 고객) — 테스트 빌드는 @vanam.co.kr 주소로만 나간다(mail-send.ts).
-import { runQuoteAck } from '../../lib/quote-ack-run';
+import { runQuoteAck, ackPlanned } from '../../lib/quote-ack-run';
 
 // 서버에서 온디맨드 실행 (정적 생성 금지)
 export const prerender = false;
@@ -264,14 +264,17 @@ export const POST: APIRoute = async ({ request, locals }) => {
   //      PDF 만들기·발송에 몇 초 걸리므로 응답 직전에 시작해 응답 뒤(waitUntil)에 끝낸다 — 고객 화면을 늦추지 않는다.
   //      구글챗 전송 실패(502)로 고객 화면이 오류를 띄우는 경우에는 보내지 않는다('접수됨' 메일과 어긋나지 않게 —
   //      관리자 견적 탭에서 직접 보낼 수 있다). runQuoteAck 는 예외를 던지지 않고, 결과는 inquiries.ack_mail 에 남는다.
+  const ackOrigin = new URL(request.url).origin;
+  const ackVerified = ts.ok && !(ts as { skipped?: boolean }).skipped; // 보안 확인을 실제로 통과한 접수만(운영 빌드 자동 발송 조건)
   const scheduleAck = () => {
     if (type !== 'quote' || !saved) return;
-    const ack = runQuoteAck(saved, id, {
-      by: 'auto', origin: new URL(request.url).origin,
-      verified: ts.ok && !(ts as { skipped?: boolean }).skipped, // 보안 확인을 실제로 통과한 접수만(운영 빌드 자동 발송 조건)
-    }).catch(() => undefined);
+    const ack = runQuoteAck(saved, id, { by: 'auto', origin: ackOrigin, verified: ackVerified }).catch(() => undefined);
     pickWaitUntil(locals)?.(ack); // waitUntil 이 없는 환경(드묾)에서는 기다리지 않는다 — 고객 응답이 우선
   };
+  // 응답의 ack — 확인 메일이 나갈 건인가(판정만). 완료 화면이 이때만 '접수 확인 메일을 보내드렸습니다'를 띄운다
+  // (같은 주소 하루 상한·테스트 빌드의 고객 주소·설정 없음 등으로 안 나가는 건에 '보냈다'고 말하지 않게).
+  const ackFlag = async (): Promise<boolean> =>
+    type === 'quote' && saved ? ackPlanned(saved, id, email, { origin: ackOrigin, verified: ackVerified }) : false;
 
   // 알림 본문 조립은 lib/chat-message.js 의 순수 함수가 한다.
   // (인라인이던 시절에는 문구 확인을 위해 실제 채팅방으로 제출해 보는 수밖에 없었다)
@@ -286,12 +289,14 @@ export const POST: APIRoute = async ({ request, locals }) => {
   //    ⚠️ 로그에는 접수번호만 남는다. 본문(text)의 PII 는 남기지 않는다.
   const chat = await sendChat(text, { tag: 'inquiry', ref: id });
   if (chat.reason === 'blocked_build' || chat.reason === 'no_webhook') {
+    const ack = await ackFlag();
     scheduleAck();
-    return json({ ok: true, delivered: false, id, quote: quoteSaved });
+    return json({ ok: true, delivered: false, id, quote: quoteSaved, ack });
   }
   if (chat.reason === 'http_error') return json({ ok: false, error: 'webhook_failed' }, 502);
   if (chat.reason === 'fetch_error') return json({ ok: false, error: 'webhook_error' }, 502);
 
+  const ack = await ackFlag();
   scheduleAck();
-  return json({ ok: true, delivered: true, type, id, quote: quoteSaved });
+  return json({ ok: true, delivered: true, type, id, quote: quoteSaved, ack });
 };

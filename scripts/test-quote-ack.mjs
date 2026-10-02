@@ -12,9 +12,10 @@ import {
 } from '../src/lib/mail-mime.js';
 import {
   ackContent, estimateOf, attachmentName, kstText, pageOf, mergeDocPages, fitScript,
-  ackRecord, parseAck, ackLabel, requestDocArgs, ACK_REASON_KO, hostAllowed, safeShort, isFreshPending, ACK_PENDING_MS,
+  ackRecord, parseAck, ackLabel, requestDocArgs, ACK_REASON_KO, hostAllowed, safeShort, isFreshPending, ACK_PENDING_MS, lookupLink,
 } from '../src/lib/quote-ack.js';
 import { buildQuoteHtml, buildRequestHtml, requestDocFrom, fitCells, STYLE } from '../src/lib/doc-excel.js';
+import { defang, safeShort as safeShortText } from '../src/lib/safe-text.js';
 
 let total = 0, failed = 0;
 let b64ms = 0;
@@ -162,13 +163,17 @@ const BASE = {
   eq('HTML: 고객 글자는 이스케이프 · 스크립트 없음 · 링크는 조회 주소 하나', [c.html.includes('홍길동&lt;b&gt;'), c.html.includes('홍길동<b>'),
     /<script/i.test(c.html), [...c.html.matchAll(/href="([^"]+)"/g)].map((m) => m[1])], [true, false, false, [BASE.lookupUrl]]);
   eq('HTML: 예상 견적 상자(금액·날짜는 한 덩어리) · 버튼 문구', has(c.html, '>₩239,800<', '부가세 포함 · 약 <span style="white-space:nowrap">$173.14</span>',
-    '(<span style="white-space:nowrap">2026-10-15</span>까지)', '>진행 상황 조회<'), true);
+    '(<span style="white-space:nowrap">2026-10-15</span>까지)', '>진행 상태 조회<'), true);
+  eq('한글: 조회 안내 — HTML 은 버튼 안내 · 글 본문은 "버튼 이름: 주소" 한 줄(사이트와 같은 "진행 상태")', [
+    c.html.includes('아래 버튼을 누르면 진행 상태를 바로 확인하실 수 있습니다.'), c.text.includes(`\n진행 상태 조회: ${BASE.lookupUrl}\n`),
+    c.text.includes('아래 버튼'), c.text.includes('진행 상황')], [true, true, false, false]);
 }
 {
   const c = ackContent({ ...BASE, lang: 'ko', live: false, estimate: null, T: T.ko, attachment: 'request' });
   eq('한글·테스트: 제목 앞 [테스트]', c.subject, '[테스트] [반암] 견적 요청이 접수되었습니다 (INQ-20261001-AB2C)');
   eq('한글·테스트: 본문 맨 위·HTML 에 테스트 빌드 안내', [c.text.startsWith('※ 테스트 빌드에서 보낸 메일입니다.'), c.html.includes('테스트 빌드에서 보낸 메일입니다.')], [true, true]);
-  eq('한글: 예상 견적 없으면 금액 줄 없음 · 요청서 첨부 줄', [c.text.includes('₩'), c.text.includes('첨부: 견적 요청서(PDF)')], [false, true]);
+  eq('한글: 예상 견적 없으면 금액 줄 없음 · 요청서 첨부 줄(견적서 양식이지만 금액 없음을 밝힘)', [c.text.includes('₩'),
+    c.text.includes('첨부: 견적 요청서(PDF) — 접수하신 내용을 반암 견적서 양식에 금액 없이 정리했습니다.')], [false, true]);
   const none = ackContent({ ...BASE, lang: 'ko', live: true, estimate: null, T: T.ko, attachment: null });
   eq('한글: PDF 를 못 붙였으면 조회 화면에서 인쇄 안내', none.text.includes('견적 요청서는 아래 조회 화면에서 인쇄하거나 PDF로 저장하실 수 있습니다.'), true);
   const noCo = ackContent({ ...BASE, company: '', lang: 'ko', live: true, estimate: null, T: T.ko, attachment: null });
@@ -180,9 +185,33 @@ const BASE = {
   eq('영문: 제목·인사·2 business days', [c.subject, has(c.text, 'Dear 홍길동<b>,', 'reply within 2 business days', 'Received: 2026-10-01 16:50 KST')],
     ['[VanaM] We received your quote request (INQ-20261001-AB2C)', true]);
   eq('영문: 예상 견적은 달러 먼저(고객 화면과 같음)', has(c.text, 'Approx. $173.14 (₩239,800 incl. VAT)', T.en.notice), true);
-  eq('영문: 첨부 줄 · 회사 줄', has(c.text, 'Attached: the estimated quotation and your quote request (one PDF).', 'VanaM Inc. · hello@vanam.co.kr · +82-2-0000-0000 · vanam.co.kr'), true);
+  eq('영문: 첨부 줄 · 회사 줄', has(c.text, 'Attached: the estimated quotation and your request sheet (one PDF).', 'VanaM Inc. · hello@vanam.co.kr · +82-2-0000-0000 · vanam.co.kr'), true);
   const t = ackContent({ ...BASE, lang: 'en', live: false, estimate: null, T: T.en, attachment: null });
   eq('영문·테스트: 제목 앞 [TEST]', t.subject.startsWith('[TEST] [VanaM]'), true);
+  const r = ackContent({ ...BASE, lang: 'en', live: true, estimate: null, T: T.en, attachment: 'request' });
+  eq('영문: 요청서 첨부 줄(금액 없음) · 버튼 안내 · 글 본문 "Check status: 주소"', [
+    r.text.includes('Attached: your request sheet (PDF), laid out in our quotation format without prices.'),
+    r.html.includes('Use the button below to check the status of your request at any time.'), r.text.includes(`\nCheck status: ${BASE.lookupUrl}\n`)], [true, true, true]);
+}
+{
+  // 조회 링크 — 이메일은 # 뒤(서버로 안 감) · 조회 화면이 쓰는 방식(URLSearchParams)으로 읽으면 원래 주소 그대로
+  const S = 'https://vanam.co.kr';
+  const links = [
+    lookupLink({ live: true, site: S, origin: 'http://127.0.0.1:8787', lang: 'ko', id: 'INQ-20261001-AB2C', email: ' first.last+tag@example.co.kr ' }),
+    lookupLink({ live: false, site: S, origin: 'http://localhost:8787', lang: 'en', id: 'INQ-20261001-AB2C', email: 'hello@vanam.co.kr' }),
+    lookupLink({ live: false, site: S, origin: 'javascript:alert(1)//x', lang: 'ko', id: 'INQ-1', email: '' }),
+    lookupLink({ live: false, site: S, origin: undefined, lang: 'ko', id: 'INQ 1&x', email: null }),
+  ];
+  eq('조회 링크: 운영은 고정 주소 · 테스트 빌드는 접속 주소(모양이 이상하면 고정 주소) · 영문은 /ko 없음 · 이메일 없으면 # 없음', links, [
+    'https://vanam.co.kr/ko/order/lookup?id=INQ-20261001-AB2C#e=first.last%2Btag%40example.co.kr',
+    'http://localhost:8787/order/lookup?id=INQ-20261001-AB2C#e=hello%40vanam.co.kr',
+    'https://vanam.co.kr/ko/order/lookup?id=INQ-1',
+    'https://vanam.co.kr/ko/order/lookup?id=INQ%201%26x',
+  ]);
+  const u = new URL(links[0]);
+  eq('조회 링크 왕복: ?id= 는 접수번호 · # 뒤 e 는 받는 주소(+ 도 그대로) · 서버로 가는 부분(경로+검색)에 주소 없음', [
+    u.searchParams.get('id'), new URLSearchParams(u.hash.slice(1)).get('e'), (u.pathname + u.search).includes('example')],
+  ['INQ-20261001-AB2C', 'first.last+tag@example.co.kr', false]);
 }
 
 // ── ③ PDF 용 서류 HTML ───────────────────────────────────────────────────────────
@@ -237,6 +266,9 @@ eq('safeShort: 주소 모양은 링크가 안 되게 · 길면 자름 · 보통 
   safeShort('http://evil.example/login', 60), safeShort('www.evil.com 홍길동', 60), safeShort('evil.com', 60), safeShort('가짜대학교 홍길동', 60),
   safeShort('Samsung Electronics Co., Ltd.', 60), safeShort('가'.repeat(50), 10), safeShort('  여러   칸\n줄  ', 60),
 ], ['http[:]//evil[.]example/login', 'www[.]evil[.]com 홍길동', 'evil[.]com', '가짜대학교 홍길동', 'Samsung Electronics Co., Ltd.', `${'가'.repeat(9)}…`, '여러 칸 줄']);
+eq('defang(조회 화면 요청 내용): 줄바꿈·길이는 그대로 · 주소 모양만 · 약어·소수는 그대로 · 메일과 조회 화면이 같은 safeShort', [
+  defang('1. Sputter | Ti | 10nm\n참고: https://evil.example/pay www.evil.com\nCo., Ltd. e.g. 1.5 nm'), defang(null), safeShort === safeShortText,
+], ['1. Sputter | Ti | 10nm\n참고: https[:]//evil[.]example/pay www[.]evil[.]com\nCo., Ltd. e.g. 1.5 nm', '', true]);
 {
   const c = ackContent({ ...BASE, name: 'https://phish.example/x', company: 'www.evil.com', product: 'p'.repeat(200),
     lang: 'ko', live: true, estimate: null, T: T.ko, attachment: null });

@@ -23,6 +23,8 @@ const LIVE = ['MAIL', 'MODE', 'LIVE'].join('_');
 const TEST = ['MAIL', 'MODE', 'TEST'].join('_');
 const FAKE_REFRESH = ['1', '', '0'].join('/') + 'gAbCdEfGhIjKlMnOpQrStUvWxYz012345';
 const FAKE_CLIENT_SECRET = ['GOCSPX', 'aBcDeFgHiJkLmNoP'].join('-');
+// Cloudflare 2026 새 형식 토큰 모양(접두어 + 40자 + 검사값 8자 = 53자) — 가짜
+const FAKE_CF_TOKEN = ['cfut', 'A1b2C3d4E5f6G7h8I9j0K1l2M3n4O5p6Q7r8S9t0' + 'abcdefgh'].join('_');
 const IME = ['import', 'meta', 'env'].join('.');
 
 // ── mailModeAtBuild 진리표 ──────────────────────────────────────────────
@@ -81,6 +83,8 @@ try {
   eq('새로고침 토큰 모양이 번들에 → 실패', judge(leak, LOCAL), 1);
   const leak2 = tree('leak2', { 'a.mjs': `"${TEST}"`, 'b.mjs': `const s="${FAKE_CLIENT_SECRET}"` });
   eq('클라이언트 비밀 모양이 번들에 → 실패', judge(leak2, LOCAL), 1);
+  const leak3 = tree('leak3', { 'a.mjs': `"${TEST}"`, 'b.mjs': `const t="${FAKE_CF_TOKEN}"` });
+  eq('Cloudflare 새 형식 토큰 모양(cfut_ · 53자)이 번들에 → 실패', [FAKE_CF_TOKEN.length, judge(leak3, LOCAL)], [53, 1]);
   const dv = tree('devvars', { 'a.mjs': `"${TEST}"`, '.dev.vars': `GMAIL_REFRESH_TOKEN="${FAKE_REFRESH}"` });
   eq('.dev.vars 의 비밀값은 보지 않음(배포되지 않는 로컬 파일)', judge(dv, LOCAL), 0);
   const inl = tree('inlined', { 'a.mjs': `"${TEST}"`, 'b.mjs': `Object.assign(x, {"CF_BROWSER_TOKEN":"abc123token","GMAIL_CLIENT_ID":"123.apps"});` });
@@ -104,6 +108,8 @@ try {
     'lib/quote-ack-run.ts': `// ${IME} 를 주석에 적어도 걸린다`,
   });
   eq('규칙 어긴 소스 → 위반 9건(buildMime 다른 곳 · 메일 경로의 빌드 환경 변수 글자 포함)', checkSource(badSrc).length, 9);
+  const cfSrc = tree('src-cf', { 'lib/x.ts': `const t = '${FAKE_CF_TOKEN}';` });
+  eq('Cloudflare 토큰 모양이 소스에 → 위반 1건', checkSource(cfSrc).length, 1);
   eq('실제 저장소 src → 통과', checkSource('src'), []);
 } finally {
   rmSync(root, { recursive: true, force: true });

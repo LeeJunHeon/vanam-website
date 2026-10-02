@@ -21,7 +21,7 @@ import { renderPdf, pdfConfigured, logoDataUri } from './doc-pdf';
 import { isSafeAddress } from './mail-mime.js';
 import {
   mailAllowed, hostAllowed, isFreshPending, ackContent, estimateOf, attachmentName, mergeDocPages, fitScript,
-  ackRecord, requestDocArgs, ACK_REASON_KO, kstText,
+  ackRecord, requestDocArgs, ACK_REASON_KO, kstText, lookupLink,
 } from './quote-ack.js';
 import { buildQuoteHtml, buildRequestHtml, requestDocFrom, fitCells, STYLE, telKr } from './doc-excel.js';
 import { docOptions } from './quote-view-render.js';
@@ -59,12 +59,6 @@ function mapsFor(lang: 'ko' | 'en') {
   };
 }
 
-/** 조회 화면 링크 — 운영은 vanam.co.kr, 테스트 빌드는 지금 접속한 주소(맥미니 로컬에서 바로 열리게) */
-function lookupUrl(lang: 'ko' | 'en', id: string, origin: string): string {
-  const base = MAIL_LIVE ? SITE : (/^https?:\/\/[^/]+$/.test(origin) ? origin : SITE);
-  return `${base}${lang === 'ko' ? '/ko' : ''}/order/lookup?id=${encodeURIComponent(id)}`;
-}
-
 /** 메일 본문의 상품 이름 — 카탈로그 이름(접수 때 브라우저가 보낸 글자 대신) · 없으면 저장된 이름 */
 async function productLabel(q: Record<string, unknown>, lang: 'ko' | 'en'): Promise<string> {
   const sku = String(q.product_sku ?? '');
@@ -95,6 +89,39 @@ async function capCheck(d: D1, id: string, email: string): Promise<{ reason: 're
   return null;
 }
 
+type AckOpts = { by: 'auto' | 'admin'; origin: string; verified?: boolean };
+
+/**
+ * 이 접수 건에 확인 메일을 보낼 수 있는가 — 주소·빌드·접속 주소·설정·(운영 빌드 자동 발송이면) 보안 확인·하루 상한.
+ * runQuoteAck(실제 발송)와 ackPlanned(접수 응답 — 완료 화면이 '메일을 보냈다'고 안내해도 되는지)가 같은 판정을 쓴다.
+ * @returns 막는 사유(보낼 수 있으면 null) · capAlert = 하루 전체 상한에 처음 닿았는가(구글챗 한 번만)
+ */
+async function ackBlock(d: D1, id: string, to: string, opts: AckOpts): Promise<{ reason: string; capAlert?: boolean } | null> {
+  const allowed = mailAllowed(MAIL_LIVE, to, isSafeAddress);
+  if (!allowed.ok) return { reason: allowed.reason };
+  if (!hostAllowed(MAIL_LIVE, opts.origin)) return { reason: 'blocked_host' };
+  if (!gmailConfigured()) return { reason: 'no_credentials' };
+  if (MAIL_LIVE && opts.by === 'auto') {
+    if (!opts.verified) return { reason: 'unverified' };
+    const cap = await capCheck(d, id, to);
+    if (cap) return { reason: cap.reason, capAlert: cap.alert };
+  }
+  return null;
+}
+
+/**
+ * 접수 직후 자동 확인 메일이 나갈 건인가(판정만 — 보내지 않고 기록도 남기지 않는다). 예외를 던지지 않는다.
+ * 접수 응답의 ack 로 내려가 완료 화면이 이때만 '접수 확인 메일을 보내드렸습니다'를 띄운다
+ * (상한·테스트 빌드·설정 없음으로 안 나가는 건에 '보냈다'고 말하지 않게). PDF·Gmail 실패는 여기서 알 수 없다 — 그때는 담당자 알림.
+ */
+export async function ackPlanned(d: D1, id: string, to: string, opts: Omit<AckOpts, 'by'>): Promise<boolean> {
+  try {
+    return (await ackBlock(d, id, String(to ?? '').trim(), { ...opts, by: 'auto' })) === null;
+  } catch {
+    return false;
+  }
+}
+
 async function record(d: D1, id: string, prev: unknown, r: Parameters<typeof ackRecord>[1]): Promise<void> {
   try {
     await d.prepare(`UPDATE inquiries SET ack_mail = ? WHERE id = ?`).bind(ackRecord(prev, r), id).run();
@@ -109,9 +136,7 @@ async function record(d: D1, id: string, prev: unknown, r: Parameters<typeof ack
  * @param opts.by 'auto'(접수 직후) | 'admin'(관리자가 누름) · opts.origin 요청이 들어온 주소
  *             opts.verified 접수 때 보안 확인(Turnstile)을 실제로 통과했는가(자동 발송만 본다)
  */
-export async function runQuoteAck(
-  d: D1, id: string, opts: { by: 'auto' | 'admin'; origin: string; verified?: boolean },
-): Promise<AckResult> {
+export async function runQuoteAck(d: D1, id: string, opts: AckOpts): Promise<AckResult> {
   const deadline = Date.now() + RUN_MS;
   let q: Record<string, unknown> | null = null;
   try {
@@ -131,20 +156,13 @@ export async function runQuoteAck(
   const lang: 'ko' | 'en' = q.locale === 'ko' ? 'ko' : 'en';
   const to = String(q.email ?? '').trim();
   try {
-    const allowed = mailAllowed(MAIL_LIVE, to, isSafeAddress);
-    if (!allowed.ok) return finish(d, id, q, opts.by, { status: 'skipped', reason: allowed.reason, pdf: null });
-    if (!hostAllowed(MAIL_LIVE, opts.origin)) return finish(d, id, q, opts.by, { status: 'skipped', reason: 'blocked_host', pdf: null });
-    if (!gmailConfigured()) return finish(d, id, q, opts.by, { status: 'skipped', reason: 'no_credentials', pdf: null });
-    if (MAIL_LIVE && opts.by === 'auto') {
-      if (!opts.verified) return finish(d, id, q, opts.by, { status: 'skipped', reason: 'unverified', pdf: null });
-      const cap = await capCheck(d, id, to);
-      if (cap) {
-        if (cap.alert) {
-          await sendChat(`⚠️ 접수 확인 메일 — 오늘 자동 발송 상한(${GLOBAL_DAILY_MAX}통)에 닿아 멈췄습니다.\n접수번호 ${id}\n남용인지 확인하고, 필요하면 관리자 견적 탭에서 직접 보내세요.`,
-            { tag: 'ack-mail', ref: id }).catch(() => undefined);
-        }
-        return finish(d, id, q, opts.by, { status: 'skipped', reason: cap.reason, pdf: null });
+    const block = await ackBlock(d, id, to, opts);
+    if (block) {
+      if (block.capAlert) {
+        await sendChat(`⚠️ 접수 확인 메일 — 오늘 자동 발송 상한(${GLOBAL_DAILY_MAX}통)에 닿아 멈췄습니다.\n접수번호 ${id}\n남용인지 확인하고, 필요하면 관리자 견적 탭에서 직접 보내세요.`,
+          { tag: 'ack-mail', ref: id }).catch(() => undefined);
       }
+      return finish(d, id, q, opts.by, { status: 'skipped', reason: block.reason, pdf: null });
     }
     await record(d, id, q.ack_mail ?? null, { status: 'pending', by: opts.by, at: nowIso() });
     return finish(d, id, q, opts.by, await compose(d, q, id, lang, to, opts.origin, deadline));
@@ -224,7 +242,8 @@ async function compose(
     name: String(q.name ?? ''), company: String(q.company ?? ''),
     product: await productLabel(q, lang), receivedAt: String(q.created_at ?? ''),
     estimate, T, attachment: attachment ? (pdf === 'quote' ? 'quote' : 'request') : null,
-    lookupUrl: lookupUrl(lang, id, origin),
+    // 조회 링크 — 운영은 vanam.co.kr · 테스트 빌드는 지금 접속한 주소. 받는 주소를 # 뒤에 실어 누르면 바로 조회된다
+    lookupUrl: lookupLink({ live: MAIL_LIVE, site: SITE, origin, lang, id, email: to }),
     tel: lang === 'en' ? String(company.tel ?? '') : telKr(company.tel), email: String(company.email ?? ''), site: SITE,
   });
   const sent = await sendMail({

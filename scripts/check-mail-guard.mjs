@@ -11,6 +11,7 @@
 //   (b) 번들: dist/server 안의 메일 표식이 정확히 하나이고, 이 환경에서 기대하는 값과 같다
 //       → Cloudflare main 빌드가 테스트 모드로 배포되는 것도, 로컬 빌드가 운영 모드가 되는 것도 막는다.
 //   (c) 번들: dist/server 에 비밀값 0건 — Google 비밀값 모양(새로고침 토큰 1//… · 클라이언트 비밀 GOCSPX-…)과
+//       Cloudflare 토큰 모양(2026 새 형식 cfut_… 사용자 · cfat_… 계정 · cfk_… 전역 키 — 접두어 + 40자 + 검사값)과
 //       메일 비밀값 이름에 값이 붙은 모양(GMAIL_…: "…" · CF_BROWSER_TOKEN: "…")
 //
 // ⚠️ (b)(c) 는 dist/server/.dev.vars 를 보지 않는다(wrangler dev 전용 비밀값 파일 — 배포되지 않는다).
@@ -28,10 +29,12 @@ const DEFINE = ['__VANAM', 'MAIL', 'MODE__'].join('_');
 const GMAIL_KEYS = ['GMAIL_CLIENT_ID', 'GMAIL_CLIENT_SECRET', 'GMAIL_REFRESH_TOKEN'];
 const PDF_KEYS = ['CF_BROWSER_TOKEN', 'CF_ACCOUNT_ID'];
 // Google 비밀값 모양 — 새로고침 토큰은 '1//', 클라이언트 비밀은 'GOCSPX-' 로 시작한다.
+// Cloudflare 토큰 모양 — 2026 새 형식은 'cfut_'(사용자) · 'cfat_'(계정) · 'cfk_'(전역 키) + 40자 + 검사값(예전 40자 토큰은 모양으로 가릴 수 없다).
 // 그리고 비밀값 이름에 값이 붙은 모양(빌드가 .env 값을 객체로 박아 넣은 흔적)
 export const SECRET_RES = [
   /\b1\/\/0[0-9A-Za-z_-]{20,}/,
   /GOCSPX-[0-9A-Za-z_-]{10,}/,
+  /\bcf(?:ut|at|k)_[0-9A-Za-z_-]{40,}/,
   /\b(?:GMAIL_CLIENT_ID|GMAIL_CLIENT_SECRET|GMAIL_REFRESH_TOKEN|CF_ACCOUNT_ID|CF_BROWSER_TOKEN)["']?\s*:\s*["'`][^"'`\s]+["'`]/,
 ];
 // 메일 경로 파일 — 빌드 환경 변수 문자열을 두지 않는다
@@ -75,7 +78,7 @@ export function checkSource(srcDir) {
     }
     if (text.includes(DEFINE) && rel !== 'lib/mail-send.ts') errs.push(`src/${rel}: ${DEFINE} 는 src/lib/mail-send.ts 에서만 — 번들 표식이 둘이 되면 판정할 수 없다`);
     if (text.includes(LIVE) && rel !== 'lib/mail-mode.js') errs.push(`src/${rel}: 운영 표식(${LIVE})은 src/lib/mail-mode.js 에만`);
-    for (const re of SECRET_RES) if (re.test(text)) errs.push(`src/${rel}: Google 비밀값 모양의 문자열이 소스에 있다`);
+    for (const re of SECRET_RES) if (re.test(text)) errs.push(`src/${rel}: 비밀값(Google·Cloudflare) 모양의 문자열이 소스에 있다`);
   }
   return errs;
 }
@@ -107,7 +110,7 @@ export function judgeDist(scan, env) {
   } else if (scan.markers[0].value !== expected) {
     errs.push(`dist/server 의 메일 표식이 다르다: 실제값 ${scan.markers[0].value} (${scan.markers[0].file}) — ${ctx}`);
   }
-  for (const f of scan.secretFiles) errs.push(`dist/server/${f}: Google 비밀값 모양의 문자열이 번들에 박혀 있다 — 비밀값은 런타임 env 로만`);
+  for (const f of scan.secretFiles) errs.push(`dist/server/${f}: 비밀값(Google·Cloudflare) 모양의 문자열이 번들에 박혀 있다 — 비밀값은 런타임 env 로만`);
   return errs;
 }
 

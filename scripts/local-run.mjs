@@ -78,12 +78,16 @@ const KEY_RE = /^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=/;
 const keysOf = (path) => existsSync(path)
   ? readFileSync(path, 'utf8').split('\n').map((l) => l.match(KEY_RE)?.[1]).filter(Boolean)
   : [];
-/** 로컬 전용 파일(local.vars·.dev.vars)의 값 읽기. */
+/**
+ * 로컬 전용 파일(local.vars·.dev.vars)의 값 읽기.
+ * 값의 앞뒤 공백(윈도우 줄 끝 \r 포함)을 먼저 지우고 나서 따옴표("…" · '…')를 벗긴다
+ * — 예전에는 순서가 반대라 `KEY="값" ` 처럼 닫는 따옴표 뒤에 공백이 있으면 따옴표가 값에 남았다.
+ */
 function readVars(path) {
   const out = {};
   for (const line of readFileSync(path, 'utf8').split('\n')) {
-    const m = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)\s*$/);
-    if (m) out[m[1]] = m[2].replace(/^"(.*)"$/, '$1');
+    const m = line.match(/^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=([^\n]*)$/); // [^\n] — 줄 끝 \r 도 값으로 받아 아래에서 지운다
+    if (m) out[m[1]] = m[2].trim().replace(/^(["'])(.*)\1$/, '$2');
   }
   return out;
 }

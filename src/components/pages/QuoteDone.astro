@@ -5,6 +5,8 @@
 // 이 페이지는 정적이고 DB 를 읽지 않으므로, 접수번호(URL)만 아는 제3자에게
 // 연락처·공정 정보가 노출될 표면이 애초에 없다. (내용은 요청한 브라우저에서만 보인다)
 // 진행 상태는 언제든 접수번호 + 이메일로 /order/lookup 에서 조회할 수 있다.
+// 접수 직후 고객에게 접수 확인 메일(PDF·조회 버튼)이 나간다(quote-ack-run.ts) — 이 화면은 그 메일을 안내한다(10-02).
+// 안내는 서버가 '나갈 건'이라고 답한 접수(응답 ack → 세션)일 때만 — 하루 상한·테스트 빌드 등으로 안 나가는 건에 '보냈다'고 하지 않는다.
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getRelativeLocaleUrl } from 'astro:i18n';
 import company from '../../data/company.json';
@@ -23,7 +25,11 @@ const t = isKo
       heading: '견적 요청이 접수되었습니다',
       refNo: '접수번호',
       copy: '복사', copied: '복사됨',
-      reply: '1~2 영업일 내에 검토 후 이메일로 회신드리겠습니다.',
+      // 메일 안내 세 줄은 확인 메일이 나갈 건(세션 ack)일 때만 보인다 · {email} 은 입력 주소로 바꾼다
+      mailSent: '{email} 주소로 접수 확인 메일을 보내드렸습니다.',
+      mailBody: '메일에 견적 요청서(PDF)와 진행 상태 조회 버튼이 들어 있습니다.',
+      mailSpam: '몇 분이 지나도 메일이 보이지 않으면 스팸함을 확인해 주세요.',
+      reply: '담당자가 확인한 뒤 영업일 기준 2일 이내에 이메일로 회신드리겠습니다.',
       keep: '접수번호를 보관해 주세요. 접수번호와 이메일로 진행 상태를 확인하실 수 있습니다.',
       summaryTitle: '제출하신 요청 내용',
       detailsTitle: '상세 내용',
@@ -38,7 +44,10 @@ const t = isKo
       heading: 'Your quote request has been received',
       refNo: 'Reference no.',
       copy: 'Copy', copied: 'Copied',
-      reply: 'We will review it and reply by email within 1–2 business days.',
+      mailSent: "We've sent a confirmation email to {email}.",
+      mailBody: 'It includes your request sheet (PDF) and a button to check its status.',
+      mailSpam: "If it doesn't arrive within a few minutes, please check your spam folder.",
+      reply: 'Our team will review your request and reply by email within 2 business days.',
       keep: 'Please keep this reference number. You can check the status anytime with the number and your email.',
       summaryTitle: 'Your submitted request',
       detailsTitle: 'Details',
@@ -69,7 +78,12 @@ const t = isKo
             class="rounded border border-ink/15 px-2.5 py-1 text-xs text-ink/60 transition hover:border-ink/40 hover:text-ink">{t.copy}</button>
         </div>
       </div>
-      <p class="mt-4 text-sm leading-relaxed text-ink/60">{t.reply}</p>
+      <div class="mt-4 flex flex-col gap-1.5 text-sm leading-relaxed">
+        <p id="qd-mail" hidden class="font-medium text-ink/80" data-tpl={t.mailSent}></p>
+        <p id="qd-mail-body" hidden class="text-ink/60">{t.mailBody}</p>
+        <p class="text-ink/60">{t.reply}</p>
+        <p id="qd-mail-spam" hidden class="text-ink/45">{t.mailSpam}</p>
+      </div>
 
       <!-- 최신 견적(자동 견적이 저장된 경우만) — 서버가 준 inquiry.quote 로만 그린다 -->
       <div id="qd-quote" hidden></div>
@@ -110,10 +124,6 @@ const t = isKo
   const id = new URLSearchParams(location.search).get('id') ?? '';
   document.getElementById('qd-id')!.textContent = id || '—';
 
-  // 조회 링크에 접수번호를 미리 채워 넘긴다
-  const lk = document.getElementById('qd-lookup') as HTMLAnchorElement | null;
-  if (lk && id) lk.href = `${lk.getAttribute('href')}?id=${encodeURIComponent(id)}`;
-
   const cb = document.getElementById('qd-copy') as HTMLButtonElement | null;
   cb?.addEventListener('click', async () => {
     try { await navigator.clipboard.writeText(id); } catch (e) { /* 클립보드 불가 시 무시 */ }
@@ -125,6 +135,24 @@ const t = isKo
   try { raw = JSON.parse(sessionStorage.getItem('vanam_quote_done') ?? 'null'); } catch { raw = null; }
   // 다른 접수 건의 세션이 남아 있으면 보여주지 않는다 (번호와 내용의 불일치 방지)
   if (raw && id && raw.id && raw.id !== id) raw = null;
+
+  // 접수 확인 메일 안내 — 서버가 '나갈 건'이라고 답했고(ack) 세션에 주소가 있을 때만 세 줄을 보인다.
+  // 주소는 글자로만 넣는다(HTML 아님 · '$' 가 든 주소도 그대로 — replace 에 함수를 넘긴다).
+  const sentTo = raw ? String(raw.email ?? '').trim() : '';
+  const ackPlanned = (raw as Record<string, unknown> | null)?.ack === true; // 세션 값은 JSON 이라 불리언이 그대로 온다
+  const mailEl = document.getElementById('qd-mail');
+  if (mailEl && sentTo && ackPlanned && mailEl.dataset.tpl) {
+    mailEl.textContent = mailEl.dataset.tpl.replace('{email}', () => sentTo);
+    for (const elId of ['qd-mail', 'qd-mail-body', 'qd-mail-spam']) {
+      const el = document.getElementById(elId);
+      if (el) el.hidden = false;
+    }
+  }
+
+  // 조회 링크 — 접수번호(?id=)와 이메일(#e=)을 미리 채워 넘기면 조회 화면이 바로 조회한다.
+  // # 뒤는 브라우저가 서버로 보내지 않는다(서버 로그·리퍼러에 안 남음). 조회 화면이 읽은 뒤 주소창에서 지운다.
+  const lk = document.getElementById('qd-lookup') as HTMLAnchorElement | null;
+  if (lk && id) lk.href = `${lk.getAttribute('href')}?id=${encodeURIComponent(id)}${sentTo ? `#e=${encodeURIComponent(sentTo)}` : ''}`;
 
   const esc = (s: unknown) =>
     String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');

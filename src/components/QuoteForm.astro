@@ -1108,7 +1108,7 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
         body: JSON.stringify(data),
       });
       if (!res.ok) throw new Error("HTTP " + res.status);
-      const j = (await res.json().catch(() => ({}))) as { id?: string; quote?: boolean };
+      const j = (await res.json().catch(() => ({}))) as { id?: string; quote?: boolean; ack?: boolean };
       // 완료 페이지에서 "무엇을 제출했는지"를 조회 없이 보여주기 위해
       // 방금 구성한 내용을 세션에 담아 넘긴다. 완료 페이지는 정적이고 DB 를 읽지 않으므로
       // 접수번호만 아는 제3자에게 연락처·공정 정보가 노출될 표면이 없다.
@@ -1126,6 +1126,8 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
         details: String(data.details ?? ""),
         // 이번 접수로 견적 개정이 저장됐을 때만 완료 페이지가 조회 API 를 부른다(스위치 꺼짐이면 호출 없음)
         quote: j.quote === true,
+        // 접수 확인 메일이 나갈 건일 때만 완료 페이지가 '확인 메일을 보내드렸습니다'를 띄운다(서버 판정 — api/inquiry.ts ack)
+        ack: j.ack === true,
         // 완료 화면 [요청서 인쇄] — 다운로드와 같은 데이터(접수번호만 채워진다).
         // 이미 접수된 뒤라, 여기서 오류가 나도 '전송 실패'로 보이면 안 된다(중복 접수 유도) → 실패하면 요청서만 생략
         doc: (() => { try { return j.id ? requestDoc(data, j.id) : null; } catch { return null; } })(),
