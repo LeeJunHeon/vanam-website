@@ -814,6 +814,7 @@
         "msgSeqValue": "st step: please enter a value.",
         "downloadSheet": "Download request sheet",
         "downloadHint": "Prefer to send it yourself? “Download request sheet” opens a printable quote request of what you filled in — save it as PDF and email it to us whenever you are ready. Nothing is sent until you press “Request a quote”; once you do, we email you a confirmation with your request sheet (PDF) attached right away.",
+        "ackHint": "Nothing is sent until you press “Request a quote”. Once you do, we email you a confirmation with your request sheet (PDF) attached right away.",
         "lblMaterial": "Material",
         "lblMethod": "Process",
         "lblSubstrate": "Substrate",
@@ -851,7 +852,7 @@
         "docBtn": "View quotation",
         "approx": "USD equivalent (reference):",
         "docStamp": "ESTIMATE — NOT FINAL",
-        "docNoteEstimate": "This is an estimate calculated on our website and becomes final after our team's review. It carries no company seal.",
+        "docNoteEstimate": "This is an estimate calculated on our website and becomes final after our team's review.",
         "popupBlocked": "The pop-up was blocked. Please allow pop-ups for this site and try again."
       }
     },
@@ -1737,6 +1738,7 @@
         "msgSeqValue": "번째 단계의 수치를 입력해 주세요.",
         "downloadSheet": "견적 요청서 다운로드",
         "downloadHint": "직접 보내고 싶으시면 ‘견적 요청서 다운로드’를 눌러 작성 내용을 인쇄·PDF로 저장하신 뒤, 편한 때에 메일로 보내주셔도 됩니다. ‘견적 요청하기’를 누르기 전까지는 아무것도 전송되지 않으며, 누르면 입력하신 이메일로 견적 요청서(PDF)를 첨부한 접수 확인 메일을 바로 보내드립니다.",
+        "ackHint": "‘견적 요청하기’를 누르기 전까지는 아무것도 전송되지 않으며, 누르면 입력하신 이메일로 견적 요청서(PDF)를 첨부한 접수 확인 메일을 바로 보내드립니다.",
         "lblMaterial": "소재",
         "lblMethod": "공정",
         "lblSubstrate": "기판",
@@ -1774,7 +1776,7 @@
         "docBtn": "견적서 보기",
         "approx": "참고 환산:",
         "docStamp": "예상 견적 · 확정 전",
-        "docNoteEstimate": "본 견적서는 웹사이트에서 계산된 예상 견적으로, 담당자 확인 후 확정됩니다. 별도 직인이 없습니다.",
+        "docNoteEstimate": "본 견적서는 웹사이트에서 계산된 예상 견적으로, 담당자 확인 후 확정됩니다. (직인 생략)",
         "popupBlocked": "팝업이 차단되었습니다. 이 사이트의 팝업을 허용한 뒤 다시 눌러 주세요."
       }
     },

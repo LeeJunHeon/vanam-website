@@ -10,7 +10,7 @@
 //    스프레드·원본 객체 재사용 금지 — 원가·가산율·마진·ID·breakdown 이 섞여 나가는 사고를 구조로 막는다.
 import { estimateForCustomer, manualLabel, addDays } from './quote-customer.js';
 import { mapFormToQuote, QuoteMapError } from './quote-map.js';
-import { telKr } from './doc-excel.js';
+import { telKr, customerLine } from './doc-excel.js';
 
 const isObj = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 const str = (v) => (v === null || v === undefined ? '' : String(v));
@@ -58,7 +58,8 @@ export function contactFor(locale, tel) {
 export function defaultDocInfo({ inquiry, policy, today, contact, locale }) {
   const days = Number(policyValue(policy, 'quote_valid_days'));
   return {
-    customer: [inquiry?.company, inquiry?.name].map((v) => str(v).trim()).filter(Boolean).join(' '),
+    // 한글 '소속 이름' · 영문 'Name, Company'
+    customer: customerLine(inquiry?.company, inquiry?.name, locale),
     ref: '',
     title: str(inquiry?.productName),
     date: str(today),

@@ -446,6 +446,8 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
 
         {/* 다운로드 안내 — '견적 요청서 다운로드'는 전송이 아니라는 점을 버튼 옆에서 분명히 한다 */}
         {!simple && <p id="q-download-hint" class="text-sm leading-relaxed text-ink/45">{q.downloadHint}</p>}
+        {/* 자동 견적 스위치가 켜졌을 때만(QuoteEstimate 가 보인다) — 다운로드 안내 대신 '누르면 확인 메일이 간다'만 남긴다 */}
+        {!simple && <p id="q-ack-hint" class="text-sm leading-relaxed text-ink/45" hidden>{q.ackHint}</p>}
         {!simple && <QuoteEstimate part="panel" />}
 
         <div class="flex flex-wrap items-center justify-end gap-4">

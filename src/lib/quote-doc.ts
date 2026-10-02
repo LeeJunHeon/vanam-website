@@ -11,7 +11,7 @@ import company from '../data/company.json';
 import docLogo from '../assets/brand/logo-light.png';
 import { buildQuoteHtml, buildRequestHtml, buildOrderHtml, fitCells, telKr } from './doc-excel.js';
 
-export { money, telKr, koreanAmount, ymdLocal, quoteFromAmount, requestDocFrom, orderDocFrom, specFromDetails } from './doc-excel.js';
+export { money, telKr, koreanAmount, ymdLocal, quoteFromAmount, requestDocFrom, orderDocFrom, specFromDetails, customerLine } from './doc-excel.js';
 
 export type QuoteDocInfo = {
   customer: string;   // 고객(귀하)

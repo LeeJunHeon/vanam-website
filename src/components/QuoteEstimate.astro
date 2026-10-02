@@ -4,7 +4,8 @@
 //   part="button" → 버튼 줄의 [예상 견적 보기] (처음엔 hidden)
 //
 // 운영 스위치 '자동 견적'이 꺼져 있으면(= GET /api/quote-estimate 가 enabled:false·오류) 아무것도 바꾸지 않는다
-// — 지금 화면(견적서 다운로드) 그대로다. 켜져 있으면 [예상 견적 보기]를 보이고 다운로드 버튼·안내를 숨긴다.
+// — 지금 화면(견적서 다운로드) 그대로다. 켜져 있으면 [예상 견적 보기]를 보이고 다운로드 버튼·안내를 숨긴다
+//   (다운로드 안내 자리에는 확인 메일 안내 #q-ack-hint 를 대신 보인다).
 //
 // ⚠️ 금액·문구는 서버 응답(customer)만 쓴다. 화면에서 금액을 계산하지 않는다. 넣는 문자열은 전부 이스케이프.
 // ⚠️ 기존 폼의 검증·제출·다운로드 로직은 건드리지 않는다. 폼 DOM 은 읽기만 한다.
@@ -49,6 +50,7 @@ const submitLabel = site.quote.form.submit;
   const list = document.getElementById('q-process-list');
   const printBtn = document.getElementById('quote-print') as HTMLElement | null;
   const hint = document.getElementById('q-download-hint') as HTMLElement | null;
+  const ackHint = document.getElementById('q-ack-hint') as HTMLElement | null;
 
   const T: Record<string, string> = JSON.parse(box?.dataset.t || '{}');
   const submitLabel = box?.dataset.submit || '';
@@ -85,6 +87,8 @@ const submitLabel = site.quote.form.submit;
   const setDownloadVisible = (on: boolean) => {
     if (printBtn) printBtn.hidden = !on;
     if (hint) hint.hidden = !on;
+    // 다운로드 안내에 들어 있던 '누르면 확인 메일' 문장만 따로 — 다운로드가 숨으면 이것만 보인다
+    if (ackHint) ackHint.hidden = on;
   };
 
   /** 폼 값 읽기 — 숨은 칸은 빈 값 */

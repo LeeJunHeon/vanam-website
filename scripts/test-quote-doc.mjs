@@ -6,10 +6,11 @@
 //   ④ 견적 요청서 — 접수 전/후 · 공정 · 웨이퍼 · 옛 접수 건 · 영문
 //   ⑤ 주문서 — 다이싱 별도 줄 · 합계 · 결제 칸 · 영문
 //   ⑥ 칸 맞춤(fitCells) — 가짜 DOM 으로 줄이기·줄바꿈 규칙
-// 회사 정보는 가짜(실제 사업자 정보를 테스트에 쓰지 않는다). 공급자 칸 고정 글자(SUPPLIER_DOC_KO)는 엑셀 그대로인지 따로 확인한다.
+// 회사 정보는 가짜(실제 사업자 정보를 테스트에 쓰지 않는다). 공급자 칸 고정 글자(SUPPLIER_DOC_KO)는 엑셀 글자인지 따로 확인한다
+// (상호만 10-02 결정으로 '반암 주식회사' — 띄어 씀).
 import {
   buildQuoteHtml, buildRequestHtml, buildOrderHtml, quoteFromAmount, requestDocFrom, orderDocFrom, fitCells, specFromDetails,
-  SUPPLIER_DOC_KO, dateKr, dateEn, money, usd, telKr, telDisplay, ymdLocal, koreanAmount,
+  SUPPLIER_DOC_KO, dateKr, dateEn, money, usd, telKr, telDisplay, ymdLocal, koreanAmount, customerLine, STYLE,
 } from '../src/lib/doc-excel.js';
 import { koreanAmount as engineKorean } from '../src/lib/quote-engine.js';
 
@@ -43,16 +44,16 @@ const TWO = { info, items: [item(1), null, item(3)], supply: 4000, vat: 400, tot
   eq('견적서: 날짜 엑셀 형식', h.includes('<td class="date">2026년 1월 10일</td>'), true);
   eq('견적서: 로고 = 넘긴 주소', h.includes(`<img src="${LOGO}" alt="VanaM">`), true);
   eq('공급자 칸: 세로 라벨·사업자번호(회사 정보)', has(h, '공<br>급<br>자', '>000-00-00000<'), true);
-  eq('공급자 칸: 엑셀 글자(상호·대표자 (인)·소재지·업태·종목)', has(h, '>반암주식회사<', '<span>한 수 덕</span><span>(인)</span>',
+  eq('공급자 칸: 엑셀 글자(상호·대표자 (인)·소재지·업태·종목)', has(h, '>반암 주식회사<', '<span>한 수 덕</span><span>(인)</span>',
     '>서울특별시 영등포구 도신로4길 21-1, 반암<', '제조업,\n과학기술서비스업', '기타 반도체 소자 및 장비,\n공학연구개발, 엔지니어링'), true);
   eq('공급자 칸: company.json 한글 표기는 쓰지 않는다', [h.includes('가짜상사'), h.includes('(대림동)')], [false, false]);
   eq('공급자 칸: 담당자·연락처는 넣은 값(줄바꿈 허용 .fitw)', has(h, '<td class="s10 fitw">담당</td>', '<td class="s10 fitw">02-0000-0000</td>'), true);
   eq('공급자 칸: 고정 글자·라벨은 한 줄 맞춤(.fit)', has(h, '<th class="s10 fit">사업자번호</th>', '<td class="s9 fit">제조업,'), true);
-  eq('정보 칸 4줄 + 유효기간 문장', has(h, '>견 적 명<', '>Multilayers<', '>납품기한<', '>대금 지불방식<', '>견적 유효기간<', '견적일로부터 7 일간'), true);
+  eq('정보 칸 4줄 + 유효기간 문장', has(h, '>견 적 명<', '>Multilayers<', '>납품기한<', '>대금 지불방식<', '>견적 유효기간<', '견적일로부터 7일간'), true);
   eq('합계 줄: 일금 · 한글(밑줄) · 원정 · ₩ · 금액', /일금<\/td><td class="nob r"><span class="u">사천사백<\/span><\/td><td class="nob">원정<\/td><td class="nob">₩<\/td><td class="nob r">4,400<\/td>/.test(h), true);
   eq('품목표: 머리 6칸 · 최종 합계', has(h, '<th>품명</th>', '<th>규격/사양</th>', '<th>수량</th>', '<th>단가</th>', '<th>공급가액</th>', '<th>세액</th>', '>최종 합계<'), true);
   eq('품목표: 넣은 품목만(빈 줄 null 은 건너뜀) · 줄바꿈 칸', [tbodyRows(h), h.includes('<td class="t">규격 1\n둘째 줄</td>'), h.includes('<td></td>')], [2, true, false]);
-  eq('품목표: 수량 = 수 + 단위', h.includes('<td class="c">3 회</td>'), true);
+  eq('품목표: 수량 = 수 + 단위(한글은 붙여 씀)', h.includes('<td class="c">3회</td>'), true);
   eq('문서 안 스크립트·자동 인쇄 없음', [/<script/i.test(h), /\.print\(\)/.test(h)], [false, false]);
   eq('버튼(창을 연 쪽이 연결)', has(h, 'id="vn-doc-print"', 'id="vn-doc-close"', '인쇄 / PDF 저장', '>닫기<'), true);
   eq('A4 · Arial · 굵은 바깥 선', has(h, '@page{size:A4 portrait;margin:10mm}', 'font-family:Arial', '.box{border:2px solid #000}'), true);
@@ -61,8 +62,8 @@ const TWO = { info, items: [item(1), null, item(3)], supply: 4000, vat: 400, tot
   eq('표: 모든 줄 같은 최소 높이(22.5pt) · 쪽 경계에서 줄이 잘리지 않음', [(many.match(/<tr style="height:7\.64mm">/g) ?? []).length, many.includes('.items tr{break-inside:avoid}')], [17, true]);
   eq('표: 합계는 본문 마지막 줄(tfoot 아님 — 인쇄 때 쪽마다 반복되지 않게)', [many.includes('<tfoot'), /<tr class="tot" style="height:7\.64mm"><td class="lab" colspan="4">최종 합계<\/td>[^]*<\/tr><\/tbody>/.test(many)], [false, true]);
 }
-eq('SUPPLIER_DOC_KO = 엑셀 공급자 칸 글자', SUPPLIER_DOC_KO, {
-  name: '반암주식회사', ceo: '한 수 덕', address: '서울특별시 영등포구 도신로4길 21-1, 반암',
+eq('SUPPLIER_DOC_KO = 엑셀 공급자 칸 글자(상호는 띄어 씀 — 10-02)', SUPPLIER_DOC_KO, {
+  name: '반암 주식회사', ceo: '한 수 덕', address: '서울특별시 영등포구 도신로4길 21-1, 반암',
   bizType: '제조업,\n과학기술서비스업', bizItem: '기타 반도체 소자 및 장비,\n공학연구개발, 엔지니어링',
 });
 
@@ -107,7 +108,7 @@ const EN = { info: ASCII_INFO, items: ASCII_ITEMS, supply: 5000, vat: 500, total
   eq('KRW: 품목 1줄(요청 상품 · 1식)', q.items, [{ name: '금속 박막', spec: 'Sputter · Silicon / 4 inch', qty: 1, unit: '식', unitPrice: 171000, supply: 171000, vat: 17100 }]);
   eq('KRW: 한글 금액 · 대금 지불방식(입금 계좌) · 메모 → 안내 · 표시 없음', [q.totalKorean, q.info.payment, q.note, q.stamp], ['일십팔만팔천일백', '계좌이체 (은행 000-000 (가짜))', '메모 <b>', '']);
   const h = buildQuoteHtml({ ...q, logoUrl: LOGO }, FAKE);
-  eq('KRW: 견적서에 그대로', has(h, '<td class="c">1 식</td>', '>171,000<', '>17,100<', '일십팔만팔천일백', '메모 &lt;b&gt;'), true);
+  eq('KRW: 견적서에 그대로', has(h, '<td class="c">1식</td>', '>171,000<', '>17,100<', '일십팔만팔천일백', '메모 &lt;b&gt;'), true);
   const u = quoteFromAmount({ lang: 'en', id: 'INQ-2', date: '2026-10-01', customer: 'Jane', title: 'Metals', spec: 'Sputter', amount: 262, currency: 'USD', bank: 'Bank 1' });
   eq('USD: 센트 단위로 나눔 · 합 = 금액 · 한글 금액 없음', [u.supply, u.vat, Math.round((u.supply + u.vat) * 100) / 100, u.totalKorean, u.currency], [238.18, 23.82, 262, '', 'USD']);
   eq('USD 영문: 대금 지불방식 · 단위 lot', [u.info.payment, buildQuoteHtml({ ...u, logoUrl: LOGO }, FAKE).includes('>1 lot<')], ['Bank transfer (Bank 1)', true]);
@@ -141,7 +142,7 @@ const REQ_KO = { company: '테스트대학', name: '홍길동', phone: '010-0000
     ['기 판', 'Silicon / 4 inch / Prime'], ['박막 증착 여부', '있음 — SiO2 300 nm'], ['분석 요청', 'XPS, XRD'], ['요청 사항', '요청 <메모>']]);
   eq('요청서 데이터: 샘플 수량 · 전달(지도) · 완료 희망', [draft.qty, draft.delivery, draft.due, draft.kind], ['5', '방문 전달', '2026-11-01', 'process']);
   const h = buildRequestHtml({ ...draft, logoUrl: LOGO });
-  eq('요청서(접수 전): 제목·귀중·세로 요청자', has(h, '<title>견적 요청서 2026-10-01</title>', '>견적 요청서<', '반암주식회사 귀중', '요<br>청<br>자'), true);
+  eq('요청서(접수 전): 제목·귀중·세로 요청자', has(h, '<title>견적 요청서 2026-10-01</title>', '>견적 요청서<', '반암 주식회사 귀중', '요<br>청<br>자'), true);
   eq('요청서(접수 전): 접수번호 자리 · 오른쪽 접수 전', h.includes('<span>접수번호 : (아직 보내지 않은 요청서)</span><span class="mark">접수 전</span>'), true);
   eq('요청서(접수 전): 안내에 받는 메일', h.includes('hello@example.com 로 보내 주시거나'), true);
   eq('요청서: 요청자 칸 값', has(h, '>테스트대학<', '>홍길동<', '>010-0000-0000<', '>a@example.com<', '>금속 박막<', '>방문 전달<', '>2026-11-01<'), true);
@@ -213,7 +214,7 @@ const ITEMS = [{ sku: 'wafer:si4', name: 'Si Wafer 4"', unit_price: 150000, qty:
     items: [{ ...ITEMS[0], name: 'Si Wafer 4in' }], statusText: 'Paid', noShipText: 'No delivery', email: 'j@example.com' });
   const h = buildOrderHtml({ ...d, logoUrl: LOGO }, FAKE);
   eq('영문 주문서 한글 0자(ASCII 입력)', hangulOf(h), '');
-  eq('영문 주문서: 제목 · To · 결제 · 다이싱 줄 · 합계 ₩', has(h, '<title>Order ORD-20261001-TEST</title>', '>ORDER<', 'To: Test Univ. Jane Doe\nj@example.com',
+  eq('영문 주문서: 제목 · To · 결제 · 다이싱 줄 · 합계 ₩', has(h, '<title>Order ORD-20261001-TEST</title>', '>ORDER<', 'To: Jane Doe, Test Univ.\nj@example.com',
     'PayPal (USD) · $262.00 · paid on', '>Dicing<', '>per box<', '>2 boxes<', 'Total amount\n(VAT incl.)', '₩360,000', '+82-2-0000-0000  ·  fake@example.com'), true);
 }
 
@@ -234,6 +235,28 @@ const ITEMS = [{ sku: 'wafer:si4', name: 'Si Wafer 4"', unit_price: 150000, qty:
   eq('규격 칸: 영문 기판 라벨 · 한글 0자(ASCII 입력)', hangulOf(specFromDetails({ lang: 'en', dj: DJ, sizeMap: SIZE })), '');
   eq('규격 칸: 웨이퍼 → 수량·다이싱', specFromDetails({ lang: 'ko', dj: { wafer: { qty: 2, dicing: true, dicingFeeKrw: 30000 } } }), '2박스 · 다이싱: 필요 (+₩30,000/박스 × 2)');
   eq('규격 칸: 구조화 사본 없는 옛 건 → 넘긴 값 그대로', [specFromDetails({ lang: 'ko', dj: null, fallback: 'Sputter · Silicon / 4 inch' }), specFromDetails({ lang: 'ko', dj: { seq: [] }, fallback: 'F' })], ['Sputter · Silicon / 4 inch', 'F']);
+}
+
+// ── 10-02 정리(실제 메일·PDF 확인 뒤) ──────────────────────────────────────────────────────
+{
+  // 받는 사람 — 한글 '소속 이름' · 영문 'Name, Company'
+  eq('customerLine: 한글·영문·한쪽만·빈 값', [customerLine('테스트대학', '홍길동', 'ko'), customerLine('Test Univ.', 'Jane Doe', 'en'),
+    customerLine('', 'Jane', 'en'), customerLine('Test Univ.', '', 'en'), customerLine(' ', null, 'ko')],
+  ['테스트대학 홍길동', 'Jane Doe, Test Univ.', 'Jane', 'Test Univ.', '']);
+  eq('주문서(영문): 받는 사람 Name, Company', orderDocFrom({ lang: 'en', order: { ...ORDER, buyer_name: 'Jane Doe', buyer_company: 'Test Univ.' }, items: [],
+    statusText: '', noShipText: '', email: '' }).customer, 'Jane Doe, Test Univ.');
+  // 수량 칸 — 한글 붙여 씀 · 영문 단위(시간 → hr/hrs) · 영문 단위는 그대로
+  const unitRow = (qty, unit) => ({ name: 'A', spec: '', qty, unit, unitPrice: 1, supply: 1, vat: 0 });
+  const ko = buildQuoteHtml({ ...TWO, items: [unitRow(2, '시간'), unitRow(3, 'EA'), unitRow(1, '식'), unitRow(4, '')] }, FAKE);
+  eq('한글 수량: 2시간 · 3EA · 1식 · 단위 없으면 수만', has(ko, '<td class="c">2시간</td>', '<td class="c">3EA</td>', '<td class="c">1식</td>', '<td class="c">4</td>'), true);
+  const en = buildQuoteHtml({ ...EN, items: [unitRow(1, '시간'), unitRow(2, '시간'), unitRow(5, '개'), unitRow(1, 'BOX')] }, FAKE);
+  eq('영문 수량: 1 hr · 2 hrs · 5 pcs · 1 BOX', has(en, '>1 hr<', '>2 hrs<', '>5 pcs<', '>1 BOX<'), true);
+  eq('영문 견적서(단위 시간) 한글 0자', hangulOf(en), '');
+  // 글꼴 — PDF 를 만드는 리눅스 브라우저의 한글 글꼴(Noto Sans CJK KR)이 sans-serif 앞에
+  eq('서류 글꼴: Noto Sans CJK KR 이 sans-serif 앞', /'Noto Sans KR','Noto Sans CJK KR',sans-serif/.test(STYLE), true);
+  // 접수 전 요청서 안내 — 버튼 이름 그대로(‘견적 요청하기’)
+  const d = buildRequestHtml({ ...requestDocFrom({ lang: 'ko', draft: true, date: '2026-10-01', dj: DJ, supportEmail: 'hello@example.com' }), logoUrl: LOGO });
+  eq('요청서(접수 전) 안내: ‘견적 요청하기’', [d.includes('‘견적 요청하기’를 누르시면'), d.includes('‘견적 요청’을')], [true, false]);
 }
 
 // ── ⑥ 칸 맞춤(fitCells) — 가짜 DOM: 글자 크기에 비례하는 너비 ───────────────────────────────

@@ -9,6 +9,8 @@
 // 선: 엑셀은 칸 묶음(공급자 칸 · 정보/합계 칸 · 품목표)마다 바깥 선이 굵고 안쪽은 가늘다.
 //     border-collapse 표는 표 테두리와 바깥 칸 선이 겹치면 굵은 쪽이 이긴다 → 표 테두리 = 굵은 선, 칸 = 가는 선.
 // 글꼴: 엑셀(구글 시트)과 같은 Arial — 한글은 시스템 한글 글꼴(맑은 고딕 등)로 넘어간다.
+//       메일 첨부 PDF 를 만드는 클라우드플레어 브라우저(리눅스)에는 맑은 고딕이 없다 → 'Noto Sans CJK KR'(설치돼 있음)을 이어 둔다
+//       (없으면 중국어용 글꼴로 넘어가 한글 모양이 어색했다 — 10-02 실제 메일 확인).
 //
 // 엑셀과 일부러 다르게 둔 것:
 //   - 칸 높이는 '최소' 높이다. 긴 글(요청 사항 등)은 칸이 늘어나고, 줄이 많으면 2쪽으로 넘어가며 표 머리가 다시 나온다.
@@ -88,10 +90,11 @@ export const ymdLocal = (iso) => {
 
 // ── 공급자 칸 글자 ──────────────────────────────────────────────────────────────
 // 엑셀 「견적서」 탭의 공급자 칸 글자 그대로(줄바꿈 위치 포함). 사업자번호만 company.json 에서 읽는다.
-// ⚠️ 사이트 하단 회사 정보(company.json: '반암 주식회사', 주소 끝 '(대림동)')와 글자가 조금 다르다 — 서류는 엑셀을 따른다(10-01 결정).
+// 상호는 사이트 하단 회사 정보(company.json nameKo)와 같은 '반암 주식회사'(띄어 씀 — 10-02 결정, 엑셀의 붙여 쓴 글자 대신).
+// ⚠️ 주소는 엑셀 글자 그대로라 사이트 하단(끝에 '(대림동)')과 조금 다르다 — 서류는 엑셀을 따른다(10-01 결정).
 //    회사 정보가 바뀌면 여기도 같이 고친다.
 export const SUPPLIER_DOC_KO = Object.freeze({
-  name: '반암주식회사', ceo: '한 수 덕', address: '서울특별시 영등포구 도신로4길 21-1, 반암',
+  name: '반암 주식회사', ceo: '한 수 덕', address: '서울특별시 영등포구 도신로4길 21-1, 반암',
   bizType: '제조업,\n과학기술서비스업', bizItem: '기타 반도체 소자 및 장비,\n공학연구개발, 엔지니어링',
 });
 
@@ -102,7 +105,7 @@ export const STYLE = `
   @page{size:A4 portrait;margin:10mm}
   *{box-sizing:border-box}
   html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  body{margin:0;background:#e9ecef;color:#000;font-family:Arial,'Malgun Gothic','Apple SD Gothic Neo','Noto Sans KR',sans-serif;font-size:${fz(10)};word-break:keep-all;overflow-wrap:anywhere}
+  body{margin:0;background:#e9ecef;color:#000;font-family:Arial,'Malgun Gothic','Apple SD Gothic Neo','Noto Sans KR','Noto Sans CJK KR',sans-serif;font-size:${fz(10)};word-break:keep-all;overflow-wrap:anywhere}
   .page{width:210mm;min-height:297mm;margin:16px auto;background:#fff;padding:10mm;box-shadow:0 1px 6px rgba(0,0,0,.15)}
   .noprint{max-width:210mm;margin:16px auto 0;display:flex;gap:8px}
   .noprint button{font:13px/1.2 -apple-system,'Malgun Gothic',sans-serif;padding:8px 14px;border:1px solid #bbb;border-radius:8px;background:#fff;cursor:pointer}
@@ -304,13 +307,31 @@ function page({ lang, docTitle, head, r7left, r7mark, info, tableHtml, note }) {
 
 // ── 견적서 ─────────────────────────────────────────────────────────────────────────
 const QCOLS = [['B', 'C', 'D'], ['E', 'F', 'G'], ['H', 'I'], ['J', 'K', 'L'], ['M', 'N', 'O'], ['P']];
+/** 영문 견적서 단위 — 담당자 화면 단위 목록(quote-editor.js UNITS)의 한글 단위를 영문으로. 영문 단위(EA·BOX·pt)는 그대로. */
 const unitEn = (qty, unit) => {
   const u = String(unit ?? '');
   if (u === '회') return Number(qty) === 1 ? 'run' : 'runs';
   if (u === '개' || u === '장') return 'pcs';
   if (u === '식') return 'lot';
+  if (u === '시간') return Number(qty) === 1 ? 'hr' : 'hrs';
   return u;
 };
+/** 수량 칸 — 한글은 수와 단위를 붙여 쓴다(1회 · 2시간 · 3EA), 영문은 띄운다(1 run · 2 hrs) */
+const qtyCell = (qty, unit, en) => {
+  const q = String(qty ?? '');
+  const u = en ? unitEn(qty, unit) : String(unit ?? '');
+  return (en ? `${q} ${u}` : `${q}${u}`).trim();
+};
+/**
+ * 서류의 받는 사람(귀하 · To) — 한글은 '소속 이름', 영문은 'Name, Company'(영문 서류의 보통 순서).
+ * 견적서 머리(quote-revision defaultDocInfo) · 금액만 있는 견적(조회 화면) · 주문서가 같이 쓴다.
+ * @param {unknown} company @param {unknown} name @param {'ko'|'en'|string} lang
+ */
+export function customerLine(company, name, lang) {
+  const c = String(company ?? '').trim();
+  const n = String(name ?? '').trim();
+  return lang === 'en' ? [n, c].filter(Boolean).join(', ') : [c, n].filter(Boolean).join(' ');
+}
 const TBC = 'To be confirmed';
 
 /**
@@ -330,7 +351,7 @@ export function buildQuoteHtml(o, company) {
   const amt = (n) => (isUsd ? usd(n) : money(n));
   // 품목은 넣은 줄만(빈 줄 null 은 건너뛴다). 품목 수 상한(15)은 계산 엔진이 이미 지킨다.
   const rows = (o?.items ?? []).filter(Boolean).map((it) => [{ v: it.name, k: 't' }, { v: it.spec, k: 't' },
-    { v: `${it.qty ?? ''} ${en ? unitEn(it.qty, it.unit) : (it.unit ?? '')}`.trim(), k: 'c' },
+    { v: qtyCell(it.qty, it.unit, en), k: 'c' },
     { v: amt(it.unitPrice), k: 'num' }, { v: amt(it.supply), k: 'num' }, { v: amt(it.vat), k: 'num' }]);
   const days = str(i.validDays);
   const note = [o?.fxNote, o?.note].map(str).filter(Boolean).join('\n');
@@ -341,7 +362,7 @@ export function buildQuoteHtml(o, company) {
         '\n    ' + sideBox('공급자', supplierKoRows(company, [{ l: '담 당 자', v: str(i.manager) }, { l: '연 락 처', v: str(i.contact) }])),
       r7left: `견적번호 : ${str(i.quoteNo)}`, r7mark: str(o?.stamp),
       info: infoBox([['견 적 명', str(i.title)], ['납품기한', str(i.delivery)], ['대금 지불방식', str(i.payment)],
-        ['견적 유효기간', days ? `견적일로부터 ${days} 일간` : '']],
+        ['견적 유효기간', days ? `견적일로부터 ${days}일간` : '']],
       isUsd ? { label: '합계 금액\n(공급가액+세액)', amount: amt(o?.total) }
         : { label: '합계 금액\n(공급가액+세액)', words: str(o?.totalKorean), amount: money(o?.total) }),
       tableHtml: table({ cols: QCOLS, head: ['품명', '규격/사양', '수량', '단가', '공급가액', '세액'], rows,
@@ -400,7 +421,7 @@ const RCOLS = [['B'], ['C', 'D', 'E'], ['F', 'G', 'H', 'I'], ['J', 'K', 'L', 'M'
 const PCOLS = [['B', 'C', 'D'], ['E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'], ['M', 'N', 'O'], ['P']];
 const REQ = {
   ko: {
-    title: '견적 요청서', to: '반암주식회사 귀중', vlabel: '요청자',
+    title: '견적 요청서', to: '반암 주식회사 귀중', vlabel: '요청자',
     company: '소     속', name: '성     명', phone: '연 락 처', email: '이 메 일',
     product: '요청 상품', samples: '샘플 수량', qty: '수     량', delivery: '기판 전달', due: '완료 희망',
     no: '접수번호', notSent: '(아직 보내지 않은 요청서)', markDraft: '접수 전',
@@ -411,7 +432,7 @@ const REQ = {
     dicing: '다이싱', dicingYes: (fee, q) => `필요 (+₩${fee.toLocaleString('ko-KR')}/박스 × ${q})`, dicingNo: '불필요',
     boxes: (q) => `${q}박스`,
     shipMemo: '배송 요청',
-    noteDraft: (email) => `이 요청서는 아직 접수되지 않았습니다. 내용을 확인하신 뒤 ${email} 로 보내 주시거나, 웹사이트에서 ‘견적 요청’을 누르시면 바로 접수됩니다.`,
+    noteDraft: (email) => `이 요청서는 아직 접수되지 않았습니다. 내용을 확인하신 뒤 ${email} 로 보내 주시거나, 웹사이트에서 ‘견적 요청하기’를 누르시면 바로 접수됩니다.`,
     noteReceived: '접수된 요청서입니다. 접수번호와 이메일로 진행 상태를 확인하실 수 있습니다.',
   },
   en: {
@@ -624,7 +645,7 @@ export function orderDocFrom(a) {
       [str(o.ship_zip) ? `(${str(o.ship_zip)})` : '', addr].filter(Boolean).join(' '),
     ].filter(Boolean).join('\n')
     : str(a.noShipText);
-  const who = [str(o.buyer_company), str(o.buyer_name)].filter(Boolean).join(' ');
+  const who = customerLine(o.buyer_company, o.buyer_name, lang);
   return {
     lang, id: str(o.id), date: ymdLocal(o.created_at), customer: who, email: str(a.email),
     info: [[L.status, str(a.statusText)], [L.pay, pay], [L.ship, shipTo], [L.tax, o.tax_invoice ? L.taxYes : L.taxNo]],

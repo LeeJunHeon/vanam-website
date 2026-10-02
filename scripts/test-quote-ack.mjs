@@ -11,7 +11,7 @@ import {
   b64, b64lines, wrap76, encodeWords, rfc2231, isSafeAddress, buildMime, utf8,
 } from '../src/lib/mail-mime.js';
 import {
-  ackContent, estimateOf, attachmentName, kstText, pageOf, mergeDocPages, fitScript,
+  ackContent, estimateOf, attachmentName, pdfTitle, kstText, pageOf, mergeDocPages, fitScript,
   ackRecord, parseAck, ackLabel, requestDocArgs, ACK_REASON_KO, hostAllowed, safeShort, isFreshPending, ACK_PENDING_MS, lookupLink,
 } from '../src/lib/quote-ack.js';
 import { buildQuoteHtml, buildRequestHtml, requestDocFrom, fitCells, STYLE } from '../src/lib/doc-excel.js';
@@ -140,6 +140,9 @@ eq('attachmentName', [attachmentName('ko', 'INQ-20261001-AB2C', false), attachme
   attachmentName('en', 'INQ-20261001-AB2C', false), attachmentName('en', 'INQ-20261001-AB2C', true), attachmentName('ko', 'INQ/../x', false)],
 ['견적요청서_INQ-20261001-AB2C.pdf', '예상견적서_견적요청서_INQ-20261001-AB2C.pdf', 'VanaM_Quote_Request_INQ-20261001-AB2C.pdf',
   'VanaM_Estimate_and_Request_INQ-20261001-AB2C.pdf', '견적요청서_INQx.pdf']);
+eq('PDF 제목: 파일 이름과 같은 구성(예상 견적서가 붙으면 제목에도)', [pdfTitle('ko', 'INQ-1', false), pdfTitle('ko', 'INQ-1', true),
+  pdfTitle('en', 'INQ-1', false), pdfTitle('en', 'INQ-1', true)],
+['견적 요청서 INQ-1', '예상 견적서·견적 요청서 INQ-1', 'Quote request INQ-1', 'Estimate and quote request INQ-1']);
 const VIEW_EST = { state: 'estimate', totalKrwText: '₩239,800', totalUsdText: '$173.14', validDays: 14, validUntil: '2026-10-15', doc: {} };
 eq('estimateOf: 예상 견적만', [estimateOf(VIEW_EST), estimateOf({ ...VIEW_EST, state: 'reviewing' }), estimateOf({ ...VIEW_EST, state: 'confirmed' }),
   estimateOf(null), estimateOf({ ...VIEW_EST, totalUsdText: null })],
@@ -158,12 +161,15 @@ const BASE = {
   eq('한글·운영: 예상 견적 — 금액·환산·유효기간·확정 아님 안내(고객 화면 문구 그대로)', has(c.text, '예상 견적', '₩239,800 (부가세 포함 · 약 $173.14)',
     '유효기간: 견적일로부터 14일 (2026-10-15까지)', T.ko.notice), true);
   eq('한글·운영: 첨부 줄 · 조회 링크 · 답장 안내 · 회사 줄', has(c.text, '첨부: 예상 견적서와 견적 요청서(PDF 1개)', BASE.lookupUrl,
-    '이 메일에 바로 답장하셔도 담당자에게 전달됩니다.', '반암주식회사 · hello@vanam.co.kr · 02-0000-0000 · vanam.co.kr'), true);
+    '이 메일에 바로 답장하셔도 담당자에게 전달됩니다.', '반암 주식회사 · hello@vanam.co.kr · 02-0000-0000 · vanam.co.kr'), true);
   eq('한글·운영: 테스트 표시 없음', [c.text.includes('테스트'), c.html.includes('테스트')], [false, false]);
   eq('HTML: 고객 글자는 이스케이프 · 스크립트 없음 · 링크는 조회 주소 하나', [c.html.includes('홍길동&lt;b&gt;'), c.html.includes('홍길동<b>'),
     /<script/i.test(c.html), [...c.html.matchAll(/href="([^"]+)"/g)].map((m) => m[1])], [true, false, false, [BASE.lookupUrl]]);
   eq('HTML: 예상 견적 상자(금액·날짜는 한 덩어리) · 버튼 문구', has(c.html, '>₩239,800<', '부가세 포함 · 약 <span style="white-space:nowrap">$173.14</span>',
     '(<span style="white-space:nowrap">2026-10-15</span>까지)', '>진행 상태 조회<'), true);
+  // Gmail 은 HTML 에서 글 본문을 다시 만든다 — 붙어 보이던 두 곳(머리 'VanaM 반암' · 금액과 안내)에 진짜 띄어쓰기
+  const textOf = (h) => h.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ');
+  eq('HTML: 머리 VanaM 반암 · 금액과 안내 사이 띄어쓰기(태그를 빼도 붙지 않음)', [textOf(c.html).includes('VanaM 반암'), textOf(c.html).includes('₩239,800 부가세 포함')], [true, true]);
   eq('한글: 조회 안내 — HTML 은 버튼 안내 · 글 본문은 "버튼 이름: 주소" 한 줄(사이트와 같은 "진행 상태")', [
     c.html.includes('아래 버튼을 누르면 진행 상태를 바로 확인하실 수 있습니다.'), c.text.includes(`\n진행 상태 조회: ${BASE.lookupUrl}\n`),
     c.text.includes('아래 버튼'), c.text.includes('진행 상황')], [true, true, false, false]);
@@ -185,6 +191,9 @@ const BASE = {
   eq('영문: 제목·인사·2 business days', [c.subject, has(c.text, 'Dear 홍길동<b>,', 'reply within 2 business days', 'Received: 2026-10-01 16:50 KST')],
     ['[VanaM] We received your quote request (INQ-20261001-AB2C)', true]);
   eq('영문: 예상 견적은 달러 먼저(고객 화면과 같음)', has(c.text, 'Approx. $173.14 (₩239,800 incl. VAT)', T.en.notice), true);
+  // (BASE 의 이름·상품은 한글 가짜 값이라 '한글 0자'는 drive 점검에서 따로 본다 — 여기서는 머리 칸만)
+  eq('영문 HTML: 머리는 VanaM 만(반암 없음) · 금액과 안내 사이 띄어쓰기', [/color:#0a0e13">VanaM<\/div>/.test(c.html), c.html.includes('반암'),
+    c.html.replace(/<[^>]+>/g, '').includes('Approx. $173.14 ₩239,800 incl. VAT')], [true, false, true]);
   eq('영문: 첨부 줄 · 회사 줄', has(c.text, 'Attached: the estimated quotation and your request sheet (one PDF).', 'VanaM Inc. · hello@vanam.co.kr · +82-2-0000-0000 · vanam.co.kr'), true);
   const t = ackContent({ ...BASE, lang: 'en', live: false, estimate: null, T: T.en, attachment: null });
   eq('영문·테스트: 제목 앞 [TEST]', t.subject.startsWith('[TEST] [VanaM]'), true);
@@ -243,7 +252,7 @@ const MAPS = { sizeMap: { '4inch': '4 inch' }, deliveryMap: { direct: '직접 �
   const m = mergeDocPages([quote, req], STYLE, { lang: 'ko', title: '견적 요청서 <INQ>' });
   eq('합친 HTML: 종이 2장 · 스타일 하나 · 쪽 나눔 · 버튼 없음 · 제목 이스케이프', [(m.match(/<div class="page">/g) ?? []).length, (m.match(/<style>/g) ?? []).length,
     m.includes('.page+.page{break-before:page}'), m.includes('vn-doc-print'), m.includes('<title>견적 요청서 &lt;INQ&gt;</title>')], [2, 1, true, false, true]);
-  eq('합친 HTML: 견적서가 앞(예상 견적 표시) · 요청서가 뒤', [m.indexOf(T.ko.docStamp) > 0, m.indexOf(T.ko.docStamp) < m.indexOf('반암주식회사 귀중')], [true, true]);
+  eq('합친 HTML: 견적서가 앞(예상 견적 표시) · 요청서가 뒤', [m.indexOf(T.ko.docStamp) > 0, m.indexOf(T.ko.docStamp) < m.indexOf('반암 주식회사 귀중')], [true, true]);
   eq('합친 HTML: 서류 스크립트 없음', /<script/i.test(m), false);
 }
 {

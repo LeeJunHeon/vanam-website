@@ -216,7 +216,7 @@ const inputClass =
   // 서류(견적서·요청서·주문서)는 모두 엑셀 「견적서」 틀(src/lib/doc-excel.js)
   import {
     buildQuoteDoc, buildRequestDoc, buildOrderDoc, openDoc,
-    quoteFromAmount, requestDocFrom, orderDocFrom, docContact, ymdLocal, specFromDetails,
+    quoteFromAmount, requestDocFrom, orderDocFrom, docContact, ymdLocal, specFromDetails, customerLine,
   } from '../../lib/quote-doc';
   const form = document.getElementById('lookup-form') as HTMLFormElement | null;
   if (form) {
@@ -587,7 +587,7 @@ const inputClass =
               // 견적일 = 담당자가 금액을 저장한 날(updated_at). 오늘 날짜로 찍으면 옛 금액이 오늘 견적처럼 보인다
               docMsg(openDoc(buildQuoteDoc(quoteFromAmount({
                 lang: PAGE_LANG, id: String(q.id), date: ymdLocal(q.updated_at || q.created_at) || ymdLocal(),
-                customer: [q.company, q.name].map((x: unknown) => String(x ?? '').trim()).filter(Boolean).join(' '),
+                customer: customerLine(q.company, q.name, PAGE_LANG),
                 title: pName, spec, amount: Number(q.quoted_amount), currency: String(q.quote_currency ?? 'KRW'),
                 bank: String(q.quote_bank ?? ''), memo: String(q.quote_note ?? ''), contact: docContact(PAGE_LANG),
               }))));

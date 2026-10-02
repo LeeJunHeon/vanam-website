@@ -68,6 +68,7 @@ const infoKo = defaultDocInfo({ inquiry: INQ, policy: POLICY, today: '2026-01-10
 eq('defaultDocInfo ko', infoKo, { customer: '테스트대학 홍길동', ref: '', title: 'Multilayers', date: '2026-01-10', quoteNo: 'INQ-20260101-TEST',
   manager: '', contact: '02-0000-0000', delivery: '계약 후 협의', validDays: '7', payment: '' });
 eq('defaultDocInfo en — 납기 한국어 문장 제외', defaultDocInfo({ inquiry: { ...INQ, company: '' }, policy: POLICY, today: '2026-01-10', contact: 'c', locale: 'en' }).delivery, '');
+eq('defaultDocInfo en — 받는 사람 Name, Company(영문 서류 순서)', defaultDocInfo({ inquiry: { ...INQ, name: 'Jane Doe', company: 'Test Univ.' }, policy: POLICY, today: 't', contact: 'c', locale: 'en' }).customer, 'Jane Doe, Test Univ.');
 eq('defaultDocInfo — 회사 없으면 이름만 · 정책 없으면 유효 일수 빈 값',
   [defaultDocInfo({ inquiry: { ...INQ, company: '' }, policy: [], today: 't', contact: 'c', locale: 'ko' }).customer,
     defaultDocInfo({ inquiry: INQ, policy: [], today: 't', contact: 'c', locale: 'ko' }).validDays], ['홍길동', '']);

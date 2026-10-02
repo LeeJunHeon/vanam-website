@@ -80,6 +80,17 @@ export function attachmentName(lang, id, withQuote) {
 }
 
 /**
+ * 첨부 PDF 의 문서 제목(PDF 보기 창의 탭·제목 줄) — 파일 이름과 같은 구성.
+ * 예상 견적서가 앞에 붙은 PDF 에 '견적 요청서'만 적히지 않게(10-02 실제 메일 확인).
+ * @param {'ko'|'en'} lang @param {string} id @param {boolean} withQuote
+ */
+export function pdfTitle(lang, id, withQuote) {
+  const no = str(id);
+  if (lang === 'en') return `${withQuote ? 'Estimate and quote request' : 'Quote request'} ${no}`.trim();
+  return `${withQuote ? '예상 견적서·견적 요청서' : '견적 요청서'} ${no}`.trim();
+}
+
+/**
  * 고객 견적 요약(customerQuoteView) → 메일에 실을 예상 견적. '예상 견적' 상태일 때만(담당자 확인·확정·없음은 null).
  * @param {any} view
  */
@@ -107,7 +118,7 @@ const TEXT = {
     lookup: '아래 버튼을 누르면 진행 상태를 바로 확인하실 수 있습니다.',
     button: '진행 상태 조회',
     reply: '이 메일에 바로 답장하셔도 담당자에게 전달됩니다.',
-    company: '반암주식회사',
+    company: '반암 주식회사',
     test: '테스트 빌드에서 보낸 메일입니다. 운영 사이트가 아니며 회사 주소(@vanam.co.kr)로만 발송됩니다.',
   },
   en: {
@@ -194,8 +205,9 @@ export function ackContent(a) {
   const estHtml = est
     ? `<div style="margin:20px 0;border:1px solid ${C.line};border-radius:12px;background:${C.soft};padding:18px 20px">` +
       `<div style="font-size:12px;font-weight:600;letter-spacing:.08em;color:${C.accent}">${esc(T.estimate)}</div>` +
-      `<div style="margin-top:6px"><span style="font-size:24px;font-weight:700;color:${C.ink}">${fillHtml(T.totalMain, estVars)}</span>` +
-      `<span style="margin-left:8px;font-size:13px;color:${C.sub}">${fillHtml(T.totalMeta, estVars)}</span></div>` +
+      // 두 span 사이는 진짜 띄어쓰기 — Gmail 이 HTML 에서 글 본문을 다시 만들 때 금액과 안내가 붙지 않게(10-02 실제 메일 확인)
+      `<div style="margin-top:6px"><span style="font-size:24px;font-weight:700;color:${C.ink}">${fillHtml(T.totalMain, estVars)}</span> ` +
+      `<span style="margin-left:4px;font-size:13px;color:${C.sub}">${fillHtml(T.totalMeta, estVars)}</span></div>` +
       (est.validDays && est.validUntil ? `<div style="margin-top:4px;font-size:13px;color:${C.sub}">${fillHtml(T.valid, { days: est.validDays, date: est.validUntil })}</div>` : '') +
       `<div style="margin-top:12px;border-top:1px solid ${C.line};padding-top:12px;font-size:13px;line-height:1.65;color:${C.sub}">${esc(T.notice)}</div>` +
       `</div>`
@@ -207,7 +219,8 @@ export function ackContent(a) {
     `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:${C.page}"><tr><td align="center" style="padding:24px 12px">` +
     `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;background:#ffffff;border:1px solid ${C.line};border-radius:14px">` +
     `<tr><td style="padding:28px 28px 8px">` +
-    `<div style="font-size:15px;font-weight:700;letter-spacing:.02em;color:${C.ink}">VanaM<span style="margin-left:6px;font-weight:400;color:${C.sub}">${en ? '' : '반암'}</span></div>` +
+    // 'VanaM 반암' 사이도 진짜 띄어쓰기(위와 같은 이유) · 영문 메일은 VanaM 만
+    `<div style="font-size:15px;font-weight:700;letter-spacing:.02em;color:${C.ink}">VanaM${en ? '' : ` <span style="margin-left:2px;font-weight:400;color:${C.sub}">반암</span>`}</div>` +
     `</td></tr><tr><td style="padding:12px 28px 28px">` +
     banner +
     `<h1 style="margin:0 0 16px;font-size:20px;line-height:1.4;color:${C.ink}">${esc(L.title)}</h1>` +

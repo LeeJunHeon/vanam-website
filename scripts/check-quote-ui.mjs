@@ -4,7 +4,8 @@
 // 제품 페이지 10개(ko 포함)에서:
 //   · [예상 견적 보기](#quote-estimate-run) 있음·hidden · 결과 상자(#quote-estimate-result) hidden
 //   · name="estimateSeenKrw" 정확히 1개
-//   · [견적 요청서 다운로드](#quote-print) 있음·hidden 아님 · 다운로드 안내(#q-download-hint) 있음
+//   · [견적 요청서 다운로드](#quote-print) 있음·hidden 아님 · 다운로드 안내(#q-download-hint) 있음·hidden 아님
+//   · 확인 메일 안내(#q-ack-hint — 스위치가 켜졌을 때만 보임) 있음·hidden
 //   · 기판 등급 칸: #q-grade disabled · #q-grade-wrap hidden · 옵션 = SUBSTRATE_GRADES
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
@@ -30,7 +31,8 @@ for (const p of PAGES) {
   need('quote-estimate-run', (t) => hasAttr(t, 'hidden'), '가 hidden 이 아니다');
   need('quote-estimate-result', (t) => hasAttr(t, 'hidden'), '가 hidden 이 아니다');
   need('quote-print', (t) => !hasAttr(t, 'hidden'), '가 hidden 이다(스위치 꺼짐 기본 화면에서는 보여야 한다)');
-  need('q-download-hint', () => true, '');
+  need('q-download-hint', (t) => !hasAttr(t, 'hidden'), '가 hidden 이다(스위치 꺼짐 기본 화면에서는 보여야 한다)');
+  need('q-ack-hint', (t) => hasAttr(t, 'hidden'), '가 hidden 이 아니다(스위치가 켜졌을 때만 보여야 한다)');
   need('q-grade', (t) => hasAttr(t, 'disabled'), '가 disabled 가 아니다');
   need('q-grade-wrap', (t) => hasAttr(t, 'hidden'), '가 hidden 이 아니다');
   const seen = (h.match(/name="estimateSeenKrw"/g) ?? []).length;
@@ -45,4 +47,4 @@ if (errs.length) {
   console.error(`\n견적 폼 UI 게이트 실패 — ${errs.length}건.`);
   process.exit(1);
 }
-console.log(`✓ 견적 폼 UI 게이트 — 제품 페이지 ${PAGES.length}개 · 예상 견적 숨김 · 다운로드 버튼 유지 · 등급 칸 숨김/비활성 · 옵션 ${SUBSTRATE_GRADES.join('/')}`);
+console.log(`✓ 견적 폼 UI 게이트 — 제품 페이지 ${PAGES.length}개 · 예상 견적 숨김 · 다운로드 버튼·안내 유지 · 확인 메일 안내 숨김 · 등급 칸 숨김/비활성 · 옵션 ${SUBSTRATE_GRADES.join('/')}`);

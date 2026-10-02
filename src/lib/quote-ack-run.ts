@@ -20,7 +20,7 @@ import { sendMail, gmailConfigured, MAIL_LIVE } from './mail-send';
 import { renderPdf, pdfConfigured, logoDataUri } from './doc-pdf';
 import { isSafeAddress } from './mail-mime.js';
 import {
-  mailAllowed, hostAllowed, isFreshPending, ackContent, estimateOf, attachmentName, mergeDocPages, fitScript,
+  mailAllowed, hostAllowed, isFreshPending, ackContent, estimateOf, attachmentName, pdfTitle, mergeDocPages, fitScript,
   ackRecord, requestDocArgs, ACK_REASON_KO, kstText, lookupLink,
 } from './quote-ack.js';
 import { buildQuoteHtml, buildRequestHtml, requestDocFrom, fitCells, STYLE, telKr } from './doc-excel.js';
@@ -222,8 +222,7 @@ async function compose(
       const reqHtml = buildRequestHtml({ ...requestDocFrom(requestDocArgs(q, lang, date, mapsFor(lang))), logoUrl });
       const qo = estimate ? docOptions(view, T, lang) : null;
       const htmls = qo ? [buildQuoteHtml({ ...qo, logoUrl }, company as Record<string, unknown>), reqHtml] : [reqHtml];
-      const title = `${lang === 'en' ? 'Quote request' : '견적 요청서'} ${id}`;
-      const r = await renderPdf(mergeDocPages(htmls, STYLE, { lang, title }),
+      const r = await renderPdf(mergeDocPages(htmls, STYLE, { lang, title: pdfTitle(lang, id, Boolean(qo)) }),
         { script: fitScript(fitCells), ref: id, deadline: deadline - MAIL_RESERVE_MS });
       if (r.ok) {
         attachment = { filename: attachmentName(lang, id, Boolean(qo)), contentType: 'application/pdf', bytes: r.bytes };
