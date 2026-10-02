@@ -1,5 +1,6 @@
 ---
-// 비회원 주문 조회. 주문번호 + 이메일로 상태를 확인한다.
+// 비회원 주문·견적 조회. 주문번호(ORD-)·접수번호(INQ-) + 이메일로 진행 상태를 확인한다.
+// 제목·안내 문구는 어디로 들어와도 하나다(메뉴·주문 완료·견적 완료·확인 메일 — 10-02 결정: 들어온 길에 따라 제목을 나누지 않는다).
 // ⚠️ prerender=false 는 페이지 파일(src/pages/order/lookup.astro)에 있다.
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getRelativeLocaleUrl } from 'astro:i18n';
@@ -15,11 +16,8 @@ const lhref = (p: string) => getRelativeLocaleUrl(locale, p);
 // 예상·확정 견적 상자 문구 — 완료 화면과 같은 문구(site.json quote.view)
 const QV = ((siteData as Record<string, any>)[locale] ?? siteData.en).quote.view;
 
-// 주문 완료 화면에서 넘어오면 주문번호가 채워져 있다
+// 주문 완료·견적 완료 화면·확인 메일에서 넘어오면 번호가 채워져 있다(?id=)
 const prefill = Astro.url.searchParams.get('id') ?? '';
-// 견적 요청(INQ-)으로 들어오면(접수 확인 메일·견적 완료 화면의 [진행 상태 조회]) 제목을 견적 요청에 맞춘다
-// — 같은 화면이 주문(ORD-)도 조회하므로 주문으로 들어온 경우의 제목은 그대로 둔다.
-const inqEntry = /^INQ-/i.test(prefill.trim());
 
 // 견적 접수 시 저장되는 product_name 은 **접수 당시 페이지 언어**로 굳는다.
 // 한글로 넣은 견적을 영문 화면에서 조회하면 상품명만 한글로 남는 문제가 있었다.
@@ -44,15 +42,12 @@ const productNames: Record<string, string> = Object.fromEntries([
 
 const t = isKo
   ? {
-      meta: '주문 조회 | VanaM', metaDesc: '주문번호와 이메일로 주문 상태를 확인하세요.',
-      eyebrow: '주문 조회', heading: '주문 확인',
-      metaInq: '견적 요청 조회 | VanaM', eyebrowInq: '견적 요청 조회', headingInq: '진행 상태 확인',
-      metaDescInq: '접수번호와 이메일로 견적 요청의 진행 상태를 확인하세요.',
+      meta: '주문·견적 조회 | VanaM', metaDesc: '주문번호 또는 접수번호와 이메일로 진행 상태를 확인하세요.',
+      eyebrow: '주문·견적 조회', heading: '진행 상태 확인',
       lead: '주문번호(ORD-…) 또는 견적·주문 요청 접수번호(INQ-…)와 입력하신 이메일을 넣으시면 진행 상태를 확인하실 수 있습니다.',
       idLabel: '주문/접수번호', email: '이메일',
       submit: '조회하기', loading: '조회 중…',
-      notFound: '주문번호와 이메일이 일치하지 않습니다. 다시 확인해 주세요.',
-      notFoundInq: '접수번호와 이메일이 일치하지 않습니다. 다시 확인해 주세요.',
+      notFound: '주문/접수번호와 이메일이 일치하지 않습니다. 다시 확인해 주세요.',
       fail: '조회에 실패했습니다. 잠시 후 다시 시도해 주세요.',
       status: '진행 상태', amount: '결제 금액', ordered: '주문일',
       items: '주문 내역', shipTo: '배송지', taxYes: '세금계산서 요청됨',
@@ -60,7 +55,7 @@ const t = isKo
       orderNo: '주문번호', vat: '(부가세 포함)',
       ordSheetBtn: '주문서 인쇄 · PDF 저장',
       noShip: '실물 배송 없음 (결과는 이메일로 안내)',
-      help: '주문번호를 잊으셨나요? 아래로 연락 주시면 확인해 드립니다.',
+      help: '주문/접수번호를 잊으셨나요? 아래로 연락 주시면 확인해 드립니다.',
       inq: {
         title: '견적·주문 요청', received: '접수일', product: '요청 상품',
         method: '공정', substrate: '기판', reqBody: '요청 내용 보기',
@@ -98,15 +93,12 @@ const t = isKo
       trackingNo: '송장번호',
     }
   : {
-      meta: 'Track your order | VanaM', metaDesc: 'Check your order status with your order number and email.',
-      eyebrow: 'Order lookup', heading: 'Track your order',
-      metaInq: 'Quote request lookup | VanaM', eyebrowInq: 'Quote request lookup', headingInq: 'Check status',
-      metaDescInq: 'Check the status of your quote request with its number and your email.',
+      meta: 'Order & quote lookup | VanaM', metaDesc: 'Check the status of your order or quote request with its number and your email.',
+      eyebrow: 'Order & quote lookup', heading: 'Check status',
       lead: 'Enter your order number (ORD-…) or request number (INQ-…) with the email you used, to check the status.',
       idLabel: 'Order / request number', email: 'Email',
       submit: 'Look up', loading: 'Searching…',
-      notFound: 'The order number and email do not match. Please check and try again.',
-      notFoundInq: 'The request number and email do not match. Please check and try again.',
+      notFound: 'The order / request number and email do not match. Please check and try again.',
       fail: 'Lookup failed. Please try again shortly.',
       status: 'Status', amount: 'Amount', ordered: 'Ordered',
       items: 'Items', shipTo: 'Ship to', taxYes: 'Tax invoice requested',
@@ -114,7 +106,7 @@ const t = isKo
       orderNo: 'Order no.', vat: '(VAT included)',
       ordSheetBtn: 'Print order sheet (PDF)',
       noShip: 'No physical delivery (results sent by email)',
-      help: 'Lost your order number? Contact us and we will look it up for you.',
+      help: 'Lost your order or request number? Contact us and we will look it up for you.',
       inq: {
         title: 'Quote / order request', received: 'Received', product: 'Requested item',
         method: 'Process', substrate: 'Substrate', reqBody: 'View request details',
@@ -156,15 +148,14 @@ const inputClass =
   'v-input';
 ---
 
-<BaseLayout title={inqEntry ? t.metaInq : t.meta} description={inqEntry ? t.metaDescInq : t.metaDesc}>
+<BaseLayout title={t.meta} description={t.metaDesc}>
   <section class="v-wrap py-28 md:py-32">
-    <p class="text-sm font-medium uppercase tracking-widest text-accent">{inqEntry ? t.eyebrowInq : t.eyebrow}</p>
-    <h1 class="mt-4 text-3xl font-bold leading-tight text-ink md:text-4xl">{inqEntry ? t.headingInq : t.heading}</h1>
+    <p class="text-sm font-medium uppercase tracking-widest text-accent">{t.eyebrow}</p>
+    <h1 class="mt-4 text-3xl font-bold leading-tight text-ink md:text-4xl">{t.heading}</h1>
     <p class="mt-5 text-base leading-relaxed text-ink/55">{t.lead}</p>
 
     <form id="lookup-form" class="mt-10 space-y-6"
       data-msg-notfound={t.notFound}
-      data-msg-notfound-inq={t.notFoundInq}
       data-msg-fail={t.fail}
       data-label-send={t.submit}
       data-label-loading={t.loading}
@@ -386,7 +377,7 @@ const inputClass =
         const j = await res.json();
 
         if (res.status === 404) {
-          errEl.textContent = (/^INQ-/i.test(String(data.id ?? '').trim()) ? M.msgNotfoundInq : M.msgNotfound) ?? '';
+          errEl.textContent = M.msgNotfound ?? '';
           return;
         }
         if (!res.ok || !j.ok) throw new Error(j.error ?? res.status);
