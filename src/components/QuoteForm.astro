@@ -59,19 +59,23 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
     <h2 class="mt-4 text-3xl font-bold leading-tight text-ink">{productName}</h2>
     <p class="mt-4 text-base leading-relaxed text-ink/60">{simple ? q.introOrder : q.intro}</p>
 
-    <form id="quote-form" novalidate class="mt-12 space-y-12"
+    {/* method="post": 스크립트가 못 뜬 상태에서 Enter 로 제출돼도 이름·이메일·전화가 주소창(GET)에 실리지 않게 */}
+    <form id="quote-form" method="post" novalidate class="mt-12 space-y-12"
       data-product={product.id}
       data-product-name={productName}
       data-simple={simple ? '1' : ''}
       data-msg-success={simple ? q.msgSuccessOrder : q.msgSuccess}
       data-msg-error={c.msgError}
       data-msg-required={c.msgRequired}
-      data-msg-captcha={c.msgCaptcha}
+      data-msg-captcha={c.msgCaptcha.replaceAll('{email}', company.email || 'hello@vanam.co.kr')}
       data-msg-noprocess={q.msgNoProcess}
       data-msg-seq-process={q.msgSeqProcess}
       data-msg-seq-material={q.msgSeqMaterial}
       data-msg-seq-value={q.msgSeqValue}
       data-msg-prefilm={q.msgPreFilmNote}
+      data-msg-other={q.msgOtherEmpty}
+      data-msg-max-rows={q.msgMaxRows}
+      data-err={JSON.stringify(c.errors).replaceAll('{email}', company.email || 'hello@vanam.co.kr')}
       data-label-send={simple ? q.submitOrder : q.submit}
       data-sheet-mail={company.email || 'hello@vanam.co.kr'}
       data-msg-popup={site.quote.view.popupBlocked}
@@ -105,19 +109,19 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
         <div class="mt-6 grid gap-6 md:grid-cols-2">
           <div>
             <label for="q-name" class={labelClass}>{c.name} <span class="text-danger">*</span></label>
-            <input id="q-name" name="name" type="text" required class={inputClass} placeholder={c.namePlaceholder} />
+            <input id="q-name" name="name" type="text" required maxlength="100" autocomplete="name" class={inputClass} placeholder={c.namePlaceholder} />
           </div>
           <div>
             <label for="q-email" class={labelClass}>{c.email} <span class="text-danger">*</span></label>
-            <input id="q-email" name="email" type="email" required class={inputClass} placeholder={c.emailPlaceholder} />
+            <input id="q-email" name="email" type="email" required maxlength="254" autocomplete="email" class={inputClass} placeholder={c.emailPlaceholder} />
           </div>
           <div>
             <label for="q-phone" class={labelClass}>{c.phone} <span class="text-danger">*</span></label>
-            <input id="q-phone" name="phone" type="tel" required class={inputClass} />
+            <input id="q-phone" name="phone" type="tel" required maxlength="40" class={inputClass} />
           </div>
           <div>
             <label for="q-company" class={labelClass}>{c.company}</label>
-            <input id="q-company" name="company" type="text" class={inputClass} placeholder={c.companyPlaceholder} />
+            <input id="q-company" name="company" type="text" maxlength="200" autocomplete="organization" class={inputClass} placeholder={c.companyPlaceholder} />
           </div>
         </div>
       </fieldset>
@@ -135,7 +139,7 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
                 {SUBSTRATES.map(([value, lbl]) => <option value={value}>{lbl}</option>)}
                 <option value="__other__">{q.substrateTypeOther}</option>
               </select>
-              <input id="q-substrate-type-other" name="substrateTypeOther" type="text" hidden
+              <input id="q-substrate-type-other" name="substrateTypeOther" type="text" hidden maxlength="100"
                 class={`${inputClass} mt-3`} placeholder={q.substrateTypeOtherPlaceholder} />
             </div>
             <div>
@@ -145,7 +149,7 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
                 {sizeOpts.map((s) => <option value={s.value}>{s.label}</option>)}
                 <option value="__other__">{q.substrateSizeOther}</option>
               </select>
-              <input id="q-substrate-size-other" name="substrateSizeOther" type="text" hidden
+              <input id="q-substrate-size-other" name="substrateSizeOther" type="text" hidden maxlength="100"
                 class={`${inputClass} mt-3`} placeholder={q.substrateSizeOtherPlaceholder} />
             </div>
           </div>
@@ -171,7 +175,7 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
                hidden 이면 display:none 이라 그 간격도 함께 사라진다(빈 여백이 남지 않는다). -->
           <div id="q-prefilm-wrap" hidden>
             <label for="q-prefilm-note" class={labelClass}>{q.preFilmNote} <span class="text-danger">*</span></label>
-            <textarea id="q-prefilm-note" name="preFilmNote" rows="3"
+            <textarea id="q-prefilm-note" name="preFilmNote" rows="3" maxlength="1000"
               class={inputClass} placeholder={q.preFilmNotePlaceholder}></textarea>
           </div>
           <div>
@@ -267,11 +271,11 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
         <div id="q-ship-rec" hidden class="grid gap-6 sm:grid-cols-2">
           <div>
             <label for="q-ship-name" class={labelClass}>{isKo ? '수령인' : 'Recipient'} <span class="text-danger">*</span></label>
-            <input id="q-ship-name" name="shipName" type="text" class={inputClass} />
+            <input id="q-ship-name" name="shipName" type="text" maxlength="100" class={inputClass} />
           </div>
           <div>
             <label for="q-ship-phone" class={labelClass}>{isKo ? '수령인 연락처' : 'Recipient phone'} <span class="text-danger">*</span></label>
-            <input id="q-ship-phone" name="shipPhone" type="tel" placeholder="+82 10-1234-5678" class={inputClass} />
+            <input id="q-ship-phone" name="shipPhone" type="tel" maxlength="40" class={inputClass} />
           </div>
         </div>
 
@@ -285,27 +289,27 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
           </div>
           <div id="q-ship-other-wrap" hidden>
             <label for="q-ship-other" class={labelClass}>{isKo ? '국가명 직접 입력' : 'Country name'} <span class="text-danger">*</span></label>
-            <input id="q-ship-other" name="shipCountryOther" type="text" class={inputClass} />
+            <input id="q-ship-other" name="shipCountryOther" type="text" maxlength="60" class={inputClass} />
           </div>
         </div>
 
         <div class="grid gap-6 sm:grid-cols-3">
           <div>
             <label for="q-ship-zip" class={labelClass}>{isKo ? '우편번호' : 'Postal code'} <span class="text-danger">*</span></label>
-            <input id="q-ship-zip" name="shipZip" type="text" autocomplete="postal-code" class={inputClass} />
+            <input id="q-ship-zip" name="shipZip" type="text" maxlength="20" autocomplete="postal-code" class={inputClass} />
           </div>
           <div class="sm:col-span-2">
             <label for="q-ship-addr1" class={labelClass}>{isKo ? '주소' : 'Address'} <span class="text-danger">*</span></label>
-            <input id="q-ship-addr1" name="shipAddr1" type="text" autocomplete="street-address" class={inputClass} />
+            <input id="q-ship-addr1" name="shipAddr1" type="text" maxlength="200" autocomplete="street-address" class={inputClass} />
           </div>
         </div>
         <div>
           <label for="q-ship-addr2" class={labelClass}>{isKo ? '상세 주소' : 'Address line 2'}</label>
-          <input id="q-ship-addr2" name="shipAddr2" type="text" class={inputClass} />
+          <input id="q-ship-addr2" name="shipAddr2" type="text" maxlength="200" class={inputClass} />
         </div>
         <div>
           <label for="q-ship-memo" class={labelClass}>{isKo ? '배송 요청사항' : 'Delivery notes'}</label>
-          <textarea id="q-ship-memo" name="shipMemo" rows="2" class={inputClass}></textarea>
+          <textarea id="q-ship-memo" name="shipMemo" rows="2" maxlength="300" class={inputClass}></textarea>
         </div>
       </div>
 
@@ -418,12 +422,12 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
           {!simple && (
           <div>
             <label for="q-completion" class={labelClass}>{q.completionDate}</label>
-            <input id="q-completion" name="completionDate" type="text" class={inputClass} placeholder={q.completionDatePlaceholder} />
+            <input id="q-completion" name="completionDate" type="text" maxlength="100" class={inputClass} placeholder={q.completionDatePlaceholder} />
           </div>
           )}
           <div>
             <label for="q-notes" class={labelClass}>{q.notes}</label>
-            <textarea id="q-notes" name="notes" rows="4" class={`${inputClass} resize-y`} placeholder={q.notesPlaceholder}></textarea>
+            <textarea id="q-notes" name="notes" rows="4" maxlength="2000" class={`${inputClass} resize-y`} placeholder={q.notesPlaceholder}></textarea>
           </div>
         </div>
       </fieldset>
@@ -487,13 +491,13 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
       <div class="q-value-wrap md:col-span-1">
         <label class="q-lbl-value block text-xs font-medium text-ink/60"></label>
         <div class="mt-1.5 flex items-center gap-2">
-          <input type="text" inputmode="decimal" class="q-row-value v-input-sm" />
+          <input type="text" inputmode="decimal" maxlength="20" class="q-row-value v-input-sm" />
           <span class="q-row-unit shrink-0 text-sm text-ink/50"></span>
         </div>
       </div>
       <div class="md:col-span-1">
         <label class="q-lbl-etc block text-xs font-medium text-ink/60"></label>
-        <input type="text" class="q-row-etc mt-1.5 v-input-sm" />
+        <input type="text" maxlength="100" class="q-row-etc mt-1.5 v-input-sm" />
       </div>
     </div>
   </div>
@@ -506,7 +510,9 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
     실패 감지·자동 재시도·안내가 거기 모여 있다. 여기서 직접 부르지 말 것. */}
 
 <script>
-  import { initTelInput, normalizeTelInputs } from '../lib/telInput';
+  import { initTelInput, applyTelValues } from '../lib/telInput';
+  // 입력칸 판정 공통 규칙(견적·주문·문의 같은 규칙) — 남은 '틀림 표시' 지우기 · 보이는 칸만 · 서버와 같은 이메일 규칙
+  import { firstFieldIssue, firstInDocument, isShown, msgs, type Issue } from '../lib/form-check';
   // 소재 value 문자열을 만드는 함수는 한 곳뿐이다 — 옵션 파생·CTA 링크·여기(프리필)가 같은 걸 쓴다.
   import { materialValue, formProcessFor } from '../lib/material-value.js';
   // 박막 증착 여부의 저장값 정규화 — 서버 검증·검증 스크립트와 같은 파일을 쓴다.
@@ -585,20 +591,27 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
   );
 
   // ── 기판 종류/크기 "기타" 선택 시 직접입력 칸 토글 ──
-  function bindOther(selectId: string, otherId: string) {
+  // 칸 표시는 **선택값에서만** 정한다 — change · pageshow(뒤로가기 복원) · 검사 직전.
+  // 예전에는 change 때만 맞춰서, 뒤로가기로 선택값만 '기타'로 되살아나면 입력칸은 숨은 채 남았다(10-12 점검).
+  const OTHER_PAIRS: [string, string][] = [
+    ["q-substrate-type", "q-substrate-type-other"],
+    ["q-substrate-size", "q-substrate-size-other"],
+    ["q-country", "q-country-other"],   // 배송 국가 "기타" (simple 폼 전용 — 없으면 no-op)
+  ];
+  function syncOther(selectId: string, otherId: string, clearWhenOff: boolean) {
     const sel = document.getElementById(selectId) as HTMLSelectElement | null;
     const other = document.getElementById(otherId) as HTMLInputElement | null;
-    sel?.addEventListener("change", () => {
-      const isOther = sel.value === "__other__";
-      if (other) {
-        other.hidden = !isOther;
-        if (!isOther) other.value = "";
-      }
-    });
+    if (!sel || !other) return;
+    const isOther = sel.value === "__other__";
+    other.hidden = !isOther;
+    if (!isOther && clearWhenOff) other.value = "";
   }
-  bindOther("q-substrate-type", "q-substrate-type-other");
-  bindOther("q-substrate-size", "q-substrate-size-other");
-  bindOther("q-country", "q-country-other");   // 배송 국가 "기타" (simple 폼 전용 — 없으면 no-op)
+  for (const [s, o] of OTHER_PAIRS) {
+    document.getElementById(s)?.addEventListener("change", () => syncOther(s, o, true));
+  }
+  const syncOthers = () => { for (const [s, o] of OTHER_PAIRS) syncOther(s, o, false); };
+  window.addEventListener("pageshow", syncOthers);
+  syncOthers();
 
   // ── 공정 시퀀스 빌더 ──────────────────────────────
   // 단일 상품(simple) 폼에는 이 요소들이 없다 → 옵셔널 처리
@@ -665,8 +678,14 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
     }
   }
 
+  // 공정 행 상한 — 요청 내용이 서버 길이 상한(api/inquiry.ts)을 넘지 않게 한다(조용히 잘리던 문제 · 10-12).
+  const MAX_ROWS = 30;
   function addRow() {
     if (!tmpl || !listEl) return;
+    if (listEl.querySelectorAll(".q-process-row").length >= MAX_ROWS) {
+      if (addBtn) showHint(addBtn as HTMLElement, M.msgMaxRows || "");
+      return;
+    }
     const frag = tmpl.content.cloneNode(true) as DocumentFragment;
     const row = frag.querySelector(".q-process-row") as HTMLElement;
 
@@ -756,29 +775,36 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
     return { text: lines.join("\n"), json };
   }
 
-  // ── 버튼 게이팅 ────────────────────────────────────
-  // 필수 입력·동의·보안확인이 모두 끝나야 버튼이 열린다(웨이퍼 주문서와 동일한 방식).
-  // '견적 요청서 다운로드'도 같은 게이트를 쓰되, 전송이 아니므로 개인정보 동의·보안확인은 빼고 본다.
-  // ⚠️ printBtn 은 여기서 선언한다. 사용처(syncGate)보다 아래에서 선언하면 TDZ 로 스크립트가 통째로 죽는다(전례 있음).
+  // ── 버튼 ──────────────────────────────────────────
+  // 0221: 두 버튼은 상시 활성이고, 막히는 사유는 누를 때 그 자리 말풍선으로 안내한다.
+  // ⚠️ 10-12: 예전 '게이트'는 1초마다 입력칸을 checkValidity() 로 검사했다(결과는 쓰지도 않았다).
+  //    그 호출이 빈 필수 칸에 '틀림 표시'를 붙였고, 그 칸이 나중에 숨으면(택배 → 방문 전달) 표시가 남아
+  //    제출이 영영 막혔다. 또 1초마다 [견적 요청하기]를 다시 열어 전송 중 두 번 눌리는 틈도 있었다.
+  //    → 주기 검사를 없앴다. 검사는 누를 때 한 번, src/lib/form-check.ts 공통 규칙으로만 한다.
+  // ⚠️ printBtn 은 여기서 선언한다. 사용처보다 아래에서 선언하면 TDZ 로 스크립트가 통째로 죽는다(전례 있음).
   const submitBtn = document.getElementById("quote-submit") as HTMLButtonElement | null;
   const printBtn = document.getElementById("quote-print") as HTMLButtonElement | null;
+  if (submitBtn) submitBtn.disabled = false;
+  if (printBtn) printBtn.disabled = false;
 
   const tokenOk = () =>
-    Boolean((form.querySelector('[name="cf-turnstile-response"]') as HTMLInputElement | null)?.value);
+    Boolean((form?.querySelector('[name="cf-turnstile-response"]') as HTMLInputElement | null)?.value);
+
+  // 단계 안내 문구 — {n} 자리에 단계 번호(예전 문구는 앞에 번호만 붙였다: 영문이 '2st step' 으로 나왔다)
+  const stepMsg = (tpl: string | undefined, n: number) =>
+    (tpl ?? "").includes("{n}") ? (tpl ?? "").replace("{n}", String(n)) : `${n}${tpl ?? ""}`;
 
   // 0222: 검증 단일화 — 폼 위→아래 "첫 문제 지점" 하나만 골라, 그 자리에서 말풍선으로 알린다.
-  //   네이티브 검증(빈 필드·동의)과 커스텀 검증(공정 없음·봇 확인)을 DOM 순서로 합쳐 정렬한다.
-  type Issue = { el: HTMLElement | null; msg?: string };
+  //   입력칸 판정은 공통 규칙(firstFieldIssue — 남은 표시를 지우고 지금 규칙으로 · 보이는 칸만 ·
+  //   서버와 같은 이메일 규칙 · 공백만 입력 금지). 여기서는 그 규칙으로 못 보는 것만 더한다:
+  //   공정 행 · 박막 메모 · '기타 (직접 입력)' · 보안 확인.
   function collectIssues(forSubmit: boolean): Issue | null {
+    if (!form) return null;
+    syncOthers();
     const cands: Issue[] = [];
-    if (form) {
-      for (const raw of Array.from(form.elements)) {
-        const el = raw as HTMLInputElement;
-        if (!el.willValidate) continue;
-        if (!forSubmit && el.name === "privacy") continue; // 다운로드는 동의 불필요
-        if (!el.checkValidity()) cands.push({ el });
-      }
-    }
+    // 다운로드는 서버로 보내지 않으므로 개인정보 동의는 보지 않는다
+    const f = firstFieldIssue(form, (el) => !forSubmit && el.name === "privacy");
+    if (f) cands.push(f);
     if (!M.simple && listEl) {
       const rows = Array.from(listEl.querySelectorAll(".q-process-row")) as HTMLElement[];
       if (rows.length === 0) {
@@ -787,13 +813,13 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
         // 행 단위 미입력도 같은 게이트에서 — 요청·다운로드 동작을 일치시킨다
         rows.forEach((row, i) => {
           const proc = row.querySelector(".q-row-process") as HTMLSelectElement | null;
-          if (proc && !proc.value) { cands.push({ el: proc, msg: `${i + 1}${M.msgSeqProcess}` }); return; }
+          if (proc && !proc.value) { cands.push({ el: proc, msg: stepMsg(M.msgSeqProcess, i + 1) }); return; }
           const matWrap = row.querySelector(".q-material-wrap") as HTMLElement | null;
           const matSel = row.querySelector(".q-row-material") as HTMLSelectElement | null;
-          if (matWrap && !matWrap.hidden && matSel && !matSel.value) { cands.push({ el: matSel, msg: `${i + 1}${M.msgSeqMaterial}` }); return; }
+          if (matWrap && !matWrap.hidden && matSel && !matSel.value) { cands.push({ el: matSel, msg: stepMsg(M.msgSeqMaterial, i + 1) }); return; }
           const valWrap = row.querySelector(".q-value-wrap") as HTMLElement | null;
           const valInput = row.querySelector(".q-row-value") as HTMLInputElement | null;
-          if (valWrap && !valWrap.hidden && valInput && !valInput.value.trim()) cands.push({ el: valInput, msg: `${i + 1}${M.msgSeqValue}` });
+          if (valWrap && !valWrap.hidden && valInput && !valInput.value.trim()) cands.push({ el: valInput, msg: stepMsg(M.msgSeqValue, i + 1) });
         });
       }
     }
@@ -805,57 +831,25 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
       if (pfYes?.checked && pfNote && !pfNote.value.trim())
         cands.push({ el: pfNote as unknown as HTMLElement, msg: M.msgPrefilm });
     }
+    // '기타 (직접 입력)'을 골랐으면 그 칸이 비면 안 된다(비면 기판 정보가 통째로 빠진 채 접수됐다 — 10-12).
+    // 같은 이유로 required 는 걸지 않는다(숨은 칸 사고) — 여기서 선택값을 보고 판정한다.
+    for (const [s, o] of OTHER_PAIRS) {
+      const sel = document.getElementById(s) as HTMLSelectElement | null;
+      const other = document.getElementById(o) as HTMLInputElement | null;
+      if (sel && other && sel.value === "__other__" && isShown(other) && !other.value.trim())
+        cands.push({ el: other, msg: M.msgOther });
+    }
     if (forSubmit && !tokenOk())
-      cands.push({ el: form?.querySelector(".cf-turnstile") as HTMLElement | null, msg: M.msgCaptcha });
-    const live = cands.filter((c) => c.el) as { el: HTMLElement; msg?: string }[];
-    live.sort((a, b) => (a.el.compareDocumentPosition(b.el) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1));
-    return live[0] ?? null;
+      cands.push({ el: form.querySelector(".cf-turnstile") as HTMLElement | null, msg: M.msgCaptcha });
+    return firstInDocument(cands);
   }
-  // 0224: 안내는 자체 팁 "하나"로만 — 크롬 네이티브 말풍선은 스크롤 중 닫히고(첫 클릭에
-  //   안 보이던 원인), BaseLayout 전역 invalid 핸들러의 setCustomValidity 와도 얽혀
-  //   깜빡임을 만든다. reportValidity 는 더 이상 쓰지 않는다.
+  // 0224: 안내는 자체 팁 "하나"로만 — 크롬 네이티브 말풍선(reportValidity)은 스크롤 중 닫힌다.
   // 0225: 안내는 공통 모듈(formHint)로 — 레이아웃에 영향 없는 고정 오버레이 1개.
+  //       말풍선 위치는 formHint 가 정한다(감싼 label → 칸 → 화면에 보이는 조상 — 숨은 칸이면 구석에 뜨지 않게).
   function flagInvalid(issue: Issue) {
     const el = issue.el;
     if (!el) return;
-    const ctl = el as HTMLInputElement;
-    let msg = issue.msg ?? "";
-    if (!msg && typeof ctl.checkValidity === "function" && ctl.willValidate) {
-      ctl.checkValidity(); // 전역 invalid 핸들러가 한글 문구를 채운다 (UI 없음)
-      msg = ctl.validationMessage || M.msgRequired || "";
-    }
-    const anchor = (el.closest("label") as HTMLElement | null) ?? el;
-    showHint(anchor, msg, ctl.willValidate ? ctl : null);
-  }
-  if (form && submitBtn) {
-    // 화면에 보이지 않는 입력이 required 로 남으면 브라우저가 제출을 막으면서도
-    // 경고 대상을 찾지 못해 "눌러도 반응 없음" 이 된다.
-    const isHidden = (el: HTMLElement) => !el.offsetParent && getComputedStyle(el).position !== "fixed";
-    const fieldsOk = (skipPrivacy = false) => {
-      for (const el of Array.from(form.elements) as HTMLElement[]) {
-        const f = el as HTMLInputElement;
-        if (!f.name || f.disabled || f.type === "hidden") continue;
-        if (f.name === "vanam_hp_note") continue;
-        if (skipPrivacy && f.name === "privacy") continue;
-        if (isHidden(f)) continue;
-        if (f.required && !f.checkValidity()) return false;
-      }
-      return true;
-    };
-    // 공정 시퀀스는 동적으로 추가되는 행이라 required 속성으로 잡히지 않는다.
-    // 게이트에서 직접 확인하지 않으면 "시퀀스를 안 넣었는데 버튼이 열려 있는" 상태가 된다.
-    const seqOk = () => (M.simple ? true : collectSequence().json.length > 0);
-
-    const syncGate = () => {
-      const base = fieldsOk() && seqOk();
-      void base; submitBtn.disabled = false; // 0221: 상시 활성 — 사유는 클릭 시 안내
-      // 다운로드는 서버로 보내지 않으므로 개인정보 동의·보안확인은 요구하지 않는다.
-      if (printBtn) printBtn.disabled = false;
-    };
-    form.addEventListener("input", syncGate);
-    form.addEventListener("change", syncGate);
-    setInterval(syncGate, 1000);   // 보안확인 토큰은 비동기로 채워진다
-    syncGate();
+    showHint(el, issue.msg || M.msgRequired || "", el);
   }
 
   // 견적 내용 조립 — '견적 요청'(서버 전송)과 '장바구니에 추가'(브라우저 저장)가 **같은 함수**를 쓴다.
@@ -898,23 +892,24 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
         const proc = (row.querySelector('.q-row-process') as HTMLSelectElement)?.value ?? '';
-        if (!proc) { flagInvalid({ el: row.querySelector('.q-row-process') as HTMLElement | null, msg: `${i + 1}${M.msgSeqProcess}` }); return null; }
+        if (!proc) { flagInvalid({ el: row.querySelector('.q-row-process') as HTMLElement | null, msg: stepMsg(M.msgSeqProcess, i + 1) }); return null; }
         const matWrap = row.querySelector('.q-material-wrap') as HTMLElement | null;
         const matSel = row.querySelector('.q-row-material') as HTMLSelectElement | null;
         if (matWrap && !matWrap.hidden && matSel && !matSel.value) {
-          flagInvalid({ el: matSel as unknown as HTMLElement, msg: `${i + 1}${M.msgSeqMaterial}` }); return null;
+          flagInvalid({ el: matSel as unknown as HTMLElement, msg: stepMsg(M.msgSeqMaterial, i + 1) }); return null;
         }
         const valWrap = row.querySelector('.q-value-wrap') as HTMLElement | null;
         const valInput = row.querySelector('.q-row-value') as HTMLInputElement | null;
         if (valWrap && !valWrap.hidden && valInput && !valInput.value.trim()) {
-          flagInvalid({ el: valInput as unknown as HTMLElement, msg: `${i + 1}${M.msgSeqValue}` }); return null;
+          flagInvalid({ el: valInput as unknown as HTMLElement, msg: stepMsg(M.msgSeqValue, i + 1) }); return null;
         }
       }
     }
     if (seqInput) seqInput.value = JSON.stringify(seq.json);
 
-    normalizeTelInputs(form);
     const data = Object.fromEntries(new FormData(form).entries()) as Record<string, string>;
+    // 전화번호 제출값 — 번호 규칙으로 확인된 것만 국제표준(+82…), 아니면 쓴 그대로. 입력칸은 바꾸지 않는다(telInput.ts).
+    applyTelValues(form, data);
     delete data.vanam_hp_note;
 
     if (data.substrateType === "__other__") data.substrateType = (data.substrateTypeOther || "").trim();
@@ -1085,8 +1080,25 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
     });
   }
 
+  // 서버가 거절한 이유를 고객이 고칠 수 있는 말로 — 예전에는 400·429·502 모두 '잠시 후 다시'뿐이라
+  // 이메일 오타처럼 다시 해도 안 되는 경우에도 같은 말을 반복했다(10-12 점검). 문구는 site.json contact.form.errors.
+  const ERR = (() => { try { return JSON.parse(M.err || "{}") as Record<string, string>; } catch { return {} as Record<string, string>; } })();
+  function failText(status: number, j: { error?: string; retryAfterSec?: number }): string {
+    const code = String(j?.error ?? "");
+    if (status === 429 || code === "rate_limited") {
+      const min = Math.max(1, Math.ceil(Number(j?.retryAfterSec || 600) / 60));
+      return (ERR.rateLimited || M.msgError || "").replace("{min}", String(min));
+    }
+    if (code === "captcha_failed") return ERR.captcha || M.msgCaptcha || "";
+    if (code === "too_long") return ERR.tooLong || M.msgError || "";
+    if (status === 400 && code) return ERR.check || M.msgRequired || "";
+    return ERR.fail || M.msgError || "";
+  }
+
+  let sending = false; // 전송 중 두 번 눌러 같은 견적이 두 번 접수되지 않게
   form?.addEventListener("submit", async (e) => {
     e.preventDefault();
+    if (sending) return;
     setStatus("", true);
     hideHint();
     { const bad = collectIssues(true); if (bad) { flagInvalid(bad); return; } }
@@ -1099,18 +1111,40 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
       return;
     }
 
+    sending = true;
     btn.disabled = true;
     label.textContent = M.labelSending!;
     setStatus("", true);
+    // 완료 화면으로 떠나는 중에는 버튼을 다시 열지 않는다 — 이동이 끝나기 전 한 번 더 눌려 같은 견적이 또 접수되지 않게
+    let leaving = false;
 
     try {
-      const res = await fetch("/api/inquiry", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Accept": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) throw new Error("HTTP " + res.status);
-      const j = (await res.json().catch(() => ({}))) as { id?: string; quote?: boolean; ack?: boolean };
+      let res: Response;
+      try {
+        res = await fetch("/api/inquiry", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Accept": "application/json" },
+          body: JSON.stringify(data),
+        });
+      } catch (netErr) {
+        // 네트워크 자체가 끊긴 경우 — 서버에 닿지 않았다
+        console.error(netErr);
+        resetTurnstile();
+        setStatus(ERR.fail || M.msgError!, false);
+        return;
+      }
+      const j = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string; retryAfterSec?: number; id?: string; quote?: boolean; ack?: boolean };
+      if (!res.ok || j.ok === false) {
+        resetTurnstile(); // 토큰은 1회용 — 다시 보낼 수 있게 새로 받는다
+        if (j.error === "invalid_email") {
+          // 화면 검사와 같은 규칙이라 보통은 여기까지 오지 않는다(옛 화면이 캐시된 경우 등)
+          const em = form?.querySelector('[name="email"]') as HTMLElement | null;
+          if (em) { flagInvalid({ el: em, msg: msgs().email }); return; }
+        }
+        setStatus(failText(res.status, j), false);
+        try { statusEl.scrollIntoView({ block: "center", behavior: "smooth" }); } catch (err2) { /* 무시 */ }
+        return;
+      }
       // 완료 페이지에서 "무엇을 제출했는지"를 조회 없이 보여주기 위해
       // 방금 구성한 내용을 세션에 담아 넘긴다. 완료 페이지는 정적이고 DB 를 읽지 않으므로
       // 접수번호만 아는 제3자에게 연락처·공정 정보가 노출될 표면이 없다.
@@ -1147,6 +1181,7 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
         // 제출이 성공한 폼 페이지는 히스토리에서 제거한다.
         try { sessionStorage.setItem("vanam_quote_done", JSON.stringify(doneData)); } catch (err2) { /* 세션 불가 — 완료 페이지가 접수번호만 표시 */ }
         const base = document.documentElement.lang === "ko" ? "/ko" : "";
+        leaving = true;
         location.replace(`${base}/quote/done?id=${encodeURIComponent(j.id)}`);
         return;
       }
@@ -1154,12 +1189,15 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
       setStatus(M.msgSuccess!, true);
       try { statusEl.scrollIntoView({ block: "center", behavior: "smooth" }); } catch (err2) { /* 무시 */ }
     } catch (err) {
+      // 접수 뒤 화면 정리 중 오류 — 여기까지 왔다면 서버는 이미 받았다. 다시 누르게 하지 않는다.
       console.error(err);
-      resetTurnstile();
-      setStatus(M.msgError!, false);
+      setStatus(M.msgSuccess!, true);
     } finally {
-      btn.disabled = false;
-      label.textContent = M.labelSend!;
+      if (!leaving) {
+        sending = false;
+        btn.disabled = false;
+        label.textContent = M.labelSend!;
+      }
     }
   });
 

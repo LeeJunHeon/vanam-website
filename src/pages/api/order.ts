@@ -10,6 +10,8 @@ import { isKnownCountry } from '../../lib/countries';
 import { rateLimit, tooMany } from '../../lib/rate-limit';
 import { verifyTurnstile } from '../../lib/turnstile';
 import { getRate, pickWaitUntil } from '../../lib/fx';
+// 이메일 규칙 — 화면(주문서·견적·문의 폼)과 같은 파일을 쓴다(한쪽만 다르면 고객이 원인 모를 실패를 본다)
+import { isEmail } from '../../lib/email-rule.js';
 // 구글챗은 이 통로로만 보낸다 — Cloudflare main 빌드가 아니면 코드에서 차단된다.
 import { sendChat } from '../../lib/chat-send';
 
@@ -76,7 +78,7 @@ async function handleOrder({ request, locals }: { request: Request; locals: unkn
   const locale = str(body.locale) === 'ko' ? 'ko' : 'en';
 
   if (!buyerName || !buyerEmail) return json({ ok: false, error: 'missing_buyer' }, 400);
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(buyerEmail)) {
+  if (!isEmail(buyerEmail)) {
     return json({ ok: false, error: 'invalid_email' }, 400);
   }
 
@@ -134,7 +136,7 @@ async function handleOrder({ request, locals }: { request: Request; locals: unkn
   if (taxInvoice) {
     if (!taxBizNo || !taxBizName || !taxEmail) return json({ ok: false, error: 'missing_tax' }, 400);
     if (!validBizNo(taxBizNo)) return json({ ok: false, error: 'invalid_biz_no' }, 400);
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(taxEmail)) {
+    if (!isEmail(taxEmail)) {
       return json({ ok: false, error: 'invalid_tax_email' }, 400);
     }
   }
@@ -153,29 +155,11 @@ async function handleOrder({ request, locals }: { request: Request; locals: unkn
   const d = await db();
 
   if (inquiryId) {
-    // ── 견적 주문: DB의 quoted_amount 를 쓴다 (관리자가 책정한 값)
-    if (!/^INQ-\d{8}-[A-Z0-9]{4}$/.test(inquiryId)) return json({ ok: false, error: 'bad_inquiry' }, 400);
-    if (!d) return json({ ok: false, error: 'no_db' }, 503);
-
-    const q = await d
-      .prepare(`SELECT id, product_sku, product_name, quoted_amount, status FROM inquiries WHERE id = ?`)
-      .bind(inquiryId)
-      .first<{ id: string; product_sku: string | null; product_name: string | null; quoted_amount: number | null; status: string }>();
-
-    if (!q) return json({ ok: false, error: 'inquiry_not_found' }, 404);
-    if (!q.quoted_amount || q.quoted_amount <= 0) return json({ ok: false, error: 'not_quoted' }, 409);
-    if (q.status === 'closed') return json({ ok: false, error: 'quote_closed' }, 409);
-
-    amount = q.quoted_amount;
-    lines.push({
-      sku: q.product_sku ?? inquiryId,
-      name: q.product_name ?? '맞춤 견적',
-      unit: amount,
-      qty: 1,
-      subtotal: amount,
-      dicing: false,      // 견적 금액에는 관리자가 책정한 값이 이미 전부 들어 있다
-      dicingFee: 0,
-    });
+    // ⚠️ 10-12: 견적을 이 주문 API 로 결제하던 길(/checkout?quote=INQ-…)은 닫았다 — Checkout.astro 머리 주석.
+    //    견적 통화(quote_currency)를 무시해 USD 견적이 같은 숫자의 원화로 주문됐고(₩1,500 → $1.09),
+    //    결제가 끝난 견적도 다시 주문되며 상태가 'paid' → 'replied' 로 덮였다. 사이트 안에 이 길로 가는 링크는 없다.
+    //    견적 결제는 '주문·견적 조회'(접수번호 + 이메일 확인 뒤 PayPal · 계좌 안내)에서만 한다.
+    return json({ ok: false, error: 'quote_checkout_closed' }, 410);
   } else {
     // ── 일반 주문: {sku, qty} 만 받고 단가는 서버 카탈로그에서
     const raw = Array.isArray(body.items) ? body.items : [];

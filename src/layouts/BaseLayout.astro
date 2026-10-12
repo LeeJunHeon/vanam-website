@@ -678,13 +678,21 @@ const childHref = (path) => {
     </script>
 
     <script>
-      // ── 폼 유효성 검사 메시지 현지화 ──────────────────────────
+      // ── 폼 유효성 검사 메시지 현지화 (브라우저 기본 말풍선을 쓰는 폼: 조회·관리자) ──────────
       // 브라우저 기본 메시지는 '페이지 언어'가 아니라 '브라우저 UI 언어'를 따른다.
-      // (한국어 크롬에서는 영문 페이지에서도 한국어로 뜬다)
-      // 그래서 페이지 언어에 맞춰 우리가 직접 문구를 지정한다.
+      // (한국어 크롬에서는 영문 페이지에서도 한국어로 뜬다) 그래서 페이지 언어 문구로 바꿔 단다.
+      // 문구는 src/lib/form-check.ts 의 MSG 와 같다(견적·주문·문의 폼의 자체 말풍선 문구).
+      //   ⚠️ 여기서 import 하지 않는다 — 모든 페이지에 붙는 스크립트라 import 하면 페이지마다 파일을 더 받는다.
+      //      두 표가 어긋나지 않게 scripts/test-form-rules.mjs 가 글자 그대로 대조한다.
+      //
+      // ⚠️ setCustomValidity(문구)는 그 칸을 '틀린 칸'으로 남긴다 — 숨기거나 필수를 풀어도 그대로다
+      //    (10-12 운영 사고: 견적 폼 '택배' → 다른 방식으로 바꾸면 제출이 영영 막힘. form-check.ts 머리 주석).
+      //    그래서 ① 실제 위반(빈칸·형식 등)이 없으면 문구를 달지 않고 남은 표시를 지운다
+      //           ② 제출 버튼을 누르면 브라우저가 판정하기 전에 그 폼의 남은 표시를 먼저 지운다.
       const V_KO = {
         required: '필수 항목입니다.',
         checkbox: '계속하려면 동의해 주세요.',
+        radio: '항목을 선택해 주세요.',
         select: '항목을 선택해 주세요.',
         email: '올바른 이메일 주소를 입력해 주세요. (예: name@company.com)',
         tel: '올바른 전화번호를 입력해 주세요.',
@@ -695,6 +703,7 @@ const childHref = (path) => {
       const V_EN = {
         required: 'This field is required.',
         checkbox: 'Please tick this box to continue.',
+        radio: 'Please choose an option.',
         select: 'Please choose an option.',
         email: 'Please enter a valid email address (e.g. name@company.com).',
         tel: 'Please enter a valid phone number.',
@@ -704,39 +713,58 @@ const childHref = (path) => {
       };
       const V = (document.documentElement.lang || 'en').startsWith('ko') ? V_KO : V_EN;
 
-      function validationMessage(el) {
+      const isField = (el: unknown): el is HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement =>
+        el instanceof HTMLInputElement ||
+        el instanceof HTMLTextAreaElement ||
+        el instanceof HTMLSelectElement;
+
+      // 실제 위반(남은 표시 customError 는 빼고)
+      const failing = (v: ValidityState) =>
+        v.valueMissing || v.typeMismatch || v.badInput || v.rangeUnderflow || v.rangeOverflow
+        || v.stepMismatch || v.tooLong || v.tooShort || v.patternMismatch;
+
+      function validationMessage(el: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement) {
         const v = el.validity;
+        const type = (el as HTMLInputElement).type;
         if (v.valueMissing) {
-          if (el.type === 'checkbox' || el.type === 'radio') return V.checkbox;
+          if (type === 'checkbox') return V.checkbox;
+          if (type === 'radio') return V.radio;
           if (el.tagName === 'SELECT') return V.select;
           return V.required;
         }
         if (v.typeMismatch) {
-          if (el.type === 'email') return V.email;
-          if (el.type === 'tel') return V.tel;
+          if (type === 'email') return V.email;
+          if (type === 'tel') return V.tel;
           return V.fallback;
         }
-        if (v.badInput) return el.type === 'number' ? V.number : V.fallback;
+        if (v.badInput) return type === 'number' ? V.number : V.fallback;
         if (v.rangeUnderflow || v.rangeOverflow || v.stepMismatch) return V.number;
         if (v.tooLong || v.tooShort) return V.length;
         return V.fallback;
       }
 
-      const isField = (el) =>
-        el instanceof HTMLInputElement ||
-        el instanceof HTMLTextAreaElement ||
-        el instanceof HTMLSelectElement;
-
       // invalid 이벤트는 버블링되지 않으므로 캡처 단계에서 받는다
       document.addEventListener('invalid', (e) => {
         const el = e.target;
-        if (isField(el)) el.setCustomValidity(validationMessage(el));
+        if (!isField(el)) return;
+        el.setCustomValidity(failing(el.validity) ? validationMessage(el) : '');
       }, true);
 
       // 값을 고치면 커스텀 메시지를 해제해야 다시 정상 판정된다
-      const clear = (e) => { if (isField(e.target)) e.target.setCustomValidity(''); };
+      const clear = (e: Event) => { const el = e.target; if (isField(el)) el.setCustomValidity(''); };
       document.addEventListener('input', clear, true);
       document.addEventListener('change', clear, true);
+
+      // 제출 버튼 click(Enter 키 제출도 기본 버튼 click 으로 들어온다) — 브라우저가 판정하기 전에 남은 표시를 지운다
+      document.addEventListener('click', (e) => {
+        const t = e.target;
+        const b = t instanceof Element ? t.closest('button, input[type="submit"], input[type="image"]') : null;
+        if (!(b instanceof HTMLButtonElement || b instanceof HTMLInputElement)) return;
+        if (b.type !== 'submit' && b.type !== 'image') return;
+        const f = b.form;
+        if (!f) return;
+        for (const el of Array.from(f.elements)) if (isField(el)) el.setCustomValidity('');
+      }, true);
     </script>
     <script is:inline>
       // 언어 전환 시 현재 섹션(해시)을 유지한다 (0171).

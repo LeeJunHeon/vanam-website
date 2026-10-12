@@ -41,6 +41,15 @@ export const POST: APIRoute = async ({ request }) => {
 
     const pu = ((cap as Record<string, any>).purchase_units ?? [])[0] ?? {};
     const capture = ((pu.payments ?? {}).captures ?? [])[0] ?? {};
+    // ⚠️ 10-12: 주문(order) 상태가 COMPLETED 여도 캡처(실제 돈) 상태는 PENDING·DECLINED 일 수 있다(PayPal 문서).
+    //    캡처가 COMPLETED 일 때만 결제 완료로 기록한다. PENDING 은 PayPal 이 확정을 미룬 것 —
+    //    나중에 웹훅(PAYMENT.CAPTURE.COMPLETED)이 확정한다. 화면은 '재결제 금지' 안내를 띄운다(이중 청구 방지).
+    const capStatus = String(capture.status ?? '');
+    if (capStatus && capStatus !== 'COMPLETED') {
+      console.warn('[paypal] 캡처 미완료:', capStatus, String(capture.custom_id ?? pu.reference_id ?? ''));
+      if (capStatus === 'PENDING') return json({ ok: false, error: 'capture_pending' }, 409);
+      return json({ ok: false, error: 'declined', restart: true }, 402);
+    }
     const ref = String(capture.custom_id ?? pu.reference_id ?? '').toUpperCase();
     const paidUsd = Number(capture?.amount?.value ?? 0);
     const paidCur = String(capture?.amount?.currency_code ?? '');

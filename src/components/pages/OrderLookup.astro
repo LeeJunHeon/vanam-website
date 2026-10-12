@@ -154,7 +154,8 @@ const inputClass =
     <h1 class="mt-4 text-3xl font-bold leading-tight text-ink md:text-4xl">{t.heading}</h1>
     <p class="mt-5 text-base leading-relaxed text-ink/55">{t.lead}</p>
 
-    <form id="lookup-form" class="mt-10 space-y-6"
+    {/* method="post": 스크립트가 못 뜬 상태에서 제출돼도 접수번호·이메일이 주소창(GET)에 실리지 않게 */}
+    <form id="lookup-form" method="post" class="mt-10 space-y-6"
       data-msg-notfound={t.notFound}
       data-msg-fail={t.fail}
       data-label-send={t.submit}
@@ -175,7 +176,9 @@ const inputClass =
       })}>
       <div>
         <label for="lk-id" class="block text-sm font-medium text-ink/80">{t.idLabel} *</label>
-        <input id="lk-id" name="id" type="text" required value={prefill}
+        {/* 휴대폰 자동 수정·첫 글자 대문자 변환이 접수번호를 바꾸지 않게 */}
+        <input id="lk-id" name="id" type="text" required value={prefill} maxlength="40"
+          autocapitalize="characters" autocorrect="off" autocomplete="off" spellcheck="false"
           placeholder="ORD-… / INQ-…" class={`${inputClass} font-mono`} />
       </div>
       <div>
@@ -383,10 +386,14 @@ const inputClass =
         if (!res.ok || !j.ok) throw new Error(j.error ?? res.status);
 
         // ── PayPal 결제 블록 (INQ: USD 견적 / ORD: pending 주문) — 해외 고객 전용 USD
-        const payBlock = (ref: string, amountKrw?: number, cur?: string) => `
+        // fixedUsd: 주문 시점에 굳힌 USD(orders.amount_usd) — PayPal 이 실제로 청구하는 금액이다(lib/paypal.ts expectedUsdStr).
+        //   예전에는 지금 환율로 다시 계산해 보여 줘서 합계·품목·결제 상자의 달러 금액이 서로 달랐다(10-12 점검).
+        const payBlock = (ref: string, amountKrw?: number, cur?: string, fixedUsd?: number) => `
           <div class="mt-5 rounded-lg border border-accent/25 bg-accent/[0.05] p-4" data-pp data-ref="${esc(ref)}">
             <p class="text-sm font-semibold text-ink/80">${P.payTitle} <span class="font-normal text-ink/45">(International · USD)</span></p>
-            ${amountKrw && cur !== 'USD' ? `<p class="mt-1 text-xs text-ink/50" data-pp-usd data-krw="${amountKrw}"></p>` : ''}
+            ${fixedUsd && fixedUsd > 0
+              ? `<p class="mt-1 text-xs text-ink/50">$${fixedUsd.toFixed(2)} USD</p>`
+              : (amountKrw && cur !== 'USD' ? `<p class="mt-1 text-xs text-ink/50" data-pp-usd data-krw="${amountKrw}"></p>` : '')}
             <div class="mt-3" data-pp-btn></div>
             <p class="mt-2 text-[11px] leading-relaxed text-ink/40">${P.payNote}</p>
             <p class="mt-2 hidden text-sm font-semibold text-danger" data-pp-err></p>
@@ -452,7 +459,8 @@ const inputClass =
                 const j2 = await r2.json();
                 if (!r2.ok || !j2.ok) {
                   // verify_failed/not_found = 결제는 성사·자동 확정 불가 → 재결제 금지 안내(이중 청구 방지)
-                  const held = j2.error === 'verify_failed' || j2.error === 'not_found';
+                  // capture_pending: PayPal 이 돈은 받았지만 확정을 미룬 상태 — 다시 결제하면 이중 청구가 된다(10-12)
+                  const held = j2.error === 'verify_failed' || j2.error === 'not_found' || j2.error === 'capture_pending';
                   showSpecific(held ? P.mHeld : (j2.restart ? P.mDeclined : P.mCapture));
                   if (held) killPay();
                   throw new Error(j2.error || 'capture_failed');
@@ -529,7 +537,7 @@ const inputClass =
               ${dTxt ? `
                 <details class="mt-4 rounded-lg border border-ink/10 bg-ink/[0.03]">
                   <summary class="cursor-pointer px-4 py-3 text-sm font-medium text-ink/70">${esc(INQ.reqBody)}</summary>
-                  <pre class="whitespace-pre-wrap border-t border-ink/10 px-4 py-3 font-sans text-sm leading-relaxed text-ink/65">${esc(defang(dTxt))}</pre>
+                  <pre class="whitespace-pre-wrap break-words [overflow-wrap:anywhere] border-t border-ink/10 px-4 py-3 font-sans text-sm leading-relaxed text-ink/65">${esc(defang(dTxt))}</pre>
                 </details>` : ''}
               ${amountBlock}
               ${q.quote_bank ? `
@@ -600,6 +608,12 @@ const inputClass =
 
         const o = j.order;
         const items = j.items ?? [];
+        // 주문 시점 환율 = 원화 합계 ÷ 굳힌 USD — 품목 줄도 이 환율로 그려야 합계와 맞는다(10-12)
+        const lockedRate = Number(o.amount_usd) > 0 && Number(o.amount) > 0 && String(o.currency ?? 'KRW') !== 'USD'
+          ? Number(o.amount) / Number(o.amount_usd) : 0;
+        const itemUsd = (v: unknown) => lockedRate > 0
+          ? `$${((Number(v) || 0) / lockedRate).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+          : usdOf(v, o.currency);
         const addr = [o.ship_addr1, o.ship_addr2, o.ship_city, o.ship_state]
           .filter(Boolean).join(', ');
 
@@ -621,7 +635,7 @@ const inputClass =
                 ${items.map((i: any) => `
                   <li class="flex justify-between gap-4">
                     <span class="text-ink/70">${esc(i.name)} <span class="text-ink/35">× ${esc(i.qty)}</span>${dicingNote(i)}</span>
-                    <span class="shrink-0 text-ink/80">${usdOf(i.subtotal, o.currency)}</span>
+                    <span class="shrink-0 text-ink/80">${itemUsd(i.subtotal)}</span>
                   </li>`).join('')}
               </ul>
               <div class="mt-5 flex items-center justify-between border-t border-ink/10 pt-5">
@@ -630,7 +644,8 @@ const inputClass =
               </div>
               ${o.paid_at ? `
                 <p class="mt-4 rounded-lg border border-ok/25 bg-ok/10 p-3 text-center text-sm font-semibold text-ok">✅ ${P2.paidAt} — ${when(o.paid_at)}${o.paid_usd ? ` ($${Number(o.paid_usd).toFixed(2)})` : ''}</p>` : ''}
-              ${!o.paid_at && o.status === 'pending' ? payBlock(o.id, Number(o.amount), String(o.currency ?? 'KRW')) : ''}
+              ${!o.paid_at && o.status === 'pending' && String(o.pay_method ?? '') !== 'bank'
+                ? payBlock(o.id, Number(o.amount), String(o.currency ?? 'KRW'), Number(o.amount_usd) || 0) : ''}
             </div>
 
             ${o.tracking_no || o.tracking_courier ? `
