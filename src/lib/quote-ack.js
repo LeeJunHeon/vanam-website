@@ -103,21 +103,33 @@ export function estimateOf(view) {
   };
 }
 
+/**
+ * 확인 메일·첨부 PDF 의 언어 — 접수 건의 locale(고객이 쓴 페이지 언어)만 본다.
+ * 한국어 페이지에서 접수한 건만 한국어, 그 밖(영문 페이지·값 없음·이상한 값)은 모두 영어.
+ * 자동 발송과 관리자 [다시 보내기]가 같은 판정을 쓴다(quote-ack-run.ts).
+ * @param {unknown} locale inquiries.locale
+ * @returns {'ko'|'en'}
+ */
+export function ackLang(locale) {
+  return str(locale).trim().toLowerCase() === 'ko' ? 'ko' : 'en';
+}
+
 const TEXT = {
   ko: {
     subject: (id) => `[반암] 견적 요청이 접수되었습니다 (${id})`,
     testSubject: '[테스트] ',
     title: '견적 요청이 접수되었습니다',
+    // 인사는 이름만(10-12) — 소속은 첨부 요청서의 요청자 칸에 있다. '가짜대학교 홍길동 님'처럼 길어지지 않게.
     hello: (who) => `${who} 님, 안녕하세요. 반암(VanaM)입니다.`,
     lead: '견적 요청이 정상적으로 접수되었습니다. 담당자가 요청 내용을 확인한 뒤 영업일 기준 2일 이내에 회신드리겠습니다.',
     no: '접수번호', item: '요청 상품', at: '접수 일시', atSuffix: ' (한국 시간)',
-    attachQuote: '첨부: 예상 견적서와 견적 요청서(PDF 1개)',
-    attachRequest: '첨부: 견적 요청서(PDF) — 접수하신 내용을 반암 견적서 양식에 금액 없이 정리했습니다.',
+    attachQuote: '예상 견적서와 견적 요청서를 PDF 파일 하나로 첨부해 드립니다.',
+    attachRequest: '접수하신 내용을 정리한 견적 요청서(PDF)를 첨부해 드립니다. 견적 금액은 회신드릴 때 함께 안내드리겠습니다.',
     attachNone: '견적 요청서는 아래 조회 화면에서 인쇄하거나 PDF로 저장하실 수 있습니다.',
     // 버튼 이름은 사이트(완료 화면 버튼·조회 화면 '진행 상태')와 같게
     lookup: '아래 버튼을 누르면 진행 상태를 바로 확인하실 수 있습니다.',
     button: '진행 상태 조회',
-    reply: '이 메일에 바로 답장하셔도 담당자에게 전달됩니다.',
+    reply: '추가 자료나 문의가 있으시면 이 메일에 바로 답장해 주세요. 담당자에게 전달됩니다.',
     company: '반암 주식회사',
     test: '테스트 빌드에서 보낸 메일입니다. 운영 사이트가 아니며 회사 주소(@vanam.co.kr)로만 발송됩니다.',
   },
@@ -129,12 +141,12 @@ const TEXT = {
     lead: 'Thank you for your quote request. We have received it, and our team will review it and reply within 2 business days.',
     no: 'Reference No.', item: 'Item', at: 'Received', atSuffix: ' KST',
     // 문서 이름은 견적 폼 버튼('Download request sheet')과 같게 — request sheet
-    attachQuote: 'Attached: the estimated quotation and your request sheet (one PDF).',
-    attachRequest: 'Attached: your request sheet (PDF), laid out in our quotation format without prices.',
+    attachQuote: 'We have attached the estimated quotation together with your request sheet as one PDF.',
+    attachRequest: 'We have attached a request sheet (PDF) summarizing your request. We will include the pricing in our reply.',
     attachNone: 'You can print your request sheet or save it as a PDF from the status page below.',
     lookup: 'Use the button below to check the status of your request at any time.',
     button: 'Check status',
-    reply: 'You can reply directly to this email to reach our team.',
+    reply: 'If you have additional files or questions, simply reply to this email and it will reach our team.',
     company: 'VanaM Inc.',
     test: 'Sent from a test build — not the live site. Only company addresses (@vanam.co.kr) receive it.',
   },
@@ -161,7 +173,8 @@ export function ackContent(a) {
   const T = a.T ?? {};
   // 고객이 넣은 글은 짧게 · 주소 모양은 링크가 안 되게(safeShort)
   const name = safeShort(a.name, 40);
-  const who = en ? (name || 'Customer') : [safeShort(a.company, 60), name].filter(Boolean).join(' ') || '고객';
+  // 인사는 두 언어 모두 이름만(소속은 요청서에) — 이름이 비면 일반 호칭
+  const who = name || (en ? 'Customer' : '고객');
   const at = kstText(a.receivedAt);
   const rows = [[L.no, str(a.id)], [L.item, safeShort(a.product, 80)], [L.at, at ? `${at}${L.atSuffix}` : '']].filter(([, v]) => v);
   const est = a.estimate;

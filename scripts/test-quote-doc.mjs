@@ -13,6 +13,7 @@ import {
   SUPPLIER_DOC_KO, dateKr, dateEn, money, usd, telKr, telDisplay, ymdLocal, koreanAmount, customerLine, STYLE,
 } from '../src/lib/doc-excel.js';
 import { koreanAmount as engineKorean } from '../src/lib/quote-engine.js';
+import { displayName } from '../src/lib/quote-fields.js';
 
 let total = 0, failed = 0;
 function eq(label, got, want) {
@@ -139,7 +140,7 @@ const REQ_KO = { company: '테스트대학', name: '홍길동', phone: '010-0000
   eq('요청서 데이터: 공정 → 표 줄(수치 + 단위)', draft.steps, [
     { process: 'Sputter', material: 'Ti', value: '10 nm', etc: '' }, { process: 'Annealing', material: 'N2', value: '60 min', etc: '400 °C' }]);
   eq('요청서 데이터: 정보 칸(기판 지도 · 박막 있음+메모 · 분석 · 요청 사항)', draft.info, [
-    ['기 판', 'Silicon / 4 inch / Prime'], ['박막 증착 여부', '있음 — SiO2 300 nm'], ['분석 요청', 'XPS, XRD'], ['요청 사항', '요청 <메모>']]);
+    ['기 판', 'Silicon / 4 inch / Prime'], ['박막 증착 여부', '있음 — SiO2 300 nm'], ['분석 요청', 'XPS, XRD'], ['주의사항 및 요청사항', '요청 <메모>']]);
   eq('요청서 데이터: 샘플 수량 · 전달(지도) · 완료 희망', [draft.qty, draft.delivery, draft.due, draft.kind], ['5', '방문 전달', '2026-11-01', 'process']);
   const h = buildRequestHtml({ ...draft, logoUrl: LOGO });
   eq('요청서(접수 전): 제목·귀중·세로 요청자', has(h, '<title>견적 요청서 2026-10-01</title>', '>견적 요청서<', '반암 주식회사 귀중', '요<br>청<br>자'), true);
@@ -181,6 +182,20 @@ const REQ_KO = { company: '테스트대학', name: '홍길동', phone: '010-0000
   const w = buildRequestHtml({ ...requestDocFrom({ lang: 'en', id: 'INQ-W', date: '2026-10-01', requester: {}, product: 'Wafer',
     dj: { wafer: { qty: 1, dicing: false } } }), logoUrl: LOGO });
   eq('영문 요청서(웨이퍼): 한글 0자 · 1 box · 다이싱 불필요', [hangulOf(w), w.includes('>1 box<'), w.includes('Dicing: Not required')], ['', true, true]);
+}
+
+{
+  // 공정·분석 이름 표시(10-12) — 붙여 쓴 영문만 띄어 쓴다. 저장값(dj)은 그대로.
+  eq('displayName: 붙여 쓴 영문만 띄어쓰기', ['SheetResistance', 'PlasmaCleaning (In-situ)', 'PlasmaTreatment (Ex-situ)', 'XPS', 'PPMS', 'SEM (include EDS)', 'I–V', 'Sputter', 'ALD', 'HfO2', 'ZnO', 'TiN', 'In2O3', '', null].map(displayName),
+    ['Sheet Resistance', 'Plasma Cleaning (In-situ)', 'Plasma Treatment (Ex-situ)', 'XPS', 'PPMS', 'SEM (include EDS)', 'I–V', 'Sputter', 'ALD', 'HfO2', 'ZnO', 'TiN', 'In2O3', '', '']);
+  const dj = { ...DJ, seq: [{ step: 1, process: 'PlasmaCleaning (In-situ)', material: 'Ar', value: '5', unit: 'min', etc: '' }, DJ.seq[0]], measures: ['SheetResistance', 'XPS'] };
+  const before = JSON.stringify(dj);
+  const d = requestDocFrom({ lang: 'ko', id: 'INQ-N', date: '2026-10-01', requester: REQ_KO, product: '금속 박막', dj, sizeMap: SIZE, deliveryMap: DELIV_KO });
+  eq('요청서: 공정·분석 이름 띄어 표시 · 저장값은 그대로', [d.steps[0].process, d.info[2], JSON.stringify(dj) === before],
+    ['Plasma Cleaning (In-situ)', ['분석 요청', 'Sheet Resistance, XPS'], true]);
+  eq('규격 칸(specFromDetails)도 같은 표시', specFromDetails({ lang: 'en', dj, sizeMap: SIZE }).split('\n')[0], 'Plasma Cleaning (In-situ) Ar 5 min');
+  const h = buildRequestHtml({ ...d, logoUrl: LOGO });
+  eq('요청서 HTML: 주의사항 및 요청사항 라벨', h.includes('>주의사항 및 요청사항<'), true);
 }
 
 // ── ⑤ 주문서 ──────────────────────────────────────────────────────────────────────────
