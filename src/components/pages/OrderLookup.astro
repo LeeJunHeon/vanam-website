@@ -204,6 +204,8 @@ const inputClass =
 <script>
   // 견적 요약 상자·엑셀형 견적서 — 금액은 서버가 준 inquiry.quote 만 쓴다(화면에서 계산하지 않는다)
   import { renderQuoteBox, docOptions, injectQuoteViewStyle } from '../../lib/quote-view-render.js';
+  // 공정·분석 이름 표시(SheetResistance → Sheet Resistance) — 폼·요청서와 같은 함수. 저장값은 그대로.
+  import { displayName } from '../../lib/quote-fields.js';
   // 고객이 넣은 글 — 이 화면은 링크 하나로 바로 조회되므로, 남이 넣은 글이 vanam.co.kr 화면에서 피싱 문구가 되지 않게
   // 한 줄 항목(상품·공정·기판)은 짧게 + 주소 모양은 링크가 안 되게, 여러 줄 요청 내용은 주소 모양만 바꾼다(확인 메일과 같은 규칙).
   import { safeShort, defang } from '../../lib/safe-text.js';
@@ -257,7 +259,7 @@ const inputClass =
       }
 
       const seqLines = (Array.isArray(dj.seq) ? dj.seq : []).map((r: any, i: number) => {
-        let line = `${i + 1}. ${r.process ?? ''}`;
+        let line = `${i + 1}. ${displayName(r.process ?? '')}`;
         if (r.material) line += ` | ${r.material}`;
         if (r.value) line += ` | ${r.value}${r.unit ?? ''}`;
         if (r.etc) line += ` | ${r.etc}`;
@@ -284,7 +286,7 @@ const inputClass =
         ].filter(Boolean) : []),
         seqLines.length ? '\n' + String(INQ.dSeq) : '',
         ...seqLines,
-        Array.isArray(dj.measures) && dj.measures.length ? `\n${INQ.dAnalysis} ${dj.measures.join(', ')}` : '',
+        Array.isArray(dj.measures) && dj.measures.length ? `\n${INQ.dAnalysis} ${dj.measures.map(displayName).join(', ')}` : '',
         dj.notes ? `\n${INQ.dNotes}: ${dj.notes}` : '',
       ].filter((x) => x !== '').join('\n');
       return out || fallback;

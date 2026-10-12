@@ -21,6 +21,8 @@
 // 규칙: 자동 인쇄하지 않는다(창 안 버튼) · 넣는 값은 전부 이스케이프 · 이 파일은 화면(DOM)을 만지지 않는다
 //       (칸 맞춤 fitCells 만 예외 — 창을 연 쪽이 새 창 문서를 넘겨 부른다. 문서 안에 스크립트를 넣지 않는다).
 import { koreanAmount } from './quote-engine.js';
+// 공정·분석 이름 표시(붙여 쓴 영문에 띄어쓰기) — 폼·조회 화면과 같은 함수. 저장값은 그대로.
+import { displayName } from './quote-fields.js';
 
 export { koreanAmount };
 
@@ -425,7 +427,7 @@ const REQ = {
     company: '소     속', name: '성     명', phone: '연 락 처', email: '이 메 일',
     product: '요청 상품', samples: '샘플 수량', qty: '수     량', delivery: '기판 전달', due: '완료 희망',
     no: '접수번호', notSent: '(아직 보내지 않은 요청서)', markDraft: '접수 전',
-    substrate: '기 판', preFilm: '박막 증착 여부', analysis: '분석 요청', notes: '요청 사항', ship: '배 송 지', body: '요청 내용',
+    substrate: '기 판', preFilm: '박막 증착 여부', analysis: '분석 요청', notes: '주의사항 및 요청사항', ship: '배 송 지', body: '요청 내용',
     yes: '있음', none: '없음', staffNote: '담당자 안내', bank: '입금 계좌', substrateShort: '기판',
     stepHead: ['단계', '공정', '물질 · 가스', '두께 · 시간', '기타 조건'],
     itemHead: ['품명', '규격 · 옵션', '수량', '비고'],
@@ -510,7 +512,7 @@ function requestDocCore(a) {
     const info = [
       [L.substrate, substrate],
       [L.preFilm, preFilm],
-      [L.analysis, (Array.isArray(dj.measures) ? dj.measures : []).map(str).filter(Boolean).join(', ')],
+      [L.analysis, (Array.isArray(dj.measures) ? dj.measures : []).map(str).filter(Boolean).map(displayName).join(', ')],
       [L.notes, str(dj.notes)],
     ];
     if (dj.ship && typeof dj.ship === 'object') {
@@ -525,7 +527,7 @@ function requestDocCore(a) {
       ...base, kind: 'process',
       qty: str(dj.sampleCount), delivery: deliveryMap[str(dj.delivery)] ?? str(dj.delivery), due: str(dj.completionDate),
       info,
-      steps: dj.seq.map((s) => ({ process: str(s?.process), material: str(s?.material), value: stepValue(s), etc: str(s?.etc) })),
+      steps: dj.seq.map((s) => ({ process: displayName(str(s?.process)), material: str(s?.material), value: stepValue(s), etc: str(s?.etc) })),
       items: [],
     };
   }
@@ -550,7 +552,7 @@ export function specFromDetails(a) {
   if (dj && Array.isArray(dj.seq) && dj.seq.length) {
     const size = (a.sizeMap ?? {})[str(dj.substrateSize)] ?? str(dj.substrateSize);
     const substrate = [str(dj.substrateType), size, str(dj.substrateGrade)].filter(Boolean).join(' / ');
-    const steps = dj.seq.map((s) => [str(s?.process), str(s?.material), stepValue(s)].filter(Boolean).join(' '));
+    const steps = dj.seq.map((s) => [displayName(str(s?.process)), str(s?.material), stepValue(s)].filter(Boolean).join(' '));
     return [...steps, substrate ? `${L.substrateShort}: ${substrate}` : ''].filter(Boolean).join('\n');
   }
   return str(a.fallback);

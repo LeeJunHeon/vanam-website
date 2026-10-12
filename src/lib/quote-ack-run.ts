@@ -21,7 +21,7 @@ import { renderPdf, pdfConfigured, logoDataUri } from './doc-pdf';
 import { isSafeAddress } from './mail-mime.js';
 import {
   mailAllowed, hostAllowed, isFreshPending, ackContent, estimateOf, attachmentName, pdfTitle, mergeDocPages, fitScript,
-  ackRecord, requestDocArgs, ACK_REASON_KO, kstText, lookupLink,
+  ackRecord, requestDocArgs, ACK_REASON_KO, kstText, lookupLink, ackLang,
 } from './quote-ack.js';
 import { buildQuoteHtml, buildRequestHtml, requestDocFrom, fitCells, STYLE, telKr } from './doc-excel.js';
 import { docOptions } from './quote-view-render.js';
@@ -153,7 +153,8 @@ export async function runQuoteAck(d: D1, id: string, opts: AckOpts): Promise<Ack
   // 이미 보내는 중이면(접수 직후 자동 발송이 아직 도는 중 등) 두 번 보내지 않는다
   if (isFreshPending(q.ack_mail)) return { status: 'skipped', reason: 'in_progress', pdf: null };
 
-  const lang: 'ko' | 'en' = q.locale === 'ko' ? 'ko' : 'en';
+  // 메일·PDF·파일 이름·제목 모두 이 언어 하나로(영문 페이지 접수 → 전부 영어)
+  const lang: 'ko' | 'en' = ackLang(q.locale);
   const to = String(q.email ?? '').trim();
   try {
     const block = await ackBlock(d, id, to, opts);

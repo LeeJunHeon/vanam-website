@@ -12,8 +12,9 @@ import {
 } from '../src/lib/mail-mime.js';
 import {
   ackContent, estimateOf, attachmentName, pdfTitle, kstText, pageOf, mergeDocPages, fitScript,
-  ackRecord, parseAck, ackLabel, requestDocArgs, ACK_REASON_KO, hostAllowed, safeShort, isFreshPending, ACK_PENDING_MS, lookupLink,
+  ackRecord, parseAck, ackLabel, requestDocArgs, ACK_REASON_KO, hostAllowed, safeShort, isFreshPending, ACK_PENDING_MS, lookupLink, ackLang,
 } from '../src/lib/quote-ack.js';
+import { DELIVERY_METHODS } from '../src/lib/quote-fields.js';
 import { buildQuoteHtml, buildRequestHtml, requestDocFrom, fitCells, STYLE } from '../src/lib/doc-excel.js';
 import { defang, safeShort as safeShortText } from '../src/lib/safe-text.js';
 
@@ -27,6 +28,16 @@ function eq(label, got, want) {
   }
 }
 const has = (h, ...ws) => ws.every((w) => h.includes(w));
+// 영문 페이지에서 접수한 가짜 행(ASCII 만) — 영문 메일·PDF 한글 0자 점검용
+const ROW_EN_SRC = () => ({
+  id: 'INQ-20261001-EN01', type: 'quote', name: 'Jane Doe', email: 'jane@example.com', phone: '+1 202-555-0100', company: 'Test University',
+  product_name: 'Metal thin film', material: 'Ti', details: '[Process sequence]\n1. Sputter | Ti | 10nm',
+  details_json: JSON.stringify({ seq: [{ process: 'PlasmaCleaning (In-situ)', material: 'Ar', value: '5', unit: 'min', etc: '' },
+    { process: 'Sputter', material: 'Ti', value: '10', unit: 'nm', etc: '' }],
+    measures: ['SheetResistance', 'XPS'], delivery: 'direct', substrateType: 'Silicon', substrateSize: '4inch', substrateGrade: '', sampleCount: '3',
+    preFilm: false, notes: 'Handle with care', completionDate: 'End of November' }),
+  created_at: '2026-10-01T07:50:12.000Z',
+});
 const fromB64 = (s) => new Uint8Array(Buffer.from(s.replace(/\r\n/g, ''), 'base64'));
 const dec = (bytes) => new TextDecoder('utf-8', { fatal: true }).decode(bytes);
 
@@ -155,13 +166,14 @@ const BASE = {
 {
   const c = ackContent({ ...BASE, lang: 'ko', live: true, estimate: estimateOf(VIEW_EST), T: T.ko, attachment: 'quote' });
   eq('한글·운영: 제목(테스트 표시 없음)', c.subject, '[반암] 견적 요청이 접수되었습니다 (INQ-20261001-AB2C)');
-  eq('한글·운영: 본문 — 인사·접수·2일 이내 회신·접수 내용', has(c.text, '가짜대학교 홍길동<b> 님, 안녕하세요. 반암(VanaM)입니다.',
+  eq('한글·운영: 본문 — 인사·접수·2일 이내 회신·접수 내용', has(c.text, '홍길동<b> 님, 안녕하세요. 반암(VanaM)입니다.',
     '견적 요청이 정상적으로 접수되었습니다. 담당자가 요청 내용을 확인한 뒤 영업일 기준 2일 이내에 회신드리겠습니다.',
     '접수번호: INQ-20261001-AB2C', '요청 상품: 다층 박막', '접수 일시: 2026-10-01 16:50 (한국 시간)'), true);
   eq('한글·운영: 예상 견적 — 금액·환산·유효기간·확정 아님 안내(고객 화면 문구 그대로)', has(c.text, '예상 견적', '₩239,800 (부가세 포함 · 약 $173.14)',
     '유효기간: 견적일로부터 14일 (2026-10-15까지)', T.ko.notice), true);
-  eq('한글·운영: 첨부 줄 · 조회 링크 · 답장 안내 · 회사 줄', has(c.text, '첨부: 예상 견적서와 견적 요청서(PDF 1개)', BASE.lookupUrl,
-    '이 메일에 바로 답장하셔도 담당자에게 전달됩니다.', '반암 주식회사 · hello@vanam.co.kr · 02-0000-0000 · vanam.co.kr'), true);
+  eq('한글: 인사는 이름만(소속은 요청서에) — 첫 줄에 소속 없음', [c.text.split('\n')[0], c.html.includes('가짜대학교')], ['홍길동<b> 님, 안녕하세요. 반암(VanaM)입니다.', false]);
+  eq('한글·운영: 첨부 줄 · 조회 링크 · 답장 안내 · 회사 줄', has(c.text, '예상 견적서와 견적 요청서를 PDF 파일 하나로 첨부해 드립니다.', BASE.lookupUrl,
+    '추가 자료나 문의가 있으시면 이 메일에 바로 답장해 주세요. 담당자에게 전달됩니다.', '반암 주식회사 · hello@vanam.co.kr · 02-0000-0000 · vanam.co.kr'), true);
   eq('한글·운영: 테스트 표시 없음', [c.text.includes('테스트'), c.html.includes('테스트')], [false, false]);
   eq('HTML: 고객 글자는 이스케이프 · 스크립트 없음 · 링크는 조회 주소 하나', [c.html.includes('홍길동&lt;b&gt;'), c.html.includes('홍길동<b>'),
     /<script/i.test(c.html), [...c.html.matchAll(/href="([^"]+)"/g)].map((m) => m[1])], [true, false, false, [BASE.lookupUrl]]);
@@ -179,7 +191,8 @@ const BASE = {
   eq('한글·테스트: 제목 앞 [테스트]', c.subject, '[테스트] [반암] 견적 요청이 접수되었습니다 (INQ-20261001-AB2C)');
   eq('한글·테스트: 본문 맨 위·HTML 에 테스트 빌드 안내', [c.text.startsWith('※ 테스트 빌드에서 보낸 메일입니다.'), c.html.includes('테스트 빌드에서 보낸 메일입니다.')], [true, true]);
   eq('한글: 예상 견적 없으면 금액 줄 없음 · 요청서 첨부 줄(견적서 양식이지만 금액 없음을 밝힘)', [c.text.includes('₩'),
-    c.text.includes('첨부: 견적 요청서(PDF) — 접수하신 내용을 반암 견적서 양식에 금액 없이 정리했습니다.')], [false, true]);
+    c.text.includes('접수하신 내용을 정리한 견적 요청서(PDF)를 첨부해 드립니다. 견적 금액은 회신드릴 때 함께 안내드리겠습니다.')], [false, true]);
+  eq('한글: 예전 문구(첨부: … 금액 없이 정리 · 답장하셔도)는 남지 않음', [c.text.includes('첨부:'), c.text.includes('금액 없이'), c.text.includes('답장하셔도')], [false, false, false]);
   const none = ackContent({ ...BASE, lang: 'ko', live: true, estimate: null, T: T.ko, attachment: null });
   eq('한글: PDF 를 못 붙였으면 조회 화면에서 인쇄 안내', none.text.includes('견적 요청서는 아래 조회 화면에서 인쇄하거나 PDF로 저장하실 수 있습니다.'), true);
   const noCo = ackContent({ ...BASE, company: '', lang: 'ko', live: true, estimate: null, T: T.ko, attachment: null });
@@ -194,13 +207,38 @@ const BASE = {
   // (BASE 의 이름·상품은 한글 가짜 값이라 '한글 0자'는 drive 점검에서 따로 본다 — 여기서는 머리 칸만)
   eq('영문 HTML: 머리는 VanaM 만(반암 없음) · 금액과 안내 사이 띄어쓰기', [/color:#0a0e13">VanaM<\/div>/.test(c.html), c.html.includes('반암'),
     c.html.replace(/<[^>]+>/g, '').includes('Approx. $173.14 ₩239,800 incl. VAT')], [true, false, true]);
-  eq('영문: 첨부 줄 · 회사 줄', has(c.text, 'Attached: the estimated quotation and your request sheet (one PDF).', 'VanaM Inc. · hello@vanam.co.kr · +82-2-0000-0000 · vanam.co.kr'), true);
+  eq('영문: 첨부 줄 · 회사 줄', has(c.text, 'We have attached the estimated quotation together with your request sheet as one PDF.', 'VanaM Inc. · hello@vanam.co.kr · +82-2-0000-0000 · vanam.co.kr'), true);
   const t = ackContent({ ...BASE, lang: 'en', live: false, estimate: null, T: T.en, attachment: null });
   eq('영문·테스트: 제목 앞 [TEST]', t.subject.startsWith('[TEST] [VanaM]'), true);
   const r = ackContent({ ...BASE, lang: 'en', live: true, estimate: null, T: T.en, attachment: 'request' });
   eq('영문: 요청서 첨부 줄(금액 없음) · 버튼 안내 · 글 본문 "Check status: 주소"', [
-    r.text.includes('Attached: your request sheet (PDF), laid out in our quotation format without prices.'),
+    r.text.includes('We have attached a request sheet (PDF) summarizing your request. We will include the pricing in our reply.'),
     r.html.includes('Use the button below to check the status of your request at any time.'), r.text.includes(`\nCheck status: ${BASE.lookupUrl}\n`)], [true, true, true]);
+}
+{
+  // 영문 페이지 접수 → 메일·첨부·PDF 가 모두 영어(10-12). 고객이 영어로 쓴 경우 한글이 한 글자도 없어야 한다.
+  eq('ackLang: 한국어 페이지만 ko · 나머지(en·빈 값·이상한 값)는 en', ['ko', 'KO', ' ko ', 'en', 'en-US', '', null, undefined, 'ja'].map(ackLang),
+    ['ko', 'ko', 'ko', 'en', 'en', 'en', 'en', 'en', 'en']);
+  const HAN = /[가-힣ㄱ-ㆎ]/;
+  const EN_BASE = { ...BASE, name: 'Jane Doe', company: 'Test University', product: 'Metal thin film',
+    lookupUrl: 'https://vanam.co.kr/order/lookup?id=INQ-20261001-AB2C', tel: '+82-2-0000-0000' };
+  for (const [att, est] of [['request', null], ['quote', estimateOf(VIEW_EST)], [null, null]]) {
+    for (const live of [true, false]) {
+      const c = ackContent({ ...EN_BASE, lang: 'en', live, estimate: est, T: T.en, attachment: att });
+      eq(`영문(${att ?? 'PDF 없음'}·${live ? '운영' : '테스트'}): 제목·글 본문·HTML 한글 0자`, [HAN.test(c.subject), HAN.test(c.text), HAN.test(c.html)], [false, false, false]);
+    }
+  }
+  const c = ackContent({ ...EN_BASE, lang: 'en', live: true, estimate: null, T: T.en, attachment: 'request' });
+  eq('영문: 인사는 이름만 · html lang=en', [c.text.split('\n')[0], c.html.includes('<html lang="en">'), c.text.includes('Test University')], ['Dear Jane Doe,', true, false]);
+  eq('영문: 첨부 파일 이름·PDF 제목 한글 0자', [attachmentName('en', 'INQ-1', false), attachmentName('en', 'INQ-1', true), pdfTitle('en', 'INQ-1', false), pdfTitle('en', 'INQ-1', true)].some((x) => HAN.test(x)), false);
+  // 첨부 PDF(요청서) — 실행부와 같은 길: 접수 행 → requestDocArgs → requestDocFrom → buildRequestHtml → mergeDocPages
+  const EN_ROW = { ...ROW_EN_SRC(), locale: 'en' };
+  const lang = ackLang(EN_ROW.locale);
+  const enMaps = { sizeMap: { '4inch': '4 inch' }, deliveryMap: Object.fromEntries(DELIVERY_METHODS.map((x) => [x.value, x.en])) };
+  const reqHtml = buildRequestHtml({ ...requestDocFrom(requestDocArgs(EN_ROW, lang, '2026-10-01', enMaps)), logoUrl: 'data:image/png;base64,AAAA' });
+  const merged = mergeDocPages([reqHtml], STYLE, { lang, title: pdfTitle(lang, EN_ROW.id, false) });
+  eq('영문 접수 → 첨부 요청서 PDF HTML 한글 0자(제목·라벨·전달 방식·공정·분석)', [lang, (merged.match(/[가-힣ㄱ-ㆎ]/g) ?? []).join('')], ['en', '']);
+  eq('영문 첨부 요청서: 영문 라벨 · 띄어 쓴 공정·분석 이름', has(merged, '<html lang="en">', '>QUOTE REQUEST<', '>In-person delivery<', '>Notes<', 'Plasma Cleaning (In-situ)', 'Sheet Resistance, XPS'), true);
 }
 {
   // 조회 링크 — 이메일은 # 뒤(서버로 안 감) · 조회 화면이 쓰는 방식(URLSearchParams)으로 읽으면 원래 주소 그대로

@@ -110,3 +110,16 @@ export function preFilmFields(raw, note) {
     preFilmNote: preFilm ? String(note ?? '').trim() : '',
   };
 }
+
+/**
+ * 공정·분석 이름의 **표시용** 글자(10-12) — 붙여 쓴 영문 낱말 사이에 띄어쓰기를 넣는다.
+ *   'SheetResistance' → 'Sheet Resistance' · 'PlasmaCleaning (In-situ)' → 'Plasma Cleaning (In-situ)'
+ *   약어(XPS·PPMS·ALD)·이미 띄어 쓴 이름·하이픈(In-situ)·물질 화학식(HfO2·ZnO)은 그대로.
+ * ⚠️ 표시에만 쓴다. 저장값(details_json 의 process·measures)·선택지 value·견적 계산 키는 원래 이름 그대로 둔다
+ *    (lib/processes 의 name 과 견적 계산이 이 이름으로 맞물려 있다).
+ * @param {unknown} name
+ */
+export function displayName(name) {
+  // 소문자가 둘 이상 이어진 뒤의 대문자만 — 화학식(HfO2·ZnO·TiN)은 소문자가 하나라 건드리지 않는다
+  return String(name ?? '').replace(/([a-z]{2})(?=[A-Z])/g, '$1 ');
+}
