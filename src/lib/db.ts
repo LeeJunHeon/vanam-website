@@ -6,6 +6,7 @@
 //    → getDb()가 null 을 돌려주고, 호출부는 DB 없이도 동작해야 한다.
 //      (문의 폼은 DB 없이도 구글챗 알림은 나가야 하므로)
 import { env as cfEnv } from 'cloudflare:workers';
+import { runSchemaInit, schemaVersionOf } from './schema-init.js';
 
 export type D1 = {
   prepare: (sql: string) => {
@@ -30,6 +31,8 @@ export function getDb(): D1 | null {
 // ── 테이블 자동 생성 ────────────────────────────────────
 // migrations/0001_init.sql 과 동일한 내용. 워커 인스턴스당 한 번만 실행된다.
 // (수동 마이그레이션 없이도 첫 요청에서 스키마가 준비되도록)
+// 콜드 스타트 속도·D1 사용량 — 스키마 버전 표식이 맞으면 D1 1번으로 끝낸다(schema-init.js, 예전 43번 왕복).
+//    아래 SCHEMA·MIGRATIONS 를 한 글자라도 바꾸면 버전이 바뀌어 다음 인스턴스가 전체 점검을 한 번 한다.
 let schemaReady: Promise<void> | null = null;
 
 const SCHEMA = [
@@ -70,6 +73,55 @@ const SCHEMA = [
   //   key = "login:1.2.3.4" 등, window_start = 창 시작 시각(ms epoch)
   `CREATE TABLE IF NOT EXISTS rate_limits (
     key TEXT PRIMARY KEY, hits INTEGER NOT NULL, window_start INTEGER NOT NULL)`,
+
+  // ── 견적 가격 DB (price_*) ────────────────────────────────────────────
+  // 구글 시트 견적 파일(V3_SHEET_*)의 DB 시트를 그대로 옮긴 원본 테이블.
+  // scripts/price-db-import.mjs 가 엑셀에서 생성해 DELETE→INSERT 로 통째 갱신한다.
+  //
+  // ⚠️ 두 가지 원칙
+  //  ① 빈 셀은 NULL 로 넣는다. 엑셀에서 '비움'과 0 은 뜻이 다르다
+  //     (예: loading_override_min 비움 = 장비 기본값 사용, 0 = 0분 적용).
+  //     NOT NULL DEFAULT 0 을 붙이면 이 구분이 조용히 사라진다 → 어떤 열에도 붙이지 않는다.
+  //  ② 숫자 열은 REAL 이다. material_cost_per_nm 처럼 소수가 들어오고,
+  //     INTEGER 로 받으면 반올림되어 원가가 어긋난다.
+  //
+  // ⚠️ CREATE TABLE 문자열 안에 주석(--)을 쓰지 말 것.
+  //    scripts/check-schema.mjs 는 db.ts 쪽 SQL 에서 주석을 제거하지 않아
+  //    주석 뒤 컬럼을 못 읽고 init.sql 과 어긋난 것으로 오판한다.
+  `CREATE TABLE IF NOT EXISTS price_policy (
+    key TEXT PRIMARY KEY, value TEXT, vtype TEXT, applies_to TEXT, notes TEXT)`,
+  `CREATE TABLE IF NOT EXISTS price_equipment (
+    equipment_id TEXT PRIMARY KEY, equipment_name TEXT, process_type TEXT,
+    rate_per_min REAL, default_loading_min REAL, default_plasma_min REAL, default_setup_min REAL,
+    active INTEGER, notes TEXT)`,
+  `CREATE TABLE IF NOT EXISTS price_recipe (
+    recipe_id TEXT PRIMARY KEY, material_name TEXT, process_type TEXT, equipment_id TEXT, method TEXT,
+    material_cost_per_nm REAL, growth_nm_per_min REAL, default_temp_c REAL,
+    loading_override_min REAL, plasma_override_min REAL, setup_override_min REAL,
+    legacy_min_charge REAL, active INTEGER, verification_status TEXT, supplier TEXT, notes TEXT)`,
+  `CREATE TABLE IF NOT EXISTS price_substrate (
+    catalog_id TEXT PRIMARY KEY, item_name TEXT, category TEXT, unit TEXT,
+    cost_per_unit REAL, sale_price_per_unit REAL, units_per_pack REAL, legacy_pack_price REAL,
+    size_inch REAL, oxide_nm REAL, supplier TEXT, active INTEGER, verification_status TEXT, notes TEXT)`,
+  `CREATE TABLE IF NOT EXISTS price_alias (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, entity_type TEXT, alias TEXT, equipment_scope TEXT,
+    canonical_id TEXT, status TEXT, notes TEXT)`,
+  `CREATE TABLE IF NOT EXISTS price_import_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, imported_at TEXT, source_file TEXT, source_sha256 TEXT,
+    rules_version TEXT, counts_json TEXT)`,
+
+  // ── 견적 개정 (quote_revisions) ──────────────────────────────────────
+  // 문의 한 건의 견적 이력. 접수 시 자동 계산(auto)과 담당자 저장(admin)이 개정 번호를 1,2,3… 올린다.
+  // 고객에게 나가는 금액은 doc_json 이 유일한 원천이다(input_json·result_json 은 내부 전용 — 원가 포함).
+  // 새 개정은 "기준 개정 + 1" 로 INSERT 한다 — 두 곳이 동시에 저장하면 UNIQUE 위반으로 한쪽이 실패(낙관적 잠금).
+  // 컬럼 설명은 migrations/0001_init.sql 에 있다(여기 CREATE 문자열 안에는 주석을 넣지 않는다).
+  `CREATE TABLE IF NOT EXISTS quote_revisions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, inquiry_id TEXT NOT NULL, rev INTEGER NOT NULL,
+    source TEXT NOT NULL, kind TEXT NOT NULL, total INTEGER,
+    input_json TEXT, result_json TEXT, doc_json TEXT, manual_json TEXT,
+    seen_total INTEGER, price_sha TEXT, note TEXT, created_at TEXT NOT NULL,
+    UNIQUE (inquiry_id, rev))`,
+  // (inquiry_id, rev) 조회는 UNIQUE 의 자동 인덱스가 맡는다 — 같은 열의 인덱스를 따로 두면 개정 저장마다 쓰기만 는다.
 ];
 
 // 이미 만들어진 테이블에 컬럼을 덧붙일 때 쓴다.
@@ -103,6 +155,9 @@ const MIGRATIONS = [
   //   "구조화 사본 없이 / 계좌 없이" 조용히 데이터를 버리던 재현 불가 지뢰.
   `ALTER TABLE inquiries ADD COLUMN details_json TEXT`,
   `ALTER TABLE inquiries ADD COLUMN quote_bank TEXT`,
+  // 1001: 견적 요청 접수 확인 메일의 결과(JSON — 보냄/실패/안 보냄 · 사유 · PDF · 시각 · 횟수). src/lib/quote-ack-run.ts 가 쓴다.
+  //   옛 접수 건은 NULL → 관리자 화면에 아무것도 표시하지 않는다.
+  `ALTER TABLE inquiries ADD COLUMN ack_mail TEXT`,
   // 0829: 웨이퍼 다이싱 옵션. 주문 항목별로 '골랐는가'와 '그때의 박스당 금액'을 함께 굳힌다.
   //   금액을 같이 저장해야 나중에 단가표가 바뀌어도 그 주문의 청구 근거가 그대로 남는다.
   //   옛 주문에는 값이 없다 → DEFAULT 0 으로 '다이싱 아니오'가 된다.
@@ -110,23 +165,40 @@ const MIGRATIONS = [
   `ALTER TABLE order_items ADD COLUMN dicing_fee INTEGER NOT NULL DEFAULT 0`,
 ];
 
+// 스키마 버전 — SCHEMA·MIGRATIONS 문장 전체의 지문(settings 'schema_version' 에 숫자로 저장)
+const SCHEMA_VERSION = schemaVersionOf([...SCHEMA, ...MIGRATIONS]);
+
 export async function ensureSchema(db: D1): Promise<void> {
   if (!schemaReady) {
-    schemaReady = (async () => {
-      for (const sql of SCHEMA) await db.prepare(sql).run();
-      for (const sql of MIGRATIONS) {
-        try {
-          await db.prepare(sql).run();
-        } catch (e) {
-          // 컬럼이 이미 있으면(duplicate column) 정상 경로 — 그 외 실패는 조용히 삼키지 않는다.
-          // (0249: ALTER 오타가 소리 없이 무시되어 스키마가 어긋나는 것을 로그로 드러낸다.
-          //  가용성 원칙은 유지 — 경고만 남기고 서비스는 계속 간다)
-          if (!/duplicate column/i.test(String(e))) {
-            console.warn('[ensureSchema] 마이그레이션 실패(무시하지 않음):', sql, e);
-          }
-        }
-      }
-    })().catch((e) => {
+    schemaReady = runSchemaInit({
+      schema: SCHEMA,
+      migrations: MIGRATIONS,
+      version: SCHEMA_VERSION,
+      readMarker: async () => {
+        const row = await db
+          .prepare(`SELECT value FROM settings WHERE key = 'schema_version'`)
+          .first<{ value: number | string | null }>();
+        const v = Number(row?.value);
+        return row && Number.isFinite(v) ? v : null;
+      },
+      writeMarker: async (v: number) => {
+        await db
+          .prepare(
+            `INSERT INTO settings (key, value, updated_at, source) VALUES ('schema_version', ?, ?, 'schema')
+             ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at, source = excluded.source`,
+          )
+          .bind(v, new Date().toISOString())
+          .run();
+      },
+      exec: (sql: string) => db.prepare(sql).run(),
+      tableColumns: async (table: string) => {
+        if (!/^\w+$/.test(table)) throw new Error(`표 이름이 이상합니다: ${table}`);
+        const { results } = await db.prepare(`PRAGMA table_info(${table})`).all<{ name: string }>();
+        return new Set((results ?? []).map((r) => r.name));
+      },
+      warn: (...a: unknown[]) => console.warn(...a),
+      log: (m: string) => console.log(m),
+    }).then(() => undefined).catch((e) => {
       schemaReady = null; // 실패하면 다음 요청에서 재시도
       throw e;
     });

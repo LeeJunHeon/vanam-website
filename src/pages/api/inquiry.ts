@@ -1,16 +1,24 @@
 import type { APIRoute } from 'astro';
 import { getCollection } from 'astro:content';
-// Astro 6부터 Astro.locals.runtime.env 가 제거되어(접근 시 예외를 던짐)
-// Cloudflare 런타임 환경변수는 이 모듈에서 직접 읽는다.
-// dev(순수 Node)에서는 astro.config.mjs의 shim이 빈 객체를 돌려주고, .env 로 폴백한다.
-import { env as cfEnv } from 'cloudflare:workers';
 import { db, newId, nowIso, nowKst } from '../../lib/db';
 import { rateLimit, tooMany } from '../../lib/rate-limit';
 import { verifyTurnstile } from '../../lib/turnstile';
 import { getRate, pickWaitUntil } from '../../lib/fx';
 // 견적 폼 선택지·검증은 폼과 같은 파일에서 가져온다(서버가 별도 목록을 들면 조용히 어긋난다).
 import { validateQuoteDetails } from '../../lib/quote-fields.js';
-import { buildInquiryChatText } from '../../lib/chat-message.js';
+import { buildInquiryChatText, buildEstimateChatLine } from '../../lib/chat-message.js';
+// 접수 시 자동 견적(운영 스위치 '자동 견적'이 켜졌을 때만) — 실패해도 접수·알림은 그대로 진행한다.
+import { computeQuote } from '../../lib/quote-engine.js';
+import { formFromDetails, buildAutoRevision, defaultDocInfo, contactFor } from '../../lib/quote-revision.js';
+import { manualLabelAdmin } from '../../lib/quote-customer.js';
+import { loadPriceDbCached, latestImport } from '../../lib/price-db';
+import { quoteAutoEnabled } from '../../lib/quote-auto';
+import { insertRevision } from '../../lib/quote-store';
+import companyInfo from '../../data/company.json';
+// 구글챗은 이 통로로만 보낸다 — Cloudflare main 빌드가 아니면 코드에서 차단된다.
+import { sendChat } from '../../lib/chat-send';
+// 공정 견적 요청의 접수 확인 메일(hello@ → 고객) — 테스트 빌드는 @vanam.co.kr 주소로만 나간다(mail-send.ts).
+import { runQuoteAck, ackPlanned } from '../../lib/quote-ack-run';
 
 // 서버에서 온디맨드 실행 (정적 생성 금지)
 export const prerender = false;
@@ -19,6 +27,12 @@ type Payload = Record<string, unknown>;
 
 const str = (v: unknown) => (typeof v === 'string' ? v.trim() : '');
 const MAX = 2000; // 필드당 최대 길이 (남용 방지)
+
+/** 접수 순간 고객 화면에 떠 있던 예상 합계(참고용) — 0 이상 100억 이하 정수만 받는다. */
+const seenKrw = (v: unknown): number | null => {
+  const n = typeof v === 'number' ? v : typeof v === 'string' && /^\d+$/.test(v.trim()) ? Number(v.trim()) : NaN;
+  return Number.isInteger(n) && n >= 0 && n <= 10_000_000_000 ? n : null;
+};
 
 const json = (body: object, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -161,14 +175,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
   const who = `담당: ${name}${company ? ` (${company})` : ''} · ${email}${phone ? ` · ${phone}` : ''}`;
   const meta = `접수번호 ${id} · ${locale} · ${nowKst()} (KST)`;
 
-  // 알림 본문 조립은 lib/chat-message.js 의 순수 함수가 한다.
-  // (인라인이던 시절에는 문구 확인을 위해 실제 채팅방으로 제출해 보는 수밖에 없었다)
-  const text = buildInquiryChatText({
-    type, productName, product, who, substrate, sampleCount, details, message, waferLine, meta,
-  });
-
   // 5) D1에 저장 — 알림을 놓쳐도 요청이 사라지지 않도록 남긴다.
   //    DB가 없거나(dev) 실패해도 알림은 나가야 하므로 예외를 삼킨다.
+  let saved: Awaited<ReturnType<typeof db>> = null; // 접수 행이 실제로 저장된 DB (자동 견적은 이때만)
   try {
     const d = await db();
     if (d) {
@@ -193,6 +202,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
           .prepare(`INSERT INTO inquiries ${COLS}, details_json) ${VALS},?)`)
           .bind(...base, detailsJson || null)
           .run();
+        saved = d;
       } catch (colErr) {
         // ⚠️ 컬럼 추가(ALTER TABLE) 전에 배포되면 위 INSERT 가 실패한다.
         //    그때 그냥 던지면 **고객 견적이 통째로 사라진다.** 구조화 사본만 포기하고 접수는 반드시 남긴다.
@@ -201,6 +211,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
           .prepare(`INSERT INTO inquiries ${COLS}) ${VALS})`)
           .bind(...base)
           .run();
+        // 구조화 사본이 저장되지 않았으니 자동 견적도 남기지 않는다(saved 는 null 로 둔다)
       }
     } else {
       console.warn('[inquiry] D1 미연결 — 알림만 발송합니다.');
@@ -209,38 +220,83 @@ export const POST: APIRoute = async ({ request, locals }) => {
     console.error('[inquiry] DB 저장 실패 (알림은 계속 진행):', e);
   }
 
-  // 6) Google Chat 웹훅 전송
-  //    - 배포(Cloudflare workerd): cloudflare:workers 의 env
-  //    - dev(Node): .env 파일 → import.meta.env
-  //    대시보드 입력칸이 여러 줄이라 개행·따옴표가 섞여 들어올 수 있어 정리한다.
-  const raw =
-    (cfEnv as Record<string, unknown> | undefined)?.GOOGLE_CHAT_WEBHOOK ??
-    import.meta.env.GOOGLE_CHAT_WEBHOOK ??
-    '';
-  const webhook = typeof raw === 'string' ? raw.trim().replace(/^["']|["']$/g, '') : '';
-
-  if (!webhook) {
-    // 웹훅 미설정: 전송하지 않는다.
-    // ⚠️ 여기에 payload(text)를 로그로 남기면 이름·이메일·전화·문의내용이 로그에 그대로 쌓인다.
-    //    접수번호만 남겨 진단 가능하게 하고, PII 는 로그에 남기지 않는다.
-    console.warn('[inquiry] GOOGLE_CHAT_WEBHOOK 미설정 — 알림을 건너뜁니다. 접수번호:', id);
-    return json({ ok: true, delivered: false, id });
-  }
-
-  try {
-    const res = await fetch(webhook, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json; charset=UTF-8' },
-      body: JSON.stringify({ text }),
-    });
-    if (!res.ok) {
-      console.error('[inquiry] webhook failed:', res.status, await res.text().catch(() => ''));
-      return json({ ok: false, error: 'webhook_failed' }, 502);
+  // 5-1) 접수 시 자동 견적 — 공정 견적 · 구조화 사본 저장됨 · 운영 스위치 켜짐(가격 DB 있음)일 때만.
+  //      결과는 quote_revisions 에 개정 1로 남고, 담당자 알림에 한 줄이 붙는다.
+  //      ⚠️ 여기서 무슨 일이 나도 접수 응답·알림은 그대로 진행한다. 로그에는 접수번호와 오류 종류만 남긴다.
+  let estimateLine: string | undefined;
+  let quoteSaved = false; // 이번 접수로 개정이 저장됐는가 — 완료 페이지가 이때만 조회 API 를 부른다
+  if (type === 'quote' && saved) {
+    try {
+      let dj: unknown = null;
+      try { dj = detailsJson ? JSON.parse(detailsJson) : null; } catch { dj = null; }
+      if (formFromDetails(dj, locale) && (await quoteAutoEnabled(saved))) {
+        const priceDb = await loadPriceDbCached(saved);
+        const today = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10); // 한국 날짜
+        const info = defaultDocInfo({
+          inquiry: { id, name, company, productName }, policy: priceDb.policy, today,
+          contact: contactFor(locale, companyInfo.tel), locale,
+        });
+        const auto = buildAutoRevision({ details: dj, locale, priceDb, computeQuote, today, info });
+        if (auto) {
+          const seenTotal = seenKrw(body.estimateSeenKrw);
+          const imp = await latestImport(saved);
+          const r = await insertRevision(saved, id, 0, {
+            source: 'auto', kind: auto.kind, total: auto.total,
+            input: auto.input, result: auto.result, doc: auto.doc, manual: auto.manual,
+            seenTotal, priceSha: imp?.source_sha256 ?? null,
+          });
+          if (r.ok) {
+            quoteSaved = true;
+            estimateLine = buildEstimateChatLine({
+              kind: auto.kind, total: auto.total, seenTotal, manualAdmin: auto.manual.map(manualLabelAdmin),
+            });
+          } else {
+            console.warn('[inquiry] 자동 견적 저장 충돌:', id);
+          }
+        }
+      }
+    } catch (e) {
+      console.error('[inquiry] 자동 견적 실패 (접수·알림은 계속 진행):', id, (e as Error)?.name ?? 'Error');
     }
-  } catch (err) {
-    console.error('[inquiry] webhook error:', err);
-    return json({ ok: false, error: 'webhook_error' }, 502);
   }
 
-  return json({ ok: true, delivered: true, type, id });
+  // 5-2) 접수 확인 메일 — 공정 견적 요청이 저장됐고, 고객에게 '접수됨'으로 응답하는 경우에만(일반 문의 제외).
+  //      PDF 만들기·발송에 몇 초 걸리므로 응답 직전에 시작해 응답 뒤(waitUntil)에 끝낸다 — 고객 화면을 늦추지 않는다.
+  //      구글챗 전송 실패(502)로 고객 화면이 오류를 띄우는 경우에는 보내지 않는다('접수됨' 메일과 어긋나지 않게 —
+  //      관리자 견적 탭에서 직접 보낼 수 있다). runQuoteAck 는 예외를 던지지 않고, 결과는 inquiries.ack_mail 에 남는다.
+  const ackOrigin = new URL(request.url).origin;
+  const ackVerified = ts.ok && !(ts as { skipped?: boolean }).skipped; // 보안 확인을 실제로 통과한 접수만(운영 빌드 자동 발송 조건)
+  const scheduleAck = () => {
+    if (type !== 'quote' || !saved) return;
+    const ack = runQuoteAck(saved, id, { by: 'auto', origin: ackOrigin, verified: ackVerified }).catch(() => undefined);
+    pickWaitUntil(locals)?.(ack); // waitUntil 이 없는 환경(드묾)에서는 기다리지 않는다 — 고객 응답이 우선
+  };
+  // 응답의 ack — 확인 메일이 나갈 건인가(판정만). 완료 화면이 이때만 '접수 확인 메일을 보내드렸습니다'를 띄운다
+  // (같은 주소 하루 상한·테스트 빌드의 고객 주소·설정 없음 등으로 안 나가는 건에 '보냈다'고 말하지 않게).
+  const ackFlag = async (): Promise<boolean> =>
+    type === 'quote' && saved ? ackPlanned(saved, id, email, { origin: ackOrigin, verified: ackVerified }) : false;
+
+  // 알림 본문 조립은 lib/chat-message.js 의 순수 함수가 한다.
+  // (인라인이던 시절에는 문구 확인을 위해 실제 채팅방으로 제출해 보는 수밖에 없었다)
+  // 자동 견적이 없으면(스위치 꺼짐 등) estimateLine 이 undefined 라 본문은 이전과 바이트 단위로 같다.
+  const text = buildInquiryChatText({
+    type, productName, product, who, substrate, sampleCount, details, message, waferLine, meta, estimateLine,
+  });
+
+  // 6) Google Chat 알림 (chat-send.ts 가 유일한 발송 통로)
+  //    - 빌드 차단·웹훅 미설정: 접수는 끝났으니 성공으로 응답한다(알림만 빠짐).
+  //    - 전송 실패: 기존과 같은 502 — 폼이 담당자 메일 안내를 띄운다.
+  //    ⚠️ 로그에는 접수번호만 남는다. 본문(text)의 PII 는 남기지 않는다.
+  const chat = await sendChat(text, { tag: 'inquiry', ref: id });
+  if (chat.reason === 'blocked_build' || chat.reason === 'no_webhook') {
+    const ack = await ackFlag();
+    scheduleAck();
+    return json({ ok: true, delivered: false, id, quote: quoteSaved, ack });
+  }
+  if (chat.reason === 'http_error') return json({ ok: false, error: 'webhook_failed' }, 502);
+  if (chat.reason === 'fetch_error') return json({ ok: false, error: 'webhook_error' }, 502);
+
+  const ack = await ackFlag();
+  scheduleAck();
+  return json({ ok: true, delivered: true, type, id, quote: quoteSaved, ack });
 };

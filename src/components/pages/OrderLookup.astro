@@ -1,5 +1,6 @@
 ---
-// 비회원 주문 조회. 주문번호 + 이메일로 상태를 확인한다.
+// 비회원 주문·견적 조회. 주문번호(ORD-)·접수번호(INQ-) + 이메일로 진행 상태를 확인한다.
+// 제목·안내 문구는 어디로 들어와도 하나다(메뉴·주문 완료·견적 완료·확인 메일 — 10-02 결정: 들어온 길에 따라 제목을 나누지 않는다).
 // ⚠️ prerender=false 는 페이지 파일(src/pages/order/lookup.astro)에 있다.
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getRelativeLocaleUrl } from 'astro:i18n';
@@ -7,12 +8,15 @@ import company from '../../data/company.json';
 
 import { getCollection } from 'astro:content';
 import { SUBSTRATE_SIZES, DELIVERY_METHODS } from '../../lib/processes';
+import siteData from '../../data/site.json';
 
 const locale = (Astro.currentLocale ?? 'en') as 'ko' | 'en';
 const isKo = locale === 'ko';
 const lhref = (p: string) => getRelativeLocaleUrl(locale, p);
+// 예상·확정 견적 상자 문구 — 완료 화면과 같은 문구(site.json quote.view)
+const QV = ((siteData as Record<string, any>)[locale] ?? siteData.en).quote.view;
 
-// 주문 완료 화면에서 넘어오면 주문번호가 채워져 있다
+// 주문 완료·견적 완료 화면·확인 메일에서 넘어오면 번호가 채워져 있다(?id=)
 const prefill = Astro.url.searchParams.get('id') ?? '';
 
 // 견적 접수 시 저장되는 product_name 은 **접수 당시 페이지 언어**로 굳는다.
@@ -38,22 +42,20 @@ const productNames: Record<string, string> = Object.fromEntries([
 
 const t = isKo
   ? {
-      meta: '주문 조회 | VanaM', metaDesc: '주문번호와 이메일로 주문 상태를 확인하세요.',
-      eyebrow: '주문 조회', heading: '주문 확인',
+      meta: '주문·견적 조회 | VanaM', metaDesc: '주문번호 또는 접수번호와 이메일로 진행 상태를 확인하세요.',
+      eyebrow: '주문·견적 조회', heading: '진행 상태 확인',
       lead: '주문번호(ORD-…) 또는 견적·주문 요청 접수번호(INQ-…)와 입력하신 이메일을 넣으시면 진행 상태를 확인하실 수 있습니다.',
-      orderNo: '주문/접수번호', email: '이메일',
+      idLabel: '주문/접수번호', email: '이메일',
       submit: '조회하기', loading: '조회 중…',
-      notFound: '주문번호와 이메일이 일치하지 않습니다. 다시 확인해 주세요.',
+      notFound: '주문/접수번호와 이메일이 일치하지 않습니다. 다시 확인해 주세요.',
       fail: '조회에 실패했습니다. 잠시 후 다시 시도해 주세요.',
       status: '진행 상태', amount: '결제 금액', ordered: '주문일',
       items: '주문 내역', shipTo: '배송지', taxYes: '세금계산서 요청됨',
       dicing: '다이싱', dicingYes: '필요', dicingNo: '불필요', boxUnit: '박스',
       orderNo: '주문번호', vat: '(부가세 포함)',
       ordSheetBtn: '주문서 인쇄 · PDF 저장',
-      ordSheetTitle: '주문서',
-      ordSheetFoot: '본 주문서는 웹사이트 주문 조회 화면에서 출력된 문서로 별도 직인이 없습니다. 표시 금액은 주문 시점 환율로 확정된 값입니다. 문의는 아래 연락처로 부탁드립니다.',
       noShip: '실물 배송 없음 (결과는 이메일로 안내)',
-      help: '주문번호를 잊으셨나요? 아래로 연락 주시면 확인해 드립니다.',
+      help: '주문/접수번호를 잊으셨나요? 아래로 연락 주시면 확인해 드립니다.',
       inq: {
         title: '견적·주문 요청', received: '접수일', product: '요청 상품',
         method: '공정', substrate: '기판', reqBody: '요청 내용 보기',
@@ -65,12 +67,8 @@ const t = isKo
         wQty: '수량', wQtyOne: '{n}박스', wQtyMany: '{n}박스',
         wDicing: '다이싱', wYes: '필요', wNo: '불필요', wPerBox: '/박스',
         sheetBtn: '견적서 인쇄 · PDF 저장',
-        sheetTitle: '견적서',
-        sheetSupplier: '공급자',
-        sheetIssued: '발행일',
-        sheetStatus: '진행 상태',
+        reqSheetBtn: '요청서 인쇄 · PDF 저장',
         sheetBank: '입금 계좌',
-        sheetFoot: '본 견적서는 웹사이트 조회 화면에서 출력된 문서로 별도 직인이 없습니다. 문의는 아래 연락처로 부탁드립니다.',
         pending: '산정 중입니다 — 견적이 확정되면 이메일로 안내드립니다.',
         st: { new: '접수됨 (검토 대기)', quoted: '견적 완료', replied: '회신 완료', paid: '결제 완료', closed: '종료' },
       } as Record<string, unknown>,
@@ -95,22 +93,20 @@ const t = isKo
       trackingNo: '송장번호',
     }
   : {
-      meta: 'Track your order | VanaM', metaDesc: 'Check your order status with your order number and email.',
-      eyebrow: 'Order lookup', heading: 'Track your order',
+      meta: 'Order & quote lookup | VanaM', metaDesc: 'Check the status of your order or quote request with its number and your email.',
+      eyebrow: 'Order & quote lookup', heading: 'Check status',
       lead: 'Enter your order number (ORD-…) or request number (INQ-…) with the email you used, to check the status.',
-      orderNo: 'Order / request number', email: 'Email',
+      idLabel: 'Order / request number', email: 'Email',
       submit: 'Look up', loading: 'Searching…',
-      notFound: 'The order number and email do not match. Please check and try again.',
+      notFound: 'The order / request number and email do not match. Please check and try again.',
       fail: 'Lookup failed. Please try again shortly.',
       status: 'Status', amount: 'Amount', ordered: 'Ordered',
       items: 'Items', shipTo: 'Ship to', taxYes: 'Tax invoice requested',
       dicing: 'Dicing', dicingYes: 'Required', dicingNo: 'Not required', boxUnit: 'box',
       orderNo: 'Order no.', vat: '(VAT included)',
       ordSheetBtn: 'Print order sheet (PDF)',
-      ordSheetTitle: 'Order sheet',
-      ordSheetFoot: 'This order sheet was generated from the online order lookup page and carries no company seal. The amount shown was fixed at the exchange rate applied when the order was placed. Please use the contact below for any questions.',
       noShip: 'No physical delivery (results sent by email)',
-      help: 'Lost your order number? Contact us and we will look it up for you.',
+      help: 'Lost your order or request number? Contact us and we will look it up for you.',
       inq: {
         title: 'Quote / order request', received: 'Received', product: 'Requested item',
         method: 'Process', substrate: 'Substrate', reqBody: 'View request details',
@@ -122,12 +118,8 @@ const t = isKo
         wQty: 'Quantity', wQtyOne: '{n} box', wQtyMany: '{n} boxes',
         wDicing: 'Dicing', wYes: 'Required', wNo: 'Not required', wPerBox: '/box',
         sheetBtn: 'Print quotation (PDF)',
-        sheetTitle: 'Quotation',
-        sheetSupplier: 'Supplier',
-        sheetIssued: 'Issued',
-        sheetStatus: 'Status',
+        reqSheetBtn: 'Print request (PDF)',
         sheetBank: 'Bank account',
-        sheetFoot: 'This quotation was generated from the online lookup page and carries no company seal. Please use the contact below for any questions.',
         pending: 'Being prepared — we will email you once the quote is ready.',
         st: { new: 'Received (in review)', quoted: 'Quote ready', replied: 'Replied', closed: 'Closed', paid: 'Paid' },
       } as Record<string, unknown>,
@@ -169,28 +161,20 @@ const inputClass =
       data-label-loading={t.loading}
       data-labels={JSON.stringify(t.st)}
       data-inq={JSON.stringify(t.inq)}
+      data-qv={JSON.stringify(QV)}
       data-product-names={JSON.stringify(productNames)}
       data-map-size={JSON.stringify(sizeMap)}
       data-map-delivery={JSON.stringify(deliveryMap)}
-      data-supplier={JSON.stringify({
-        name: isKo ? company.nameKo : company.nameEn,
-        ceo: isKo ? company.ceoKo : (company.ceoEn || company.ceoKo),
-        bizNo: company.bizNo,
-        address: isKo ? company.addressKo : (company.addressEn || company.addressKo),
-        tel: company.tel,
-        email: company.email,
-      })}
       data-pay={JSON.stringify({ tracking: t.tracking, trackingCourier: t.trackingCourier, trackingNo: t.trackingNo, paidDone: t.paidDone, paidAt: t.paidAt, mApproved: t.mApproved, mCreate: t.mCreate, mHeld: t.mHeld, mDeclined: t.mDeclined, mCapture: t.mCapture, mError: t.mError, mPaid: t.mPaid, mSetup: t.mSetup, payTitle: t.payTitle, payNote: t.payNote })}
       data-copy={JSON.stringify({
         status: t.status, amount: t.amount, ordered: t.ordered,
         items: t.items, shipTo: t.shipTo, taxYes: t.taxYes, noShip: t.noShip,
         dicing: t.dicing, dicingYes: t.dicingYes, dicingNo: t.dicingNo, boxUnit: t.boxUnit,
         orderNo: t.orderNo, vat: t.vat,
-        ordSheetBtn: t.ordSheetBtn, ordSheetTitle: t.ordSheetTitle, ordSheetFoot: t.ordSheetFoot,
-        sheetIssued: t.inq.sheetIssued, sheetSupplier: t.inq.sheetSupplier, sheetStatus: t.inq.sheetStatus,
+        ordSheetBtn: t.ordSheetBtn,
       })}>
       <div>
-        <label for="lk-id" class="block text-sm font-medium text-ink/80">{t.orderNo} *</label>
+        <label for="lk-id" class="block text-sm font-medium text-ink/80">{t.idLabel} *</label>
         <input id="lk-id" name="id" type="text" required value={prefill}
           placeholder="ORD-… / INQ-…" class={`${inputClass} font-mono`} />
       </div>
@@ -215,16 +199,26 @@ const inputClass =
 </BaseLayout>
 
 <script>
-  import { buildQuoteSheet, openQuoteSheet } from '../../lib/quote-sheet';
+  // 견적 요약 상자·엑셀형 견적서 — 금액은 서버가 준 inquiry.quote 만 쓴다(화면에서 계산하지 않는다)
+  import { renderQuoteBox, docOptions, injectQuoteViewStyle } from '../../lib/quote-view-render.js';
+  // 고객이 넣은 글 — 이 화면은 링크 하나로 바로 조회되므로, 남이 넣은 글이 vanam.co.kr 화면에서 피싱 문구가 되지 않게
+  // 한 줄 항목(상품·공정·기판)은 짧게 + 주소 모양은 링크가 안 되게, 여러 줄 요청 내용은 주소 모양만 바꾼다(확인 메일과 같은 규칙).
+  import { safeShort, defang } from '../../lib/safe-text.js';
+  // 서류(견적서·요청서·주문서)는 모두 엑셀 「견적서」 틀(src/lib/doc-excel.js)
+  import {
+    buildQuoteDoc, buildRequestDoc, buildOrderDoc, openDoc,
+    quoteFromAmount, requestDocFrom, orderDocFrom, docContact, ymdLocal, specFromDetails, customerLine,
+  } from '../../lib/quote-doc';
   const form = document.getElementById('lookup-form') as HTMLFormElement | null;
   if (form) {
     const M = form.dataset;
-    // 견적서 인쇄물은 견적 폼과 **같은 템플릿**을 쓴다 (src/lib/quote-sheet.ts)
     const P = JSON.parse(M.pay || '{}') as Record<string, string>;
     const P2 = P;   // 결과 렌더 템플릿에서도 동일 문자열 사용
     const ST: Record<string, string> = JSON.parse(M.labels ?? '{}');
     const C = JSON.parse(M.copy ?? '{}');
     const INQ = JSON.parse(M.inq ?? '{}');
+    const QVT: Record<string, string> = JSON.parse(M.qv ?? '{}');
+    const PAGE_LANG: 'ko' | 'en' = document.documentElement.lang === 'ko' ? 'ko' : 'en';
     // 상품 id → 이 페이지 언어의 상품명. 접수 당시 언어로 굳은 이름 대신 이걸 우선 쓴다.
     const PNAMES: Record<string, string> = JSON.parse(M.productNames ?? '{}');
     const SIZE_MAP: Record<string, string> = JSON.parse(M.mapSize ?? '{}');
@@ -269,7 +263,7 @@ const inputClass =
       const delivery = DELIV_MAP[String(dj.delivery ?? '')] ?? String(dj.delivery ?? '');
       const out = [
         INQ.dSecSub,
-        [dj.substrateType, dj.substrateSize].filter(Boolean).length ? `${INQ.substrate}: ${[dj.substrateType, SIZE_MAP[String(dj.substrateSize ?? '')] ?? dj.substrateSize].filter(Boolean).join(' / ')}` : '',
+        [dj.substrateType, dj.substrateSize].filter(Boolean).length ? `${INQ.substrate}: ${[dj.substrateType, SIZE_MAP[String(dj.substrateSize ?? '')] ?? dj.substrateSize, dj.substrateGrade].filter(Boolean).join(' / ')}` : '',
         delivery ? `${INQ.dDelivery}: ${delivery}` : '',
         dj.sampleCount ? `${INQ.dSamples}: ${dj.sampleCount}` : '',
         dj.completionDate ? `${INQ.dDue}: ${dj.completionDate}` : '',
@@ -299,7 +293,8 @@ const inputClass =
       try {
         const dj = JSON.parse(String(raw));
         const size = SIZE_MAP[String(dj.substrateSize ?? '')] ?? String(dj.substrateSize ?? '');
-        const joined = [dj.substrateType, size].filter(Boolean).join(' / ');
+        // 등급(Test·Prime)은 코드값이 곧 표기다 — 구매 요청 + Silicon 계열일 때만 들어 있다
+        const joined = [dj.substrateType, size, dj.substrateGrade].filter(Boolean).join(' / ');
         return joined || fallback;
       } catch { return fallback; }
     };
@@ -370,6 +365,8 @@ const inputClass =
       label.textContent = M.labelLoading!;
 
       const data = Object.fromEntries(new FormData(form).entries()) as Record<string, string>;
+      // 견적 요약의 담당자 확인 문구 언어 — 이 페이지 언어
+      data.locale = PAGE_LANG;
 
       try {
         const res = await fetch('/api/order/lookup', {
@@ -380,7 +377,7 @@ const inputClass =
         const j = await res.json();
 
         if (res.status === 404) {
-          errEl.textContent = M.msgNotfound!;
+          errEl.textContent = M.msgNotfound ?? '';
           return;
         }
         if (!res.ok || !j.ok) throw new Error(j.error ?? res.status);
@@ -490,6 +487,25 @@ const inputClass =
             : q.quote_currency === 'USD'
               ? `$${Number(q.quoted_amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
               : `₩${Number(q.quoted_amount).toLocaleString('ko-KR')}`;
+          // 견적 요약(자동 견적·담당자 개정) — 예상·검토 중이면 금액 줄 자리에, 확정이면 금액 줄 아래에 상자를 둔다
+          const qv = q.quote ?? null;
+          const qvState = String(qv?.state ?? '');
+          const qvBox = renderQuoteBox(qv, QVT);
+          if (qvBox) injectQuoteViewStyle(document);
+          const amountRow = `
+              <div class="mt-5 flex items-center justify-between border-t border-ink/10 pt-5">
+                <span class="text-sm text-ink/60">${esc(INQ.amount)} <span class="text-ink/35">${esc(INQ.vat)}</span></span>
+                <span class="text-xl font-bold text-ink">${amt ?? `<span class="text-base font-medium text-ink/45">${esc(INQ.pending)}</span>`}</span>
+              </div>`;
+          // 견적 상자에 [견적서 보기]가 있으면 아래 예전 [견적서 인쇄]는 그리지 않는다(같은 문서를 여는 버튼이 둘이 되지 않게)
+          const hasDocBtn = qvBox.includes('data-qv-doc');
+          // 담당자가 금액만 넣은 견적(편집기 개정 없음)이 있으면 [견적서 인쇄], 아직 금액이 없으면 [요청서 인쇄]
+          const hasAmount = q.quoted_amount != null && Number(q.quoted_amount) > 0;
+          // 일반 문의(상품·공정 없음)는 금액이 없으면 뽑을 서류가 없다 — 버튼을 그리지 않는다
+          const canPrint = hasAmount || q.type !== 'general';
+          const amountBlock = qvBox && (qvState === 'estimate' || qvState === 'reviewing')
+            ? `<div class="mt-5 border-t border-ink/10 pt-1">${qvBox}</div>`
+            : amountRow + (qvBox ? qvBox : '');
           resEl.innerHTML = `
             <div class="rounded-xl border border-ink/10 bg-ink/[0.02] p-7">
               <div class="flex flex-wrap items-start justify-between gap-4">
@@ -504,74 +520,78 @@ const inputClass =
               </div>
               ${q.product_name || q.material ? `
                 <p class="mt-6 border-t border-ink/10 pt-5 text-sm text-ink/60">
-                  ${esc(INQ.product)}: <span class="text-ink/80">${esc(PNAMES[String(q.product_sku ?? '')] ?? q.product_name ?? q.material)}</span>
+                  ${esc(INQ.product)}: <span class="text-ink/80">${esc(PNAMES[String(q.product_sku ?? '')] ?? safeShort(q.product_name ?? q.material, 80))}</span>
                 </p>` : ''}
               ${q.method || dSub ? `
                 <p class="mt-2 text-sm text-ink/60">
-                  ${q.method ? `${esc(INQ.method)}: <span class="text-ink/80">${esc(q.method)}</span>` : ''}${q.method && q.substrate ? ' · ' : ''}${dSub ? `${esc(INQ.substrate)}: <span class="text-ink/80">${esc(dSub)}</span>` : ''}
+                  ${q.method ? `${esc(INQ.method)}: <span class="text-ink/80">${esc(safeShort(q.method, 120))}</span>` : ''}${q.method && q.substrate ? ' · ' : ''}${dSub ? `${esc(INQ.substrate)}: <span class="text-ink/80">${esc(safeShort(dSub, 80))}</span>` : ''}
                 </p>` : ''}
               ${dTxt ? `
                 <details class="mt-4 rounded-lg border border-ink/10 bg-ink/[0.03]">
                   <summary class="cursor-pointer px-4 py-3 text-sm font-medium text-ink/70">${esc(INQ.reqBody)}</summary>
-                  <pre class="whitespace-pre-wrap border-t border-ink/10 px-4 py-3 font-sans text-sm leading-relaxed text-ink/65">${esc(dTxt)}</pre>
+                  <pre class="whitespace-pre-wrap border-t border-ink/10 px-4 py-3 font-sans text-sm leading-relaxed text-ink/65">${esc(defang(dTxt))}</pre>
                 </details>` : ''}
-              <div class="mt-5 flex items-center justify-between border-t border-ink/10 pt-5">
-                <span class="text-sm text-ink/60">${esc(INQ.amount)} <span class="text-ink/35">${esc(INQ.vat)}</span></span>
-                <span class="text-xl font-bold text-ink">${amt ?? `<span class="text-base font-medium text-ink/45">${esc(INQ.pending)}</span>`}</span>
-              </div>
+              ${amountBlock}
               ${q.quote_bank ? `
                 <p class="mt-5 rounded-lg border border-ink/10 bg-ink/[0.03] p-4 text-sm leading-relaxed text-ink/70"><span class="text-ink/45">${esc(INQ.sheetBank)}</span><br>${esc(q.quote_bank)}</p>` : ''}
               ${q.quote_note ? `
                 <p class="mt-5 rounded-lg bg-ink/[0.05] p-4 text-sm leading-relaxed text-ink/65">${esc(q.quote_note)}</p>` : ''}
-              <button type="button" id="inq-sheet" class="mt-5 v-btn-ghost-sm">🖨 ${esc(INQ.sheetBtn)}</button>
+              ${hasDocBtn || !canPrint ? '' : `<button type="button" id="inq-sheet" class="mt-5 v-btn-ghost-sm">🖨 ${esc(hasAmount ? INQ.sheetBtn : INQ.reqSheetBtn)}</button>
+                <p class="mt-2 text-sm text-danger" data-doc-msg hidden></p>`}
               ${q.paid_at ? `
                 <p class="mt-5 rounded-lg border border-ok/25 bg-ok/10 p-3 text-center text-sm font-semibold text-ok">✅ ${P2.paidAt} — ${when(q.paid_at)}</p>` : ''}
               ${!q.paid_at && q.quote_currency === 'USD' && Number(q.quoted_amount) > 0 && q.status !== 'closed' ? payBlock(q.id) : ''}
             </div>`;
           resEl.hidden = false;
 
-          // 견적서 인쇄 — 접수 확인 페이지를 이미 닫았거나 나중에 다시 찾은 고객이
-          // 조회 화면에서 바로 견적서를 뽑을 수 있어야 한다(구매팀에 넘길 서류가 된다).
-          // 자동 인쇄하지 않는다 — 창 안의 버튼을 눌러야 인쇄창이 뜬다.
-          document.getElementById('inq-sheet')?.addEventListener('click', () => {
-            // 웨이퍼 문의면 수량·다이싱을 인쇄물에도 별도 행으로 싣는다(구매팀에 그대로 넘어가는 서류다).
-            let wf: Record<string, any> | null = null;
-            try { wf = JSON.parse(String(q.details_json ?? '{}'))?.wafer ?? null; } catch { wf = null; }
-            const wFee = Number(wf?.dicingFeeKrw) || 0;
-            const rows: [string, string][] = ([
-              [String(INQ.title), String(q.id)],
-              [String(INQ.received), String(when(q.created_at))],
-              [String(INQ.sheetStatus), String(INQ.st?.[q.status] ?? q.status)],
-              [String(INQ.product), String(PNAMES[String(q.product_sku ?? '')] ?? q.product_name ?? q.material ?? '')],
-              [String(INQ.method), String(q.method ?? '')],
-              [String(INQ.substrate), dSub],
-              ...(wf
-                ? ([
-                    [String(INQ.wQty), qtyBox(wf.qty)],
-                    [String(INQ.wDicing), wf.dicing
-                      ? `${INQ.wYes} (+₩${wFee.toLocaleString('ko-KR')}${INQ.wPerBox} × ${Number(wf.qty) || 1})`
-                      : String(INQ.wNo)],
-                  ] as [string, string][])
-                : []),
-            ] as [string, string][]).filter(([, v]) => v.trim());
+          // 엑셀형 견적서(견적 요약에 견적서가 있을 때) — 팝업이 막히면 상자 안에 안내
+          const openSavedDoc = (): boolean => {
+            const o = docOptions(qv, QVT, PAGE_LANG);
+            if (!o) return false;
+            const ok = openDoc(buildQuoteDoc(o));
+            const msg = resEl.querySelector('[data-qv-msg]') as HTMLElement | null;
+            if (msg) { msg.textContent = ok ? '' : QVT.popupBlocked; msg.hidden = ok; }
+            return true;
+          };
+          resEl.querySelector('[data-qv-doc]')?.addEventListener('click', () => { openSavedDoc(); });
 
-            openQuoteSheet(buildQuoteSheet({
-              title: String(INQ.sheetTitle),
-              issuedLabel: String(INQ.sheetIssued),
-              issued: new Date().toISOString().slice(0, 10),
-              supplierLabel: String(INQ.sheetSupplier),
-              supplier: JSON.parse(M.supplier ?? '{}'),
-              rows,
-              details: dTxt,
-              amountLabel: String(INQ.amount),
-              vatLabel: String(INQ.vat),
-              amount: amt ?? String(INQ.pending),
-              bankLabel: String(INQ.sheetBank),
-              bank: String(q.quote_bank ?? ''),
-              memo: String(q.quote_note ?? ''),
-              footNote: String(INQ.sheetFoot),
-              printLabel: String(INQ.sheetBtn),
-            }));
+          // 견적서·요청서 인쇄 — 접수 확인 페이지를 이미 닫았거나 나중에 다시 찾은 고객이
+          // 조회 화면에서 바로 서류를 뽑을 수 있어야 한다(구매팀에 넘길 서류가 된다).
+          // 자동 인쇄하지 않는다 — 창 안의 버튼을 눌러야 인쇄창이 뜬다. 모든 서류는 엑셀 「견적서」 틀이다.
+          //   견적 요약에 견적서(doc)가 있으면 → 그 견적서
+          //   금액만 있는 예전 방식 견적 → 엑셀 견적서 품목 1줄(요청 상품 · 1식, 금액은 부가세 포함으로 보고 공급가액·세액을 나눈다)
+          //   금액이 아직 없으면 → 견적 요청서(견적 폼의 [견적 요청서 다운로드]와 같은 함수)
+          // 팝업이 막히면 버튼 아래에 안내(문구는 견적 상자와 같은 popupBlocked)
+          const docMsg = (ok: boolean) => {
+            const m = resEl.querySelector('[data-doc-msg]') as HTMLElement | null;
+            if (m) { m.textContent = ok ? '' : QVT.popupBlocked; m.hidden = ok; }
+          };
+          document.getElementById('inq-sheet')?.addEventListener('click', () => {
+            if (qv?.doc && openSavedDoc()) return;
+            let dj: Record<string, any> | null = null;
+            try { dj = JSON.parse(String(q.details_json ?? 'null')); } catch { dj = null; }
+            const pName = String(PNAMES[String(q.product_sku ?? '')] ?? q.product_name ?? q.material ?? '');
+            if (hasAmount) {
+              // 규격 칸 = 요청 내용(공정 순서·기판 / 웨이퍼는 수량·다이싱). 옛 건은 공정 · 기판
+              const spec = specFromDetails({ lang: PAGE_LANG, dj, sizeMap: SIZE_MAP,
+                fallback: [String(q.method ?? ''), dSub].filter((x) => x.trim()).join(' · ') });
+              // 견적일 = 담당자가 금액을 저장한 날(updated_at). 오늘 날짜로 찍으면 옛 금액이 오늘 견적처럼 보인다
+              docMsg(openDoc(buildQuoteDoc(quoteFromAmount({
+                lang: PAGE_LANG, id: String(q.id), date: ymdLocal(q.updated_at || q.created_at) || ymdLocal(),
+                customer: customerLine(q.company, q.name, PAGE_LANG),
+                title: pName, spec, amount: Number(q.quoted_amount), currency: String(q.quote_currency ?? 'KRW'),
+                bank: String(q.quote_bank ?? ''), memo: String(q.quote_note ?? ''), contact: docContact(PAGE_LANG),
+              }))));
+              return;
+            }
+            // 금액 전 — 견적 요청서. 담당자가 금액 없이 남긴 안내·입금 계좌도 싣는다
+            docMsg(openDoc(buildRequestDoc(requestDocFrom({
+              lang: PAGE_LANG, id: String(q.id), draft: false, date: ymdLocal(q.created_at),
+              statusText: String(INQ.st?.[q.status] ?? q.status ?? ''),
+              requester: { company: q.company, name: q.name, phone: q.phone, email: String(data.email ?? '') },
+              product: pName, dj, detailsText: dTxt, sizeMap: SIZE_MAP, deliveryMap: DELIV_MAP,
+              staffNote: String(q.quote_note ?? ''), bank: String(q.quote_bank ?? ''),
+            }))));
           });
 
           initPP(data.email as string);
@@ -642,53 +662,22 @@ const inputClass =
 
             <div class="mt-7 border-t border-ink/10 pt-6">
               <button type="button" id="ord-sheet" class="v-btn-ghost-sm">🖨 ${esc(C.ordSheetBtn)}</button>
+              <p class="mt-2 text-sm text-danger" data-doc-msg hidden></p>
             </div>
           </div>`;
         resEl.hidden = false;
 
-        // 주문서 인쇄 — 견적서와 **같은 템플릿**(src/lib/quote-sheet.ts)을 쓴다.
-        // 구매팀에 넘길 서류이므로 항목마다 다이싱 여부를 원화 확정 금액으로 적는다.
+        // 주문서 인쇄 — 견적서와 같은 엑셀 틀(src/lib/doc-excel.js). 금액은 원화(부가세 포함), PayPal 이면 USD 금액을 결제 칸에.
+        // 구매팀에 넘길 서류이므로 웨이퍼 다이싱은 원화 확정 금액으로 별도 줄에 적는다.
         // 자동 인쇄하지 않는다 — 창 안의 버튼을 눌러야 인쇄창이 뜬다.
         document.getElementById('ord-sheet')?.addEventListener('click', () => {
-          const body = [
-            String(C.items),
-            ...items.map((i: any) => {
-              const head = `· ${i.name} × ${i.qty} — ${wonOf(i.subtotal)}`;
-              if (!String(i.sku ?? '').startsWith('wafer:')) return head;
-              const on = Number(i.dicing) === 1;
-              const fee = Number(i.dicing_fee) || 0;
-              return `${head}\n    ${C.dicing}: ${on ? `${C.dicingYes} (+${wonOf(fee)}/${C.boxUnit} × ${i.qty})` : C.dicingNo}`;
-            }),
-          ].join('\n');
-
-          const addrLine = o.needs_shipping
-            ? [`[${o.ship_country}] ${[o.ship_name, o.ship_phone].filter(Boolean).join(' · ')}`,
-               [o.ship_zip ? `(${o.ship_zip})` : '', addr].filter(Boolean).join(' ')].filter(Boolean).join('\n')
-            : String(C.noShip);
-          // 결제는 USD 로 이뤄지지만 서류에는 원화 총액도 함께 적는다(세금·회계 대조용).
-          const usdTotal = Number(o.amount_usd) > 0
-            ? `$${Number(o.amount_usd).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-            : usdOf(o.amount, o.currency);
-
-          openQuoteSheet(buildQuoteSheet({
-            title: String(C.ordSheetTitle),
-            issuedLabel: String(C.sheetIssued),
-            issued: new Date().toISOString().slice(0, 10),
-            supplierLabel: String(C.sheetSupplier),
-            supplier: JSON.parse(M.supplier ?? '{}'),
-            rows: ([
-              [String(C.orderNo), String(o.id)],
-              [String(C.ordered), when(o.created_at)],
-              [String(C.sheetStatus), String(ST[o.status] ?? o.status)],
-              [String(C.shipTo), addrLine],
-            ] as [string, string][]).filter(([, v]) => v.trim()),
-            details: body,
-            amountLabel: String(C.amount),
-            vatLabel: String(C.vat),
-            amount: `${usdTotal} (${wonOf(o.amount)})`,
-            footNote: String(C.ordSheetFoot),
-            printLabel: String(C.ordSheetBtn),
-          }));
+          const ok = openDoc(buildOrderDoc(orderDocFrom({
+            lang: PAGE_LANG, order: o, items, statusText: String(ST[o.status] ?? o.status ?? ''),
+            noShipText: String(C.noShip ?? ''), email: String(data.email ?? ''),
+          })));
+          // 팝업이 막히면 버튼 아래에 안내
+          const m = resEl.querySelector('[data-doc-msg]') as HTMLElement | null;
+          if (m) { m.textContent = ok ? '' : QVT.popupBlocked; m.hidden = ok; }
         });
 
         initPP(data.email as string);
@@ -700,5 +689,26 @@ const inputClass =
         label.textContent = M.labelSend!;
       }
     });
+
+    // ── 바로 조회 — 접수 확인 메일·견적 완료 화면의 [진행 상태 조회]는 주소 뒤 #e=이메일 을 붙여 보낸다.
+    //    이메일 칸을 채우고 바로 조회한다(접수번호는 ?id= 로 서버가 이미 채워 둠).
+    //    # 뒤는 브라우저가 서버로 보내지 않는다(서버 로그·리퍼러에 안 남음). 읽은 즉시 주소창에서 지운다
+    //    — 새로고침·주소 복사·화면 공유에 이메일이 남지 않게.
+    //    ⚠️ 그래도 이 링크는 '접수번호 + 이메일' 열쇠다 — 전달받은 사람도 같은 조회를 하고, 방문 기록에는 처음 주소가 남을 수 있다.
+    //       운영에서 자동으로 붙는 Cloudflare 방문 통계 비콘도 처음 주소(탐색 기록)를 Cloudflare 로 보낼 수 있다
+    //       — 사이트를 호스팅하며 접수 내용을 이미 처리하는 곳이라 새로 새는 곳은 아니다(빼려면 Web Analytics 규칙에서 /order/lookup 제외).
+    //    값은 직접 꺼내 decodeURIComponent 로 푼다(URLSearchParams 는 '+' 를 공백으로 바꿔 a+b@x 주소가 깨진다).
+    const hashMatch = /(?:^|&)e=([^&]*)/.exec(location.hash.slice(1));
+    if (hashMatch) {
+      let hashEmail = '';
+      try { hashEmail = decodeURIComponent(hashMatch[1]).trim(); } catch { hashEmail = ''; }
+      try { history.replaceState(history.state, '', location.pathname + location.search); } catch { /* 주소창 정리 실패는 무시 */ }
+      const emailEl = document.getElementById('lk-email') as HTMLInputElement | null;
+      const idEl = document.getElementById('lk-id') as HTMLInputElement | null;
+      if (emailEl && hashEmail.length <= 254 && /^[^\s@]+@[^\s@]+$/.test(hashEmail)) {
+        emailEl.value = hashEmail;
+        if (idEl?.value.trim()) form.requestSubmit();
+      }
+    }
   }
 </script>

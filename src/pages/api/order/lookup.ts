@@ -4,6 +4,11 @@
 import type { APIRoute } from 'astro';
 import { db } from '../../../lib/db';
 import { rateLimit, tooMany } from '../../../lib/rate-limit';
+// 견적 요청(INQ-)의 예상·확정 견적 요약 — 고객에게 보일 것만 허용 목록으로 만든다(quote-revision.js).
+import { latestRevision } from '../../../lib/quote-store';
+import { customerQuoteView } from '../../../lib/quote-revision.js';
+import { readRate } from '../../../lib/fx';
+import { formatUsd } from '../../../lib/price';
 
 export const prerender = false;
 
@@ -24,6 +29,8 @@ export const POST: APIRoute = async ({ request }) => {
 
   const id = typeof body.id === 'string' ? body.id.trim().toUpperCase() : '';
   const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
+  // 견적 요약의 담당자 확인 문구 언어 — 조회 화면이 보고 있는 언어
+  const locale = body.locale === 'ko' ? 'ko' : 'en';
 
   const isOrd = /^ORD-\d{8}-[A-Z0-9]{4}$/.test(id);
   const isInq = /^INQ-\d{8}-[A-Z0-9]{4}$/.test(id);
@@ -46,12 +53,37 @@ export const POST: APIRoute = async ({ request }) => {
         await new Promise((r) => setTimeout(r, 500));
         return json({ ok: false, error: 'not_found' }, 404);
       }
+      // 견적 요약 — 개정이 없으면 null. 여기서 실패해도 조회 자체는 지금처럼 나가야 한다.
+      let quote: ReturnType<typeof customerQuoteView> = null;
+      try {
+        const revision = await latestRevision(d, id);
+        if (revision) {
+          const fx = await readRate(d);
+          quote = customerQuoteView({
+            revision,
+            inquiry: {
+              quoted_amount: q.quoted_amount ?? null,
+              quote_currency: (q as Record<string, unknown>).quote_currency ?? null,
+              paid_at: (q as Record<string, unknown>).paid_at ?? null,
+            },
+            locale, usdRate: fx.rate, formatUsd,
+          });
+        }
+      } catch (e) {
+        console.error('[order/lookup] 견적 요약 실패(조회는 계속):', id, (e as Error)?.name ?? 'Error');
+        quote = null;
+      }
       return json({
         ok: true,
         inquiry: {
           id: q.id,
           type: q.type,
           status: q.status,
+          // 견적서 '귀하'·요청서 요청자 칸용 — 접수번호 + 이메일을 아는 본인에게만 나간다(주문 조회의 배송지와 같은 기준).
+          // (허용목록에서 빠지면 오류 없이 null 이 된다 — 지뢰 ㉟)
+          name: q.name ?? null,
+          company: q.company ?? null,
+          phone: q.phone ?? null,
           // 접수 당시 언어로 굳은 product_name 대신, 화면이 보고 있는 언어로 다시 그리기 위해
           // 상품 id 도 함께 내려준다. (허용목록에서 빠지면 오류 없이 null 이 된다 — 지뢰 ㉟)
           product_sku: q.product_sku ?? null,
@@ -70,6 +102,9 @@ export const POST: APIRoute = async ({ request }) => {
           quote_bank: (q as Record<string, unknown>).quote_bank ?? null,
           paid_at: (q as Record<string, unknown>).paid_at ?? null,
           created_at: q.created_at,
+          // 금액만 있는 예전 견적의 견적일(담당자가 금액을 저장한 때) — 견적서를 오늘 날짜로 찍지 않게
+          updated_at: (q as Record<string, unknown>).updated_at ?? null,
+          quote,
         },
       });
     } catch (e) {
@@ -109,6 +144,9 @@ export const POST: APIRoute = async ({ request }) => {
       paid_at: o.paid_at,
       pay_method: o.pay_method,
       created_at: o.created_at,
+      // 주문서 '귀하' 줄용 — 본인 확인(주문번호 + 이메일)을 통과한 요청에만 나간다
+      buyer_name: o.buyer_name ?? null,
+      buyer_company: o.buyer_company ?? null,
       needs_shipping: o.needs_shipping,
       // 배송지 표시용 — DB(SELECT *)에는 있었지만 허용목록에서 빠져
       // 조회 화면이 빈 값을 조합해 "·" 만 남던 결함(지뢰 ㉟형)의 수정.

@@ -7,9 +7,21 @@ export const prerender = false;
 import '../../styles/global.css';
 import { isAdmin, adminConfigured } from '../../lib/admin-auth';
 import { db } from '../../lib/db';
+// 이 빌드의 구글챗 알림 켜짐/꺼짐 — 꺼진 빌드(맥미니 빌드 등)가 운영에 올라가면 여기서 바로 보인다.
+import { CHAT_ENABLED } from '../../lib/chat-send';
+// 견적 카드의 개정 요약(접수 시 자동 견적 · 현재 견적)
+import { listRevisionSummariesForRecent } from '../../lib/quote-store';
+import { summarizeRevisions } from '../../lib/quote-admin.js';
+// 접수 확인 메일 — 이 빌드의 운영/테스트 · 설정 여부(값은 보지 않는다) · 견적 카드의 발송 결과 한 줄
+import { MAIL_LIVE, gmailConfigured } from '../../lib/mail-send';
+import { pdfConfigured } from '../../lib/doc-pdf';
+import { ackLabel, isFreshPending } from '../../lib/quote-ack.js';
 
 const authed = await isAdmin(Astro.request);
 const configured = adminConfigured();
+const mailReady = gmailConfigured();
+const mailLine = (MAIL_LIVE ? '확인 메일: 운영 — 고객에게 발송' : '확인 메일: 테스트 — 회사 주소(@vanam.co.kr)로만 발송') +
+  (!mailReady ? ' · Gmail 설정 없음(보내지 않음)' : !pdfConfigured() ? ' · PDF 설정 없음(조회 링크만)' : '');
 
 type Row = {
   id: string; type: string; status: string;
@@ -20,12 +32,15 @@ type Row = {
   thickness: string | null; quantity: string | null; deadline: string | null;
   details: string | null; details_json: string | null; quantity: string | null;
   quoted_amount: number | null; quote_currency: string | null; quote_note: string | null; quote_bank: string | null;
+  ack_mail: string | null;
   locale: string | null; created_at: string; updated_at: string | null;
 };
 
 let quotes: Row[] = [];
 let generals: Row[] = [];
 let orders: Row[] = [];
+// 문의별 개정 요약 — 개정이 없는 문의는 키가 없다
+const revSummary: Record<string, ReturnType<typeof summarizeRevisions>> = {};
 const orderItems: Record<string, { sku: string; name: string; qty: number; subtotal: number; dicing: number; dicing_fee: number }[]> = {};
 let dbError = '';
 
@@ -40,6 +55,15 @@ if (authed) {
         .all<Row>();
       quotes = results.filter((r) => r.type === 'quote');
       generals = results.filter((r) => r.type === 'general');
+
+      // 개정 요약 — 실패해도 목록은 그대로 보여준다(요약만 빠진다)
+      try {
+        const byId: Record<string, Awaited<ReturnType<typeof listRevisionSummariesForRecent>>> = {};
+        for (const row of await listRevisionSummariesForRecent(d)) (byId[row.inquiry_id] ??= []).push(row);
+        for (const [id, rows] of Object.entries(byId)) revSummary[id] = summarizeRevisions(rows);
+      } catch (e) {
+        console.error('[admin] 개정 요약 실패(목록은 계속):', (e as Error)?.name ?? 'Error');
+      }
 
       const o = await d
         .prepare(`SELECT * FROM orders ORDER BY created_at DESC LIMIT 300`)
@@ -133,6 +157,18 @@ const waferInqLine = (w: WaferInq) =>
   `${w.name} × ${w.qty}박스 · 다이싱: ${w.dicing ? `필요 (+₩${w.fee.toLocaleString('ko-KR')}/박스 × ${w.qty})` : '불필요'}` +
   (w.total > 0 ? ` · 예상 합계 ₩${w.total.toLocaleString('ko-KR')}` : '');
 
+// 견적 카드 요약 문구
+const revAmount = (s: { kind: string; total: number | null }) => (s.kind === 'manual' || s.total == null ? '담당자 확인' : won(s.total));
+const autoLine = (f: NonNullable<ReturnType<typeof summarizeRevisions>['first']>) =>
+  (f.kind === 'manual' || f.total == null ? `담당자 확인 필요 — 사유: ${f.manualAdmin.join(' / ') || '—'}` : won(f.total)) +
+  (f.seenTotal != null && f.seenTotal !== f.total ? ` · 폼에서 본 금액 ${won(f.seenTotal)} 과 다름` : '');
+/** 확정 금액(KRW)이 최신 개정 합계와 다른가 — 그러면 고객 견적서는 단순 양식으로 나간다 */
+const amountMismatch = (r: Row) => {
+  const latest = revSummary[r.id]?.latest;
+  if (!latest || r.quoted_amount == null || (r.quote_currency ?? 'KRW') !== 'KRW') return false;
+  return latest.total !== r.quoted_amount;
+};
+
 const spec = (r: Row) =>
   [
     r.material && `소재 ${r.material}`,
@@ -209,6 +245,10 @@ const spec = (r: Row) =>
           <div>
             <h1 class="text-2xl font-bold">VanaM 관리자</h1>
             <p class="mt-1 text-sm text-ink/45">주문 {orders.length}건 · 견적 {quotes.length}건 · 문의 {generals.length}건</p>
+            <p class:list={['chat-state mt-1 text-sm', CHAT_ENABLED ? 'is-on' : 'is-off']}>
+              {CHAT_ENABLED ? '구글챗 알림: 켜짐' : '구글챗 알림: 꺼짐 — 로컬/테스트 빌드'}
+            </p>
+            <p class:list={['chat-state mt-1 text-sm', MAIL_LIVE && mailReady ? 'is-on' : 'is-off']}>{mailLine}</p>
           </div>
           <div class="flex items-center gap-2">
             <button
@@ -224,6 +264,9 @@ const spec = (r: Row) =>
                 <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />
               </svg>
             </button>
+            <a href="/admin/quote" class="rounded-lg border border-ink/15 px-4 py-2 text-sm text-ink/60 transition hover:border-ink/40 hover:text-ink">
+              견적 계산기
+            </a>
             <button id="logout" class="rounded-lg border border-ink/15 px-4 py-2 text-sm text-ink/60 transition hover:border-ink/40 hover:text-ink">
               로그아웃
             </button>
@@ -311,6 +354,67 @@ const spec = (r: Row) =>
               자동: 하루 한 번 시장 중간환율을 받아 적용합니다. 방문자 접속 시 갱신되며, 조회에 실패하면 마지막 정상값을 유지합니다.
               직전 값 대비 ±10% 넘게 변동하면 적용을 보류하고 알림을 보냅니다.
               수동: 지정한 값만 사용하고 자동 갱신을 하지 않습니다. 저장 즉시 사이트에 반영됩니다.
+            </p>
+          </div>
+
+          <!-- ── 설정: 자동 견적 (고객 화면) — 켜고 끄는 곳은 여기 하나(/api/admin/quote-auto) ── -->
+          <div class="mt-6 rounded-xl border border-ink/10 bg-ink/[0.02] p-5" id="qa-card">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <h2 class="text-lg font-semibold text-accent">자동 견적 (고객 화면)</h2>
+              <div class="flex items-center gap-2">
+                <button id="qa-on" type="button" hidden
+                  class="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-onbrand transition hover:brightness-110">켜기</button>
+                <button id="qa-off" type="button" hidden
+                  class="rounded-lg border border-ink/15 px-3 py-1.5 text-sm text-ink/70 transition hover:border-accent hover:text-accent">끄기</button>
+              </div>
+            </div>
+            <dl class="mt-4 grid gap-x-8 gap-y-2 text-sm sm:grid-cols-2">
+              <div class="flex justify-between border-b border-ink/10 py-2">
+                <dt class="text-ink/50">상태</dt>
+                <dd id="qa-state" class="font-semibold text-ink">—</dd>
+              </div>
+              <div class="flex justify-between border-b border-ink/10 py-2">
+                <dt class="text-ink/50">가격 DB</dt>
+                <dd id="qa-db" class="text-ink/90">—</dd>
+              </div>
+              <div class="flex justify-between border-b border-ink/10 py-2">
+                <dt class="text-ink/50">개수 (정책·레시피·장비·기판)</dt>
+                <dd id="qa-counts" class="text-ink/90">—</dd>
+              </div>
+              <div class="flex justify-between border-b border-ink/10 py-2">
+                <dt class="text-ink/50">가져온 시각 · 규칙 버전 · sha</dt>
+                <dd id="qa-import" class="text-ink/90">—</dd>
+              </div>
+              <div class="flex justify-between border-b border-ink/10 py-2">
+                <dt class="text-ink/50">데이터 지문</dt>
+                <dd id="qa-fp" class="font-mono text-ink/90">—</dd>
+              </div>
+            </dl>
+            <p id="qa-warn" hidden class="mt-4 rounded-lg border border-danger/30 bg-danger/10 p-3 text-sm text-danger">가격 DB가 비어 있어 자동 견적이 동작하지 않습니다</p>
+            <p id="qa-msg" class="mt-3 text-sm" role="status" aria-live="polite"></p>
+            <p class="mt-3 text-xs leading-relaxed text-ink/40">
+              켜면 제품 페이지에 [예상 견적 보기]가 나타나고, 견적 요청마다 자동 견적이 저장됩니다.
+              끄면 즉시 이전 화면(견적서 다운로드)으로 돌아갑니다. 이미 저장된 견적은 조회 화면에 그대로 보입니다.
+            </p>
+          </div>
+
+          <!-- ── 설정: 가격 DB 올리기 (엑셀) — 브라우저가 엑셀을 읽고, 서버가 다시 검사한 뒤 한 번에 바꾼다(/api/admin/price-import) ── -->
+          <div class="mt-6 rounded-xl border border-ink/10 bg-ink/[0.02] p-5" id="pi-card">
+            <h2 class="text-lg font-semibold text-accent">가격 DB 올리기 (엑셀)</h2>
+            <div class="mt-4 flex flex-wrap items-center gap-2">
+              <input id="pi-file" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" class="text-sm text-ink/70" />
+              <button id="pi-preview" type="button"
+                class="rounded-lg border border-ink/15 px-3 py-1.5 text-sm text-ink/70 transition hover:border-accent hover:text-accent">미리보기</button>
+              <button id="pi-apply" type="button" disabled
+                class="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-onbrand transition hover:brightness-110">운영 가격 DB 바꾸기</button>
+            </div>
+            <p id="pi-msg" class="mt-3 text-sm" role="status" aria-live="polite"></p>
+            <div id="pi-result" hidden class="mt-4 text-sm"></div>
+            <p class="mt-3 text-xs leading-relaxed text-ink/40">
+              구글 시트 → 파일 → 다운로드 → Microsoft Excel(.xlsx) 로 받은 파일을 고르세요(10MB 이하).
+              파일은 이 브라우저에서 읽고 검사한 값만 서버로 보냅니다(파일은 저장하지 않습니다).
+              되돌리려면 이전 버전 엑셀을 다시 올리세요(구글 시트 버전 기록).
+              https 또는 localhost 주소에서만 동작합니다.
             </p>
           </div>
         </section>
@@ -573,7 +677,44 @@ const spec = (r: Row) =>
                   {spec(r) && <p class="mt-3 text-sm leading-relaxed text-ink/50">{spec(r)}</p>}
                   {r.details && <p class="mt-2 whitespace-pre-line rounded-lg bg-ink/[0.07] p-3 text-sm leading-relaxed text-ink/60">{r.details}</p>}
 
+                  {/* 견적 개정 요약 · 편집 — 개정이 없으면 편집 링크만 */}
+                  <div class="mt-3 flex flex-wrap items-center justify-between gap-3">
+                    <div class="min-w-0 text-sm leading-relaxed text-ink/50">
+                      {revSummary[r.id]?.first && <p>접수 시 자동 견적: {autoLine(revSummary[r.id].first!)}</p>}
+                      {revSummary[r.id]?.latest && (
+                        <p>현재 견적: 개정 {revSummary[r.id].latest!.rev} · {revSummary[r.id].latest!.source === 'auto' ? '자동' : '담당자'} · {revAmount(revSummary[r.id].latest!)} · {when(revSummary[r.id].latest!.createdAt ?? '')}</p>
+                      )}
+                    </div>
+                    <a href={`/admin/quote?id=${r.id}`} class="rounded-lg border border-ink/15 px-4 py-2 text-sm text-ink/60 transition hover:border-ink/40 hover:text-ink">견적 편집</a>
+                  </div>
+                  {/* 접수 확인 메일 — 결과 한 줄 + (신규 상태일 때) 보내기/다시 보내기. 기록이 없으면 이 기능 전에 접수된 건.
+                      보내는 중(2분 안)에는 버튼을 숨긴다 — 접수 직후 자동 발송과 겹쳐 두 번 나가지 않게 */}
+                  {(() => {
+                    const ack = ackLabel(r.ack_mail);
+                    if (!ack && r.status !== 'new') return null;
+                    return (
+                      <div class="mt-2 flex flex-wrap items-center gap-3 text-sm">
+                        {ack && <p class:list={[ack.tone === 'ok' ? 'text-ok' : ack.tone === 'bad' ? 'text-danger' : 'text-ink/40']}>{ack.text}</p>}
+                        {r.status === 'new' && !isFreshPending(r.ack_mail) && (
+                          <button type="button" data-ack-resend={r.id}
+                            class="rounded-lg border border-ink/15 px-3 py-2 text-sm text-ink/60 transition hover:border-ink/40 hover:text-ink">
+                            {ack ? '확인 메일 다시 보내기' : '확인 메일 보내기'}
+                          </button>
+                        )}
+                        <span data-ack-msg={r.id} role="status" aria-live="polite"></span>
+                      </div>
+                    );
+                  })()}
+                  {amountMismatch(r) && (
+                    <p class="mt-2 text-sm font-semibold text-warn">확정 금액과 현재 견적 합계가 다릅니다 — 고객 견적서는 단순 양식으로 나갑니다</p>
+                  )}
+
                   <form class="quote-form mt-4 flex flex-wrap items-end gap-3 border-t border-ink/10 pt-4" data-id={r.id}>
+                    {/* 두 입력 경로의 차이 — 견적 편집(엑셀식 계산·견적서)과 이 칸(금액만)을 헷갈리지 않게(10-01) */}
+                    <p class="w-full text-xs leading-relaxed text-ink/45">
+                      금액만 직접 정하는 칸입니다 — 달러(PayPal) 견적·입금 계좌·고객에게 보일 안내문은 여기서 넣습니다.
+                      엑셀처럼 품목을 계산해 견적서를 만들려면 위의 [견적 편집]을 쓰세요.
+                    </p>
                     <div>
                       <label class="block text-xs text-ink/45">통화 <span class="text-ink/30">— PayPal 결제 버튼은 $ USD 견적에만 표시됩니다</span></label>
                       <select name="currency"
@@ -695,6 +836,9 @@ const spec = (r: Row) =>
     )}
 
     <style>
+      /* 구글챗 알림 상태 — 공용 CSS 를 늘리지 않게 이 화면 전용 규칙으로 둔다 */
+      .chat-state.is-on { color: var(--color-ok); }
+      .chat-state.is-off { color: var(--color-warn); font-weight: 600; }
       /* 탭 — 선택된 것만 강조. 밑줄로 현재 위치를 표시한다. */
       .admin-tab {
         color: color-mix(in srgb, var(--color-ink) 45%, transparent);
@@ -828,6 +972,234 @@ const spec = (r: Row) =>
         void load();
       })();
 
+      // ── 자동 견적 스위치 ──────────────────────────────
+      // 켜고 끄는 곳은 이 카드 하나뿐이다(/api/admin/quote-auto). 켜기는 확인 후, 끄기는 바로.
+      (() => {
+        const $ = (id: string) => document.getElementById(id);
+        const card = $('qa-card');
+        if (!card) return;
+        const onBtn = $('qa-on') as HTMLButtonElement | null;
+        const offBtn = $('qa-off') as HTMLButtonElement | null;
+        const msg = $('qa-msg');
+        const say = (t: string, ok = true) => {
+          if (!msg) return;
+          msg.textContent = t;
+          msg.style.color = ok ? 'var(--color-accent)' : 'var(--color-danger)';
+        };
+        const setText = (id: string, t: string) => { const el = $(id); if (el) el.textContent = t; };
+
+        const load = async () => {
+          try {
+            const r = await fetch('/api/admin/quote-auto', { cache: 'no-store' });
+            const j = await r.json();
+            if (!j.ok) { say(j.error ?? '상태를 불러오지 못했습니다.', false); return; }
+            const on = j.on === true;
+            const db = j.priceDb ?? {};
+            const c = db.counts ?? {};
+            const lg = db.importLog;
+            setText('qa-state', on ? '켜짐' : '꺼짐');
+            ($('qa-state') as HTMLElement | null)?.style.setProperty('color', on ? 'var(--color-ok)' : 'var(--color-ink)');
+            setText('qa-db', db.ready ? '준비됨' : '비어 있음');
+            setText('qa-counts', `${c.policy ?? 0} · ${c.recipes ?? 0} · ${c.equipment ?? 0} · ${c.substrates ?? 0}`);
+            setText('qa-import', lg ? `${lg.imported_at} · ${lg.rules_version} · ${lg.sha256}` : '—');
+            setText('qa-fp', db.ready && db.fingerprint ? String(db.fingerprint).slice(0, 12) : '—');
+            const warn = $('qa-warn');
+            if (warn) warn.hidden = !(on && !db.ready);
+            if (onBtn) onBtn.hidden = on;
+            if (offBtn) offBtn.hidden = !on;
+          } catch (e) {
+            say('상태를 불러오지 못했습니다.', false);
+          }
+        };
+
+        const save = async (on: boolean) => {
+          say('저장 중…');
+          try {
+            const r = await fetch('/api/admin/quote-auto', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ on }),
+            });
+            const j = await r.json();
+            if (j.ok) say(on ? '켰습니다. 제품 페이지에 바로 반영됩니다.' : '껐습니다. 제품 페이지가 이전 화면으로 돌아갑니다.');
+            else say(j.error ?? '저장 실패', false);
+          } catch (e) { say('저장 실패', false); }
+          await load();
+        };
+
+        onBtn?.addEventListener('click', () => {
+          if (!confirm('켜면 제품 페이지에 [예상 견적 보기]가 나타나고, 견적 요청마다 자동 견적이 저장됩니다. 켤까요?')) return;
+          void save(true);
+        });
+        offBtn?.addEventListener('click', () => { void save(false); });
+        // 가격 DB 올리기 카드가 바꾸면 다시 불러온다
+        document.addEventListener('vanam:price-db-changed', () => { void load(); });
+
+        void load();
+      })();
+
+      // ── 가격 DB 올리기 (엑셀) ──────────────────────────
+      // 엑셀은 이 브라우저에서 읽는다(워커 CPU 한도) → 검사 → 서버 미리보기(서버가 다시 검사) → 확인 → 교체.
+      // 서버는 미리보기 때의 지문(base)이 지금 DB 와 같을 때만 바꾸고, 바꾼 뒤 다시 읽어 지문을 확인한다.
+      (() => {
+        const card = document.getElementById('pi-card');
+        if (!card) return;
+        const fileIn = document.getElementById('pi-file') as HTMLInputElement;
+        const prevBtn = document.getElementById('pi-preview') as HTMLButtonElement;
+        const applyBtn = document.getElementById('pi-apply') as HTMLButtonElement;
+        const msgEl = document.getElementById('pi-msg') as HTMLElement;
+        const out = document.getElementById('pi-result') as HTMLElement;
+        const MAX_FILE = 10 * 1024 * 1024;
+        const LABEL: Record<string, string> = {
+          price_policy: '정책', price_equipment: '장비', price_recipe: '레시피', price_substrate: '기판', price_alias: '별칭',
+        };
+        const esc = (v: unknown) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        const say = (t: string, tone: 'ok' | 'bad' | '' = '') => {
+          msgEl.textContent = t;
+          msgEl.style.color = tone === 'ok' ? 'var(--color-ok)' : tone === 'bad' ? 'var(--color-danger)' : '';
+        };
+        let ready: { file: { name: string; size: number; sha256: string }; data: unknown; base: string; next: string } | null = null;
+        let busy = false; // [운영 가격 DB 바꾸기] 진행 중 — 누르자마자 잠그고 confirm 취소·오류 때만 푼다
+        const setApply = (on: boolean) => { applyBtn.disabled = !on; applyBtn.style.opacity = on ? '' : '0.4'; };
+        const reset = () => { ready = null; setApply(false); out.hidden = true; out.innerHTML = ''; say(''); };
+        setApply(false);
+
+        const showProblems = (title: string, list: string[], total?: number) => {
+          const n = total ?? list.length;
+          out.innerHTML = `<p style="font-weight:600;color:var(--color-danger)">${esc(title)} — ${n}건</p>` +
+            `<ul style="margin-top:.5rem;padding-left:1.25rem;list-style:disc;line-height:1.6">${list.slice(0, 30).map((p) => `<li>${esc(p)}</li>`).join('')}</ul>` +
+            (n > 30 ? `<p style="margin-top:.25rem;opacity:.6">… 외 ${n - 30}건</p>` : '');
+          out.hidden = false;
+        };
+
+        const showPreview = (j: any) => {
+          const th = 'style="text-align:left;padding:.35rem .6rem;border-bottom:1px solid color-mix(in srgb,var(--color-ink) 12%,transparent);opacity:.6;font-weight:500"';
+          const td = 'style="padding:.35rem .6rem;border-bottom:1px solid color-mix(in srgb,var(--color-ink) 8%,transparent)"';
+          const rows = Object.keys(LABEL).map((t) => {
+            const d = j.diff?.[t] ?? {};
+            return `<tr><td ${td}>${esc(LABEL[t])}</td><td ${td}>${esc(j.current?.counts?.[t] ?? 0)} → ${esc(j.counts?.[t] ?? 0)}</td>` +
+              `<td ${td}>${esc(d.added ?? 0)}</td><td ${td}>${esc(d.removed ?? 0)}</td><td ${td}>${esc(d.changed ?? 0)}</td></tr>`;
+          }).join('');
+          const details = Object.keys(LABEL).map((t) => {
+            const ids = j.diff?.[t]?.ids;
+            if (!ids || (!ids.added.length && !ids.removed.length && !ids.changed.length)) return '';
+            const line = (k: string, v: string) => (v ? `<p style="margin-top:.25rem"><span style="opacity:.6">${esc(k)}:</span> ${v}</p>` : '');
+            return `<div style="margin-top:.5rem"><p style="font-weight:600">${esc(LABEL[t])}</p>` +
+              line('추가', ids.added.map(esc).join(', ')) + line('삭제', ids.removed.map(esc).join(', ')) +
+              line('변경', ids.changed.map((c: any) => `${esc(c.id)} (${c.cols.map(esc).join(', ')})`).join(' · ')) + '</div>';
+          }).join('');
+          out.innerHTML =
+            `<div style="overflow-x:auto"><table style="border-collapse:collapse;min-width:24rem"><thead><tr><th ${th}>표</th><th ${th}>행 수 (지금 → 새)</th><th ${th}>추가</th><th ${th}>삭제</th><th ${th}>변경</th></tr></thead><tbody>${rows}</tbody></table></div>` +
+            (details ? `<details style="margin-top:.75rem"><summary style="cursor:pointer;opacity:.7">바뀌는 ID·열 이름 보기</summary>${details}</details>` : '') +
+            `<p style="margin-top:.75rem;font-family:ui-monospace,monospace">새 지문 ${esc(String(j.next?.fingerprint ?? '').slice(0, 12))} · 지금 지문 ${esc(String(j.current?.fingerprint ?? '').slice(0, 12))}</p>` +
+            (j.same ? `<p style="margin-top:.5rem;font-weight:600">바뀌는 내용이 없습니다</p>` : '');
+          out.hidden = false;
+        };
+
+        fileIn.addEventListener('change', reset);
+
+        prevBtn.addEventListener('click', async () => {
+          reset();
+          const file = fileIn.files?.[0];
+          if (!file) { say('엑셀 파일을 먼저 고르세요.', 'bad'); return; }
+          if (file.size > MAX_FILE) { say('파일이 10MB 를 넘습니다.', 'bad'); return; }
+          if (!window.crypto?.subtle) { say('이 주소에서는 파일을 검사할 수 없습니다 — https 또는 localhost 주소로 여세요.', 'bad'); return; }
+          // 미리보기 중에는 파일 선택·미리보기를 잠근다. 그래도 파일이 바뀌었으면(각 await 뒤 확인) 조용히 멈춘다.
+          const gone = () => fileIn.files?.[0] !== file;
+          prevBtn.disabled = true;
+          fileIn.disabled = true;
+          say('엑셀을 읽는 중…');
+          try {
+            const { openXlsxWeb } = await import('../../lib/xlsx-core.js');
+            const { readPriceWorkbook, validatePriceData } = await import('../../lib/price-sheet.js');
+            if (gone()) return;
+            const bytes = new Uint8Array(await file.arrayBuffer());
+            if (gone()) return;
+            const sha256 = [...new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))].map((b) => b.toString(16).padStart(2, '0')).join('');
+            if (gone()) return;
+            let wb;
+            try { wb = await openXlsxWeb(bytes); } catch (e) { if (!gone()) say(`엑셀을 읽지 못했습니다: ${(e as Error)?.message ?? e}`, 'bad'); return; }
+            if (gone()) return;
+            const read = readPriceWorkbook(wb);
+            if (read.problems.length) { say(''); showProblems('엑셀 검사 실패 — 바꾸지 않습니다', read.problems); return; }
+            const v = validatePriceData(read.data);
+            if (v.problems.length) { say(''); showProblems('데이터 검사 실패 — 바꾸지 않습니다', v.problems); return; }
+            say('서버에서 지금 가격 DB 와 비교하는 중…');
+            const fileInfo = { name: file.name, size: file.size, sha256 };
+            const r = await fetch('/api/admin/price-import', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ mode: 'preview', file: fileInfo, data: read.data }),
+            });
+            const j = await r.json().catch(() => ({}));
+            if (gone()) return;
+            if (r.status === 401) { say('로그인이 만료되었습니다 — 새로고침 후 다시 로그인하세요.', 'bad'); return; }
+            if (j.error === 'invalid') { say(''); showProblems('서버 검사 실패 — 바꾸지 않습니다', j.problems ?? [], j.count); return; }
+            if (!j.ok) { say(`미리보기 실패: ${j.error ?? r.status}`, 'bad'); return; }
+            showPreview(j);
+            say(j.same ? '' : '미리보기를 확인한 뒤 [운영 가격 DB 바꾸기]를 누르세요.');
+            if (!j.same) {
+              ready = { file: fileInfo, data: read.data, base: j.current.fingerprint, next: j.next.fingerprint };
+              setApply(true);
+            }
+          } catch (e) {
+            if (!gone()) say(`미리보기 실패: ${(e as Error)?.message ?? e}`, 'bad');
+          } finally {
+            prevBtn.disabled = false;
+            fileIn.disabled = false;
+          }
+        });
+
+        applyBtn.addEventListener('click', async () => {
+          if (!ready || busy) return;
+          busy = true;
+          setApply(false);
+          const job = ready;
+          const release = () => { busy = false; setApply(!!ready); };
+          let autoOn = false;
+          try { autoOn = (await (await fetch('/api/admin/quote-auto', { cache: 'no-store' })).json())?.on === true; } catch { autoOn = false; }
+          const head = autoOn ? '지금 자동 견적이 켜져 있어 고객 예상 견적에 바로 반영됩니다.\n\n' : '';
+          if (!confirm(`${head}가격 DB 를 이 엑셀 내용으로 바꿉니다. 자동 견적과 새로 계산하는 견적에 바로 쓰입니다(이미 저장된 견적 금액은 그대로). 바꿀까요?`)) { release(); return; }
+          // 확인 창이 떠 있는 동안 파일을 바꿨으면(reset → ready 비움) 바꾸지 않는다
+          if (ready !== job) { release(); return; }
+          say('바꾸는 중…');
+          try {
+            const r = await fetch('/api/admin/price-import', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ mode: 'apply', file: job.file, data: job.data, baseFingerprint: job.base, expectFingerprint: job.next }),
+            });
+            const j = await r.json().catch(() => ({}));
+            if (ready === job) ready = null;
+            if (r.status === 401) { say('로그인이 만료되었습니다 — 새로고침 후 다시 로그인하세요.', 'bad'); return; }
+            if (j.ok) {
+              const fp = String(j.fingerprint ?? '').slice(0, 12);
+              say(`바꿨습니다 — 지문 ${fp}${j.fingerprint === job.next ? ' (미리보기와 같음)' : ''}`, 'ok');
+              document.dispatchEvent(new CustomEvent('vanam:price-db-changed'));
+              return;
+            }
+            if (j.error === 'db_changed') { say('미리보기 뒤에 가격 DB 가 바뀌었습니다 — 다시 미리보기를 누르세요', 'bad'); return; }
+            if (j.error === 'data_changed') { say('미리보기 뒤 데이터가 달라졌습니다 — 다시 미리보기를 누르세요', 'bad'); return; }
+            if (j.error === 'db_error') { say('저장하지 못했습니다 — 가격 DB 는 바뀌지 않았습니다', 'bad'); return; }
+            if (j.error === 'applied_unverified') {
+              say('가격 DB 는 바뀌었지만 확인 읽기에 실패했습니다 — 다시 미리보기를 누르면 지금 상태를 볼 수 있습니다', 'bad');
+              document.dispatchEvent(new CustomEvent('vanam:price-db-changed'));
+              return;
+            }
+            if (j.error === 'verify_mismatch') {
+              say('경고: 가격 DB 는 이미 바뀌었지만 다시 읽은 지문이 미리보기와 다릅니다 — 다시 미리보기로 확인하세요', 'bad');
+              document.dispatchEvent(new CustomEvent('vanam:price-db-changed'));
+              return;
+            }
+            if (j.error === 'invalid') { showProblems('서버 검사 실패 — 바꾸지 않습니다', j.problems ?? [], j.count); say(''); return; }
+            say(`바꾸지 못했습니다: ${j.error ?? r.status}`, 'bad');
+          } catch (e) {
+            say(`바꾸지 못했습니다: ${(e as Error)?.message ?? e} — 결과를 확인하려면 다시 미리보기를 누르세요`, 'bad');
+          } finally {
+            // 응답이 오면 ready 가 비어 버튼은 꺼진 채(다시 미리보기 필요) · 응답 없이 실패했을 때만 다시 켜진다
+            release();
+          }
+        });
+      })();
+
       // 로그인
       const lf = document.getElementById('login-form') as HTMLFormElement | null;
       lf?.addEventListener('submit', async (e) => {
@@ -882,6 +1254,39 @@ const spec = (r: Row) =>
           } catch (err) {
             msg.textContent = `실패: ${err}`;
             msg.style.color = 'var(--color-danger)';
+          } finally {
+            btn.disabled = false;
+          }
+        });
+      });
+
+      // 접수 확인 메일 (다시) 보내기 — 고객에게 메일이 나가는 동작이라 확인을 받는다(테스트 빌드는 회사 주소로만 나간다).
+      document.querySelectorAll<HTMLButtonElement>('[data-ack-resend]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const id = btn.dataset.ackResend!;
+          if (!confirm(`${id}\n\n고객에게 접수 확인 메일(견적 요청서 PDF 첨부)을 보냅니다.\n진행하시겠습니까?`)) return;
+          const msg = document.querySelector(`[data-ack-msg="${id}"]`) as HTMLElement | null;
+          const say = (t: string, ok = true) => {
+            if (!msg) return;
+            msg.textContent = t;
+            msg.style.color = ok ? 'var(--color-accent)' : 'var(--color-danger)';
+          };
+          btn.disabled = true;
+          say('보내는 중… (PDF 를 만드느라 10초쯤 걸릴 수 있습니다)');
+          try {
+            const res = await fetch('/api/admin/quote-mail', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id }),
+            });
+            const j = await res.json().catch(() => ({}));
+            if (res.status === 401) { say('로그인이 만료되었습니다. 새로고침한 뒤 다시 로그인하세요.', false); return; }
+            if (res.status === 409) { say('아직 보내는 중입니다. 잠시 뒤 새로고침해 결과를 확인하세요.', false); return; }
+            if (j.ok) { say('보냈습니다. 새로고침합니다.'); setTimeout(() => location.reload(), 900); return; }
+            if (j.result) { say('보내지 못했습니다 — 새로고침 뒤 이 줄에 사유가 나옵니다.', false); setTimeout(() => location.reload(), 1500); return; }
+            say(`실패: ${j.error ?? res.status}`, false);
+          } catch (e) {
+            say('처리 중 오류가 발생했습니다.', false);
           } finally {
             btn.disabled = false;
           }

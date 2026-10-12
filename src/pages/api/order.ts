@@ -5,12 +5,13 @@
 //    (견적 주문은 DB의 quoted_amount 를 쓴다 — 이 역시 관리자가 넣은 값)
 import type { APIRoute } from 'astro';
 import { getCollection } from 'astro:content';
-import { env as cfEnv } from 'cloudflare:workers';
 import { db, newId, nowIso, nowKst } from '../../lib/db';
 import { isKnownCountry } from '../../lib/countries';
 import { rateLimit, tooMany } from '../../lib/rate-limit';
 import { verifyTurnstile } from '../../lib/turnstile';
 import { getRate, pickWaitUntil } from '../../lib/fx';
+// 구글챗은 이 통로로만 보낸다 — Cloudflare main 빌드가 아니면 코드에서 차단된다.
+import { sendChat } from '../../lib/chat-send';
 
 export const prerender = false;
 
@@ -313,13 +314,7 @@ async function handleOrder({ request, locals }: { request: Request; locals: unkn
     return json({ ok: false, error: 'db_error' }, 500);
   }
 
-  // ── 7) 구글챗 알림 ─────────────────────────────────
-  const rawHook =
-    (cfEnv as Record<string, unknown> | undefined)?.GOOGLE_CHAT_WEBHOOK ??
-    import.meta.env.GOOGLE_CHAT_WEBHOOK ??
-    '';
-  const webhook = typeof rawHook === 'string' ? rawHook.trim().replace(/^["']|["']$/g, '') : '';
-
+  // ── 7) 구글챗 알림 (chat-send.ts 가 유일한 발송 통로) ──────────────
   // 주문 상세 — 계좌이체는 접수 즉시, PayPal 은 결제가 완료된 뒤에 이 내용을 보낸다.
   const detail = [
     `주문번호: ${orderId}`,
@@ -362,23 +357,10 @@ async function handleOrder({ request, locals }: { request: Request; locals: unkn
     ? ['🏦 *새 주문 (국내 · 계좌이체 안내 필요)*', detail].join('\n')
     : '';
 
-  if (webhook && text) {
-    try {
-      await fetch(webhook, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json; charset=UTF-8' },
-        body: JSON.stringify({ text }),
-      });
-    } catch (e) {
-      console.error('[order] 알림 실패 (주문은 저장됨):', e);
-    }
-  } else if (webhook) {
-    // PayPal 주문 — 결제 완료 시 발송되므로 접수 시점에는 알리지 않는다.
-  } else {
-    // ⚠️ payload(text)에는 주문자 이름·이메일·전화·배송지가 들어있다. 로그에 남기지 않는다.
-    //    진단은 주문번호만으로 충분하다.
-    console.warn('[order] GOOGLE_CHAT_WEBHOOK 미설정 — 알림을 건너뜁니다. 주문번호:', orderId);
-  }
+  // PayPal 주문(text 비어 있음)은 결제 완료 시 발송되므로 접수 시점에는 보내지 않는다.
+  // 전송 실패는 주문 결과에 영향을 주지 않는다(주문은 이미 저장됨) — 로그는 sendChat 이 남긴다.
+  // ⚠️ payload(text)에는 주문자 이름·이메일·전화·배송지가 들어있다. 로그에는 주문번호만 남는다.
+  if (text) await sendChat(text, { tag: 'order', ref: orderId });
 
   return json({ ok: true, orderId, amount });
 }
