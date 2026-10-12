@@ -144,6 +144,9 @@ eq('planRuns 경계', [planRuns(9), planRuns(10)], [{ runs: 1, manual: false }, 
 // 담당자 확인 항목
 eq('후보 2개 → manual', cust({ steps: [S('ALD', 'Al2O3', '10')], sampleCount: 1 }), { kind: 'manual', manual: ['1단계 ALD Al₂O₃'] });
 eq('분석 → manual', cust({ steps: [S('Sputter', 'Ti', '10')], measurements: ['XPS'], sampleCount: 1 }), { kind: 'manual', manual: ['분석: XPS'] });
+eq('분석 이름 표시 띄어쓰기(고객·담당자 문구)', [cust({ steps: [S('Sputter', 'Ti', '10')], measurements: ['SheetResistance'], sampleCount: 1 }).manual,
+  manualLabelAdmin({ code: 'measure', name: 'SheetResistance' }), manualLabel({ code: 'measure', name: 'SheetResistance' }, 'en')],
+  [['분석: Sheet Resistance'], '분석: Sheet Resistance — 가격 자료 없음', 'Analysis: Sheet Resistance']);
 eq('어닐링 → manual', cust({ steps: [S('Sputter', 'Ti', '10'), S('Annealing', 'N2', '60'), S('Sputter', 'Pt', '10')], sampleCount: 1 }), { kind: 'manual', manual: ['2단계 Annealing N₂'] });
 // 공정 시퀀스 물질 변경 — Annealing O2·Ar 추가, Ag·Te 는 Evaporator 로(가격 자료가 없어 담당자 확인)
 eq('어닐링 O2 → manual', cust({ steps: [S('Sputter', 'Ti', '10'), S('Annealing', 'O2', '30')], sampleCount: 1 }), { kind: 'manual', manual: ['2단계 Annealing O₂'] });
@@ -160,7 +163,7 @@ eq(`두께 ${AUTO_MAX_NM + 1} nm → manual(그 단계)`, cust({ steps: [S('Sput
   const r = est({ steps: [S('Sputter', 'Ti', '9'.repeat(300))], sampleCount: 1 }, (db, q) => { called++; return fakeEngine(db, q); });
   eq('두께 300자리 숫자 → manual · 엔진을 부르지 않음(터무니없는 금액 저장 안 함)', [r.customer, called, r.debug.result], [{ kind: 'manual', manual: ['1단계 Sputter Ti'] }, 0, null]);
 }
-eq(`플라즈마 ${AUTO_MAX_MIN + 1} 분 → manual`, cust({ steps: [S('PlasmaCleaning (In-situ)', 'Ar', String(AUTO_MAX_MIN + 1)), S('Sputter', 'Ti', '10')], sampleCount: 1 }), { kind: 'manual', manual: ['1단계 PlasmaCleaning (In-situ) Ar'] });
+eq(`플라즈마 ${AUTO_MAX_MIN + 1} 분 → manual`, cust({ steps: [S('PlasmaCleaning (In-situ)', 'Ar', String(AUTO_MAX_MIN + 1)), S('Sputter', 'Ti', '10')], sampleCount: 1 }), { kind: 'manual', manual: ['1단계 Plasma Cleaning (In-situ) Ar'] });
 eq(`플라즈마 ${AUTO_MAX_MIN} 분 → estimate`, cust({ steps: [S('PlasmaCleaning (In-situ)', 'Ar', String(AUTO_MAX_MIN)), S('Sputter', 'Ti', '10')], sampleCount: 1 }).kind, 'estimate');
 eq('어닐링 범위 초과 + 가격 없음 → 고객 문구 한 번만', cust({ steps: [S('Sputter', 'Ti', '10'), S('Annealing', 'N2', '99999')], sampleCount: 1 }), { kind: 'manual', manual: ['2단계 Annealing N₂'] });
 eq('담당자 문구: 범위 초과 사유', manualLabelAdmin({ code: 'step', step: 2, process: 'Sputter', material: 'Pt', reason: 'overLimit' }), '2단계 Sputter Pt — 자동 계산 범위를 넘는 수치(두께·시간)');

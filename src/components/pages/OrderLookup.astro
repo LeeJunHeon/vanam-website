@@ -60,7 +60,7 @@ const t = isKo
         title: '견적·주문 요청', received: '접수일', product: '요청 상품',
         method: '공정', substrate: '기판', reqBody: '요청 내용 보기',
         dSeq: '[공정 시퀀스]', dAnalysis: '[분석]', dDelivery: '기판 전달',
-        dSamples: '총 샘플 수량', dDue: '완료 희망일', dNotes: '주의사항',
+        dSamples: '총 샘플 수량', dDue: '완료 희망일', dNotes: '주의사항 및 요청사항',
         dShip: '[배송 주소]', dCountry: '국가', dSecSub: '[기판 정보]', dRecip: '수령인', dAddr: '주소', dPostal: '우편번호', dShipMemo: '배송 요청',
         dPreFilm: '박막 증착 여부', dPreFilmNone: '없음', dPreFilmYes: '있음',
         amount: '견적 금액', vat: '(부가세 포함)',
@@ -212,7 +212,7 @@ const inputClass =
   // 서류(견적서·요청서·주문서)는 모두 엑셀 「견적서」 틀(src/lib/doc-excel.js)
   import {
     buildQuoteDoc, buildRequestDoc, buildOrderDoc, openDoc,
-    quoteFromAmount, requestDocFrom, orderDocFrom, docContact, ymdLocal, specFromDetails, customerLine,
+    quoteFromAmount, requestDocFrom, orderDocFrom, docContact, ymdLocal, specFromDetails, customerLine, telDisplay,
   } from '../../lib/quote-doc';
   const form = document.getElementById('lookup-form') as HTMLFormElement | null;
   if (form) {
@@ -279,7 +279,7 @@ const inputClass =
         ...(dj.ship ? [
           '\n' + INQ.dShip,
           dj.ship.country ? `${INQ.dCountry}: ${dj.ship.country}` : '',
-          `${INQ.dRecip}: ${dj.ship.name ?? ''}${dj.ship.phone ? ' \u00b7 ' + dj.ship.phone : ''}`,
+          `${INQ.dRecip}: ${dj.ship.name ?? ''}${dj.ship.phone ? ' \u00b7 ' + telDisplay(dj.ship.phone, document.documentElement.lang === 'ko' ? 'ko' : 'en') : ''}`,
           `${INQ.dAddr}: ${dj.ship.addr ?? ''}`,
           dj.ship.zip ? `${INQ.dPostal}: ${dj.ship.zip}` : '',
           dj.ship.memo ? `${INQ.dShipMemo}: ${dj.ship.memo}` : '',

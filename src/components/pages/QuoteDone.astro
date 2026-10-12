@@ -117,7 +117,7 @@ const t = isKo
 <script>
   import { renderQuoteBox, docOptions, injectQuoteViewStyle } from '../../lib/quote-view-render.js';
   // 서류는 견적서·요청서 모두 엑셀 틀(src/lib/doc-excel.js) — 견적 폼의 [견적 요청서 다운로드]와 같은 요청서
-  import { buildQuoteDoc, buildRequestDoc, openDoc, requestDocFrom, ymdLocal } from '../../lib/quote-doc';
+  import { buildQuoteDoc, buildRequestDoc, openDoc, requestDocFrom, ymdLocal, telDisplay } from '../../lib/quote-doc';
   // 접수번호는 URL 로, 제출 내용은 세션으로 받는다.
   const root = document.getElementById('qd-root')!;
   const L: Record<string, string> = JSON.parse(root.dataset.labels || '{}');
@@ -162,7 +162,8 @@ const t = isKo
     const order = ['product', 'name', 'company', 'email', 'phone', 'material', 'method', 'substrate'];
     const pairs = order
       .filter((k) => (d[k] ?? '').trim() !== '')
-      .map((k) => ({ l: L[k] ?? k, v: d[k] }));
+      // 연락처는 서류와 같은 모양(+821012345678 → 010-1234-5678 · 영문 +82 10-1234-5678) — 저장값은 그대로
+      .map((k) => ({ l: L[k] ?? k, v: k === 'phone' ? telDisplay(d[k], document.documentElement.lang === 'ko' ? 'ko' : 'en') : d[k] }));
 
     document.getElementById('qd-rows')!.innerHTML = pairs
       .map((p) => `<div class="flex gap-3"><dt class="w-20 shrink-0 text-xs leading-6 text-ink/40">${esc(p.l)}</dt><dd class="min-w-0 text-ink/75">${esc(p.v)}</dd></div>`)
