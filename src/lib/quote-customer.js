@@ -13,7 +13,7 @@
 // ⚠️ 규칙은 DB 값으로 런타임에 판단한다. 실제 장비·레시피·기판 ID·단가를 코드에 적지 않는다.
 // ⚠️ 엔진(computeQuote)과 USD 표기(formatUsd)는 인자로 받는다 — node 테스트가 빌드 없이 쓰기 위해.
 import { mapFormToQuote, conv, parseThickness, REASON, QuoteMapError } from './quote-map.js';
-import { SUBSTRATE_GRADES, GRADED_SUBSTRATES } from './quote-fields.js';
+import { SUBSTRATE_GRADES, GRADED_SUBSTRATES, displayName } from './quote-fields.js';
 
 /** 입력 오류 목록은 앞에서 이만큼만 돌려준다(단계가 아주 많은 요청에서 응답이 커지지 않게). */
 export const MAX_FORM_ERRORS = 30;
@@ -199,8 +199,9 @@ export function manualLabel(e, locale) {
   switch (e?.code) {
     case 'samples': return T.manySamples;
     case 'substrate': return T.substrate(...substrateParts(e, T));
-    case 'step': return T.step(e.step, e.process, prettyFormula(e.material));
-    case 'measure': return T.measure(e.name);
+    // 공정·분석 이름은 표시용 띄어쓰기(SheetResistance → Sheet Resistance) — 폼·요청서와 같은 함수
+    case 'step': return T.step(e.step, displayName(e.process), prettyFormula(e.material));
+    case 'measure': return T.measure(displayName(e.name));
     case 'pricing': return T.pricing;
     case 'size': return T.size;
     case 'input':
@@ -224,8 +225,8 @@ export function manualLabelAdmin(e) {
     case 'samples': return T.manySamples;
     case 'substrate':
       return `${T.substrate(...substrateParts(e, T))} — ${e.status === 'ambiguous' ? '같은 사양 원가가 다름' : '목록에 없음'}`;
-    case 'step': return `${T.step(e.step, e.process, prettyFormula(e.material))} — ${REASON[e.reason] ?? e.reason}`;
-    case 'measure': return `${T.measure(e.name)} — 가격 자료 없음`;
+    case 'step': return `${T.step(e.step, displayName(e.process), prettyFormula(e.material))} — ${REASON[e.reason] ?? e.reason}`;
+    case 'measure': return `${T.measure(displayName(e.name))} — 가격 자료 없음`;
     case 'pricing': return `${T.pricing} — 엔진 상태: ${e.engineStatus}`;
     case 'size':
       return `자동 계산 한도 초과 — ${e.what === 'layers' ? '층' : '품목'} ${e.count}개(최대 ${e.max}) · 편집기에서 품목을 묶어 입력`;
