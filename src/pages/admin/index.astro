@@ -215,7 +215,8 @@ const spec = (r: Row) =>
           {configured ? (
             <>
               <p class="mt-2 text-sm text-ink/50">비밀번호를 입력하세요.</p>
-              <form id="login-form" class="mt-8 space-y-4">
+              {/* method="post": 스크립트가 못 뜬 상태에서 Enter 로 제출돼도 비밀번호가 주소창(GET)에 실리지 않게 */}
+              <form id="login-form" method="post" class="mt-8 space-y-4">
                 <input id="pw" type="password" autocomplete="current-password" required
                   class="w-full rounded-lg border border-ink/10 bg-ink/[0.03] px-4 py-3 text-ink outline-none transition focus:border-accent"
                   placeholder="비밀번호" />
@@ -709,7 +710,7 @@ const spec = (r: Row) =>
                     <p class="mt-2 text-sm font-semibold text-warn">확정 금액과 현재 견적 합계가 다릅니다 — 고객 견적서는 단순 양식으로 나갑니다</p>
                   )}
 
-                  <form class="quote-form mt-4 flex flex-wrap items-end gap-3 border-t border-ink/10 pt-4" data-id={r.id}>
+                  <form method="post" class="quote-form mt-4 flex flex-wrap items-end gap-3 border-t border-ink/10 pt-4" data-id={r.id}>
                     {/* 두 입력 경로의 차이 — 견적 편집(엑셀식 계산·견적서)과 이 칸(금액만)을 헷갈리지 않게(10-01) */}
                     <p class="w-full text-xs leading-relaxed text-ink/45">
                       금액만 직접 정하는 칸입니다 — 달러(PayPal) 견적·입금 계좌·고객에게 보일 안내문은 여기서 넣습니다.

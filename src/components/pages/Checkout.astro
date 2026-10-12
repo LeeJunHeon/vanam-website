@@ -24,32 +24,23 @@ const locale = (Astro.currentLocale ?? 'en') as 'ko' | 'en';
 const isKo = locale === 'ko';
 const lhref = (p: string) => getRelativeLocaleUrl(locale, p);
 
-// ── 견적 주문이면 DB에서 확정 금액을 읽는다 ──
+// ── 견적 주문(/checkout?quote=INQ-…) — 10-12 닫았다 ──
+// ⚠️ 이 주문서로 견적을 결제하던 길은 닫았다(사이트 안에 이 주소로 가는 링크는 없다).
+//   ① 접수번호만 알면 의뢰자 이름·이메일이 화면에 채워져 나왔다(조회 화면과 달리 이메일 확인이 없다)
+//   ② 견적 통화를 무시해 USD 견적이 같은 숫자의 원화로 주문됐다($1,500 견적 → $1.09 청구)
+//   ③ 결제가 끝난 견적도 다시 주문됐다.
+//   견적 결제는 '주문·견적 조회'(접수번호 + 이메일 확인 뒤 PayPal · 계좌 안내)에서 한다. 서버(/api/order)도 막는다.
+//   아래 quote 관련 화면 분기는 늘 '견적 없음'으로 지나간다(값은 항상 null).
 const quoteId = Astro.url.searchParams.get('quote') ?? '';
-let quote: {
+const quote = null as {
   id: string; product_sku: string | null; product_name: string | null;
   quoted_amount: number | null; name: string; email: string; status: string;
-} | null = null;
-let quoteError = '';
-
-if (quoteId) {
-  if (!/^INQ-\d{8}-[A-Z0-9]{4}$/.test(quoteId)) {
-    quoteError = isKo ? '잘못된 견적 번호입니다.' : 'Invalid quote reference.';
-  } else {
-    const d = await db();
-    if (!d) {
-      quoteError = isKo ? '견적을 불러올 수 없습니다.' : 'Unable to load the quote.';
-    } else {
-      quote = await d
-        .prepare(`SELECT id, product_sku, product_name, quoted_amount, name, email, status FROM inquiries WHERE id = ?`)
-        .bind(quoteId)
-        .first();
-      if (!quote) quoteError = isKo ? '견적을 찾을 수 없습니다.' : 'Quote not found.';
-      else if (!quote.quoted_amount) quoteError = isKo ? '아직 금액이 책정되지 않았습니다.' : 'This quote has not been priced yet.';
-      else if (quote.status === 'closed') quoteError = isKo ? '종료된 견적입니다.' : 'This quote is closed.';
-    }
-  }
-}
+} | null;
+const quoteError = quoteId
+  ? (isKo
+      ? '견적 결제는 ‘주문·견적 조회’에서 접수번호와 이메일로 조회한 뒤 진행해 주세요.'
+      : 'To pay for a quote, please look it up on the Order & quote lookup page with your request number and email.')
+  : '';
 
 // ── 상품 카탈로그 (금액 표시 + 배송 필요 여부) ──
 const all = await getCollection('products');
@@ -107,7 +98,8 @@ const t = isKo
       desiredDate: '희망 완료일 (선택)', desiredDateShip: '희망 배송일 (선택)', desiredDatePh: '예: 2026-09 또는 자유롭게 기재',
       orderNote: '요청사항 (선택)', orderNotePh: '추가 요청·참고사항이 있으면 적어주세요',
       name: '이름', email: '이메일', phone: '연락처', company: '회사 / 소속',
-      phoneHint: '해외 연락처는 국가번호를 포함해 주세요 (예: +1 555 000 0000)',
+      // 국가번호는 입력칸 왼쪽 국기 메뉴에서 고른다('+'를 입력하면 국가 검색이 열려 칸이 비는 것처럼 보였다 — 10-12)
+      phoneHint: '해외 연락처는 왼쪽 국기 메뉴에서 국가를 고른 뒤 번호만 입력해 주세요.',
       noShip: '이 주문은 실물 배송이 없습니다. 결과는 입력하신 이메일로 안내드립니다.',
       shipSame: '주문자와 동일',
       shipName: '수령인', shipPhone: '수령인 연락처',
@@ -120,7 +112,7 @@ const t = isKo
       courier: '택배사 계정번호 (FedEx / DHL / UPS 등)',
       courierHint: '착불 배송이므로 수령인의 택배사 계정으로 배송비가 청구됩니다. 계정번호가 없으시면 비워두시고, 담당자가 별도로 안내드립니다.',
       taxWant: '세금계산서가 필요합니다 (사업자)',
-      taxHint: '카드 결제 시에는 카드매출전표가 적격 증빙이 되어 세금계산서가 중복 발행되지 않습니다. 세금계산서가 필요하시면 가상계좌·계좌이체를 선택해 주세요.',
+      taxHint: '카드 결제 시에는 카드매출전표가 적격 증빙이 되어 세금계산서가 중복 발행되지 않습니다. 세금계산서가 필요하시면 결제 방법에서 계좌이체를 선택해 주세요.',
       taxIntl: '해외 주문에는 상업 송장(Commercial Invoice)을 이메일로 보내드립니다.',
       taxBizNo: '사업자등록번호', taxBizName: '상호', taxCeo: '대표자', taxEmail: '계산서 수신 이메일',
       privacy: '주문 처리를 위한 개인정보 수집·이용에 동의합니다.',
@@ -141,6 +133,30 @@ const t = isKo
       payBank: '계좌이체 (국내)',
       payBankNote: '주문 접수 후 담당자가 이메일로 계좌를 안내드립니다. 세금계산서 발행 가능.',
       submitBank: '주문 접수하기',
+      // 서버 오류 코드별 안내(api/order.ts) — 예전에는 한·영이 한 줄에 섞여 양쪽 화면에 그대로 나왔고,
+      // 빠진 코드(missing_city 등)는 '잠시 후 다시'로만 나와 다시 해도 안 되는 줄 몰랐다(10-12).
+      errors: {
+        missing_buyer: '주문자 이름과 이메일을 확인해 주세요.',
+        invalid_email: '이메일 주소를 확인해 주세요. (예: name@company.com)',
+        missing_phone: '주문자 연락처를 입력해 주세요.',
+        need_privacy: '개인정보 수집·이용에 동의해 주세요.',
+        need_terms: '주문 제작품 청약철회 제한 고지에 동의해 주세요.',
+        missing_ship: '배송지 정보를 모두 입력해 주세요.',
+        missing_recipient: '수령인 이름과 연락처를 입력해 주세요.',
+        missing_address: '배송 주소와 우편번호를 입력해 주세요.',
+        missing_city: '도시(City)를 입력해 주세요.',
+        missing_country: '국가명을 입력해 주세요.',
+        bad_country: '배송 국가를 다시 선택해 주세요.',
+        missing_tax: '세금계산서 정보(사업자등록번호·상호·수신 이메일)를 입력해 주세요.',
+        invalid_biz_no: '사업자등록번호가 올바르지 않습니다.',
+        invalid_tax_email: '계산서 수신 이메일을 확인해 주세요.',
+        items: '주문 품목을 확인할 수 없습니다. 장바구니에서 다시 시도해 주세요.',
+        bad_amount: '온라인 주문 한도를 넘는 금액입니다. {email} 로 문의해 주세요.',
+        captcha_failed: '보안 확인이 만료되었습니다. 확인이 다시 끝나면 한 번 더 눌러 주세요.',
+        rate_limited: '짧은 시간에 주문을 여러 번 시도하셔서 잠시 막혔습니다. 약 {min}분 뒤 다시 시도해 주세요. 급하시면 {email} 로 연락 주세요.',
+        quote_checkout_closed: '견적 결제는 ‘주문·견적 조회’에서 진행해 주세요.',
+        fail: '주문 생성에 실패했습니다. 잠시 후 다시 시도해 주세요. 계속 안 되면 {email} 로 연락 주세요.',
+      },
     }
   : {
       meta: 'Checkout | VanaM', metaDesc: 'Enter your order details and pay.',
@@ -151,7 +167,7 @@ const t = isKo
       desiredDate: 'Desired completion (optional)', desiredDateShip: 'Preferred delivery date (optional)', desiredDatePh: 'e.g. 2026-09, or free text',
       orderNote: 'Additional requests (optional)', orderNotePh: 'Anything else we should know',
       name: 'Name', email: 'Email', phone: 'Phone', company: 'Company / Affiliation',
-      phoneHint: 'Please include your country code (e.g. +1 555 000 0000)',
+      phoneHint: 'Choose your country from the flag menu on the left, then type the number.',
       noShip: 'This order does not require physical delivery. Results are sent to the email you provide.',
       shipSame: 'Same as purchaser',
       shipName: 'Recipient', shipPhone: 'Recipient phone',
@@ -164,7 +180,7 @@ const t = isKo
       courier: 'Courier account number (FedEx / DHL / UPS)',
       courierHint: 'Shipping is freight collect, so it will be billed to the recipient’s courier account. Leave blank if you do not have one and we will contact you.',
       taxWant: 'I need a Korean tax invoice (business)',
-      taxHint: 'For card payments the card receipt is the qualifying document, so a separate tax invoice is not issued. If you need one, please choose virtual account or bank transfer.',
+      taxHint: 'For card payments the card receipt is the qualifying document, so a separate tax invoice is not issued. If you need one, please choose bank transfer as the payment method.',
       taxIntl: 'A commercial invoice will be emailed to you for international orders.',
       taxBizNo: 'Business reg. no.', taxBizName: 'Company name', taxCeo: 'Representative', taxEmail: 'Invoice email',
       privacy: 'I agree to the collection and use of my personal data to process this order.',
@@ -185,6 +201,28 @@ const t = isKo
       payBank: 'Bank transfer (Korea)',
       payBankNote: 'We will email you the bank details after your order is received.',
       submitBank: 'Place order',
+      errors: {
+        missing_buyer: 'Please check the purchaser name and email.',
+        invalid_email: 'Please check the email address (e.g. name@company.com).',
+        missing_phone: 'Please enter the purchaser phone number.',
+        need_privacy: 'Please agree to the collection and use of your personal data.',
+        need_terms: 'Please agree to the made-to-order withdrawal terms.',
+        missing_ship: 'Please complete the shipping details.',
+        missing_recipient: 'Please enter the recipient name and phone.',
+        missing_address: 'Please enter the shipping address and postal code.',
+        missing_city: 'Please enter the city.',
+        missing_country: 'Please enter the country name.',
+        bad_country: 'Please choose the shipping country again.',
+        missing_tax: 'Please complete the tax invoice details.',
+        invalid_biz_no: 'The business registration number is not valid.',
+        invalid_tax_email: 'Please check the invoice email.',
+        items: 'We could not verify the items in this order. Please try again from the cart.',
+        bad_amount: 'This order exceeds the online order limit. Please contact {email}.',
+        captcha_failed: 'The security check expired. Please press the button again once it completes.',
+        rate_limited: 'Too many order attempts in a short time. Please try again in about {min} min, or contact {email} if it is urgent.',
+        quote_checkout_closed: 'To pay for a quote, please use the Order & quote lookup page.',
+        fail: 'Could not create the order. Please try again in a moment. If it keeps failing, contact {email}.',
+      },
     };
 
 const req = ' *';
@@ -204,16 +242,18 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
     {quoteError ? (
       <div class="mt-10 rounded-xl border border-warn/30 bg-warn/10 p-6">
         <p class="text-warn">{quoteError}</p>
-        <a href={lhref('/product')} class="mt-4 inline-block text-sm text-accent hover:underline">{t.backToShop} →</a>
+        <a href={lhref('/order/lookup')} class="mt-4 inline-block text-sm text-accent hover:underline">{isKo ? '주문·견적 조회로 가기' : 'Go to order & quote lookup'} →</a>
       </div>
     ) : (
       <div class="mt-12 grid gap-12 lg:grid-cols-[1fr_20rem]">
-        <form id="checkout-form" novalidate class="space-y-12"
+        {/* method="post": 스크립트가 못 뜬 상태에서 Enter 로 제출돼도 연락처·주소가 주소창(GET)에 실리지 않게 */}
+        <form id="checkout-form" method="post" novalidate class="space-y-12"
           data-quote={quote?.id ?? ''}
           data-quote-ship={quote ? String(quoteNeedsShipping) : ''}
           data-msg-biz={t.errBiz}
           data-msg-fail={t.errFail}
           data-msg-captcha={t.errCaptcha}
+          data-err={JSON.stringify(t.errors).replaceAll('{email}', company.email || 'hello@vanam.co.kr')}
           data-label-send={t.submit}
           data-label-send-bank={t.submitBank}
           data-label-sending={t.sending}
@@ -500,8 +540,10 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
     실패 감지·자동 재시도·안내가 거기 모여 있다. 여기서 직접 부르지 말 것. */}
 
 <script>
-  import { initTelInput, normalizeTelInputs } from '../../lib/telInput';
+  import { initTelInput, applyTelValues } from '../../lib/telInput';
   import { showHint, hideHint } from '../../lib/formHint';
+  // 입력칸 판정 공통 규칙(견적·문의 폼과 같은 규칙) — 남은 '틀림 표시' 지우기 · 보이는 칸만 · 서버와 같은 이메일 규칙
+  import { firstFieldIssue, fieldIssue, inScope, isShown } from '../../lib/form-check';
   // 보안 확인 위젯 — 로드 실패 시 자동 재시도·안내까지 여기서 처리한다
   import { mountTurnstile, resetTurnstile } from '../../lib/turnstile-client';
   mountTurnstile();
@@ -642,21 +684,21 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
     // 숨겨진 필드가 required 로 남으면 브라우저가 제출을 막으면서도
     // 경고를 띄울 대상을 찾지 못해 **아무 반응 없이 멈춘다**
     // (콘솔: "An invalid form control ... is not focusable").
-    // 화면에 보이지 않는 입력은 required 를 해제하고 검증에서 제외한다.
-    const isHidden = (el: HTMLElement) => !el.offsetParent && getComputedStyle(el).position !== 'fixed';
+    // 화면에 보이지 않는 입력은 required 를 해제하고 잠가서(disabled) 값도 보내지 않는다.
+    // ⚠️ 10-12: 예전에는 다시 보일 때 '원래 필수였던 칸'만 풀어서, 처음 잠글 때 필수가 아니던 칸
+    //    (해외 주소 City·State, 세금계산서 칸, 다른 수령인 칸)은 보이는데도 잠긴 채 입력이 안 됐다 —
+    //    해외 주문이 전부 막혔다. 이제 **이 함수가 잠근 칸(data-auto-disabled)** 은 보이면 반드시 푼다.
+    //    그리고 칸을 숨기거나 보이는 모든 곳(국가·수령인·세금계산서)에서 바로 이 함수를 부른다.
     const syncHiddenRequired = () => {
       for (const el of Array.from(form.elements) as HTMLElement[]) {
         const f = el as HTMLInputElement;
-        if (!f.name || f.type === 'hidden') continue;
-        if (isHidden(f)) {
+        if (!f.name || f.type === 'hidden' || f.name === 'payMethod') continue;
+        if (!isShown(f)) {
           if (f.required) { f.dataset.wasRequired = '1'; f.required = false; }
-          f.disabled = true;            // 값도 함께 전송되지 않도록
-        } else if (f.dataset.wasRequired === '1') {
-          f.disabled = false;
-          f.required = true;
-          delete f.dataset.wasRequired;
-        } else if (f.disabled && f.dataset.autoDisabled === '1') {
-          f.disabled = false;
+          if (!f.disabled) { f.disabled = true; f.dataset.autoDisabled = '1'; } // 값도 함께 전송되지 않도록
+        } else {
+          if (f.dataset.autoDisabled === '1') { f.disabled = false; delete f.dataset.autoDisabled; }
+          if (f.dataset.wasRequired === '1') { f.required = true; delete f.dataset.wasRequired; }
         }
       }
     };
@@ -698,6 +740,7 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
 
       // 착불이면 수령인의 택배사 계정번호를 받는다
       $('courier-wrap').hidden = !(isKR ? fees.collectDomestic : fees.collectIntl);
+      syncHiddenRequired(); // 숨긴 칸 잠그기 · 다시 보인 칸 풀기(10-12 — 해외 주소칸이 잠긴 채 남던 문제)
     }
     countrySel?.addEventListener('change', applyCountry);
     applyCountry();
@@ -709,6 +752,7 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
       $('ship-person').hidden = shipSame.checked;
       setReq('shipName', !shipSame.checked);
       setReq('shipPhone', !shipSame.checked);
+      syncHiddenRequired();
     }
     shipSame?.addEventListener('change', applySame);
     applySame();
@@ -750,10 +794,10 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
       const els = Array.from(form.elements) as HTMLElement[];
       for (const el of els) {
         const f = el as HTMLInputElement;
-        if (!f.name || f.disabled || f.type === 'hidden') continue;
-        if (f.name === 'vanam_hp_note') continue;
-        if (isHidden(f)) continue;                    // 화면에 없는 입력은 판정하지 않는다
-        if (f.required && !f.checkValidity()) return false;
+        // 화면에 없는 칸·잠긴 칸·미끼칸은 판정하지 않는다(inScope). 판정은 공통 규칙(fieldIssue —
+        // 남은 '틀림 표시'를 지우고 지금 규칙으로, invalid 이벤트 없이). 1초마다 불려도 표시를 남기지 않는다.
+        if (!f.name || !inScope(f)) continue;
+        if (fieldIssue(f)) return false;
       }
       return true;
     };
@@ -802,15 +846,9 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
       // 0225: 견적 폼과 동일한 안내 — 첫 미입력 지점으로 이동 + 공통 힌트(레이아웃 불변)
       hideHint();
       {
-        const bad = (Array.from(form.elements) as HTMLInputElement[]).find(
-          (el) => el.willValidate && !el.checkValidity(),
-        );
-        if (bad) {
-          bad.checkValidity(); // 전역 invalid 핸들러가 문구를 채운다
-          const anchor = (bad.closest('label') as HTMLElement | null) ?? (bad as HTMLElement);
-          showHint(anchor, bad.validationMessage, bad);
-          return;
-        }
+        // 첫 문제 칸(보이는 칸만 · 남은 표시 지우고 지금 규칙으로 · 서버와 같은 이메일 규칙) — 그 자리 말풍선
+        const bad = firstFieldIssue(form);
+        if (bad) { showHint(bad.el, bad.msg, bad.el); return; }
       }
 
       // 미끼칸이 차 있어도 조용히 되돌리지 않는다.
@@ -820,9 +858,9 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
       const hp = form.elements.namedItem('vanam_hp_note') as HTMLInputElement | null;
       if (hp) hp.value = '';
 
-      // 전화번호(구매자·수령인)를 국제표준(+82...)으로 변환한 뒤 수집
-      normalizeTelInputs(form);
       const data = Object.fromEntries(new FormData(form).entries()) as Record<string, string>;
+      // 전화번호(구매자·수령인) 제출값 — 번호 규칙으로 확인된 것만 국제표준(+82…), 아니면 쓴 그대로(입력칸은 그대로)
+      applyTelValues(form, data);
       // 라디오가 폼 바깥에 있어 FormData 가 놓칠 수 있다. 판정값을 명시적으로 싣는다.
       data.payMethod = payMethod();
       delete data.vanam_hp_note;
@@ -874,8 +912,12 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
-        const j = await res.json();
-        if (!res.ok || !j.ok) throw new Error(j.error ?? res.status);
+        const j = await res.json().catch(() => ({}));
+        if (!res.ok || !j.ok) {
+          const e2 = new Error(String(j.error ?? (res.status === 429 ? 'rate_limited' : res.status)));
+          (e2 as Error & { retryAfterSec?: number }).retryAfterSec = Number(j.retryAfterSec) || 0;
+          throw e2;
+        }
 
         if (!quoteId) {
           if (isBuyNow) {
@@ -897,24 +939,21 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
         location.replace(`${base}/order/done?id=${encodeURIComponent(j.orderId)}${suffix}`);
       } catch (err) {
         console.error(err);
-        // 원인을 감추면 어느 칸이 문제인지 알 수 없다 — 서버 코드별 안내로 바꾼다
+        // 원인을 감추면 어느 칸이 문제인지 알 수 없다 — 서버 코드별 안내(이 페이지 언어 한 가지로 · 10-12)
         const code = String((err as Error)?.message ?? '');
-        const MAP: Record<string, string> = {
-          missing_buyer: '주문자 이름과 이메일을 확인해 주세요 · Check buyer name and email.',
-          invalid_email: '이메일 형식이 올바르지 않습니다 · Invalid email format.',
-          need_privacy: '개인정보 수집·이용 동의가 필요합니다 · Privacy consent required.',
-          need_terms: '주문 제작품 청약철회 제한 고지 동의가 필요합니다 · Terms consent required.',
-          missing_ship: '배송지 정보를 모두 입력해 주세요 · Complete the shipping address.',
-          bad_items: '장바구니 상품을 다시 확인해 주세요 · Check the cart items.',
-          captcha_failed: '자동입력 방지 확인에 실패했습니다. 잠시 후 다시 시도해 주세요 · Captcha failed, please retry.',
-        };
-        if (MAP[code]) { setStatus(MAP[code], false); gateBusy = false; btn.disabled = false; label.textContent = M.labelSend!; resetTurnstile(); return; }
+        const ERR = (() => { try { return JSON.parse(M.err || '{}') as Record<string, string>; } catch { return {} as Record<string, string>; } })();
+        const ITEMS = ['bad_items', 'bad_item', 'unknown_sku', 'not_purchasable'];
+        let msg = ERR[ITEMS.includes(code) ? 'items' : code] ?? ERR.fail ?? M.msgFail ?? '';
+        if (code === 'rate_limited') {
+          const sec = Number((err as Error & { retryAfterSec?: number }).retryAfterSec) || 3600;
+          msg = msg.replace('{min}', String(Math.max(1, Math.ceil(sec / 60))));
+        }
         // 토큰은 1회용 — 실패 시 리셋해 재시도를 준비한다. (성공 시엔 페이지가 이동하므로 불필요)
         resetTurnstile();
-        setStatus(M.msgFail!, false);
+        setStatus(msg, false);
         gateBusy = false;
         btn.disabled = false;
-        label.textContent = M.labelSend!;
+        syncPayLabel(); // 계좌이체를 고른 상태면 '주문 접수하기' 그대로(예전엔 실패 뒤 '결제하기'로 바뀌었다)
       }
     });
 

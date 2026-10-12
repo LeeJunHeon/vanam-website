@@ -3,6 +3,8 @@ import { getCollection } from 'astro:content';
 import { db, newId, nowIso, nowKst } from '../../lib/db';
 import { rateLimit, tooMany } from '../../lib/rate-limit';
 import { verifyTurnstile } from '../../lib/turnstile';
+// 이메일 규칙 — 화면(견적·문의 폼)과 같은 파일을 쓴다(한쪽만 다르면 고객이 원인 모를 실패를 본다 · 10-12)
+import { isEmail } from '../../lib/email-rule.js';
 import { getRate, pickWaitUntil } from '../../lib/fx';
 // 견적 폼 선택지·검증은 폼과 같은 파일에서 가져온다(서버가 별도 목록을 들면 조용히 어긋난다).
 import { validateQuoteDetails } from '../../lib/quote-fields.js';
@@ -27,6 +29,11 @@ type Payload = Record<string, unknown>;
 
 const str = (v: unknown) => (typeof v === 'string' ? v.trim() : '');
 const MAX = 2000; // 필드당 최대 길이 (남용 방지)
+// 요청 본문(사람이 읽는 문장)과 구조화 사본의 상한 — 화면의 칸별 maxlength·공정 30단계 상한을 모두 채워도 넘지 않게 잡았다.
+// ⚠️ 넘으면 **자르지 않고 거절한다**(too_long). 예전에는 2000자·8000자에서 조용히 잘려
+//    알림·관리자에는 잘린 글이, 구조화 사본은 깨진 JSON 이 저장됐는데 고객 화면은 '접수 완료'였다(10-12 점검).
+const MAX_DETAILS = 12000;
+const MAX_DETAILS_JSON = 24000;
 
 /** 접수 순간 고객 화면에 떠 있던 예상 합계(참고용) — 0 이상 100억 이하 정수만 받는다. */
 const seenKrw = (v: unknown): number | null => {
@@ -72,7 +79,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   if (!name || !email || str(body.privacy) !== 'agreed') {
     return json({ ok: false, error: 'missing_required' }, 400);
   }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (!isEmail(email)) {
     return json({ ok: false, error: 'invalid_email' }, 400);
   }
 
@@ -101,12 +108,14 @@ export const POST: APIRoute = async ({ request, locals }) => {
   const substrate = str(body.substrate).slice(0, MAX);
   const sampleCount = str(body.sampleCount).slice(0, 20);
   // 배송지(0214) — 전달 방식이 배송/택배일 때 폼에서 온다. details 에 합류시켜 챗·admin·D1 에 함께 남긴다.
-  const details = str(body.details).slice(0, MAX);
+  const details = str(body.details);
+  if (details.length > MAX_DETAILS) return json({ ok: false, error: 'too_long' }, 400);
   // 조회 화면에서 보는 언어로 다시 그리기 위한 구조화 사본(라벨 붙이기 전의 값들).
   // ⚠️ 일반 필드 상한(2000자)을 쓰면 공정 12단계 + 분석 다수 + 긴 요청사항인 견적에서 잘려
   //    JSON 이 깨진다. 깨지면 조용히 기존 문장으로 되돌아가 기능만 못 쓰게 된다.
   //    이미 각 항목이 폼에서 제한된 값들을 모아 담은 것이라 상한을 따로 넉넉히 준다.
-  let detailsJson = str(body.detailsJson).slice(0, 8000);
+  let detailsJson = str(body.detailsJson);
+  if (detailsJson.length > MAX_DETAILS_JSON) return json({ ok: false, error: 'too_long' }, 400);
 
   // 4-1) 구조화 사본의 허용값 검증 (0910c)
   //   전달 방식(delivery)이 폼 선택지 밖이거나, 박막 증착 '있음'인데 내용이 비어 있으면 막는다.
@@ -178,6 +187,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   // 5) D1에 저장 — 알림을 놓쳐도 요청이 사라지지 않도록 남긴다.
   //    DB가 없거나(dev) 실패해도 알림은 나가야 하므로 예외를 삼킨다.
   let saved: Awaited<ReturnType<typeof db>> = null; // 접수 행이 실제로 저장된 DB (자동 견적은 이때만)
+  let rowSaved = false; // 접수 행이 어떤 경로로든 저장됐는가(알림 실패 때 성공 응답 판정 — 예비 저장 경로 포함)
   try {
     const d = await db();
     if (d) {
@@ -203,6 +213,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
           .bind(...base, detailsJson || null)
           .run();
         saved = d;
+        rowSaved = true;
       } catch (colErr) {
         // ⚠️ 컬럼 추가(ALTER TABLE) 전에 배포되면 위 INSERT 가 실패한다.
         //    그때 그냥 던지면 **고객 견적이 통째로 사라진다.** 구조화 사본만 포기하고 접수는 반드시 남긴다.
@@ -211,6 +222,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
           .prepare(`INSERT INTO inquiries ${COLS}) ${VALS})`)
           .bind(...base)
           .run();
+        rowSaved = true;
         // 구조화 사본이 저장되지 않았으니 자동 견적도 남기지 않는다(saved 는 null 로 둔다)
       }
     } else {
@@ -262,8 +274,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   // 5-2) 접수 확인 메일 — 공정 견적 요청이 저장됐고, 고객에게 '접수됨'으로 응답하는 경우에만(일반 문의 제외).
   //      PDF 만들기·발송에 몇 초 걸리므로 응답 직전에 시작해 응답 뒤(waitUntil)에 끝낸다 — 고객 화면을 늦추지 않는다.
-  //      구글챗 전송 실패(502)로 고객 화면이 오류를 띄우는 경우에는 보내지 않는다('접수됨' 메일과 어긋나지 않게 —
-  //      관리자 견적 탭에서 직접 보낼 수 있다). runQuoteAck 는 예외를 던지지 않고, 결과는 inquiries.ack_mail 에 남는다.
+  //      고객 화면이 오류를 띄우는 경우(저장 실패 + 알림 실패 = 502)에는 보내지 않는다('접수됨' 메일과 어긋나지 않게).
+  //      알림만 실패하고 저장은 된 경우는 성공 응답이라 보낸다(10-12). runQuoteAck 는 예외를 던지지 않고, 결과는 inquiries.ack_mail 에 남는다.
   const ackOrigin = new URL(request.url).origin;
   const ackVerified = ts.ok && !(ts as { skipped?: boolean }).skipped; // 보안 확인을 실제로 통과한 접수만(운영 빌드 자동 발송 조건)
   const scheduleAck = () => {
@@ -285,7 +297,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   // 6) Google Chat 알림 (chat-send.ts 가 유일한 발송 통로)
   //    - 빌드 차단·웹훅 미설정: 접수는 끝났으니 성공으로 응답한다(알림만 빠짐).
-  //    - 전송 실패: 기존과 같은 502 — 폼이 담당자 메일 안내를 띄운다.
+  //    - 전송 실패: **접수가 DB 에 저장됐으면 성공으로 응답한다**(알림만 빠짐 — 관리자 화면에는 있다).
+  //      ⚠️ 10-12: 예전에는 저장이 끝난 뒤에도 502 를 돌려줘서, 고객은 '실패'를 보고 다시 보냈고
+  //      보낼 때마다 같은 견적이 새 접수번호로 쌓이다 접수 횟수 제한(429)에 걸렸다. 접수 확인 메일도 안 나갔다.
+  //    - 저장도 못 하고 알림도 못 보냈으면(어디에도 남지 않음) 502 — 폼이 다시 보내기·메일 안내를 띄운다.
   //    ⚠️ 로그에는 접수번호만 남는다. 본문(text)의 PII 는 남기지 않는다.
   const chat = await sendChat(text, { tag: 'inquiry', ref: id });
   if (chat.reason === 'blocked_build' || chat.reason === 'no_webhook') {
@@ -293,8 +308,15 @@ export const POST: APIRoute = async ({ request, locals }) => {
     scheduleAck();
     return json({ ok: true, delivered: false, id, quote: quoteSaved, ack });
   }
-  if (chat.reason === 'http_error') return json({ ok: false, error: 'webhook_failed' }, 502);
-  if (chat.reason === 'fetch_error') return json({ ok: false, error: 'webhook_error' }, 502);
+  if (chat.reason === 'http_error' || chat.reason === 'fetch_error') {
+    if (rowSaved) {
+      console.error('[inquiry] 구글챗 알림 실패 — 접수는 저장됨(관리자 화면에서 확인):', id, chat.reason, chat.status ?? '');
+      const ack = await ackFlag();
+      scheduleAck();
+      return json({ ok: true, delivered: false, id, quote: quoteSaved, ack });
+    }
+    return json({ ok: false, error: chat.reason === 'http_error' ? 'webhook_failed' : 'webhook_error' }, 502);
+  }
 
   const ack = await ackFlag();
   scheduleAck();

@@ -90,10 +90,14 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
       )}
     </div>
 
-    <form id="inquiry-form" class="v-reveal mt-14 space-y-8"
+    {/* novalidate: 견적·주문 폼과 같은 검사·말풍선(src/lib/form-check.ts · formHint)을 쓴다 — 브라우저 기본 말풍선과 섞이지 않게.
+        method="post": 스크립트가 못 뜬 상태에서 Enter 로 제출돼도 이름·이메일·내용이 주소창(GET)에 실리지 않게 */}
+    <form id="inquiry-form" method="post" novalidate class="v-reveal mt-14 space-y-8"
       data-msg-success={f.msgSuccess}
       data-msg-error={f.msgError}
-      data-msg-captcha={f.msgCaptcha}
+      data-msg-captcha={f.msgCaptcha.replaceAll('{email}', company.email || 'hello@vanam.co.kr')}
+      data-msg-required={f.msgRequired}
+      data-err={JSON.stringify(f.errors).replaceAll('{email}', company.email || 'hello@vanam.co.kr')}
       data-label-send={f.submit}
       data-label-sending={f.sending}
       data-wafers={JSON.stringify(waferCatalog)}
@@ -118,25 +122,26 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
       <div class="grid gap-6 md:grid-cols-2">
         <div>
           <label for="name" class={labelClass}>{f.name} <span class="text-danger">*</span></label>
-          <input id="name" name="name" type="text" required class={inputClass} placeholder={f.namePlaceholder} />
+          <input id="name" name="name" type="text" required maxlength="100" autocomplete="name" class={inputClass} placeholder={f.namePlaceholder} />
         </div>
         <div>
           <label for="email" class={labelClass}>{f.email} <span class="text-danger">*</span></label>
-          <input id="email" name="email" type="email" required class={inputClass} placeholder={f.emailPlaceholder} />
+          <input id="email" name="email" type="email" required maxlength="254" autocomplete="email" class={inputClass} placeholder={f.emailPlaceholder} />
         </div>
         <div>
           <label for="phone" class={labelClass}>{f.phone}</label>
-          <input id="phone" name="phone" type="tel" class={inputClass} />
+          <input id="phone" name="phone" type="tel" maxlength="40" class={inputClass} />
         </div>
         <div>
           <label for="company" class={labelClass}>{f.company}</label>
-          <input id="company" name="company" type="text" class={inputClass} placeholder={f.companyPlaceholder} />
+          <input id="company" name="company" type="text" maxlength="200" autocomplete="organization" class={inputClass} placeholder={f.companyPlaceholder} />
         </div>
       </div>
 
       <div>
         <label for="message" class={labelClass}>{f.message} <span class="text-danger">*</span></label>
-        <textarea id="message" name="message" rows="7" required class={`${inputClass} resize-y`} placeholder={f.messagePlaceholder}></textarea>
+        {/* maxlength 2000 = 서버 상한(api/inquiry.ts MAX) — 넘는 글이 서버에서 조용히 잘리던 문제(10-12) */}
+        <textarea id="message" name="message" rows="7" required maxlength="2000" class={`${inputClass} resize-y`} placeholder={f.messagePlaceholder}></textarea>
       </div>
 
       <div class="space-y-6 border-t border-ink/10 pt-8">
@@ -181,7 +186,7 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
         height="340"
         style="border:0; display:block;"
         loading="lazy"
-        referrerpolicy="no-referrer-when-downgrade"
+        referrerpolicy="strict-origin-when-cross-origin"
         allowfullscreen></iframe>
     </div>
     <div class="v-reveal mt-8 grid gap-8 sm:grid-cols-2">
@@ -245,7 +250,10 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
     실패 감지·자동 재시도·안내가 거기 모여 있다. 여기서 직접 부르지 말 것. */}
 
 <script>
-  import { initTelInput, normalizeTelInputs } from '../../lib/telInput';
+  import { initTelInput, applyTelValues } from '../../lib/telInput';
+  // 입력칸 판정·말풍선 — 견적·주문 폼과 같은 공통 규칙(서버와 같은 이메일 규칙 · 공백만 입력 금지)
+  import { firstFieldIssue, msgs } from '../../lib/form-check';
+  import { showHint, hideHint } from '../../lib/formHint';
   // 예상 합계의 달러 환산은 사이트 다른 화면과 같은 환율을 쓴다
   import { liveRate, cachedRate } from '../../lib/fx-client';
   // 보안 확인 위젯 — 로드 실패 시 자동 재시도·안내까지 여기서 처리한다
@@ -353,8 +361,47 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
     statusEl.style.color = ok ? 'var(--color-accent)' : 'var(--color-danger)';
   }
 
+  // 서버가 거절한 이유를 고객이 고칠 수 있는 말로(문구: site.json contact.form.errors) — 견적 폼과 같은 규칙
+  const ERR = (() => { try { return JSON.parse(M.err || "{}") as Record<string, string>; } catch { return {} as Record<string, string>; } })();
+  function failText(status: number, j: { error?: string; retryAfterSec?: number }): string {
+    const code = String(j?.error ?? "");
+    if (status === 429 || code === "rate_limited") {
+      const min = Math.max(1, Math.ceil(Number(j?.retryAfterSec || 600) / 60));
+      return (ERR.rateLimited || M.msgError || "").replace("{min}", String(min));
+    }
+    if (code === "captcha_failed") return ERR.captcha || M.msgCaptcha || "";
+    if (code === "too_long") return ERR.tooLong || M.msgError || "";
+    if (status === 400 && code) return ERR.check || M.msgRequired || "";
+    return ERR.fail || M.msgError || "";
+  }
+
+  // 웨이퍼 문의 프리필 값 지우기 — 접수 뒤 같은 화면에서 다른 문의를 보내면 이 값이 그대로 실려
+  // 엉뚱한 웨이퍼 주문으로 저장됐다(10-12 점검). hidden 칸은 form.reset() 으로 지워지지 않는다
+  // (값을 넣으면 그 값이 기본값이 된다). 주소창의 ?product= 도 지워 새로고침해도 다시 채워지지 않게 한다.
+  function clearWaferPrefill() {
+    for (const id of ["wf-product", "wf-product-name", "wf-qty", "wf-dicing"]) {
+      const el = document.getElementById(id) as HTMLInputElement | null;
+      if (el) { el.value = ""; el.defaultValue = ""; }
+    }
+    try {
+      const u = new URL(location.href);
+      if (u.searchParams.has("product")) {
+        ["product", "qty", "dicing"].forEach((k) => u.searchParams.delete(k));
+        history.replaceState(history.state, "", u.pathname + (u.search ? u.search : "") + u.hash);
+      }
+    } catch { /* 주소 정리 실패는 무시 — 값은 이미 지웠다 */ }
+  }
+
+  let sending = false; // 전송 중 두 번 눌러 같은 문의가 두 번 접수되지 않게
   form?.addEventListener("submit", async (e) => {
     e.preventDefault();
+    if (sending) return;
+    hideHint();
+    setStatus("", true);
+
+    // 입력칸 검사 — 남은 '틀림 표시'를 지우고 지금 규칙으로(보이는 칸만 · 서버와 같은 이메일 규칙)
+    const bad = firstFieldIssue(form);
+    if (bad) { showHint(bad.el, bad.msg, bad.el); return; }
 
     // 미끼칸이 차 있어도 조용히 가짜 성공을 띄우지 않는다.
     // 브라우저 자동완성 오탐(이름에 email 포함)이 실제 문의를 "접수된 척"만 하게 만들었다.
@@ -362,40 +409,55 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
     const hp = form.elements.namedItem("vanam_hp_note") as HTMLInputElement | null;
     if (hp) hp.value = "";
 
-    // 전화번호를 국제표준(+82...)으로 변환한 뒤 수집
-    normalizeTelInputs(form);
     const data = Object.fromEntries(new FormData(form).entries()) as Record<string, string>;
+    // 전화번호 제출값 — 번호 규칙으로 확인된 것만 국제표준(+82…), 아니면 쓴 그대로(입력칸은 그대로 둔다)
+    applyTelValues(form, data);
     delete data.vanam_hp_note;
     data.type = "general";
     data.locale = document.documentElement.lang || "en";
 
-    // Turnstile 토큰 확인. 위젯이 아직 준비 안 됐으면 잠깐 기다리라고 안내.
+    // Turnstile 토큰 확인. 위젯이 아직 준비 안 됐으면 잠깐 기다리라고 그 자리에서 안내.
     // (FormData 가 cf-turnstile-response 를 자동 수집하므로 data 에 이미 들어있다)
     if (!data["cf-turnstile-response"]) {
-      setStatus(M.msgCaptcha!, false);
+      showHint(form.querySelector(".cf-turnstile") as HTMLElement | null, M.msgCaptcha!);
+      setStatus(M.msgCaptcha!, false); // 말풍선은 5초 뒤 닫힌다 — 메일 대안 안내는 상태줄에도 남긴다
       return;
     }
 
+    sending = true;
     btn.disabled = true;
     label.textContent = M.labelSending!;
-    setStatus("", true);
 
     try {
-      const res = await fetch(ENDPOINT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Accept": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) throw new Error("HTTP " + res.status);
-      form.reset();
+      let res: Response;
+      try {
+        res = await fetch(ENDPOINT, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Accept": "application/json" },
+          body: JSON.stringify(data),
+        });
+      } catch (netErr) {
+        console.error(netErr);
+        resetTurnstile();
+        setStatus(ERR.fail || M.msgError!, false);
+        return;
+      }
+      const j = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string; retryAfterSec?: number };
       // 제출 성공/실패와 무관하게 토큰은 1회용이므로 위젯을 리셋해 다음 제출을 준비한다.
       resetTurnstile();
+      if (!res.ok || j.ok === false) {
+        if (j.error === "invalid_email") {
+          const em = form.querySelector('[name="email"]') as HTMLElement | null;
+          if (em) { showHint(em, msgs().email, em); return; }
+        }
+        setStatus(failText(res.status, j), false);
+        return;
+      }
+      form.reset();
+      clearWaferPrefill();
       setStatus(M.msgSuccess!, true);
-    } catch (err) {
-      console.error(err);
-      resetTurnstile();
-      setStatus(M.msgError!, false);
     } finally {
+      sending = false;
       btn.disabled = false;
       label.textContent = M.labelSend!;
     }

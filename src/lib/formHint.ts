@@ -7,6 +7,8 @@
 //   모양: 대상 필드를 가리키는 꼬리(caret) 달린 말풍선. 색은 사이트 토큰(--v-ink/--v-canvas)을
 //   그대로 써서 다크·라이트 테마와 톤을 맞춘다.
 
+import { anchorOf, isShown } from './form-check';
+
 let hintEl: HTMLDivElement | null = null;
 let caretEl: HTMLDivElement | null = null;
 let hideTimer = 0;
@@ -97,6 +99,10 @@ export function hideHint(): void {
 /** 대상으로 스크롤한 뒤 그 옆에 말풍선을 띄운다. 항상 1개만 존재하며 레이아웃에 영향이 없다. */
 export function showHint(target: HTMLElement | null, message: string, focusEl?: HTMLElement | null): void {
   if (!target || !message) return;
+  // 화면에 없는 요소(숨은 칸)를 가리키면 위치가 0,0 이라 말풍선이 화면 왼쪽 위 구석에 뜬다(10-12 운영 사고).
+  // 호출부가 실수해도 보이는 가장 가까운 조상을 가리키게 한다.
+  target = anchorOf(target);
+  if (focusEl && !isShown(focusEl)) focusEl = null;
   bind();
   const el = ensure();
   anchorEl = target;

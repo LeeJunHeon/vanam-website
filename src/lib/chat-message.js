@@ -13,6 +13,16 @@
 
 const DASH = '—';
 
+// 고객이 쓴 글을 구글챗 문법으로 해석시키지 않는다 (10-12 점검).
+//   구글챗은 꺾쇠 문법을 해석한다 — <users/all>(방 전원 호출) · <https://주소|글자>(다른 주소로 가는 링크).
+//   고객이 쓴 칸의 꺾쇠만 전각(＜＞)으로 바꾼다. 꺾쇠가 없는 보통 글은 **바이트 단위로 그대로**다.
+const safe = (v) => String(v ?? '').replace(/</g, '＜').replace(/>/g, '＞');
+
+/** 알림 한 통에 싣는 요청 본문 상한(글자) — 넘는 부분은 관리자 화면에서 본다(DB·확인 메일 PDF 에는 전체가 있다) */
+export const CHAT_BODY_MAX = 3000;
+// 구글챗 메시지 크기 한도 안에 들게 한다 — 넘으면 알림 자체가 실패한다.
+const clip = (s) => (s.length > CHAT_BODY_MAX ? `${s.slice(0, CHAT_BODY_MAX)}\n… (이하 생략 — 관리자 화면에서 전체 보기)` : s);
+
 /**
  * 견적/문의 알림 본문.
  *
@@ -35,13 +45,13 @@ export function buildInquiryChatText(p) {
   if (p.type === 'quote') {
     return [
       '📩 *새 견적 요청*',
-      `상품: ${p.productName ?? ''} (${p.product ?? ''})`,
-      p.who,
-      `기판: ${p.substrate || DASH} | 총 샘플: ${p.sampleCount || DASH}`,
+      `상품: ${safe(p.productName)} (${safe(p.product)})`,
+      safe(p.who),
+      `기판: ${safe(p.substrate) || DASH} | 총 샘플: ${safe(p.sampleCount) || DASH}`,
       // ⚠️ 예전 견적 폼의 '두께·수량·납기' 줄은 뺐다. 지금 폼에는 그 항목이 없어서
       //    **항상 `두께: — | 수량: — | 납기: —`** 로만 찍혔다(실제 입력값이 아니다).
       //    같은 정보는 아래 요청 본문에 '총 샘플 수량'·'완료 희망일'로 이미 들어 있다.
-      `\n${p.details || DASH}`,
+      `\n${clip(safe(p.details)) || DASH}`,
       // 값이 없으면 빈 문자열 → filter(Boolean) 에 걸러져 기존 출력과 바이트 단위로 같다
       p.estimateLine ? `\n${p.estimateLine}` : '',
       p.meta,
@@ -49,7 +59,7 @@ export function buildInquiryChatText(p) {
   }
   // 웨이퍼 문의면 상품·수량·다이싱을 별도 줄로 먼저 보여준다(본문에도 같은 내용이 들어 있지만
   // 담당자가 목록에서 한눈에 구분할 수 있어야 한다).
-  return ['✉️ *새 문의*', p.who, p.waferLine, `내용: ${p.message ?? ''}`, p.meta]
+  return ['✉️ *새 문의*', safe(p.who), p.waferLine, `내용: ${clip(safe(p.message))}`, p.meta]
     .filter(Boolean).join('\n');
 }
 

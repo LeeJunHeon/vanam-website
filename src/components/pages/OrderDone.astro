@@ -287,7 +287,8 @@ const t = isKo
                     if (!j.ok) {
                       // verify_failed/not_found = PayPal 결제는 성사됐으나 서버 대조에 실패한 상태.
                       // 여기서 '실패'로만 안내하면 고객이 재결제해 이중 청구가 난다.
-                      var held = j.error === 'verify_failed' || j.error === 'not_found';
+                      // capture_pending: PayPal 이 돈은 받았지만 확정을 미룬 상태 — 다시 결제하면 이중 청구(10-12)
+                      var held = j.error === 'verify_failed' || j.error === 'not_found' || j.error === 'capture_pending';
                       showSpecific(held ? host.dataset.mHeld : (j.restart ? host.dataset.mDeclined || host.dataset.mError : host.dataset.mError));
                       if (held) disablePay();
                       throw new Error(j.error || 'capture_failed');

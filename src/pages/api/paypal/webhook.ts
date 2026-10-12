@@ -81,6 +81,11 @@ export const POST: APIRoute = async ({ request }) => {
           return ok({ ok: true, skipped: 'capture_failed' });
         }
         const c = ((cap as Record<string, any>).purchase_units?.[0]?.payments?.captures ?? [])[0] ?? {};
+        // 캡처(실제 돈)가 COMPLETED 일 때만 확정한다 — PENDING 이면 나중에 PAYMENT.CAPTURE.COMPLETED 가 온다(10-12)
+        if (c?.status && String(c.status) !== 'COMPLETED') {
+          console.warn('[paypal-webhook] 승인건 캡처 미완료:', ref, String(c.status));
+          return ok({ ok: true, skipped: 'capture_not_completed' });
+        }
         const r = await settlePayment(d, {
           ref,
           ppOrderId,
