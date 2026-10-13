@@ -18,6 +18,15 @@ import { pdfConfigured } from '../../lib/doc-pdf';
 import { ackLabel, isFreshPending } from '../../lib/quote-ack.js';
 
 const authed = await isAdmin(Astro.request);
+// 로그인 폼이 스크립트 없이 제출됐을 때(/api/admin/login 이 303 으로 돌려보냄) 보여줄 문구
+const LOGIN_MSG: Record<string, string> = {
+  invalid: '비밀번호가 맞지 않습니다.',
+  limited: '틀린 시도가 많아 잠시 막혔습니다 — 15분 안에 다시 시도해 주세요.',
+  empty: '비밀번호를 입력하세요.',
+  bad: '요청을 읽지 못했습니다 — 다시 시도해 주세요.',
+  not_configured: '관리자 비밀번호가 설정되지 않았습니다.',
+};
+const loginMsg = authed ? '' : (LOGIN_MSG[Astro.url.searchParams.get('login') ?? ''] ?? '');
 const configured = adminConfigured();
 const mailReady = gmailConfigured();
 const mailLine = (MAIL_LIVE ? '확인 메일: 운영 — 고객에게 발송' : '확인 메일: 테스트 — 회사 주소(@vanam.co.kr)로만 발송') +
@@ -215,16 +224,17 @@ const spec = (r: Row) =>
           {configured ? (
             <>
               <p class="mt-2 text-sm text-ink/50">비밀번호를 입력하세요.</p>
-              {/* method="post": 스크립트가 못 뜬 상태에서 Enter 로 제출돼도 비밀번호가 주소창(GET)에 실리지 않게 */}
-              <form id="login-form" method="post" class="mt-8 space-y-4">
-                <input id="pw" type="password" autocomplete="current-password" required
+              {/* 스크립트가 붙기 전에 눌러도 로그인되게 action 은 로그인 API(폼 제출 → 303 으로 /admin). 스크립트가 붙으면 fetch 로 처리한다.
+                  required 는 두지 않는다 — 크롬 자동 입력 값이 아직 안 보일 때 브라우저 확인이 제출을 막는 일이 없게(빈 값은 스크립트·서버가 안내). */}
+              <form id="login-form" method="post" action="/api/admin/login" class="mt-8 space-y-4">
+                <input id="pw" name="password" type="password" autocomplete="current-password"
                   class="w-full rounded-lg border border-ink/10 bg-ink/[0.03] px-4 py-3 text-ink outline-none transition focus:border-accent"
                   placeholder="비밀번호" />
-                <button type="submit"
-                  class="w-full rounded-lg bg-brand px-4 py-3 font-semibold text-onbrand transition hover:brightness-110">
+                <button type="submit" id="login-btn"
+                  class="w-full rounded-lg bg-brand px-4 py-3 font-semibold text-onbrand transition hover:brightness-110 disabled:cursor-wait disabled:opacity-70">
                   로그인
                 </button>
-                <p id="login-err" class="text-sm text-danger"></p>
+                <p id="login-err" class="text-sm text-danger" role="status" aria-live="polite">{loginMsg}</p>
               </form>
             </>
           ) : (
@@ -1302,18 +1312,46 @@ const spec = (r: Row) =>
 
       // 로그인
       const lf = document.getElementById('login-form') as HTMLFormElement | null;
+      // 10-13: 누르자마자 '로그인 중…'으로 잠근다(응답·화면 불러오기를 기다리는 동안 다시 누르지 않게) · 오류마다 다른 문구
+      let loggingIn = false;
       lf?.addEventListener('submit', async (e) => {
         e.preventDefault();
+        if (loggingIn) return;
         const err = document.getElementById('login-err')!;
+        const btn = document.getElementById('login-btn') as HTMLButtonElement | null;
+        const input = document.getElementById('pw') as HTMLInputElement;
+        // 크롬 자동 입력 값은 잠깐 늦게 보일 수 있다 — 비어 있으면 한 번 더 읽는다
+        let pw = input.value;
+        if (!pw) { await new Promise((r) => setTimeout(r, 120)); pw = input.value; }
+        if (!pw) { err.textContent = '비밀번호를 입력하세요.'; input.focus(); return; }
+        loggingIn = true;
         err.textContent = '';
-        const pw = (document.getElementById('pw') as HTMLInputElement).value;
-        const res = await fetch('/api/admin/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ password: pw }),
-        });
-        if (res.ok) location.reload();
-        else err.textContent = res.status === 503 ? '관리자 비밀번호가 설정되지 않았습니다.' : '비밀번호가 맞지 않습니다.';
+        const setBtn = (t: string, busy: boolean) => { if (btn) { btn.textContent = t; btn.disabled = busy; } };
+        setBtn('로그인 중…', true);
+        try {
+          const res = await fetch('/api/admin/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: pw }),
+          });
+          const j = await res.json().catch(() => ({}));
+          if (res.ok) {
+            // 관리자 화면(목록 전체)을 불러오는 데 몇 초 걸릴 수 있다 — 기다리는 중임을 보여준다
+            setBtn('로그인됨 — 관리자 화면을 불러오는 중…', true);
+            location.replace('/admin');
+            return;
+          }
+          err.textContent = res.status === 429
+            ? `틀린 시도가 많아 잠시 막혔습니다 — 약 ${Math.max(1, Math.ceil((Number(j.retryAfterSec) || 900) / 60))}분 뒤 다시 시도해 주세요.`
+            : res.status === 503 ? '관리자 비밀번호가 설정되지 않았습니다.'
+            : j.error === 'empty' ? '비밀번호를 입력하세요.'
+            : res.status === 401 ? '비밀번호가 맞지 않습니다.'
+            : `로그인하지 못했습니다(${res.status}) — 다시 시도해 주세요.`;
+        } catch (e2) {
+          err.textContent = '연결 오류 — 인터넷 연결을 확인하고 다시 시도해 주세요.';
+        }
+        loggingIn = false;
+        setBtn('로그인', false);
       });
 
       // 로그아웃
