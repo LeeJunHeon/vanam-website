@@ -517,6 +517,7 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
   import { materialValue, formProcessFor } from '../lib/material-value.js';
   // 박막 증착 여부의 저장값 정규화 — 서버 검증·검증 스크립트와 같은 파일을 쓴다.
   import { preFilmFields, displayName } from '../lib/quote-fields.js';
+  import { fillDays } from '../lib/reply-days.js';
   import { showHint, hideHint } from '../lib/formHint';
   // 보안 확인 위젯 — 로드 실패 시 자동 재시도·안내까지 여기서 처리한다
   import { mountTurnstile, resetTurnstile } from '../lib/turnstile-client';
@@ -1133,7 +1134,7 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
         setStatus(ERR.fail || M.msgError!, false);
         return;
       }
-      const j = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string; retryAfterSec?: number; id?: string; quote?: boolean; ack?: boolean };
+      const j = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string; retryAfterSec?: number; id?: string; quote?: boolean; ack?: boolean; replyDays?: number };
       if (!res.ok || j.ok === false) {
         resetTurnstile(); // 토큰은 1회용 — 다시 보낼 수 있게 새로 받는다
         if (j.error === "invalid_email") {
@@ -1162,6 +1163,8 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
         details: String(data.details ?? ""),
         // 이번 접수로 견적 개정이 저장됐을 때만 완료 페이지가 조회 API 를 부른다(스위치 꺼짐이면 호출 없음)
         quote: j.quote === true,
+        // 회신 기한(운영 설정) — 완료 화면의 "영업일 기준 N일"
+        replyDays: j.replyDays,
         // 접수 확인 메일이 나갈 건일 때만 완료 페이지가 '확인 메일을 보내드렸습니다'를 띄운다(서버 판정 — api/inquiry.ts ack)
         ack: j.ack === true,
         // 완료 화면 [요청서 인쇄] — 다운로드와 같은 데이터(접수번호만 채워진다).
@@ -1185,13 +1188,13 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
         location.replace(`${base}/quote/done?id=${encodeURIComponent(j.id)}`);
         return;
       }
-      // 구버전 응답(id 없음) 폴백 — 인라인 성공 안내
-      setStatus(M.msgSuccess!, true);
+      // 구버전 응답(id 없음) 폴백 — 인라인 성공 안내({days} = 회신 기한)
+      setStatus(fillDays(M.msgSuccess!, j.replyDays), true);
       try { statusEl.scrollIntoView({ block: "center", behavior: "smooth" }); } catch (err2) { /* 무시 */ }
     } catch (err) {
       // 접수 뒤 화면 정리 중 오류 — 여기까지 왔다면 서버는 이미 받았다. 다시 누르게 하지 않는다.
       console.error(err);
-      setStatus(M.msgSuccess!, true);
+      setStatus(fillDays(M.msgSuccess!, undefined), true);
     } finally {
       if (!leaving) {
         sending = false;

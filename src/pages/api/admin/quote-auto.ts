@@ -50,6 +50,8 @@ export const GET: APIRoute = async ({ request }) => {
         imported_at: log.imported_at,
         rules_version: log.rules_version,
         sha256: String(log.source_sha256 ?? '').slice(0, 12),
+        // 마지막 바뀜이 가격 DB 편집 화면(관리자 수정)인가 — 엑셀 올리기가 아니면 sha 는 데이터 지문이다
+        edited: String(log.source_file ?? '').startsWith('admin-edit:'),
       },
     },
   });

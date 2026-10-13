@@ -243,3 +243,18 @@ CREATE TABLE IF NOT EXISTS quote_revisions (
   created_at   TEXT NOT NULL,
   UNIQUE (inquiry_id, rev)                  -- 이 UNIQUE 의 자동 인덱스가 (inquiry_id, rev) 조회를 맡는다(따로 인덱스 두지 않음)
 );
+
+-- ── 가격 DB 관리자 수정 기록 (price_edit_log) ───────────────
+-- 관리자 화면(/admin/price)에서 한 행을 고치거나 더할 때마다 한 줄. 되돌리기는 before_json 으로 한다.
+-- ⚠️ 원가 값이 들어 있다 — 관리자 화면 전용(고객 응답·로그·구글챗에 쓰지 않는다).
+-- 행 삭제 기능은 없다(사용함/사용 안 함으로만 끈다).
+CREATE TABLE IF NOT EXISTS price_edit_log (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  at           TEXT NOT NULL,               -- 저장 시각(UTC ISO)
+  table_name   TEXT NOT NULL,               -- price_policy | price_equipment | price_recipe | price_substrate | price_alias
+  row_key      TEXT NOT NULL,               -- 행 ID(별칭은 DB 번호)
+  action       TEXT NOT NULL,               -- edit(수정) | add(추가) | revert(되돌림)
+  cols_json    TEXT,                        -- 바뀐 열 이름 배열
+  before_json  TEXT,                        -- 바뀌기 전 행(추가면 NULL)
+  after_json   TEXT                         -- 바뀐 뒤 행
+);

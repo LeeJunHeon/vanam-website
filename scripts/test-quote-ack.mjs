@@ -349,7 +349,7 @@ eq('defang(조회 화면 요청 내용): 줄바꿈·길이는 그대로 · 주�
   eq('관리자 줄: PDF 없이 보냄', ackLabel(ackRecord(null, { status: 'sent', pdf: 'none:rate_limited', by: 'auto', at: '2026-10-01T07:50:20.000Z' })).text,
     '확인 메일: 보냄 · 2026-10-01 16:50 · PDF 못 만듦 — 조회 링크만');
   eq('관리자 줄: 기록 없음(이 기능 전 접수) → null', ackLabel(null), null);
-  eq('사유 한글: 발송 통로의 모든 사유 + 실행부 사유', ['blocked_build', 'blocked_host', 'bad_recipient', 'no_credentials', 'unverified', 'recipient_cap', 'daily_cap',
+  eq('사유 한글: 발송 통로의 모든 사유 + 실행부 사유', ['blocked_build', 'blocked_host', 'bad_recipient', 'no_credentials', 'unverified', 'recipient_cap', 'daily_cap', 'disabled_by_setting',
     'auth_failed', 'http_error', 'fetch_error', 'in_progress', 'no_inquiry', 'not_quote', 'error']
     .every((k) => typeof ACK_REASON_KO[k] === 'string' && ACK_REASON_KO[k]), true);
 }

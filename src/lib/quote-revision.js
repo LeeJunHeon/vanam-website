@@ -109,13 +109,14 @@ export function buildDoc({ input, result, info }) {
 
 /**
  * 접수 시 자동 견적 — 저장할 개정의 내용. 공정 견적이 아니면 null.
- * @param {{details: unknown, locale: string, priceDb: any, computeQuote: Function, today: string, info: Record<string, unknown>}} a
+ * @param {{details: unknown, locale: string, priceDb: any, computeQuote: Function, today: string, info: Record<string, unknown>,
+ *   limits?: {sampleManualMin?: number, maxNm?: number, maxMin?: number}}} a  limits = 운영 설정 한도(없으면 기본값)
  */
-export function buildAutoRevision({ details, locale, priceDb, computeQuote, today, info }) {
+export function buildAutoRevision({ details, locale, priceDb, computeQuote, today, info, limits }) {
   const form = formFromDetails(details, locale);
   if (!form) return null;
   // USD 는 저장에 필요 없다 — 조회할 때 그때 환율로 다시 표기한다
-  const { customer, debug } = estimateForCustomer({ form, priceDb, computeQuote, formatUsd: () => '', usdRate: 1, today });
+  const { customer, debug } = estimateForCustomer({ form, priceDb, computeQuote, formatUsd: () => '', usdRate: 1, today, limits });
 
   if (customer.kind === 'estimate') {
     return { kind: 'estimate', total: customer.totalKrw, input: debug.input, result: debug.result,

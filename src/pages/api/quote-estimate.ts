@@ -18,6 +18,9 @@ import { QuoteMapError } from '../../lib/quote-map.js';
 import { estimateForCustomer } from '../../lib/quote-customer.js';
 import { loadPriceDbCached } from '../../lib/price-db';
 import { quoteAutoEnabled } from '../../lib/quote-auto';
+// 자동 견적 판정 한도(샘플 수·최대 두께·최대 시간) — 관리자 '운영 설정'
+import { readSiteSettings } from '../../lib/site-settings-db';
+import { quoteLimitsOf } from '../../lib/site-settings.js';
 
 export const prerender = false;
 
@@ -65,9 +68,10 @@ export const POST: APIRoute = async ({ request }) => {
 
   const priceDb = await loadPriceDbCached(d);
   const fx = await readRate(d);
+  const limits = quoteLimitsOf(await readSiteSettings(d));
   const today = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10); // 한국 날짜
   try {
-    const { customer } = estimateForCustomer({ form, priceDb, computeQuote, formatUsd, usdRate: fx.rate, today });
+    const { customer } = estimateForCustomer({ form, priceDb, computeQuote, formatUsd, usdRate: fx.rate, today, limits });
     return json({ ok: true, customer });
   } catch (e) {
     if (e instanceof QuoteMapError) return json({ ok: false, error: e.code }, 400);

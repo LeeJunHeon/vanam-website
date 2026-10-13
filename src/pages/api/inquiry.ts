@@ -16,6 +16,9 @@ import { manualLabelAdmin } from '../../lib/quote-customer.js';
 import { loadPriceDbCached, latestImport } from '../../lib/price-db';
 import { quoteAutoEnabled } from '../../lib/quote-auto';
 import { insertRevision } from '../../lib/quote-store';
+// 운영 설정 — 자동 견적 판정 한도 · 회신 기한(응답의 replyDays — 화면 안내 "영업일 기준 N일")
+import { readSiteSettings } from '../../lib/site-settings-db';
+import { quoteLimitsOf } from '../../lib/site-settings.js';
 import companyInfo from '../../data/company.json';
 // 구글챗은 이 통로로만 보낸다 — Cloudflare main 빌드가 아니면 코드에서 차단된다.
 import { sendChat } from '../../lib/chat-send';
@@ -235,6 +238,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
   // 5-1) 접수 시 자동 견적 — 공정 견적 · 구조화 사본 저장됨 · 운영 스위치 켜짐(가격 DB 있음)일 때만.
   //      결과는 quote_revisions 에 개정 1로 남고, 담당자 알림에 한 줄이 붙는다.
   //      ⚠️ 여기서 무슨 일이 나도 접수 응답·알림은 그대로 진행한다. 로그에는 접수번호와 오류 종류만 남긴다.
+  // 운영 설정(실패하면 기본값) — 자동 견적 한도와 응답의 회신 기한
+  const siteSettings = await readSiteSettings(saved);
   let estimateLine: string | undefined;
   let quoteSaved = false; // 이번 접수로 개정이 저장됐는가 — 완료 페이지가 이때만 조회 API 를 부른다
   if (type === 'quote' && saved) {
@@ -248,7 +253,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
           inquiry: { id, name, company, productName }, policy: priceDb.policy, today,
           contact: contactFor(locale, companyInfo.tel), locale,
         });
-        const auto = buildAutoRevision({ details: dj, locale, priceDb, computeQuote, today, info });
+        const auto = buildAutoRevision({ details: dj, locale, priceDb, computeQuote, today, info, limits: quoteLimitsOf(siteSettings) });
         if (auto) {
           const seenTotal = seenKrw(body.estimateSeenKrw);
           const imp = await latestImport(saved);
@@ -306,19 +311,19 @@ export const POST: APIRoute = async ({ request, locals }) => {
   if (chat.reason === 'blocked_build' || chat.reason === 'no_webhook') {
     const ack = await ackFlag();
     scheduleAck();
-    return json({ ok: true, delivered: false, id, quote: quoteSaved, ack });
+    return json({ ok: true, delivered: false, id, quote: quoteSaved, ack, replyDays: siteSettings.reply_business_days });
   }
   if (chat.reason === 'http_error' || chat.reason === 'fetch_error') {
     if (rowSaved) {
       console.error('[inquiry] 구글챗 알림 실패 — 접수는 저장됨(관리자 화면에서 확인):', id, chat.reason, chat.status ?? '');
       const ack = await ackFlag();
       scheduleAck();
-      return json({ ok: true, delivered: false, id, quote: quoteSaved, ack });
+      return json({ ok: true, delivered: false, id, quote: quoteSaved, ack, replyDays: siteSettings.reply_business_days });
     }
     return json({ ok: false, error: chat.reason === 'http_error' ? 'webhook_failed' : 'webhook_error' }, 502);
   }
 
   const ack = await ackFlag();
   scheduleAck();
-  return json({ ok: true, delivered: true, type, id, quote: quoteSaved, ack });
+  return json({ ok: true, delivered: true, type, id, quote: quoteSaved, ack, replyDays: siteSettings.reply_business_days });
 };

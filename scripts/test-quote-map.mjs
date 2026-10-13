@@ -156,6 +156,23 @@ eq('Evaporator Te → manual', cust({ steps: [S('Sputter', 'Ti', '10'), S('Evapo
 eq('엔진 오류(가격 자료) → manual', cust({ steps: [S('Sputter', 'Ti', '10')], sampleCount: 1 }, badEngine), { kind: 'manual', manual: ['가격 자료 확인'] });
 // 자동 계산 범위(10-01): 두께 10,000 nm · 시간 1,440 분을 넘으면 금액 없이 담당자 확인
 eq('범위: 상수', [AUTO_MAX_NM, AUTO_MAX_MIN], [10000, 1440]);
+// 운영 설정 한도(10-12) — 관리자가 바꾼 값이 판정·문구에 그대로 쓰인다 · 이상한 값은 기본값
+{
+  const lim = (f, limits) => estimateForCustomer({
+    form: { locale: 'ko', delivery: 'direct', ...f }, priceDb: DB, computeQuote: fakeEngine, formatUsd: (k, r) => `$${(k / r).toFixed(2)}`, usdRate: 1000, today: '2026-01-10', limits,
+  });
+  eq('한도: 샘플 5개 이상이면 담당자 확인(문구에 5)', [lim({ steps: [S('Sputter', 'Ti', '10')], sampleCount: 4 }, { sampleManualMin: 5 }).customer.kind,
+    lim({ steps: [S('Sputter', 'Ti', '10')], sampleCount: 5 }, { sampleManualMin: 5 }).customer, lim({ steps: [S('Sputter', 'Ti', '10')], sampleCount: 5 }, { sampleManualMin: 5 }).debug.manual],
+    ['estimate', { kind: 'manual', manual: ['샘플 수량 5개 이상'] }, [{ code: 'samples', min: 5 }]]);
+  eq('한도: 두께 500 nm 까지', [lim({ steps: [S('Sputter', 'Ti', '500')], sampleCount: 1 }, { maxNm: 500 }).customer.kind,
+    lim({ steps: [S('Sputter', 'Ti', '501')], sampleCount: 1 }, { maxNm: 500 }).customer], ['estimate', { kind: 'manual', manual: ['1단계 Sputter Ti'] }]);
+  eq('한도: 시간 30분까지', [lim({ steps: [S('PlasmaCleaning (In-situ)', 'Ar', '30'), S('Sputter', 'Ti', '10')], sampleCount: 1 }, { maxMin: 30 }).customer.kind,
+    lim({ steps: [S('PlasmaCleaning (In-situ)', 'Ar', '31'), S('Sputter', 'Ti', '10')], sampleCount: 1 }, { maxMin: 30 }).customer.kind], ['estimate', 'manual']);
+  eq('한도: 이상한 값(0·음수·소수·문자)은 기본값', [0, -3, 2.5, '7', null].map((v) => lim({ steps: [S('Sputter', 'Ti', '10')], sampleCount: 9 }, { sampleManualMin: v }).customer.kind),
+    ['estimate', 'estimate', 'estimate', 'estimate', 'estimate']);
+  eq('문구: 예전 저장 건(min 없음)은 기본 10 · 새 건은 그 값', [manualLabel({ code: 'samples' }, 'ko'), manualLabel({ code: 'samples', min: 3 }, 'ko'),
+    manualLabel({ code: 'samples', min: 3 }, 'en'), manualLabelAdmin({ code: 'samples', min: 3 })], ['샘플 수량 10개 이상', '샘플 수량 3개 이상', '3 or more samples', '샘플 수량 3개 이상']);
+}
 eq(`두께 ${AUTO_MAX_NM} nm → estimate`, cust({ steps: [S('Sputter', 'Ti', String(AUTO_MAX_NM))], sampleCount: 1 }).kind, 'estimate');
 eq(`두께 ${AUTO_MAX_NM + 1} nm → manual(그 단계)`, cust({ steps: [S('Sputter', 'Ti', '10'), S('Sputter', 'Pt', String(AUTO_MAX_NM + 1))], sampleCount: 1 }), { kind: 'manual', manual: ['2단계 Sputter Pt'] });
 {
@@ -212,7 +229,7 @@ eq('날짜 더하기(월 넘김)', addDays('2026-01-25', 14), '2026-02-08');
 {
   const r = est({ steps: [S('Sputter', 'Ti', '10'), S('Annealing', 'N2', '60'), S('ALD', 'Al2O3', '10')], measurements: ['XPS'], sampleCount: 12 });
   eq('debug.manual 은 구조화 항목(중복 없음)', r.debug.manual, [
-    { code: 'samples' },
+    { code: 'samples', min: 10 },
     { code: 'step', step: 2, process: 'Annealing', material: 'N2', reason: 'noPrice' },
     { code: 'step', step: 3, process: 'ALD', material: 'Al2O3', reason: 'chooseEquipment' },
     { code: 'measure', name: 'XPS' },
