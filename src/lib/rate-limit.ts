@@ -140,6 +140,38 @@ export async function rateLimit(
   }
 }
 
+/**
+ * 세지 않고 지금 막혀 있는지만 본다(10-13 — 관리자 로그인은 '틀린 시도만' 센다).
+ * 쓰는 법: rateCheck 로 막혔는지 먼저 보고 → 실패했을 때만 rateLimit 으로 한 번 센다.
+ *   rateLimit 은 센 뒤 hits > limit 이면 막으므로, 여기서는 hits >= limit 이면 막는다(같은 횟수에서 막힌다).
+ * DB 가 없거나 오류면 통과(가용성 우선 — rateLimit 과 같다).
+ */
+export async function rateCheck(
+  db: D1 | null,
+  bucket: RateBucket,
+  request: Request,
+): Promise<RateResult> {
+  const rule = RATE_RULES[bucket];
+  if (!rule || !db) return { ok: true, remaining: rule?.limit ?? 0, retryAfterSec: 0 };
+  const now = Date.now();
+  const windowMs = rule.windowSec * 1000;
+  try {
+    const row = await db
+      .prepare(`SELECT hits, window_start FROM rate_limits WHERE key = ?`)
+      .bind(`${bucket}:${clientIp(request)}`)
+      .first<{ hits: number; window_start: number }>();
+    if (!row || now - Number(row.window_start) >= windowMs) return { ok: true, remaining: rule.limit, retryAfterSec: 0 };
+    const hits = Number(row.hits);
+    if (hits >= rule.limit) {
+      return { ok: false, remaining: 0, retryAfterSec: Math.max(1, Math.ceil((Number(row.window_start) + windowMs - now) / 1000)) };
+    }
+    return { ok: true, remaining: rule.limit - hits, retryAfterSec: 0 };
+  } catch (e) {
+    console.error('[rate-limit] 확인 실패 (통과 처리):', e);
+    return { ok: true, remaining: rule.limit, retryAfterSec: 0 };
+  }
+}
+
 /** 429 Too Many Requests 응답. Retry-After 헤더 포함. */
 export function tooMany(retryAfterSec: number): Response {
   return new Response(JSON.stringify({ ok: false, error: 'rate_limited', retryAfterSec }), {
