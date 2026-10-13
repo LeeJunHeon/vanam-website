@@ -434,13 +434,23 @@ const spec = (r: Row) =>
           <!-- ── 설정: 가격 DB 올리기 (엑셀) — 브라우저가 엑셀을 읽고, 서버가 다시 검사한 뒤 한 번에 바꾼다(/api/admin/price-import) ── -->
           <div class="mt-6 rounded-xl border border-ink/10 bg-ink/[0.02] p-5" id="pi-card">
             <h2 class="text-lg font-semibold text-accent">가격 DB 올리기 (엑셀)</h2>
-            <div class="mt-4 flex flex-wrap items-center gap-2">
-              <input id="pi-file" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" class="text-sm text-ink/70" />
-              <button id="pi-preview" type="button"
-                class="rounded-lg border border-ink/15 px-3 py-1.5 text-sm text-ink/70 transition hover:border-accent hover:text-accent">미리보기</button>
-              <button id="pi-apply" type="button" disabled
-                class="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-onbrand transition hover:brightness-110">운영 가격 DB 바꾸기</button>
-            </div>
+            {/* 10-13: 브라우저 기본 파일 칸은 버튼처럼 보이지 않아 헷갈렸다 → 숨기고 ① 파일 고르기 ② 미리보기 ③ 바꾸기 버튼으로 */}
+            <ol class="mt-4 flex flex-wrap items-center gap-2 text-sm">
+              <li class="flex items-center gap-2">
+                <input id="pi-file" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" class="sr-only" />
+                <label for="pi-file" id="pi-pick" tabindex="0" role="button"
+                  class="cursor-pointer rounded-lg border border-accent/50 px-3 py-1.5 text-sm font-medium text-accent transition hover:bg-accent/10">① 엑셀 파일 고르기</label>
+                <span id="pi-fname" class="max-w-[16rem] truncate text-ink/50">고른 파일 없음</span>
+              </li>
+              <li>
+                <button id="pi-preview" type="button"
+                  class="rounded-lg border border-ink/15 px-3 py-1.5 text-sm text-ink/70 transition hover:border-accent hover:text-accent">② 미리보기</button>
+              </li>
+              <li>
+                <button id="pi-apply" type="button" disabled
+                  class="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-onbrand transition hover:brightness-110">③ 운영 가격 DB 바꾸기</button>
+              </li>
+            </ol>
             <p id="pi-msg" class="mt-3 text-sm" role="status" aria-live="polite"></p>
             <div id="pi-result" hidden class="mt-4 text-sm"></div>
             <p class="mt-3 text-xs leading-relaxed text-ink/40">
@@ -1205,12 +1215,20 @@ const spec = (r: Row) =>
           out.hidden = false;
         };
 
-        fileIn.addEventListener('change', reset);
+        // 고른 파일 이름 표시 · 키보드(Enter/Space)로도 파일 고르기
+        const fname = document.getElementById('pi-fname');
+        const pick = document.getElementById('pi-pick');
+        fileIn.addEventListener('change', () => {
+          reset();
+          const f = fileIn.files?.[0];
+          if (fname) { fname.textContent = f ? f.name : '고른 파일 없음'; fname.title = f ? f.name : ''; fname.style.color = f ? 'var(--color-ink)' : ''; }
+        });
+        pick?.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); fileIn.click(); } });
 
         prevBtn.addEventListener('click', async () => {
           reset();
           const file = fileIn.files?.[0];
-          if (!file) { say('엑셀 파일을 먼저 고르세요.', 'bad'); return; }
+          if (!file) { say('먼저 [① 엑셀 파일 고르기]로 파일을 고르세요.', 'bad'); return; }
           if (file.size > MAX_FILE) { say('파일이 10MB 를 넘습니다.', 'bad'); return; }
           if (!window.crypto?.subtle) { say('이 주소에서는 파일을 검사할 수 없습니다 — https 또는 localhost 주소로 여세요.', 'bad'); return; }
           // 미리보기 중에는 파일 선택·미리보기를 잠근다. 그래도 파일이 바뀌었으면(각 await 뒤 확인) 조용히 멈춘다.
@@ -1245,7 +1263,7 @@ const spec = (r: Row) =>
             if (j.error === 'invalid') { say(''); showProblems('서버 검사 실패 — 바꾸지 않습니다', j.problems ?? [], j.count); return; }
             if (!j.ok) { say(`미리보기 실패: ${j.error ?? r.status}`, 'bad'); return; }
             showPreview(j);
-            say(j.same ? '' : '미리보기를 확인한 뒤 [운영 가격 DB 바꾸기]를 누르세요.');
+            say(j.same ? '' : '미리보기를 확인한 뒤 [③ 운영 가격 DB 바꾸기]를 누르세요.');
             if (!j.same) {
               ready = { file: fileInfo, data: read.data, base: j.current.fingerprint, next: j.next.fingerprint, edits: Number(j.edits?.count) || 0 };
               setApply(true);
