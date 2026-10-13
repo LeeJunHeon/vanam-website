@@ -94,6 +94,11 @@ const qvText = editId ? JSON.stringify({ ko: siteData.ko.quote.view, en: siteDat
             <ol>
               <li>견적서의 한 줄이 <b>품목</b> 하나입니다. 박막 증착은 층(레시피·두께)으로 엑셀과 같은 방식으로 계산되고, 분석·기판·박스처럼 값이 정해진 줄은 단가나 총액으로 넣습니다.</li>
               <li>입력을 바꾸면 금액이 바로 다시 계산됩니다. 계산은 서버가 엑셀과 같은 규칙으로 합니다.</li>
+              <li><b>박막 증착 품목</b>: 장비 → 층(레시피·두께) 순서로 고릅니다. <b>횟수</b>는 엑셀의 <b>수량</b>과 같습니다(증착 2회 = 2). 1회 금액 × 횟수로 계산합니다.</li>
+              <li><b>마진</b>은 보통 <b>기본</b>으로 둡니다. 연구소·대학 할인·특수 물질은 해당할 때만 고르고, 고객 홈페이지 자동 견적은 늘 기본 마진입니다.</li>
+              <li><b>플라즈마 클리닝</b>은 포함일 때만 체크합니다. 분을 비우면 장비 기본 시간이 들어갑니다. [공정 시간 조정]의 로딩·셋업·대기 분도 비우면 레시피·장비 기본값입니다.</li>
+              <li><b>기판도 함께 청구</b>는 기판 값을 같은 줄에 더할 때 고릅니다. 목록은 '이름 · 기판 ID'이고, 회당 기판 장수 × 횟수만큼 더합니다.</li>
+              <li>시료함·분석처럼 값이 정해진 항목은 아래 <b>[+ 금액 입력 품목]</b>으로 줄을 따로 추가하고 단가와 수량을 넣습니다.</li>
               <li>고칠 곳이 있으면 그 칸이 빨갛게 표시되고, 오른쪽 합계 칸에 목록이 나옵니다(누르면 그 칸으로 갑니다).</li>
               <li>견적서 정보(담당자·납기 등)는 금액과 무관해서 바꿔도 다시 계산하지 않습니다.</li>
               {editId
@@ -430,6 +435,8 @@ const qvText = editId ? JSON.stringify({ ko: siteData.ko.quote.view, en: siteDat
         let subOpts: Opt[] = [];
 
         let cards: Card[] = [];
+        const RECIPE_CLEARED_HEAD = '장비를 바꿔서';
+        const RECIPE_CLEARED = (n: number) => `${RECIPE_CLEARED_HEAD} 그 장비에 없는 레시피 ${n}개를 비웠습니다. 빈 층의 레시피를 다시 고르면 이 안내는 사라집니다.`;
         const notes = new Map<number, string>();      // 카드 열쇠 → 잠깐 보이는 안내(장비를 바꿔 레시피를 비웠다 등)
         const advOpen = new Map<number, boolean>();   // 카드 열쇠 → [공정 시간 조정] 펼침 여부(다시 그려도 유지)
         const bdOpen = new Map<number, boolean>();    // 카드 열쇠 → [원가 내역] 펼침 여부(다시 계산해도 유지)
@@ -517,7 +524,7 @@ const qvText = editId ? JSON.stringify({ ko: siteData.ko.quote.view, en: siteDat
         const filmBody = (c: Card, i: number) => `
           <div class="qc-grid">
             <label class="qc-field qc-wide" data-fw="equipment">장비${eqSelect(c, i)}</label>
-            <label class="qc-field" data-fw="qty">횟수<span class="qc-suffix"><input data-f="qty" value="${esc(c.qty)}" inputmode="numeric" aria-label="품목 ${i + 1} 횟수" /><span>회</span></span></label>
+            <label class="qc-field" data-fw="qty"><span>횟수 <span class="qc-hint">(엑셀의 수량)</span></span><span class="qc-suffix"><input data-f="qty" value="${esc(c.qty)}" inputmode="numeric" aria-label="품목 ${i + 1} 횟수(엑셀의 수량)" /><span>회</span></span><span class="qc-hint">증착 1회 금액 × 횟수</span></label>
             <label class="qc-field" data-fw="margin">마진${marginSelect(c, i)}</label>
             ${c.margin === '직접입력' ? `<label class="qc-field" data-fw="directMarkup">가산율 (원가 × 비율)<input data-f="directMarkup" value="${esc(c.directMarkup)}" inputmode="decimal" placeholder="예: 0.3" aria-label="품목 ${i + 1} 가산율" /></label>` : ''}
             <div class="qc-field qc-wide" data-fw="plasma">플라즈마 클리닝
@@ -536,7 +543,7 @@ const qvText = editId ? JSON.stringify({ ko: siteData.ko.quote.view, en: siteDat
             <button type="button" class="qc-link" data-act="ladd" style="margin:0.4rem 0 0 0.25rem">+ 층 추가</button>
           </div>
           <div class="qc-grid">
-            <label class="qc-field qc-wide" data-fw="substrateId">기판도 함께 청구${subSelect(c, i)}</label>
+            <label class="qc-field qc-wide" data-fw="substrateId"><span>기판도 함께 청구 <span class="qc-hint">(이름 · 기판 ID)</span></span>${subSelect(c, i)}</label>
             ${c.substrateId.trim() ? `<label class="qc-field" data-fw="substratePerRun">회당 기판 장수<input data-f="substratePerRun" value="${esc(c.substratePerRun)}" inputmode="numeric" aria-label="품목 ${i + 1} 회당 기판 장수" /></label>` : ''}
             <label class="qc-field qc-full" data-fw="extraSpec">견적서 규격에 덧붙일 글<input data-f="extraSpec" value="${esc(c.extraSpec)}" placeholder="예: 양면 증착" aria-label="품목 ${i + 1} 덧붙일 규격" /></label>
           </div>
@@ -868,7 +875,7 @@ const qvText = editId ? JSON.stringify({ ko: siteData.ko.quote.view, en: siteDat
               }
               c.equipmentId = next;
               const n = next ? clearForeignRecipes(c, eqOf) : 0;
-              if (n) notes.set(c.key, `다른 장비의 레시피 ${n}개를 비웠습니다. 다시 고르세요.`); else notes.delete(c.key);
+              if (n) notes.set(c.key, RECIPE_CLEARED(n)); else notes.delete(c.key);
               structural();
               return;
             }
@@ -881,6 +888,11 @@ const qvText = editId ? JSON.stringify({ ko: siteData.ko.quote.view, en: siteDat
               const li = layerIndexOf(c, t);
               if (li < 0) return;
               c.layers[li].recipeId = t.value;
+              // 장비를 바꿔 비웠던 레시피를 다 다시 고르면 안내를 거둔다(남아 있으면 계속 오류처럼 보인다)
+              if (notes.get(c.key)?.startsWith(RECIPE_CLEARED_HEAD) && c.layers.every((l) => l.recipeId.trim())) {
+                notes.delete(c.key);
+                cardsEl.querySelector(`[data-k="${c.key}"] .qc-note`)?.remove();
+              }
               // 장비를 안 고른 채 레시피를 고르면 그 레시피의 장비로 정한다(이후 목록은 그 장비 것만)
               if (!c.equipmentId && t.value && eqOf.has(t.value)) { c.equipmentId = eqOf.get(t.value) ?? ''; structural(); } else changed(false);
             }
