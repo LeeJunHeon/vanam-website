@@ -226,9 +226,10 @@ eq('conv: 숫자 아닌 글자는 그대로(앞뒤 공백 포함)', [conv('abc')
   eq('레시피: 장비를 안 고르면 전부', recipeOptions(RECIPES).length, RECIPES.length);
   eq('active 값 읽기(1·true·"TRUE")', recipeOptions([R('a', 'M', 'S', 'E', { active: 1 }), R('b', 'M2', 'S', 'E', { active: 'TRUE' }), R('c', 'M3', 'S', 'E', { active: null })])
     .map((o) => o.active), [true, true, false]);
-  eq('기판: 이름 · 겹치면 ID · 사용 중지 · 같은 ID 한 번', substrateOptions([...SUBSTRATES, { catalog_id: 'SUB-2', item_name: '가짜 기판', active: 0 },
-    { catalog_id: 'SUB-1', item_name: '중복' }, { catalog_id: '', item_name: 'ID 없음' }]).map((o) => o.label),
-  ['가짜 기판 · SUB-1', '가짜 기판 · SUB-2 — 사용 중지']);
+  eq('기판: 이름 · 늘 ID · 사용 중지 · 같은 ID 한 번', substrateOptions([...SUBSTRATES, { catalog_id: 'SUB-2', item_name: '가짜 기판', active: 0 },
+    { catalog_id: 'SUB-1', item_name: '중복' }, { catalog_id: '', item_name: 'ID 없음' }, { catalog_id: 'SUB-3', item_name: '다른 기판', active: 1 },
+    { catalog_id: 'SUB-4', item_name: '', active: 1 }]).map((o) => o.label),
+  ['가짜 기판 · SUB-1', '가짜 기판 · SUB-2 — 사용 중지', '다른 기판 · SUB-3', 'SUB-4']);
   const card = newCard('박막자동', { equipmentId: 'EQ-C' });
   card.layers = [newLayer({ recipeId: 'R-A1' }), newLayer({ recipeId: 'R-C1' }), newLayer({ recipeId: '' }), newLayer({ recipeId: 'R-NONE' })];
   const n = clearForeignRecipes(card, new Map(RECIPES.map((r) => [r.recipe_id, r.equipment_id])));

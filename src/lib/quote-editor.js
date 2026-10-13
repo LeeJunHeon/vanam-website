@@ -269,13 +269,11 @@ export function recipeOptions(recipes, equipmentId = '') {
 }
 
 /**
- * 기판 선택지 — 이름(겹치면 ID) · 사용 중지 표시.
+ * 기판 선택지 — '이름 · ID'(ID 는 늘 붙인다 — 엑셀·견적 DB 에서 ID 로 찾으니까) · 사용 중지 표시.
  * @param {{catalog_id: unknown, item_name?: unknown, active?: unknown}[]} substrates
  */
 export function substrateOptions(substrates) {
   const list = substrates ?? [];
-  const count = new Map();
-  for (const s of list) count.set(str(s.item_name).trim(), (count.get(str(s.item_name).trim()) ?? 0) + 1);
   const seen = new Set();
   const out = [];
   for (const s of list) {
@@ -283,7 +281,7 @@ export function substrateOptions(substrates) {
     if (!id || seen.has(id)) continue;
     seen.add(id);
     const name = str(s.item_name).trim() || id;
-    out.push({ value: id, label: `${name}${(count.get(name) ?? 0) > 1 ? ` · ${id}` : ''}${isActive(s.active) ? '' : ' — 사용 중지'}`, active: isActive(s.active) });
+    out.push({ value: id, label: `${name}${name === id ? '' : ` · ${id}`}${isActive(s.active) ? '' : ' — 사용 중지'}`, active: isActive(s.active) });
   }
   return out;
 }
