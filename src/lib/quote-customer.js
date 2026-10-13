@@ -26,6 +26,8 @@ export const SAMPLE_MANUAL_MIN = 10;
  */
 export const AUTO_MAX_NM = 10000;   // 10 µm
 export const AUTO_MAX_MIN = 1440;   // 24시간
+// ↑ 세 값은 기본값이다. 운영 값은 관리자 '운영 설정'(src/lib/site-settings.js)에서 바꾸고,
+//   호출부가 estimateForCustomer 의 limits 로 넘긴다(넘기지 않으면 이 기본값).
 
 /** 두께(nm) 단위 공정 · 시간(min) 단위 공정 — src/lib/processes.ts 의 단위와 같다 */
 const NM_PROCESSES = ['Sputter', 'ALD', 'Evaporator'];
@@ -52,7 +54,7 @@ const TEXT = {
     sizeOther: '기타 크기',
     typeOther: '기타 종류',
     size2: '2 inch 이하·조각',
-    manySamples: `샘플 수량 ${SAMPLE_MANUAL_MIN}개 이상`,
+    manySamples: (n) => `샘플 수량 ${n}개 이상`,
     size: '공정 단계가 많아 담당자가 직접 계산합니다',
     pricing: '가격 자료 확인',
     inputStep: (n) => `${n}단계 입력 확인`,
@@ -74,7 +76,7 @@ const TEXT = {
     sizeOther: 'other size',
     typeOther: 'other type',
     size2: '≤2 inch / piece',
-    manySamples: `${SAMPLE_MANUAL_MIN} or more samples`,
+    manySamples: (n) => `${n} or more samples`,
     size: 'Many process steps — our team will calculate this quote',
     pricing: 'Pricing data review',
     inputStep: (n) => `Check the input for step ${n}`,
@@ -93,12 +95,18 @@ const isActive = (v) => v === true || v === 1 || v === '1';
 
 /**
  * 회수 계획 — 지금은 1회 투입 장수 표가 없어서 샘플 수량만 본다.
- * SAMPLE_MANUAL_MIN 미만이면 1회, 이상이면 담당자 확인. 표가 오면 이 함수만 바꾼다.
- * @param {number} sampleCount
+ * manualMin(기본 SAMPLE_MANUAL_MIN) 미만이면 1회, 이상이면 담당자 확인. 표가 오면 이 함수만 바꾼다.
+ * @param {number} sampleCount @param {number} [manualMin] 운영 설정 '담당자 확인 샘플 수량'
  * @returns {{runs: number, manual: boolean}}
  */
-export function planRuns(sampleCount) {
-  return { runs: 1, manual: sampleCount >= SAMPLE_MANUAL_MIN };
+export function planRuns(sampleCount, manualMin = SAMPLE_MANUAL_MIN) {
+  return { runs: 1, manual: sampleCount >= manualMin };
+}
+
+/** 운영 설정 한도 → 실제로 쓸 값(빠졌거나 이상하면 기본값) */
+function limitsOf(l) {
+  const ok = (v, d) => (Number.isInteger(v) && v >= 1 ? v : d);
+  return { sampleManualMin: ok(l?.sampleManualMin, SAMPLE_MANUAL_MIN), maxNm: ok(l?.maxNm, AUTO_MAX_NM), maxMin: ok(l?.maxMin, AUTO_MAX_MIN) };
 }
 
 /**
@@ -170,7 +178,7 @@ export function validateForm(form, T) {
 
 // ── 담당자 확인 사유 → 문구 ────────────────────────────────────────────
 /**
- * @typedef {{code:'samples'}
+ * @typedef {{code:'samples', min?: number}
  *   | {code:'substrate', type:string, size:string, grade:string, status:'none'|'ambiguous'}
  *   | {code:'step', step:number, process:string, material:string, reason:string}
  *   | {code:'measure', name:string}
@@ -197,7 +205,8 @@ function substrateParts(e, T) {
 export function manualLabel(e, locale) {
   const T = TEXT[locale === 'en' ? 'en' : 'ko'];
   switch (e?.code) {
-    case 'samples': return T.manySamples;
+    // min = 판정 때의 운영 설정 값(10-12 전 저장 건에는 없다 → 그때 기본값)
+    case 'samples': return T.manySamples(Number.isInteger(e.min) ? e.min : SAMPLE_MANUAL_MIN);
     case 'substrate': return T.substrate(...substrateParts(e, T));
     // 공정·분석 이름은 표시용 띄어쓰기(SheetResistance → Sheet Resistance) — 폼·요청서와 같은 함수
     case 'step': return T.step(e.step, displayName(e.process), prettyFormula(e.material));
@@ -222,7 +231,7 @@ const INPUT_FIELD_KO = { value: '두께·시간', material: '물질', process: '
 export function manualLabelAdmin(e) {
   const T = TEXT.ko;
   switch (e?.code) {
-    case 'samples': return T.manySamples;
+    case 'samples': return T.manySamples(Number.isInteger(e.min) ? e.min : SAMPLE_MANUAL_MIN);
     case 'substrate':
       return `${T.substrate(...substrateParts(e, T))} — ${e.status === 'ambiguous' ? '같은 사양 원가가 다름' : '목록에 없음'}`;
     case 'step': return `${T.step(e.step, displayName(e.process), prettyFormula(e.material))} — ${REASON[e.reason] ?? e.reason}`;
@@ -248,8 +257,10 @@ export function manualLabelAdmin(e) {
  * @param {(krw: number, rate: number) => string} args.formatUsd
  * @param {number} args.usdRate
  * @param {string} args.today 한국 날짜 YYYY-MM-DD
+ * @param {{sampleManualMin?: number, maxNm?: number, maxMin?: number}} [args.limits] 운영 설정 한도(site-settings.js quoteLimitsOf) — 없으면 기본값
  */
-export function estimateForCustomer({ form, priceDb, computeQuote, formatUsd, usdRate, today }) {
+export function estimateForCustomer({ form, priceDb, computeQuote, formatUsd, usdRate, today, limits }) {
+  const L = limitsOf(limits);
   const locale = form?.locale === 'en' ? 'en' : 'ko';
   const T = TEXT[locale];
 
@@ -266,8 +277,8 @@ export function estimateForCustomer({ form, priceDb, computeQuote, formatUsd, us
   };
 
   // 회수
-  const runsPlan = planRuns(sampleCount);
-  if (runsPlan.manual) addManual({ code: 'samples' });
+  const runsPlan = planRuns(sampleCount, L.sampleManualMin);
+  if (runsPlan.manual) addManual({ code: 'samples', min: L.sampleManualMin });
 
   // 자동 계산 범위를 넘는 두께·시간 → 그 단계는 담당자 확인(엔진도 돌리지 않는다 — 터무니없는 금액을 저장하지 않게)
   let overLimit = false;
@@ -275,7 +286,7 @@ export function estimateForCustomer({ form, priceDb, computeQuote, formatUsd, us
     const p = String(s?.process ?? '');
     const nm = NM_PROCESSES.includes(p);
     const v = nm ? parseThickness(s?.value) : MIN_PROCESSES.includes(p) ? conv(s?.value) : null;
-    if (typeof v === 'number' && v > (nm ? AUTO_MAX_NM : AUTO_MAX_MIN)) {
+    if (typeof v === 'number' && v > (nm ? L.maxNm : L.maxMin)) {
       addManual({ code: 'step', step: i + 1, process: p, material: String(s?.material ?? ''), reason: 'overLimit' });
       overLimit = true;
     }
@@ -344,7 +355,7 @@ export function estimateForCustomer({ form, priceDb, computeQuote, formatUsd, us
     extras: mapped?.extras ?? [],
     manual,
     flags: {
-      samples: { count: sampleCount, runs: runsPlan.runs, manualAtOrAbove: SAMPLE_MANUAL_MIN, manual: runsPlan.manual },
+      samples: { count: sampleCount, runs: runsPlan.runs, manualAtOrAbove: L.sampleManualMin, manual: runsPlan.manual },
       substrate: { ...substrate, row: undefined, chosen: substrateId },
     },
   };

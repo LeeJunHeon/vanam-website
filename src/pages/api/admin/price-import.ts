@@ -14,7 +14,7 @@
 import type { APIRoute } from 'astro';
 import { isAdmin } from '../../../lib/admin-auth';
 import { db, nowIso } from '../../../lib/db';
-import { readPriceTables, latestImport } from '../../../lib/price-db';
+import { readPriceTables, latestImport, editsSinceUpload } from '../../../lib/price-db';
 import {
   validatePriceData, priceRowsForDb, priceFingerprint, priceDiff, insertChunks, PRICE_TABLE_ORDER,
 } from '../../../lib/price-sheet.js';
@@ -46,6 +46,7 @@ const INSERT_HEAD: Record<string, string> = {
   price_alias: 'INSERT INTO price_alias (entity_type, alias, equipment_scope, canonical_id, status, notes) VALUES ',
 };
 
+const safeCols = (s: string | null): string[] => { try { const v = s ? JSON.parse(s) : []; return Array.isArray(v) ? v.map(String) : []; } catch { return []; } };
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 
 type Rows = ReturnType<typeof priceRowsForDb>;
@@ -94,7 +95,13 @@ export const POST: APIRoute = async ({ request }) => {
     const counts = countsOf(next);
 
     if (mode === 'preview') {
+      // 마지막 엑셀 올리기 뒤 관리자 화면(/admin/price)에서 고친 것 — 올리면 엑셀 내용으로 바뀐다(10-12: 경고 후 허용)
+      const edits = await editsSinceUpload(d, 30);
       return json({
+        edits: {
+          count: edits.count,
+          rows: edits.rows.map((r) => ({ at: r.at, table: r.table_name, key: r.row_key, action: r.action, cols: safeCols(r.cols_json) })),
+        },
         ok: true, mode, counts,
         current: { counts: countsOf(current), fingerprint: curFp },
         next: { fingerprint: nextFp },

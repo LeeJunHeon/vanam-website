@@ -7,6 +7,7 @@
 // 진행 상태는 언제든 접수번호 + 이메일로 /order/lookup 에서 조회할 수 있다.
 // 접수 직후 고객에게 접수 확인 메일(PDF·조회 버튼)이 나간다(quote-ack-run.ts) — 이 화면은 그 메일을 안내한다(10-02).
 // 안내는 서버가 '나갈 건'이라고 답한 접수(응답 ack → 세션)일 때만 — 하루 상한·테스트 빌드 등으로 안 나가는 건에 '보냈다'고 하지 않는다.
+import { fillDays } from '../../lib/reply-days.js';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getRelativeLocaleUrl } from 'astro:i18n';
 import company from '../../data/company.json';
@@ -29,7 +30,8 @@ const t = isKo
       mailSent: '{email} 주소로 접수 확인 메일을 보내드렸습니다.',
       mailBody: '메일에 견적 요청서(PDF)와 진행 상태 조회 버튼이 들어 있습니다.',
       mailSpam: '몇 분이 지나도 메일이 보이지 않으면 스팸함을 확인해 주세요.',
-      reply: '담당자가 확인한 뒤 영업일 기준 2일 이내에 이메일로 회신드리겠습니다.',
+      // {days} = 운영 설정 '회신 기한(영업일)' — 먼저 기본값으로 그리고, 접수 응답(세션)·/api/site-settings 값으로 바꾼다
+      reply: '담당자가 확인한 뒤 영업일 기준 {days}일 이내에 이메일로 회신드리겠습니다.',
       keep: '접수번호를 보관해 주세요. 접수번호와 이메일로 진행 상태를 확인하실 수 있습니다.',
       summaryTitle: '제출하신 요청 내용',
       detailsTitle: '상세 내용',
@@ -47,7 +49,7 @@ const t = isKo
       mailSent: "We've sent a confirmation email to {email}.",
       mailBody: 'It includes your request sheet (PDF) and a button to check its status.',
       mailSpam: "If it doesn't arrive within a few minutes, please check your spam folder.",
-      reply: 'Our team will review your request and reply by email within 2 business days.',
+      reply: 'Our team will review your request and reply by email within {days} business days.',
       keep: 'Please keep this reference number. You can check the status anytime with the number and your email.',
       summaryTitle: 'Your submitted request',
       detailsTitle: 'Details',
@@ -81,7 +83,7 @@ const t = isKo
       <div class="mt-4 flex flex-col gap-1.5 text-sm leading-relaxed">
         <p id="qd-mail" hidden class="font-medium text-ink/80" data-tpl={t.mailSent}></p>
         <p id="qd-mail-body" hidden class="text-ink/60">{t.mailBody}</p>
-        <p class="text-ink/60">{t.reply}</p>
+        <p id="qd-reply" class="text-ink/60" data-tpl={t.reply}>{fillDays(t.reply, undefined)}</p>
         <p id="qd-mail-spam" hidden class="text-ink/45">{t.mailSpam}</p>
       </div>
 
@@ -118,6 +120,7 @@ const t = isKo
   import { renderQuoteBox, docOptions, injectQuoteViewStyle } from '../../lib/quote-view-render.js';
   // 서류는 견적서·요청서 모두 엑셀 틀(src/lib/doc-excel.js) — 견적 폼의 [견적 요청서 다운로드]와 같은 요청서
   import { buildQuoteDoc, buildRequestDoc, openDoc, requestDocFrom, ymdLocal, telDisplay } from '../../lib/quote-doc';
+  import { fillDays } from '../../lib/reply-days.js';
   // 접수번호는 URL 로, 제출 내용은 세션으로 받는다.
   const root = document.getElementById('qd-root')!;
   const L: Record<string, string> = JSON.parse(root.dataset.labels || '{}');
@@ -135,6 +138,16 @@ const t = isKo
   try { raw = JSON.parse(sessionStorage.getItem('vanam_quote_done') ?? 'null'); } catch { raw = null; }
   // 다른 접수 건의 세션이 남아 있으면 보여주지 않는다 (번호와 내용의 불일치 방지)
   if (raw && id && raw.id && raw.id !== id) raw = null;
+
+  // 회신 기한 "영업일 기준 N일" — 방금 접수한 응답(세션 replyDays)이 있으면 그 값, 없으면(다시 연 화면) 공개 설정을 읽는다.
+  //   읽기에 실패하면 기본값 그대로 둔다.
+  {
+    const replyEl = document.getElementById('qd-reply');
+    const setReply = (n: unknown) => { if (replyEl?.dataset.tpl) replyEl.textContent = fillDays(replyEl.dataset.tpl, n); };
+    const sess = (raw as Record<string, unknown> | null)?.replyDays;
+    if (sess !== undefined && sess !== null) setReply(sess);
+    else fetch('/api/site-settings').then((r) => r.json()).then((j) => { if (j?.ok) setReply(j.replyDays); }).catch(() => { /* 기본값 유지 */ });
+  }
 
   // 접수 확인 메일 안내 — 서버가 '나갈 건'이라고 답했고(ack) 세션에 주소가 있을 때만 세 줄을 보인다.
   // 주소는 글자로만 넣는다(HTML 아님 · '$' 가 든 주소도 그대로 — replace 에 함수를 넘긴다).

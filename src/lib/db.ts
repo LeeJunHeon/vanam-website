@@ -109,6 +109,10 @@ const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS price_import_log (
     id INTEGER PRIMARY KEY AUTOINCREMENT, imported_at TEXT, source_file TEXT, source_sha256 TEXT,
     rules_version TEXT, counts_json TEXT)`,
+  // 가격 DB 관리자 수정 기록(10-12) — /admin/price 에서 한 행을 고치거나 더할 때마다 한 줄. 컬럼 설명은 migrations/0001_init.sql.
+  `CREATE TABLE IF NOT EXISTS price_edit_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, at TEXT NOT NULL, table_name TEXT NOT NULL, row_key TEXT NOT NULL,
+    action TEXT NOT NULL, cols_json TEXT, before_json TEXT, after_json TEXT)`,
 
   // ── 견적 개정 (quote_revisions) ──────────────────────────────────────
   // 문의 한 건의 견적 이력. 접수 시 자동 계산(auto)과 담당자 저장(admin)이 개정 번호를 1,2,3… 올린다.

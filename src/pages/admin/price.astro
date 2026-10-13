@@ -1,0 +1,449 @@
+---
+// VanaM 관리자 — 가격 DB 편집 (엑셀 「견적 DB V3」의 DB 시트 5장을 화면에서 고친다)
+//
+// 10-12 사용자 결정:
+//   · 처음에는 설정 탭의 [가격 DB 올리기]로 엑셀을 한 번 올리고, 그 뒤 수정·추가는 이 화면에서 한다.
+//   · 행 삭제는 없다 — 장비·레시피·기판은 '사용함/사용 안 함'으로만 끈다. 정책·별칭은 수정·추가만.
+//   · [엑셀로 내려받기] — 지금 DB 를 올리기와 같은 모양의 엑셀로(백업·구글 시트와 맞추기·다시 올리기).
+//   · 저장마다 수정 기록이 남고, 기록에서 되돌릴 수 있다(그 행이 그 뒤로 또 바뀌지 않았을 때).
+// 검사는 서버(/api/admin/price-edit)가 엑셀 올리기와 같은 규칙으로 한다. 이 화면은 원가를 보여주므로 관리자 전용이다.
+export const prerender = false;
+
+import '../../styles/global.css';
+import { isAdmin } from '../../lib/admin-auth';
+import { EDIT_TABLES } from '../../lib/price-edit.js';
+import { TABLES, POLICY } from '../../lib/price-sheet.js';
+import { CHAT_ENABLED } from '../../lib/chat-send';
+
+const authed = await isAdmin(Astro.request);
+// 표마다 열 목록(화면 그리기용 — 값은 API 로 받는다)
+const spec = Object.fromEntries([POLICY, ...TABLES].map((s) => [s.table, {
+  id: s.id ?? 'id',
+  cols: s.table === 'price_policy'
+    ? [{ name: 'key', kind: 'text' }, { name: 'value', kind: 'text' }, { name: 'vtype', kind: 'vtype' }, { name: 'applies_to', kind: 'text' }, { name: 'notes', kind: 'text' }]
+    : s.cols,
+}]));
+---
+
+<html lang="ko" class="bg-canvas">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>VanaM 관리자 — 가격 DB 편집</title>
+    <link rel="icon" href="/favicon.ico" />
+    <script is:inline>
+      (function () {
+        try {
+          var t = localStorage.getItem('vanam-theme');
+          if (t !== 'light' && t !== 'dark') {
+            t = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+          }
+          document.documentElement.setAttribute('data-theme', t);
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+        }
+      })();
+    </script>
+  </head>
+  <body class="min-h-screen bg-canvas text-ink antialiased">
+    {!authed ? (
+      <main class="flex min-h-screen items-center justify-center px-6">
+        <div class="w-full max-w-sm text-center">
+          <h1 class="text-2xl font-bold">가격 DB 편집</h1>
+          <p class="mt-3 text-sm text-ink/55">관리자 로그인이 필요합니다.</p>
+          <a href="/admin" class="mt-6 inline-block rounded-lg border border-ink/15 px-4 py-2 text-sm text-ink/70 transition hover:border-ink/40 hover:text-ink">
+            관리자 로그인으로 이동
+          </a>
+        </div>
+      </main>
+    ) : (
+      <main class="mx-auto max-w-7xl px-6 py-10" id="pe" data-tables={JSON.stringify(EDIT_TABLES)} data-spec={JSON.stringify(spec)}>
+        <header class="border-b border-ink/10 pb-6">
+          <div class="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <h1 class="text-2xl font-bold">가격 DB 편집</h1>
+              <p class:list={['pe-chat mt-1 text-sm', CHAT_ENABLED ? 'is-on' : 'is-off']}>
+                {CHAT_ENABLED ? '구글챗 알림: 켜짐' : '구글챗 알림: 꺼짐 — 로컬/테스트 빌드'}
+              </p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <a id="pe-export" href="/api/admin/price-export" class="pe-btn">엑셀로 내려받기</a>
+              <a href="/admin" class="pe-btn">← 관리자</a>
+            </div>
+          </div>
+          <dl class="pe-facts mt-4">
+            <div><dt>마지막 엑셀 올리기</dt><dd id="pe-upload">—</dd></div>
+            <div><dt>그 뒤 이 화면에서 고친 수</dt><dd id="pe-edits">—</dd></div>
+            <div><dt>데이터 지문</dt><dd id="pe-fp" class="font-mono">—</dd></div>
+          </dl>
+          <details class="pe-help mt-4">
+            <summary>이 화면 사용법</summary>
+            <ol>
+              <li>위 탭이 엑셀의 DB 시트입니다(가격정책·장비·레시피·상품기판·별칭). 열 이름도 엑셀 헤더와 같습니다.</li>
+              <li>[수정]을 누르면 위쪽에 입력 칸이 열립니다. 저장하면 <b>바로</b> 새로 계산하는 견적에 쓰입니다(이미 저장된 견적 금액은 그대로).</li>
+              <li>행 삭제는 없습니다. 장비·레시피·기판은 [사용 안 함]으로 끄면 자동 견적에서 빠지고, [사용함]으로 다시 켤 수 있습니다.</li>
+              <li>엑셀 올리기와 같은 규칙으로 검사합니다(ID 중복·필수 정책 키·숫자 칸 등). 문제가 있으면 저장되지 않고 이유가 나옵니다.</li>
+              <li>아래 [수정 기록]에서 바꾼 내용을 보고 되돌릴 수 있습니다.</li>
+              <li>설정 탭에서 엑셀을 다시 올리면 이 화면에서 고친 내용은 엑셀 내용으로 바뀝니다 — 올리기 전에 [엑셀로 내려받기]로 지금 DB 를 받아 두세요.</li>
+            </ol>
+          </details>
+        </header>
+
+        <div id="pe-err" class="mt-6 hidden rounded-lg border border-danger/30 bg-danger/10 p-4 text-sm text-danger"></div>
+
+        <nav class="pe-tabs mt-8" role="tablist" id="pe-tabs"></nav>
+
+        <section class="mt-4">
+          <div class="flex flex-wrap items-center gap-2">
+            <input id="pe-q" type="search" placeholder="검색 — ID·이름·메모" aria-label="검색"
+              class="w-72 max-w-full rounded-lg border border-ink/15 bg-transparent px-3 py-2 text-sm text-ink placeholder:text-ink/30 focus:border-accent focus:outline-none" />
+            <select id="pe-active" aria-label="사용 여부" class="rounded-lg border border-ink/15 bg-canvas px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none">
+              <option value="">전체</option>
+              <option value="1">사용함만</option>
+              <option value="0">사용 안 함만</option>
+            </select>
+            <button id="pe-add" type="button" class="pe-btn">+ 행 추가</button>
+            <span id="pe-count" class="ml-auto text-xs text-ink/40"></span>
+          </div>
+
+          <form id="pe-form" class="pe-form mt-4" method="post" hidden novalidate>
+            <div class="flex flex-wrap items-baseline justify-between gap-2">
+              <h2 id="pe-form-title" class="text-base font-semibold text-accent"></h2>
+              <p class="text-xs text-ink/45">비운 칸은 엑셀의 빈칸과 같습니다(0 과 다릅니다).</p>
+            </div>
+            <div id="pe-fields" class="pe-fields mt-3"></div>
+            <ul id="pe-problems" class="pe-problems mt-3" hidden></ul>
+            <div class="mt-4 flex flex-wrap items-center gap-2">
+              <button type="submit" id="pe-save" class="pe-btn-primary">저장</button>
+              <button type="button" id="pe-cancel" class="pe-btn">취소</button>
+              <span id="pe-form-msg" class="text-sm" role="status" aria-live="polite"></span>
+            </div>
+          </form>
+
+          <p id="pe-msg" class="mt-3 text-sm" role="status" aria-live="polite"></p>
+          <div class="pe-tablewrap mt-3">
+            <table class="pe-table" id="pe-table"><thead></thead><tbody><tr><td class="pe-empty">불러오는 중…</td></tr></tbody></table>
+          </div>
+        </section>
+
+        <section class="mt-12">
+          <h2 class="text-lg font-semibold text-accent">수정 기록</h2>
+          <p class="mt-1 text-sm text-ink/50">최근 50건. [되돌리기]는 그 행이 그 뒤로 다시 바뀌지 않았을 때만 됩니다(추가한 행은 되돌리지 않고 [사용 안 함]으로 끕니다).</p>
+          <div class="pe-tablewrap mt-3">
+            <table class="pe-table" id="pe-log"><thead><tr><th>시각</th><th>표</th><th>행</th><th>동작</th><th>바뀐 열</th><th></th></tr></thead><tbody></tbody></table>
+          </div>
+        </section>
+      </main>
+    )}
+
+    <style is:global>
+      .pe-chat.is-on { color: var(--color-ok); }
+      .pe-chat.is-off { color: var(--color-warn); font-weight: 600; }
+      .pe-btn { display: inline-block; border-radius: 0.5rem; border: 1px solid color-mix(in srgb, var(--color-ink) 15%, transparent); padding: 0.45rem 0.85rem; font-size: 0.875rem; color: color-mix(in srgb, var(--color-ink) 75%, transparent); transition: border-color .15s, color .15s; }
+      .pe-btn:hover:not(:disabled) { border-color: var(--color-accent); color: var(--color-accent); }
+      .pe-btn-primary { border-radius: 0.5rem; background: var(--color-brand); padding: 0.5rem 1.1rem; font-size: 0.875rem; font-weight: 600; color: var(--color-onbrand); transition: filter .15s; }
+      .pe-btn-primary:hover:not(:disabled) { filter: brightness(1.1); }
+      .pe-btn:disabled, .pe-btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+      .pe-btn-xs { border-radius: 0.4rem; border: 1px solid color-mix(in srgb, var(--color-ink) 15%, transparent); padding: 0.15rem 0.5rem; font-size: 0.75rem; color: color-mix(in srgb, var(--color-ink) 70%, transparent); white-space: nowrap; }
+      .pe-btn-xs:hover:not(:disabled) { border-color: var(--color-accent); color: var(--color-accent); }
+      .pe-btn-xs:disabled { opacity: .4; cursor: not-allowed; }
+      .pe-facts { display: flex; flex-wrap: wrap; gap: 0.5rem 2rem; font-size: 0.875rem; }
+      .pe-facts dt { color: color-mix(in srgb, var(--color-ink) 50%, transparent); font-size: 0.75rem; }
+      .pe-facts dd { color: var(--color-ink); }
+      .pe-help { font-size: 0.875rem; color: color-mix(in srgb, var(--color-ink) 70%, transparent); }
+      .pe-help summary { cursor: pointer; color: var(--color-accent); }
+      .pe-help ol { margin-top: .5rem; padding-left: 1.25rem; list-style: decimal; line-height: 1.7; }
+      .pe-tabs { display: flex; flex-wrap: wrap; gap: .25rem; border-bottom: 1px solid color-mix(in srgb, var(--color-ink) 10%, transparent); }
+      .pe-tab { border-radius: .5rem .5rem 0 0; padding: .6rem 1rem; font-size: .875rem; font-weight: 500; color: color-mix(in srgb, var(--color-ink) 55%, transparent); }
+      .pe-tab[aria-selected='true'] { color: var(--color-accent); box-shadow: inset 0 -2px 0 var(--color-accent); }
+      .pe-tab .n { margin-left: .3rem; font-size: .75rem; opacity: .6; }
+      .pe-tablewrap { overflow-x: auto; border: 1px solid color-mix(in srgb, var(--color-ink) 10%, transparent); border-radius: .75rem; }
+      .pe-table { border-collapse: collapse; min-width: 100%; font-size: .8125rem; }
+      .pe-table th { position: sticky; top: 0; background: var(--color-canvas); text-align: left; font-weight: 500; padding: .5rem .6rem; white-space: nowrap; color: color-mix(in srgb, var(--color-ink) 55%, transparent); border-bottom: 1px solid color-mix(in srgb, var(--color-ink) 12%, transparent); font-family: ui-monospace, monospace; font-size: .75rem; }
+      .pe-table td { padding: .45rem .6rem; border-bottom: 1px solid color-mix(in srgb, var(--color-ink) 7%, transparent); vertical-align: top; max-width: 18rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .pe-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+      .pe-table td.null { color: color-mix(in srgb, var(--color-ink) 25%, transparent); }
+      .pe-table tr.off td { color: color-mix(in srgb, var(--color-ink) 40%, transparent); }
+      .pe-table tr.editing td { background: color-mix(in srgb, var(--color-accent) 8%, transparent); }
+      .pe-table td.act { white-space: nowrap; overflow: visible; }
+      .pe-empty { color: color-mix(in srgb, var(--color-ink) 45%, transparent); padding: 1rem !important; }
+      .pe-state { display: inline-block; border-radius: 999px; padding: .05rem .5rem; font-size: .7rem; margin-right: .35rem; }
+      .pe-state.on { background: color-mix(in srgb, var(--color-ok) 15%, transparent); color: var(--color-ok); }
+      .pe-state.off { background: color-mix(in srgb, var(--color-ink) 10%, transparent); color: color-mix(in srgb, var(--color-ink) 55%, transparent); }
+      .pe-form { border: 1px solid color-mix(in srgb, var(--color-accent) 35%, transparent); border-radius: .75rem; padding: 1rem 1.25rem; background: color-mix(in srgb, var(--color-accent) 4%, transparent); }
+      .pe-fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: .75rem 1rem; }
+      .pe-fields label { display: block; font-size: .75rem; color: color-mix(in srgb, var(--color-ink) 55%, transparent); font-family: ui-monospace, monospace; }
+      .pe-fields input, .pe-fields select, .pe-fields textarea { margin-top: .25rem; width: 100%; border-radius: .5rem; border: 1px solid color-mix(in srgb, var(--color-ink) 15%, transparent); background: var(--color-canvas); padding: .4rem .6rem; font-size: .875rem; color: var(--color-ink); font-family: inherit; }
+      .pe-fields input:focus, .pe-fields select:focus, .pe-fields textarea:focus { outline: none; border-color: var(--color-accent); }
+      .pe-fields input[readonly] { opacity: .6; }
+      .pe-fields .wide { grid-column: 1 / -1; }
+      .pe-fields .bad input, .pe-fields .bad select, .pe-fields .bad textarea { border-color: var(--color-danger); }
+      .pe-problems { list-style: disc; padding-left: 1.25rem; font-size: .875rem; color: var(--color-danger); line-height: 1.6; }
+      .pe-diff { margin-top: .35rem; font-size: .75rem; line-height: 1.6; white-space: normal; }
+      .pe-diff b { font-family: ui-monospace, monospace; font-weight: 500; }
+      @media (prefers-reduced-motion: reduce) { .pe-btn, .pe-btn-primary { transition: none; } }
+    </style>
+
+    <script>
+      type Col = { name: string; kind: 'text' | 'num' | 'bool' | 'vtype' };
+      type Spec = Record<string, { id: string; cols: Col[] }>;
+      type Row = Record<string, unknown>;
+      type LogRow = { id: number; at: string; table: string; key: string; action: string; cols: string[]; before: Row | null; after: Row | null };
+
+      const root = document.getElementById('pe');
+      if (root) {
+        const TABLES: { table: string; label: string; sheet: string }[] = JSON.parse(root.dataset.tables || '[]');
+        const SPEC: Spec = JSON.parse(root.dataset.spec || '{}');
+        const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+        const esc = (v: unknown) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        const kst = (iso: string | null | undefined) => { const t = iso ? Date.parse(iso) : NaN; return Number.isFinite(t) ? new Date(t + 9 * 3600e3).toISOString().slice(0, 16).replace('T', ' ') : '—'; };
+        const labelOf = (t: string) => TABLES.find((x) => x.table === t)?.label ?? t;
+        const isOn = (v: unknown) => v === 1 || v === true || v === '1';
+        const hasActive = (t: string) => SPEC[t]?.cols.some((c) => c.name === 'active');
+
+        let data: { tables: Record<string, Row[]>; counts: Record<string, number>; log: LogRow[] } | null = null;
+        let cur = TABLES[0]?.table ?? 'price_policy';
+        try { const s = sessionStorage.getItem('vanam_pe_tab'); if (s && SPEC[s]) cur = s; } catch { /* 무시 */ }
+        let editing: { mode: 'edit' | 'add'; key: string; before: Row | null } | null = null;
+
+        const say = (el: HTMLElement, t: string, tone: 'ok' | 'bad' | '' = '') => {
+          el.textContent = t;
+          el.style.color = tone === 'ok' ? 'var(--color-ok)' : tone === 'bad' ? 'var(--color-danger)' : '';
+        };
+        const msg = $('pe-msg');
+        const formMsg = $('pe-form-msg');
+        const ERR: Record<string, string> = {
+          row_changed: '다른 곳에서 먼저 이 행을 바꿨습니다 — 새로 불러온 값을 확인한 뒤 다시 고치세요.',
+          not_found: '그 행을 찾지 못했습니다 — 새로 불러옵니다.',
+          no_change: '바뀐 내용이 없습니다.',
+          cannot_revert_add: '추가한 행은 되돌리지 않습니다 — 필요하면 [사용 안 함]으로 끄세요.',
+          db_error: '저장하지 못했습니다 — 가격 DB 는 바뀌지 않았습니다.',
+          unauthorized: '로그인이 만료되었습니다 — 새로고침 후 다시 로그인하세요.',
+        };
+
+        // ── 표시 ──────────────────────────────────────
+        const keyOf = (t: string, r: Row) => String(r[SPEC[t].id] ?? '');
+        const cellHtml = (c: Col, v: unknown) => {
+          if (v === null || v === undefined || v === '') return '<td class="null">—</td>';
+          if (c.kind === 'bool') return `<td>${isOn(v) ? 'TRUE' : 'FALSE'}</td>`;
+          if (c.kind === 'num') return `<td class="num">${esc(typeof v === 'number' ? v.toLocaleString('en-US', { maximumFractionDigits: 10 }) : v)}</td>`;
+          const s = String(v);
+          return `<td title="${esc(s)}">${esc(s.replace(/\n/g, ' ⏎ '))}</td>`;
+        };
+
+        const renderTabs = () => {
+          $('pe-tabs').innerHTML = TABLES.map((t) =>
+            `<button type="button" role="tab" class="pe-tab" data-t="${esc(t.table)}" aria-selected="${t.table === cur}">${esc(t.label)}<span class="n">${esc(data?.counts?.[t.table] ?? '')}</span></button>`).join('');
+          ($('pe-active') as HTMLSelectElement).hidden = !hasActive(cur);
+        };
+
+        const renderTable = () => {
+          if (!data) return;
+          const cols = SPEC[cur].cols;
+          const q = ($('pe-q') as HTMLInputElement).value.trim().toLowerCase();
+          const act = hasActive(cur) ? ($('pe-active') as HTMLSelectElement).value : '';
+          const rows = (data.tables[cur] ?? []).filter((r) => {
+            if (act && String(isOn(r.active) ? 1 : 0) !== act) return false;
+            if (!q) return true;
+            return cols.some((c) => String(r[c.name] ?? '').toLowerCase().includes(q));
+          });
+          const tbl = $('pe-table');
+          const extra = cur === 'price_alias' ? '<th>id</th>' : '';
+          tbl.querySelector('thead')!.innerHTML = `<tr><th></th>${extra}${cols.map((c) => `<th>${esc(c.name)}</th>`).join('')}</tr>`;
+          tbl.querySelector('tbody')!.innerHTML = rows.length
+            ? rows.map((r) => {
+              const k = keyOf(cur, r);
+              const on = isOn(r.active);
+              const toggle = hasActive(cur)
+                ? `<span class="pe-state ${on ? 'on' : 'off'}">${on ? '사용함' : '사용 안 함'}</span><button type="button" class="pe-btn-xs" data-toggle="${esc(k)}">${on ? '사용 안 함으로' : '사용함으로'}</button> `
+                : '';
+              const editingThis = editing?.mode === 'edit' && editing.key === k;
+              return `<tr class="${hasActive(cur) && !on ? 'off' : ''}${editingThis ? ' editing' : ''}"><td class="act">${toggle}<button type="button" class="pe-btn-xs" data-edit="${esc(k)}">수정</button></td>` +
+                (cur === 'price_alias' ? `<td class="num">${esc(r.id)}</td>` : '') +
+                cols.map((c) => cellHtml(c, r[c.name])).join('') + '</tr>';
+            }).join('')
+            : `<tr><td class="pe-empty" colspan="${cols.length + 2}">${(data.tables[cur] ?? []).length ? '조건에 맞는 행이 없습니다.' : '비어 있습니다 — 설정 탭에서 엑셀을 먼저 올리세요.'}</td></tr>`;
+          $('pe-count').textContent = `${rows.length} / ${(data.tables[cur] ?? []).length}행`;
+        };
+
+        const renderLog = () => {
+          const body = $('pe-log').querySelector('tbody')!;
+          const list = data?.log ?? [];
+          const ACTION: Record<string, string> = { edit: '수정', add: '추가', revert: '되돌림' };
+          body.innerHTML = list.length ? list.map((l) => {
+            const changed = (l.cols ?? []).map((c) => {
+              const b = l.before?.[c]; const a = l.after?.[c];
+              return `<div><b>${esc(c)}</b>: ${esc(b === null || b === undefined || b === '' ? '(빈칸)' : b)} → ${esc(a === null || a === undefined || a === '' ? '(빈칸)' : a)}</div>`;
+            }).join('');
+            return `<tr><td>${esc(kst(l.at))}</td><td>${esc(labelOf(l.table))}</td><td>${esc(l.key)}</td><td>${esc(ACTION[l.action] ?? l.action)}</td>` +
+              `<td style="white-space:normal;max-width:32rem"><details><summary style="cursor:pointer">${esc((l.cols ?? []).join(', ') || '—')}</summary><div class="pe-diff">${changed}</div></details></td>` +
+              `<td class="act">${l.action === 'add' ? '' : `<button type="button" class="pe-btn-xs" data-revert="${esc(l.id)}">되돌리기</button>`}</td></tr>`;
+          }).join('') : '<tr><td class="pe-empty" colspan="6">아직 없습니다.</td></tr>';
+        };
+
+        const renderFacts = (j: any) => {
+          $('pe-upload').textContent = j.lastUpload ? `${kst(j.lastUpload.imported_at)}${j.lastUpload.file ? ` · ${j.lastUpload.file}` : ''}` : '없음';
+          $('pe-edits').textContent = `${j.editsSinceUpload ?? 0}건`;
+          $('pe-fp').textContent = String(j.fingerprint ?? '').slice(0, 12) || '—';
+        };
+
+        const renderAll = () => { renderTabs(); renderTable(); renderLog(); };
+
+        const load = async () => {
+          try {
+            const r = await fetch('/api/admin/price-edit', { cache: 'no-store' });
+            const j = await r.json().catch(() => ({}));
+            if (!j.ok) { $('pe-err').textContent = ERR[j.error] ?? `불러오지 못했습니다: ${j.error ?? r.status}`; $('pe-err').classList.remove('hidden'); return; }
+            $('pe-err').classList.add('hidden');
+            data = j; renderFacts(j); renderAll();
+          } catch (e) {
+            $('pe-err').textContent = '불러오지 못했습니다.'; $('pe-err').classList.remove('hidden');
+          }
+        };
+
+        // ── 입력 칸 ────────────────────────────────────
+        const form = $('pe-form') as HTMLFormElement;
+        const closeForm = () => { editing = null; form.hidden = true; $('pe-problems').hidden = true; say(formMsg, ''); renderTable(); };
+        const openForm = (mode: 'edit' | 'add', row: Row | null) => {
+          const t = cur;
+          const id = SPEC[t].id;
+          const key = row ? keyOf(t, row) : '';
+          editing = { mode, key, before: row ? { ...row } : null };
+          $('pe-form-title').textContent = mode === 'edit' ? `${labelOf(t)} 수정 — ${key}` : `${labelOf(t)} 새 행 추가`;
+          $('pe-fields').innerHTML = SPEC[t].cols.map((c) => {
+            const v = row ? row[c.name] : (c.name === 'active' ? 1 : null);
+            const lockKey = mode === 'edit' && c.name === id;
+            if (c.kind === 'bool') {
+              const val = v === null || v === undefined ? '' : isOn(v) ? 'TRUE' : 'FALSE';
+              return `<label data-f="${esc(c.name)}">${esc(c.name)}<select name="${esc(c.name)}"><option value=""${val === '' ? ' selected' : ''}>(빈칸)</option><option value="TRUE"${val === 'TRUE' ? ' selected' : ''}>TRUE</option><option value="FALSE"${val === 'FALSE' ? ' selected' : ''}>FALSE</option></select></label>`;
+            }
+            if (c.kind === 'vtype') {
+              const val = String(v ?? 'number');
+              return `<label data-f="vtype">vtype (값 종류)<select name="vtype">${['number', 'boolean', 'string'].map((o) => `<option value="${o}"${o === val ? ' selected' : ''}>${o}</option>`).join('')}</select></label>`;
+            }
+            const s = v === null || v === undefined ? '' : String(v);
+            const wide = c.name === 'notes' || (s.length > 40);
+            if (c.name === 'notes' || s.includes('\n')) {
+              return `<label data-f="${esc(c.name)}" class="${wide ? 'wide' : ''}">${esc(c.name)}<textarea name="${esc(c.name)}" rows="2">${esc(s)}</textarea></label>`;
+            }
+            return `<label data-f="${esc(c.name)}" class="${wide ? 'wide' : ''}">${esc(c.name)}${lockKey ? ' (바꿀 수 없음)' : ''}<input name="${esc(c.name)}" value="${esc(s)}"${c.kind === 'num' ? ' inputmode="decimal"' : ''}${lockKey ? ' readonly' : ''} /></label>`;
+          }).join('');
+          $('pe-problems').hidden = true;
+          say(formMsg, '');
+          form.hidden = false;
+          renderTable();
+          form.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+          (form.querySelector('input:not([readonly]), select, textarea') as HTMLElement | null)?.focus();
+        };
+
+        const showProblems = (list: string[]) => {
+          const ul = $('pe-problems');
+          ul.innerHTML = list.slice(0, 30).map((p) => `<li>${esc(p)}</li>`).join('');
+          ul.hidden = list.length === 0;
+          form.querySelectorAll('[data-f]').forEach((el) => el.classList.toggle('bad', list.some((p) => p.includes((el as HTMLElement).dataset.f!))));
+        };
+
+        const afterSave = (j: any) => { data = j; renderFacts(j); renderAll(); };
+
+        const post = async (body: unknown) => {
+          const r = await fetch('/api/admin/price-edit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+          const j = await r.json().catch(() => ({}));
+          if (r.status === 401) j.error = 'unauthorized';
+          return j;
+        };
+
+        form.addEventListener('submit', async (ev) => {
+          ev.preventDefault();
+          if (!editing) return;
+          const row: Row = {};
+          for (const el of Array.from(form.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>('[name]'))) row[el.name] = el.value;
+          const btn = $('pe-save') as HTMLButtonElement;
+          btn.disabled = true;
+          say(formMsg, '저장 중…');
+          try {
+            const j = await post({ action: 'save', table: cur, mode: editing.mode, key: editing.key, before: editing.before, row });
+            if (j.ok) {
+              const what = editing.mode === 'add' ? '추가했습니다' : '저장했습니다';
+              editing = null; form.hidden = true; afterSave(j);
+              say(msg, `${what} — 바로 반영됩니다.`, 'ok');
+              return;
+            }
+            if (j.error === 'invalid') { showProblems(j.problems ?? []); say(formMsg, '저장하지 않았습니다 — 아래 문제를 고치세요.', 'bad'); return; }
+            if (j.error === 'row_changed' || j.error === 'not_found') {
+              // 옛 값(before)으로는 다시 저장할 수 없다 — 새로 불러오고 입력 칸을 닫는다(새 값을 보고 다시 [수정])
+              await load();
+              closeForm();
+              say(msg, `${ERR[j.error]} 새 값을 확인한 뒤 다시 [수정]을 누르세요.`, 'bad');
+              return;
+            }
+            say(formMsg, ERR[j.error] ?? `저장하지 못했습니다: ${j.error ?? ''}`, 'bad');
+          } catch (e) {
+            say(formMsg, '저장하지 못했습니다 — 결과를 확인하려면 새로고침하세요.', 'bad');
+          } finally { btn.disabled = false; }
+        });
+        $('pe-cancel').addEventListener('click', closeForm);
+
+        // ── 탭·검색·버튼 ───────────────────────────────
+        $('pe-tabs').addEventListener('click', (ev) => {
+          const b = (ev.target as HTMLElement).closest<HTMLButtonElement>('[data-t]');
+          if (!b) return;
+          if (editing && !confirm('입력 중인 내용이 있습니다. 다른 표로 옮길까요?')) return;
+          cur = b.dataset.t!;
+          try { sessionStorage.setItem('vanam_pe_tab', cur); } catch { /* 무시 */ }
+          editing = null; form.hidden = true; say(msg, '');
+          ($('pe-q') as HTMLInputElement).value = '';
+          ($('pe-active') as HTMLSelectElement).value = '';
+          renderAll();
+        });
+        $('pe-q').addEventListener('input', renderTable);
+        $('pe-active').addEventListener('change', renderTable);
+        $('pe-add').addEventListener('click', () => openForm('add', null));
+
+        $('pe-table').addEventListener('click', async (ev) => {
+          const el = ev.target as HTMLElement;
+          const ed = el.closest<HTMLButtonElement>('[data-edit]');
+          if (ed && data) {
+            const row = (data.tables[cur] ?? []).find((r) => keyOf(cur, r) === ed.dataset.edit);
+            if (row) openForm('edit', row);
+            return;
+          }
+          const tg = el.closest<HTMLButtonElement>('[data-toggle]');
+          if (tg && data) {
+            const row = (data.tables[cur] ?? []).find((r) => keyOf(cur, r) === tg.dataset.toggle);
+            if (!row) return;
+            const next = !isOn(row.active);
+            if (!confirm(`${labelOf(cur)} ${tg.dataset.toggle} 를 ${next ? '사용함' : '사용 안 함'}으로 바꿉니다.${next ? '' : ' 자동 견적에서 이 항목이 빠집니다.'} 바꿀까요?`)) return;
+            tg.disabled = true;
+            const r: Row = {};
+            for (const c of SPEC[cur].cols) r[c.name] = c.kind === 'bool' ? (row[c.name] === null || row[c.name] === undefined ? '' : isOn(row[c.name]) ? 'TRUE' : 'FALSE') : row[c.name];
+            r.active = next ? 'TRUE' : 'FALSE';
+            const j = await post({ action: 'save', table: cur, mode: 'edit', key: tg.dataset.toggle, before: row, row: r }).catch(() => ({ error: 'db_error' }));
+            if (j.ok) { afterSave(j); say(msg, `${tg.dataset.toggle} — ${next ? '사용함' : '사용 안 함'}으로 바꿨습니다.`, 'ok'); }
+            else {
+              say(msg, j.error === 'invalid' ? `바꾸지 못했습니다: ${(j.problems ?? []).join(' · ')}` : (ERR[j.error] ?? `바꾸지 못했습니다: ${j.error ?? ''}`), 'bad');
+              tg.disabled = false;
+              if (j.error === 'row_changed' || j.error === 'not_found') await load();
+            }
+          }
+        });
+
+        $('pe-log').addEventListener('click', async (ev) => {
+          const b = (ev.target as HTMLElement).closest<HTMLButtonElement>('[data-revert]');
+          if (!b) return;
+          const l = data?.log.find((x) => String(x.id) === b.dataset.revert);
+          if (!l) return;
+          if (!confirm(`${labelOf(l.table)} ${l.key} 의 이 수정을 되돌립니다(바뀐 열: ${(l.cols ?? []).join(', ')}). 되돌릴까요?`)) return;
+          b.disabled = true;
+          const j = await post({ action: 'revert', logId: l.id }).catch(() => ({ error: 'db_error' }));
+          if (j.ok) { afterSave(j); say(msg, '되돌렸습니다 — 바로 반영됩니다.', 'ok'); return; }
+          b.disabled = false;
+          say(msg, j.error === 'row_changed' ? '그 행이 이 수정 뒤에 또 바뀌어 되돌리지 않았습니다 — 더 최근 기록부터 되돌리거나 직접 고치세요.'
+            : j.error === 'invalid' ? `되돌리지 못했습니다: ${(j.problems ?? []).join(' · ')}` : (ERR[j.error] ?? `되돌리지 못했습니다: ${j.error ?? ''}`), 'bad');
+        });
+
+        void load();
+      }
+    </script>
+  </body>
+</html>

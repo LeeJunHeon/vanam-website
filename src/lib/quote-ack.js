@@ -1,11 +1,12 @@
 // 견적 요청 접수 확인 메일 — 순수 모듈(.js). 워커(quote-ack-run.ts)와 node 테스트가 같이 쓴다.
 //
 // 공정 견적 요청(type 'quote')이 접수되면 고객에게 hello@vanam.co.kr 로 확인 메일을 보낸다(10-01 사용자 요청).
-//   내용: 정상 접수 · 담당자 확인 후 영업일 기준 2일 이내 회신 · 접수번호 · 조회 링크(누르면 이메일까지 채워 바로 조회 — lookupLink)
+//   내용: 정상 접수 · 담당자 확인 후 영업일 기준 N일 이내 회신(N = 운영 설정 '회신 기한') · 접수번호 · 조회 링크(누르면 이메일까지 채워 바로 조회 — lookupLink)
 //   첨부: 견적 요청서(사이트의 엑셀 틀 그대로, 금액 칸 없음) PDF 하나.
 //         자동 견적이 '예상 견적'으로 나온 건이면 예상 견적서를 앞쪽에 붙인 PDF 하나(고객 완료·조회 화면과 같은 내용).
 //   일반 문의(type 'general')에는 보내지 않는다.
 // 여기서는 화면·네트워크를 만지지 않는다 — 문구·HTML 조립·판정만. 넣는 값은 전부 이스케이프한다.
+import { fillDays } from './reply-days.js';
 import { safeShort } from './safe-text.js';
 
 const esc = (v) =>
@@ -121,7 +122,8 @@ const TEXT = {
     title: '견적 요청이 접수되었습니다',
     // 인사는 이름만(10-12) — 소속은 첨부 요청서의 요청자 칸에 있다. '가짜대학교 홍길동 님'처럼 길어지지 않게.
     hello: (who) => `${who} 님, 안녕하세요. 반암(VanaM)입니다.`,
-    lead: '견적 요청이 정상적으로 접수되었습니다. 담당자가 요청 내용을 확인한 뒤 영업일 기준 2일 이내에 회신드리겠습니다.',
+    // {days} = 운영 설정 '회신 기한(영업일)' — 실행부가 replyDays 로 넘긴다(없으면 기본 2)
+    lead: '견적 요청이 정상적으로 접수되었습니다. 담당자가 요청 내용을 확인한 뒤 영업일 기준 {days}일 이내에 회신드리겠습니다.',
     no: '접수번호', item: '요청 상품', at: '접수 일시', atSuffix: ' (한국 시간)',
     attachQuote: '예상 견적서와 견적 요청서를 PDF 파일 하나로 첨부해 드립니다.',
     attachRequest: '접수하신 내용을 정리한 견적 요청서(PDF)를 첨부해 드립니다. 견적 금액은 회신드릴 때 함께 안내드리겠습니다.',
@@ -138,7 +140,7 @@ const TEXT = {
     testSubject: '[TEST] ',
     title: 'We received your quote request',
     hello: (who) => `Dear ${who},`,
-    lead: 'Thank you for your quote request. We have received it, and our team will review it and reply within 2 business days.',
+    lead: 'Thank you for your quote request. We have received it, and our team will review it and reply within {days} business days.',
     no: 'Reference No.', item: 'Item', at: 'Received', atSuffix: ' KST',
     // 문서 이름은 견적 폼 버튼('Download request sheet')과 같게 — request sheet
     attachQuote: 'We have attached the estimated quotation together with your request sheet as one PDF.',
@@ -163,7 +165,7 @@ const FONT = "-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Malgun Got
  *   id: string, name: string, company?: string, product?: string, receivedAt?: string,
  *   estimate: ReturnType<typeof estimateOf>, T: Record<string, string>,
  *   attachment: 'quote' | 'request' | null,
- *   lookupUrl: string, tel: string, email: string, site: string,
+ *   lookupUrl: string, tel: string, email: string, site: string, replyDays?: number,
  * }} a  T = site.json quote.view(고객 화면과 같은 문구) · attachment = 실제로 붙인 PDF 종류(못 붙였으면 null)
  * @returns {{subject: string, text: string, html: string}}
  */
@@ -171,6 +173,7 @@ export function ackContent(a) {
   const en = a.lang === 'en';
   const L = TEXT[en ? 'en' : 'ko'];
   const T = a.T ?? {};
+  const lead = fillDays(L.lead, a.replyDays);
   // 고객이 넣은 글은 짧게 · 주소 모양은 링크가 안 되게(safeShort)
   const name = safeShort(a.name, 40);
   // 인사는 두 언어 모두 이름만(소속은 요청서에) — 이름이 비면 일반 호칭
@@ -196,7 +199,7 @@ export function ackContent(a) {
     a.live ? '' : `※ ${L.test}\n`,
     L.hello(who),
     '',
-    L.lead,
+    lead,
     '',
     ...rows.map(([l, v]) => `${l}: ${v}`),
     ...(estLines.length ? ['', ...estLines] : []),
@@ -238,7 +241,7 @@ export function ackContent(a) {
     banner +
     `<h1 style="margin:0 0 16px;font-size:20px;line-height:1.4;color:${C.ink}">${esc(L.title)}</h1>` +
     p(esc(L.hello(who))) +
-    p(esc(L.lead)) +
+    p(esc(lead)) +
     `<table role="presentation" cellspacing="0" cellpadding="0" style="margin:6px 0 4px;border-top:1px solid ${C.line};border-bottom:1px solid ${C.line};width:100%">${infoRows}</table>` +
     estHtml +
     p(esc(attachLine), `margin-top:18px;font-size:14px;color:${C.sub}`) +
@@ -335,8 +338,9 @@ export const ACK_REASON_KO = Object.freeze({
   bad_recipient: '받는 주소 모양이 이상해 보내지 않았습니다',
   no_credentials: '메일 설정(Gmail 비밀값)이 없습니다',
   unverified: '보안 확인(Turnstile)을 하지 못한 접수라 자동으로 보내지 않았습니다 — 필요하면 보내기를 누르세요',
-  recipient_cap: '같은 주소로 하루 3통을 넘어 자동 발송을 멈췄습니다',
-  daily_cap: '오늘 자동 발송 상한(50통)에 닿아 멈췄습니다',
+  recipient_cap: '같은 주소로 보낸 수가 하루 상한(운영 설정)에 닿아 자동 발송을 멈췄습니다',
+  daily_cap: '오늘 자동 발송 전체 상한(운영 설정)에 닿아 멈췄습니다',
+  disabled_by_setting: '운영 설정에서 자동 발송 상한을 0 으로 두어 보내지 않았습니다 — 필요하면 보내기를 누르세요',
   auth_failed: 'Gmail 권한 확인 필요 — hello@ 비밀번호를 바꿨다면 권한을 다시 승인하세요',
   http_error: 'Gmail 이 발송을 거절했습니다',
   fetch_error: 'Gmail 연결 오류',

@@ -76,12 +76,65 @@ export async function priceDbReady(d: D1): Promise<boolean> {
 }
 
 /** 가장 최근 가격 DB 가져오기 기록 */
-export async function latestImport(d: D1): Promise<{ imported_at: string; rules_version: string; source_sha256: string } | null> {
+export async function latestImport(d: D1): Promise<{ imported_at: string; rules_version: string; source_sha256: string; source_file: string | null } | null> {
   const row = await d
-    .prepare(`SELECT imported_at, rules_version, source_sha256
+    .prepare(`SELECT imported_at, rules_version, source_sha256, source_file
       FROM price_import_log ORDER BY id DESC LIMIT 1`)
-    .first<{ imported_at: string; rules_version: string; source_sha256: string }>();
+    .first<{ imported_at: string; rules_version: string; source_sha256: string; source_file: string | null }>();
   return row ?? null;
+}
+
+/** 관리자 수정이 남기는 가져오기 기록의 source_file 머리 — 캐시 열쇠만 바꾸고, '엑셀 올리기'로는 세지 않는다 */
+export const EDIT_SOURCE_PREFIX = 'admin-edit:';
+
+/** 마지막 '엑셀 올리기'(관리자 수정 기록 제외) */
+export async function lastUpload(d: D1): Promise<{ id: number; imported_at: string; source_file: string | null } | null> {
+  const row = await d
+    .prepare(`SELECT id, imported_at, source_file FROM price_import_log
+      WHERE source_file IS NULL OR source_file NOT LIKE 'admin-edit:%' ORDER BY id DESC LIMIT 1`)
+    .first<{ id: number; imported_at: string; source_file: string | null }>();
+  return row ?? null;
+}
+
+export type EditLogRow = {
+  id: number; at: string; table_name: string; row_key: string; action: string;
+  cols_json: string | null; before_json: string | null; after_json: string | null;
+};
+
+/** 마지막 엑셀 올리기 뒤의 관리자 수정(최근 것부터 limit 개) · 전체 개수 */
+export async function editsSinceUpload(d: D1, limit = 30): Promise<{ count: number; rows: EditLogRow[] }> {
+  const up = await lastUpload(d);
+  const since = up?.imported_at ?? '';
+  const n = await d.prepare(`SELECT count(*) AS n FROM price_edit_log WHERE at > ?`).bind(since).first<{ n: number }>();
+  const { results } = await d
+    .prepare(`SELECT id, at, table_name, row_key, action, cols_json, before_json, after_json FROM price_edit_log
+      WHERE at > ? ORDER BY id DESC LIMIT ?`)
+    .bind(since, limit)
+    .all<EditLogRow>();
+  return { count: Number(n?.n ?? 0), rows: results ?? [] };
+}
+
+/** 최근 관리자 수정 기록(되돌리기 화면용) */
+export async function recentEdits(d: D1, limit = 50): Promise<EditLogRow[]> {
+  const { results } = await d
+    .prepare(`SELECT id, at, table_name, row_key, action, cols_json, before_json, after_json FROM price_edit_log
+      ORDER BY id DESC LIMIT ?`)
+    .bind(limit)
+    .all<EditLogRow>();
+  return results ?? [];
+}
+
+/** 수정 기록 한 줄 */
+export async function editLogById(d: D1, id: number): Promise<EditLogRow | null> {
+  return (await d
+    .prepare(`SELECT id, at, table_name, row_key, action, cols_json, before_json, after_json FROM price_edit_log WHERE id = ?`)
+    .bind(id)
+    .first<EditLogRow>()) ?? null;
+}
+
+/** 별칭 표(DB 번호 포함) — 편집 화면이 행을 가리키는 데 쓴다 */
+export async function readAliasWithIds(d: D1): Promise<Record<string, unknown>[]> {
+  return all(d, `SELECT id, entity_type, alias, equipment_scope, canonical_id, status, notes FROM price_alias ORDER BY id`);
 }
 
 export type PriceTables = {

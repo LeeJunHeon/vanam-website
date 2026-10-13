@@ -11,7 +11,8 @@
 //       워커의 백그라운드 작업은 응답 뒤 30초 안에 끝나야 한다 → 전체 마감 24초, 메일 보낼 몫 7초를 남기고 PDF 를 만든다.
 //       마감을 넘겨 끊겨도 '보내는 중' 기록이 남아 관리자 화면에 '중단됨'으로 보인다(조용히 사라지지 않는다).
 //       로그에는 접수번호와 결과만 — 이름·주소·내용은 남기지 않는다.
-// 남용 방지(운영 빌드의 자동 발송만): 보안 확인(Turnstile)을 통과한 접수만 · 같은 주소 하루 3통 · 하루 전체 50통.
+// 남용 방지(운영 빌드의 자동 발송만): 보안 확인(Turnstile)을 통과한 접수만 · 같은 주소 하루 상한 · 하루 전체 상한.
+//   상한은 관리자 '운영 설정'(src/lib/site-settings.js) — 기본 3통·50통이고 낮추기만 가능(그보다 올릴 수 없다).
 //   회사 메일(hello@)로 남의 주소에 글을 실어 보내는 통로가 되지 않게 한다. 관리자가 직접 누른 발송은 제한하지 않는다.
 import { getCollection } from 'astro:content';
 import type { D1 } from './db';
@@ -31,6 +32,8 @@ import { readRate } from './fx';
 import { formatUsd } from './price';
 import { SUBSTRATE_SIZES, DELIVERY_METHODS } from './processes';
 import { sendChat } from './chat-send';
+// 운영 설정 — 확인 메일 하루 상한 · 회신 기한(메일 본문 "영업일 기준 N일")
+import { readSiteSettings } from './site-settings-db';
 import company from '../data/company.json';
 import siteData from '../data/site.json';
 import docLogo from '../assets/brand/logo-light.png';
@@ -48,8 +51,6 @@ const SITE = 'https://vanam.co.kr';
 const RUN_MS = 24_000;       // 전체 마감(워커 백그라운드 30초 안)
 const MAIL_RESERVE_MS = 7_000; // PDF 를 만든 뒤 메일 보낼 몫
 const DAY_MS = 24 * 60 * 60 * 1000;
-const RECIPIENT_DAILY_MAX = 3;
-const GLOBAL_DAILY_MAX = 50;
 
 /** 이 언어의 코드값 라벨(기판 크기·전달 방식) — 조회 화면과 같은 원본(lib/processes) */
 function mapsFor(lang: 'ko' | 'en') {
@@ -75,7 +76,9 @@ async function productLabel(q: Record<string, unknown>, lang: 'ko' | 'en'): Prom
  * 하루 상한 — 같은 주소로 보낸 접수 건 수 · 전체 보낸 건 수(지난 24시간, 이 건 제외).
  * @returns 넘었으면 사유, 아니면 null · alert = 전체 상한에 처음 닿았는가(구글챗 한 번만)
  */
-async function capCheck(d: D1, id: string, email: string): Promise<{ reason: 'recipient_cap' | 'daily_cap'; alert: boolean } | null> {
+async function capCheck(d: D1, id: string, email: string, caps: { recipient: number; global: number }): Promise<{ reason: 'recipient_cap' | 'daily_cap' | 'disabled_by_setting'; alert: boolean } | null> {
+  // 운영 설정에서 상한을 0 으로 두면 자동 발송을 끈 것 — 남용이 아니므로 구글챗 경고 없이 '안 보냄'
+  if (caps.global <= 0 || caps.recipient <= 0) return { reason: 'disabled_by_setting', alert: false };
   const since = new Date(Date.now() - DAY_MS).toISOString();
   const row = await d.prepare(`SELECT
       SUM(CASE WHEN lower(email) = lower(?) AND json_extract(ack_mail, '$.sentAt') IS NOT NULL THEN 1 ELSE 0 END) AS mine,
@@ -84,8 +87,8 @@ async function capCheck(d: D1, id: string, email: string): Promise<{ reason: 're
     FROM inquiries WHERE created_at > ? AND id <> ? AND ack_mail IS NOT NULL`)
     .bind(email, since, id)
     .first<{ mine: number | null; total: number | null; capped: number | null }>();
-  if ((Number(row?.total) || 0) >= GLOBAL_DAILY_MAX) return { reason: 'daily_cap', alert: (Number(row?.capped) || 0) === 0 };
-  if ((Number(row?.mine) || 0) >= RECIPIENT_DAILY_MAX) return { reason: 'recipient_cap', alert: false };
+  if ((Number(row?.total) || 0) >= caps.global) return { reason: 'daily_cap', alert: (Number(row?.capped) || 0) === 0 };
+  if ((Number(row?.mine) || 0) >= caps.recipient) return { reason: 'recipient_cap', alert: false };
   return null;
 }
 
@@ -103,7 +106,8 @@ async function ackBlock(d: D1, id: string, to: string, opts: AckOpts): Promise<{
   if (!gmailConfigured()) return { reason: 'no_credentials' };
   if (MAIL_LIVE && opts.by === 'auto') {
     if (!opts.verified) return { reason: 'unverified' };
-    const cap = await capCheck(d, id, to);
+    const s = await readSiteSettings(d);
+    const cap = await capCheck(d, id, to, { recipient: s.ack_recipient_daily_max, global: s.ack_global_daily_max });
     if (cap) return { reason: cap.reason, capAlert: cap.alert };
   }
   return null;
@@ -160,7 +164,7 @@ export async function runQuoteAck(d: D1, id: string, opts: AckOpts): Promise<Ack
     const block = await ackBlock(d, id, to, opts);
     if (block) {
       if (block.capAlert) {
-        await sendChat(`⚠️ 접수 확인 메일 — 오늘 자동 발송 상한(${GLOBAL_DAILY_MAX}통)에 닿아 멈췄습니다.\n접수번호 ${id}\n남용인지 확인하고, 필요하면 관리자 견적 탭에서 직접 보내세요.`,
+        await sendChat(`⚠️ 접수 확인 메일 — 오늘 자동 발송 전체 상한(운영 설정)에 닿아 멈췄습니다.\n접수번호 ${id}\n남용인지 확인하고, 필요하면 관리자 견적 탭에서 직접 보내세요.`,
           { tag: 'ack-mail', ref: id }).catch(() => undefined);
       }
       return finish(d, id, q, opts.by, { status: 'skipped', reason: block.reason, pdf: null });
@@ -245,6 +249,7 @@ async function compose(
     // 조회 링크 — 운영은 vanam.co.kr · 테스트 빌드는 지금 접속한 주소. 받는 주소를 # 뒤에 실어 누르면 바로 조회된다
     lookupUrl: lookupLink({ live: MAIL_LIVE, site: SITE, origin, lang, id, email: to }),
     tel: lang === 'en' ? String(company.tel ?? '') : telKr(company.tel), email: String(company.email ?? ''), site: SITE,
+    replyDays: (await readSiteSettings(d)).reply_business_days,
   });
   const sent = await sendMail({
     to, fromName: lang === 'en' ? 'VanaM Inc.' : '반암 VanaM',
