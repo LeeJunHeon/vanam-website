@@ -1,0 +1,49 @@
+---
+// 공정 의뢰 바로가기 — 고객에게 보내는 링크 https://vanam.co.kr/request
+// 브라우저 첫 언어가 한국어면 /ko/?request, 그 밖에는 /?request 로 바로 넘긴다.
+// 도착한 홈은 ?request 를 보고 공정 의뢰 선택 창(ProcessPicker)을 열자마자 띄우고, 창 우상단 EN | KO 로 언어를 바꿀 수 있다.
+// 링크 뒤에 붙인 다른 쿼리(utm 등)와 해시는 그대로 넘긴다.
+// 검색 비노출: 아래 robots noindex + 사이트맵 제외(src/lib/seo-noindex.ts 의 '/request').
+// BaseLayout 을 쓰지 않는 이유: 사람이 보는 시간이 거의 0 인 중간 단계라 머리·꼬리·폰트를 받을 필요가 없다.
+// 링크 미리보기(카톡·메일 등)는 스크립트를 실행하지 않으므로 이 페이지의 제목·설명·이미지가 보인다.
+const SITE = 'https://vanam.co.kr';
+const title = '공정 의뢰 · Request a quote | VanaM';
+const desc = '산화물·질화물·금속·다층 박막 증착 서비스를 고르면 견적 요청서로 바로 이동합니다. Pick a thin-film deposition service and go straight to its quote request.';
+---
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <meta name="color-scheme" content="light dark" />
+    <title>{title}</title>
+    <meta name="description" content={desc} />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="VanaM" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={desc} />
+    <meta property="og:url" content={`${SITE}/request/`} />
+    <meta property="og:image" content={`${SITE}/og.png`} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <script is:inline>
+      (function () {
+        var lang = ((navigator.languages && navigator.languages[0]) || navigator.language || '').toLowerCase();
+        var base = /^ko(-|$)/.test(lang) ? '/ko/' : '/';
+        var rest = location.search.replace(/^\?/, '');
+        location.replace(base + '?request' + (rest ? '&' + rest : '') + location.hash);
+      })();
+    </script>
+    <noscript><meta http-equiv="refresh" content="0; url=/?request" /></noscript>
+    <style is:inline>
+      body { margin: 0; min-height: 100dvh; display: grid; place-items: center; text-align: center; font: 15px/1.7 system-ui, -apple-system, 'Segoe UI', sans-serif; }
+      a { color: inherit; }
+    </style>
+  </head>
+  <body>
+    <p>공정 의뢰 화면으로 이동합니다 · Opening the quote request<br />
+      <a href="/ko/?request">한국어</a> · <a href="/?request">English</a></p>
+  </body>
+</html>

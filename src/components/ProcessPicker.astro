@@ -4,6 +4,10 @@
 // 그 링크의 href 는 제품 목록(/product)이라 JS 가 없거나 새 탭으로 열면 그냥 목록으로 간다.
 // 선택지는 products 컬렉션에서 뽑는다(category 'coating' · 게시된 것 · order 순) — 제품을 추가/숨기면 여기도 따라온다.
 // 네이티브 <dialog>.showModal(): 배경 비활성·Esc 닫기·포커스 가두기는 브라우저가 맡는다.
+// 주소에 ?request 가 붙어 있으면 페이지가 열리자마자 이 창을 띄운다 — 고객에게 보내는 바로가기
+// vanam.co.kr/request(src/pages/request.astro)가 브라우저 언어에 따라 /?request 또는 /ko/?request 로 보낸다.
+// 창 우상단 EN | KO 는 같은 페이지의 다른 언어 주소 + ?request 로 이동해, 그 언어로 이 창을 다시 띄운다
+// (창 문구만 바꾸면 고른 뒤 열리는 견적 요청서와 닫은 뒤의 화면이 원래 언어로 남는다).
 import { getCollection } from 'astro:content';
 import { Image } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
@@ -16,6 +20,17 @@ const isKo = locale === 'ko';
 const site = siteData[locale] ?? siteData.en;
 const t = site.processPicker;
 const lhref = (p: string) => getRelativeLocaleUrl(locale, p);
+
+// 창 안 언어 전환 — BaseLayout 헤더의 EN / KO 와 같은 방식으로 locale 접두사를 뗀 경로를 구한다.
+let basePath = Astro.url.pathname;
+if (basePath === '/ko' || basePath === '/ko/') basePath = '/';
+else if (basePath.startsWith('/ko/')) basePath = basePath.slice(3);
+const langs = (['en', 'ko'] as const).map((code) => ({
+  code,
+  label: code.toUpperCase(),
+  href: `${getRelativeLocaleUrl(code, basePath)}?request`,
+}));
+const langLabel = isKo ? '언어 선택' : 'Language';
 
 const productImages = import.meta.glob<{ default: ImageMetadata }>(
   '/src/assets/products/**/*.{png,jpg,jpeg,webp,avif}',
@@ -46,19 +61,32 @@ const services = (await getCollection('products'))
   }));
 ---
 
-<dialog id="process-picker" aria-labelledby="pp-title" aria-describedby="pp-intro"
-  class="pp m-auto max-h-[min(88dvh,46rem)] w-[min(48rem,calc(100vw-2rem))] max-w-none overflow-y-auto overscroll-contain rounded-2xl border border-ink/10 bg-canvas p-0 text-ink shadow-2xl backdrop:bg-black/60 backdrop:backdrop-blur-[2px]">
+{/* tabindex="-1" · outline-none: 주소(?request)로 바로 열릴 때 스크립트가 창 자체에 포커스를 준다(아래 open). */}
+<dialog id="process-picker" aria-labelledby="pp-title" aria-describedby="pp-intro" tabindex="-1"
+  class="pp outline-none m-auto max-h-[min(88dvh,46rem)] w-[min(48rem,calc(100vw-2rem))] max-w-none overflow-y-auto overscroll-contain rounded-2xl border border-ink/10 bg-canvas p-0 text-ink shadow-2xl backdrop:bg-black/60 backdrop:backdrop-blur-[2px]">
   <div class="p-5 sm:p-7">
+    {/* 제목 줄만 우상단 버튼(EN | KO · 닫기)과 나눠 쓰고, 안내 문장은 아래에 전체 폭으로 — 버튼이 넓어져도 모바일에서 안내 문장이 좁아지지 않게 */}
     <div class="flex items-start justify-between gap-4">
-      <div>
-        <h2 id="pp-title" class="break-keep text-xl font-semibold leading-snug text-ink sm:text-2xl">{t.title}</h2>
-        <p id="pp-intro" class="mt-1.5 break-keep text-sm leading-relaxed text-ink/60">{t.intro}</p>
+      <h2 id="pp-title" class="break-keep text-xl font-semibold leading-snug text-ink sm:text-2xl">{t.title}</h2>
+      <div class="-mr-1.5 -mt-1 flex shrink-0 items-center gap-2">
+        {/* 언어 전환 — 헤더의 EN / KO 와 같은 모양. 지금 언어는 링크가 아닌 표시만(같은 페이지 새로고침 방지). */}
+        <div role="group" aria-label={langLabel} class="flex items-center gap-1.5 text-xs font-medium">
+          {langs.map((l, i) => (
+            <Fragment>
+              {i > 0 && <span class="text-ink/20" aria-hidden="true">/</span>}
+              {l.code === locale
+                ? <span class="py-1.5 text-accent" aria-current="true" lang={l.code}>{l.label}</span>
+                : <a href={l.href} hreflang={l.code} lang={l.code} class="py-1.5 text-ink/50 transition hover:text-ink">{l.label}</a>}
+            </Fragment>
+          ))}
+        </div>
+        <button type="button" data-pp-close aria-label={t.close}
+          class="rounded-full p-2 text-ink/50 transition hover:bg-ink/5 hover:text-ink">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
       </div>
-      <button type="button" data-pp-close aria-label={t.close}
-        class="-mr-1.5 -mt-1 shrink-0 rounded-full p-2 text-ink/50 transition hover:bg-ink/5 hover:text-ink">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
-      </button>
     </div>
+    <p id="pp-intro" class="mt-1.5 break-keep text-sm leading-relaxed text-ink/60">{t.intro}</p>
 
     <ul class="mt-6 grid gap-3 sm:grid-cols-2">
       {services.map((s) => (
@@ -100,6 +128,23 @@ const services = (await getCollection('products'))
     // showModal 이 없는 아주 오래된 브라우저는 링크 기본 동작(제품 목록)으로 둔다.
     if (!dlg || typeof dlg.showModal !== 'function') return;
     let opener: HTMLElement | null = null;
+    // 주소의 ?request — 있으면 열리자마자 창을 띄운다(위 머리 주석).
+    const KEY = 'request';
+    const hasKey = () => new URLSearchParams(location.search).has(KEY);
+    // 사용자가 직접 닫았는지(X · 배경 · Esc). 그때만 주소에서 ?request 를 지운다 —
+    // 페이지를 떠나며 닫힐 때(pagehide)는 남겨 둬야 견적 요청서에서 뒤로 왔을 때 창이 다시 뜬다.
+    let byUser = false;
+
+    const open = (from: HTMLElement | null) => {
+      if (dlg.open) return;
+      opener = from;
+      document.documentElement.classList.add('pp-lock');
+      dlg.showModal();
+      // 주소로 바로 열렸을 때는 첫 링크(EN|KO)가 아닌 창 자체에 포커스 — 사용자가 누르지도 않은 링크에
+      // 포커스 테두리가 생기지 않게. Tab 을 누르면 창 안의 링크를 차례로 이동한다.
+      if (!from) dlg.focus({ preventScroll: true });
+    };
+    const userClose = () => { byUser = true; dlg.close(); };
 
     document.addEventListener('click', (e) => {
       const a = (e.target as Element | null)?.closest?.('[data-process-open]') as HTMLElement | null;
@@ -107,21 +152,29 @@ const services = (await getCollection('products'))
       // 새 탭·수정키·가운데 클릭은 기본 동작(제품 목록으로 이동) 유지
       if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
       e.preventDefault();
-      if (dlg.open) return;
-      opener = a;
-      document.documentElement.classList.add('pp-lock');
-      dlg.showModal();
+      open(a);
     });
 
     dlg.addEventListener('close', () => {
       document.documentElement.classList.remove('pp-lock');
       opener?.focus({ preventScroll: true });
       opener = null;
+      if (byUser && hasKey()) {
+        // 새로고침·뒤로가기로 다시 뜨지 않게 ?request 만 지운다(다른 쿼리·해시는 그대로).
+        const u = new URL(location.href);
+        u.searchParams.delete(KEY);
+        history.replaceState(history.state, '', u.pathname + u.search + u.hash);
+      }
+      byUser = false;
     });
     // 바깥(배경) 클릭 → 닫기. 창 자체는 여백이 0 이라 target 이 dialog 면 배경을 누른 것이다.
-    dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close(); });
-    dlg.querySelectorAll('[data-pp-close]').forEach((b) => b.addEventListener('click', () => dlg.close()));
+    dlg.addEventListener('click', (e) => { if (e.target === dlg) userClose(); });
+    dlg.querySelectorAll('[data-pp-close]').forEach((b) => b.addEventListener('click', userClose));
+    dlg.addEventListener('cancel', () => { byUser = true; }); // Esc
     // 뒤로가기(bfcache)로 돌아왔을 때 창이 열린 채 남지 않게
     window.addEventListener('pagehide', () => { if (dlg.open) dlg.close(); });
+    // bfcache 로 돌아왔는데 주소에 ?request 가 남아 있으면(창에서 서비스를 골라 나갔다가 뒤로) 다시 띄운다
+    window.addEventListener('pageshow', (e) => { if (e.persisted && hasKey()) open(null); });
+    if (hasKey()) open(null);
   })();
 </script>

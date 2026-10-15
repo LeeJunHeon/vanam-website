@@ -15,6 +15,7 @@ export const NOINDEX_PATHS = [
   '/order/done',   // 주문 완료
   '/order/lookup', // 주문 조회
   '/quote/done',   // 견적 완료
+  '/request',      // 공정 의뢰 바로가기 — 홈(?request)으로 넘기기만 하는 중간 단계 (src/pages/request.astro)
 ] as const;
 
 /** pathname 이 비노출 대상인지. '/ko/cart/' · '/cart' 등 형태 차이를 흡수한다. */
