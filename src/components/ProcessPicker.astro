@@ -156,6 +156,9 @@ const services = (await getCollection('products'))
     });
 
     dlg.addEventListener('close', () => {
+      // close 이벤트는 닫힌 '뒤' 따로 도착한다. 떠날 때(pagehide) 닫혔다가 뒤로가기(bfcache)로 돌아와
+      // pageshow 가 창을 다시 띄운 경우, 늦게 온 이 이벤트가 스크롤 잠금을 풀어 버리지 않게 무시한다.
+      if (dlg.open) return;
       document.documentElement.classList.remove('pp-lock');
       opener?.focus({ preventScroll: true });
       opener = null;
