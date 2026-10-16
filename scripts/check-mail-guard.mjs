@@ -12,7 +12,7 @@
 //       → Cloudflare main 빌드가 테스트 모드로 배포되는 것도, 로컬 빌드가 운영 모드가 되는 것도 막는다.
 //   (c) 번들: dist/server 에 비밀값 0건 — Google 비밀값 모양(새로고침 토큰 1//… · 클라이언트 비밀 GOCSPX-…)과
 //       Cloudflare 토큰 모양(2026 새 형식 cfut_… 사용자 · cfat_… 계정 · cfk_… 전역 키 — 접두어 + 40자 + 검사값)과
-//       메일 비밀값 이름에 값이 붙은 모양(GMAIL_…: "…" · CF_BROWSER_TOKEN: "…")
+//       메일 비밀값 이름에 값이 붙은 모양(GMAIL_…: "…" · CF_BROWSER_TOKEN: "…" · 담당자 알림 받는 주소 INQUIRY_NOTIFY_TO: "…")
 //
 // ⚠️ (b)(c) 는 dist/server/.dev.vars 를 보지 않는다(wrangler dev 전용 비밀값 파일 — 배포되지 않는다).
 import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
@@ -35,11 +35,11 @@ export const SECRET_RES = [
   /\b1\/\/0[0-9A-Za-z_-]{20,}/,
   /GOCSPX-[0-9A-Za-z_-]{10,}/,
   /\bcf(?:ut|at|k)_[0-9A-Za-z_-]{40,}/,
-  /\b(?:GMAIL_CLIENT_ID|GMAIL_CLIENT_SECRET|GMAIL_REFRESH_TOKEN|CF_ACCOUNT_ID|CF_BROWSER_TOKEN)["']?\s*:\s*["'`][^"'`\s]+["'`]/,
+  /\b(?:GMAIL_CLIENT_ID|GMAIL_CLIENT_SECRET|GMAIL_REFRESH_TOKEN|CF_ACCOUNT_ID|CF_BROWSER_TOKEN|INQUIRY_NOTIFY_TO)["']?\s*:\s*["'`][^"'`\s]+["'`]/,
 ];
 // 메일 경로 파일 — 빌드 환경 변수 문자열을 두지 않는다
 const MAIL_PATH_FILES = ['lib/mail-send.ts', 'lib/doc-pdf.ts', 'lib/quote-ack-run.ts', 'lib/mail-mime.js', 'lib/quote-ack.js',
-  'lib/mail-mode.js', 'pages/api/admin/quote-mail.ts'];
+  'lib/mail-mode.js', 'pages/api/admin/quote-mail.ts', 'lib/staff-notify.js', 'lib/staff-notify-run.ts'];
 const IMPORT_META_ENV = ['import', 'meta', 'env'].join('.');
 const DEV_VARS = '.dev.vars';
 

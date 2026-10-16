@@ -24,6 +24,8 @@ import companyInfo from '../../data/company.json';
 import { sendChat } from '../../lib/chat-send';
 // 공정 견적 요청의 접수 확인 메일(hello@ → 고객) — 테스트 빌드는 @vanam.co.kr 주소로만 나간다(mail-send.ts).
 import { runQuoteAck, ackPlanned } from '../../lib/quote-ack-run';
+// 담당자 알림 메일(접수 내용 전문 → 비밀값 INQUIRY_NOTIFY_TO) — 운영 빌드만 · 예외를 던지지 않는다.
+import { runStaffNotify } from '../../lib/staff-notify-run';
 
 // 서버에서 온디맨드 실행 (정적 생성 금지)
 export const prerender = false;
@@ -185,7 +187,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
   // 접수번호 — 알림과 DB, 관리자 화면에서 같은 값을 쓴다
   const id = newId('INQ');
   const who = `담당: ${name}${company ? ` (${company})` : ''} · ${email}${phone ? ` · ${phone}` : ''}`;
-  const meta = `접수번호 ${id} · ${locale} · ${nowKst()} (KST)`;
+  const receivedKst = nowKst();
+  const meta = `접수번호 ${id} · ${locale} · ${receivedKst} (KST)`;
 
   // 5) D1에 저장 — 알림을 놓쳐도 요청이 사라지지 않도록 남긴다.
   //    DB가 없거나(dev) 실패해도 알림은 나가야 하므로 예외를 삼킨다.
@@ -288,6 +291,16 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const ack = runQuoteAck(saved, id, { by: 'auto', origin: ackOrigin, verified: ackVerified }).catch(() => undefined);
     pickWaitUntil(locals)?.(ack); // waitUntil 이 없는 환경(드묾)에서는 기다리지 않는다 — 고객 응답이 우선
   };
+  // 5-3) 담당자 알림 메일 — 고객에게 성공으로 응답하는 모든 경로(scheduleAck 와 같은 자리)에서, 그보다 먼저 시작한다(첨부 없는 가벼운 쪽).
+  //      502 경로에서는 보내지 않는다. 받는 주소·발송 판정은 staff-notify-run.ts — 응답·확인 메일·구글챗과 독립(예외를 던지지 않는다).
+  const scheduleStaff = () => {
+    const staff = runStaffNotify({
+      type, id, receivedKst, locale, origin: ackOrigin,
+      name, company, email, phone, productName, product, material, method, substrate, sampleCount,
+      waferLine, details, estimateLine, message,
+    }).catch(() => undefined);
+    pickWaitUntil(locals)?.(staff);
+  };
   // 응답의 ack — 확인 메일이 나갈 건인가(판정만). 완료 화면이 이때만 '접수 확인 메일을 보내드렸습니다'를 띄운다
   // (같은 주소 하루 상한·테스트 빌드의 고객 주소·설정 없음 등으로 안 나가는 건에 '보냈다'고 말하지 않게).
   const ackFlag = async (): Promise<boolean> =>
@@ -310,6 +323,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   const chat = await sendChat(text, { tag: 'inquiry', ref: id });
   if (chat.reason === 'blocked_build' || chat.reason === 'no_webhook') {
     const ack = await ackFlag();
+    scheduleStaff();
     scheduleAck();
     return json({ ok: true, delivered: false, id, quote: quoteSaved, ack, replyDays: siteSettings.reply_business_days });
   }
@@ -317,6 +331,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (rowSaved) {
       console.error('[inquiry] 구글챗 알림 실패 — 접수는 저장됨(관리자 화면에서 확인):', id, chat.reason, chat.status ?? '');
       const ack = await ackFlag();
+      scheduleStaff();
       scheduleAck();
       return json({ ok: true, delivered: false, id, quote: quoteSaved, ack, replyDays: siteSettings.reply_business_days });
     }
@@ -324,6 +339,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   }
 
   const ack = await ackFlag();
+  scheduleStaff();
   scheduleAck();
   return json({ ok: true, delivered: true, type, id, quote: quoteSaved, ack, replyDays: siteSettings.reply_business_days });
 };
