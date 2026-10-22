@@ -120,10 +120,10 @@ const description = home.metaDescription;
     //   데이터 절약 모드(saveData)·동작 줄이기(reduced-motion) 에선 아예 받지 않는다(포스터만).
     //   preload="none" 이지만 autoplay 속성이 있어 src 를 넣는 순간 브라우저가 스스로 받기 시작한다.
     //   재생·루프·모바일 소스 선택 등 동작은 종전과 동일하다.
-    //   1019: PC 영상은 CRF 37 에서 잔무늬가 뭉개져, 0912a 직전 파일을 원본으로 CRF 27 재인코딩(약 5.4MB). 파일명을 바꾼 이유는 /media/* 30일 캐시(public/_headers).
+    //   1022: PC 영상은 08-20 결정(히어로 영상은 원본 화질 유지)대로 0912a 직전 원본(11.7MB)을 재인코딩 없이 그대로 쓴다. 다시 압축하지 말 것 — 줄이려면 촬영 원본(마스터)에서 한 번만 인코딩. 파일명을 바꾸는 이유는 /media/* 30일 캐시(public/_headers).
     const conn = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
     const skipVideo = rm || !!(conn && conn.saveData);
-    const setSrc = () => { vid.src = MOBILE ? '/media/hero-loop-m.mp4' : '/media/hero-loop-v2.mp4'; };
+    const setSrc = () => { vid.src = MOBILE ? '/media/hero-loop-m.mp4' : '/media/hero-loop-v3.mp4'; };
     const idle = () => { if ('requestIdleCallback' in window) window.requestIdleCallback(setSrc, { timeout: 2000 }); else setTimeout(setSrc, 1); };
     if (!skipVideo) {
       if (document.readyState === 'complete') idle();
