@@ -96,6 +96,9 @@ const BLOG_INDEX_RE = /^\/(?:ko\/)?blog\/?$/;
 export default defineConfig({
   site: 'https://vanam.co.kr',
 
+  // Astro 7 부터 기본값이 'jsx'(인라인 요소 사이 공백 제거)로 바뀌었다. Astro 6 과 같은 결과를 내도록 true 로 고정.
+  compressHTML: true,
+
   // Cloudflare 어댑터: 일반 페이지는 전부 정적으로 미리 생성되고,
   // 주문·문의·관리자·Keystatic UI 만 서버(워커)에서 동작한다.
   adapter: isBuild
