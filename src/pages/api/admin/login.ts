@@ -1,8 +1,12 @@
 // 관리자 로그인 · 로그아웃.
 //
 // 10-13 정리(로그인 버튼을 눌러도 '바로 안 된다'는 현상):
-//   · 횟수 제한은 '틀린 비밀번호'만 센다(IP당 15분에 5번). 예전에는 성공한 로그인도 세서, 사무실(같은 IP)에서
+//   · 횟수 제한은 결과적으로 '틀린 비밀번호'만 센다(IP당 15분에 5번). 예전에는 성공한 로그인도 세서, 사무실(같은 IP)에서
 //     여러 번 들어가거나 응답을 기다리다 다시 누르면 맞는 비밀번호로도 막혔고, 화면에는 '비밀번호가 맞지 않습니다'가 떴다.
+//   · 10-23: 비밀번호를 확인하기 '전에' 원자적으로 한 번 세고(rateLimit), 맞으면 되돌린다(rateRefund).
+//     예전 순서(읽기만 → 확인 → 틀리면 세기)는 동시에 쏜 요청이 모두 '아직 0'을 읽어 5번을 넘겨 확인할 수 있었다.
+//     지금은 동시에 몇 개가 오든 비밀번호 확인까지 가는 틀린 시도는 창마다 최대 5번이다.
+//     순서: 설정 확인 → 본문 읽기(실패는 세지 않음) → 빈 값(세지 않음) → +1(넘었으면 되돌리고 막음) → 확인 → 맞으면 되돌리고 쿠키 · 틀리면 700ms 뒤 거절
 //   · 두 가지 요청을 받는다.
 //       JSON(fetch)      → JSON 응답(화면 스크립트가 문구를 띄운다)
 //       폼 제출(스크립트가 아직 안 붙었을 때 누른 경우) → 303 으로 /admin 에 돌려보낸다(성공이면 쿠키와 함께, 실패면 ?login=사유)
@@ -10,7 +14,7 @@
 import type { APIRoute } from 'astro';
 import { checkPassword, makeSessionCookie, clearSessionCookie, adminConfigured } from '../../../lib/admin-auth';
 import { db } from '../../../lib/db';
-import { rateCheck, rateLimit } from '../../../lib/rate-limit';
+import { rateLimit, rateRefund } from '../../../lib/rate-limit';
 
 export const prerender = false;
 
@@ -25,13 +29,6 @@ export const POST: APIRoute = async ({ request }) => {
   const isForm = ct.includes('application/x-www-form-urlencoded') || ct.includes('multipart/form-data');
 
   if (!adminConfigured()) return isForm ? back('not_configured') : jsonRes({ ok: false, error: 'not_configured' }, 503);
-
-  // 무차별 대입 차단: 틀린 시도가 IP당 15분에 5번을 넘으면 막는다(맞는 비밀번호여도 그 동안은 막힌다 — 대입 방어).
-  const d = await db();
-  const rc = await rateCheck(d, 'login', request);
-  if (!rc.ok) {
-    return isForm ? back('limited') : jsonRes({ ok: false, error: 'rate_limited', retryAfterSec: rc.retryAfterSec }, 429, { 'Retry-After': String(rc.retryAfterSec) });
-  }
 
   let password = '';
   try {
@@ -48,12 +45,23 @@ export const POST: APIRoute = async ({ request }) => {
   // 빈 값은 시도로 세지 않는다(자동 입력이 아직 채워지지 않은 채 눌린 경우 등)
   if (!password) return isForm ? back('empty') : jsonRes({ ok: false, error: 'empty' }, 400);
 
+  // 무차별 대입 차단: 확인 전에 원자적으로 한 번 센다 — 틀린 시도가 IP당 15분에 5번을 넘으면 막는다
+  // (맞는 비밀번호여도 그 동안은 막힌다 — 대입 방어). 맞으면 아래에서 되돌리므로 결과적으로 틀린 시도만 센다.
+  const d = await db();
+  const rl = await rateLimit(d, 'login', request);
+  if (!rl.ok) {
+    // 막힌 요청은 비밀번호를 확인하지 않았으니 센 것을 되돌린다 — 카운트는 '확인까지 간 틀린 시도'만 남는다
+    // (맞는 비밀번호를 동시에 여러 번 눌러 막힌 몫이 남아 15분 동안 막히는 일이 없게). 이미 통과한 틀린 시도 5번은 되돌리지 않으므로 더 열리지 않는다.
+    await rateRefund(d, 'login', request);
+    return isForm ? back('limited') : jsonRes({ ok: false, error: 'rate_limited', retryAfterSec: rl.retryAfterSec }, 429, { 'Retry-After': String(rl.retryAfterSec) });
+  }
+
   if (!(await checkPassword(password))) {
-    await rateLimit(d, 'login', request); // 틀린 시도만 센다
     await new Promise((r) => setTimeout(r, 700)); // 무차별 대입을 조금이라도 늦춘다
     return isForm ? back('invalid') : jsonRes({ ok: false, error: 'invalid' }, 401);
   }
 
+  await rateRefund(d, 'login', request); // 맞는 비밀번호는 세지 않은 것과 같다(실패해도 로그인은 막지 않는다)
   const cookie = await makeSessionCookie();
   return isForm ? back(null, { 'Set-Cookie': cookie }) : jsonRes({ ok: true }, 200, { 'Set-Cookie': cookie });
 };
