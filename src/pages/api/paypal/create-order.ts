@@ -68,9 +68,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const created = await ppCreateOrder(valueUsd, ref, description);
 
     // 대사(참조)용으로 PayPal 주문번호 저장 — 컬럼 미이관 DB 면 명확한 에러로 안내
+    // ⚠️ 'paid_at IS NULL' 조건부 — 확정된 주문의 결제창 번호는 덮어쓰지 않는다(확정 때 번호가 이중 결제 판정의 기준이다).
+    //    위에서 already_paid 를 막았어도 PayPal 호출 중에 다른 경로가 확정할 수 있다 → 0행이면 already_paid.
     try {
       const table = isInq ? 'inquiries' : 'orders';
-      await d.prepare(`UPDATE ${table} SET paypal_order_id = ? WHERE id = ?`).bind(created.id, ref).run();
+      const res = await d.prepare(`UPDATE ${table} SET paypal_order_id = ? WHERE id = ? AND paid_at IS NULL`).bind(created.id, ref).run();
+      if ((res as { meta?: { changes?: number } } | null)?.meta?.changes === 0) return json({ ok: false, error: 'already_paid' }, 409);
     } catch (e) {
       console.error('[paypal] paypal_order_id 저장 실패 — D1 마이그레이션 필요:', e);
       return json({ ok: false, error: 'db_migration_required' }, 500);

@@ -9,7 +9,7 @@
 import type { APIRoute } from 'astro';
 import { db } from '../../../lib/db';
 import { ppVerifyWebhook, ppCapture, notifyChat, paypalCfg } from '../../../lib/paypal';
-import { settlePayment } from '../../../lib/paypal-settle';
+import { settlePayment, precheckCapture } from '../../../lib/paypal-settle';
 
 export const prerender = false;
 
@@ -70,6 +70,14 @@ export const POST: APIRoute = async ({ request }) => {
         const ppOrderId = String(res?.id ?? '');
         const ref = String(res?.purchase_units?.[0]?.custom_id ?? '').toUpperCase();
         if (!ppOrderId || !ref) return ok({ ok: true, skipped: 'no_ref' });
+
+        // 브라우저 캡처와 같은 사전 확인 — 이미 결제됨·오래된 결제창·주문서 없음이면 캡처하지 않는다(이중 청구 방지).
+        //   200 으로 받아준다(4xx 면 PayPal 이 계속 재전송한다).
+        const pre = await precheckCapture(d, { ppOrderId, ref });
+        if (!pre.ok) {
+          if (pre.code !== 'already_paid') console.warn('[paypal-webhook] 승인건 캡처 안 함:', pre.code, ref, ppOrderId);
+          return ok({ ok: true, skipped: pre.code });
+        }
 
         const { httpOk, body: cap } = await ppCapture(ppOrderId);
         const status = String((cap as Record<string, any>).status ?? '');

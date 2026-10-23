@@ -82,6 +82,7 @@ const t = isKo
       mCapture: '결제 확정에 실패했습니다.',
       mError: '결제 처리 중 오류가 발생했습니다.',
       mPaid: '이미 결제가 완료된 주문입니다. 위 주문 상태를 확인해 주세요.',
+      mStale: '다른 창에서 결제가 새로 시작되었습니다. 이 화면을 새로고침한 뒤 다시 결제해 주세요.',
       mApproved: '결제 승인이 완료되었습니다. 확정 처리 중이니 다시 결제하지 마시고, 이 주문번호로 잠시 후 다시 조회해 주세요.',
       mSetup: '결제 준비 중입니다.',
       payTitle: 'PayPal 결제',
@@ -133,6 +134,7 @@ const t = isKo
       mCapture: 'Capture failed.',
       mError: 'Payment error.',
       mPaid: 'This order has already been paid. Please check the order status above.',
+      mStale: 'A new payment was started in another window. Please refresh this page and try again.',
       mApproved: 'Your payment was approved and is being finalized. Please do not pay again — check the status again shortly using this order number.',
       mSetup: 'Payment is being set up.',
       payTitle: 'Pay with PayPal',
@@ -166,7 +168,7 @@ const inputClass =
       data-product-names={JSON.stringify(productNames)}
       data-map-size={JSON.stringify(sizeMap)}
       data-map-delivery={JSON.stringify(deliveryMap)}
-      data-pay={JSON.stringify({ tracking: t.tracking, trackingCourier: t.trackingCourier, trackingNo: t.trackingNo, paidDone: t.paidDone, paidAt: t.paidAt, mApproved: t.mApproved, mCreate: t.mCreate, mHeld: t.mHeld, mDeclined: t.mDeclined, mCapture: t.mCapture, mError: t.mError, mPaid: t.mPaid, mSetup: t.mSetup, payTitle: t.payTitle, payNote: t.payNote })}
+      data-pay={JSON.stringify({ tracking: t.tracking, trackingCourier: t.trackingCourier, trackingNo: t.trackingNo, paidDone: t.paidDone, paidAt: t.paidAt, mApproved: t.mApproved, mCreate: t.mCreate, mHeld: t.mHeld, mDeclined: t.mDeclined, mCapture: t.mCapture, mError: t.mError, mPaid: t.mPaid, mStale: t.mStale, mSetup: t.mSetup, payTitle: t.payTitle, payNote: t.payNote })}
       data-copy={JSON.stringify({
         status: t.status, amount: t.amount, ordered: t.ordered,
         items: t.items, shipTo: t.shipTo, taxYes: t.taxYes, noShip: t.noShip,
@@ -456,13 +458,21 @@ const inputClass =
               onApprove: async (data2: { orderID: string }) => {
                 const r2 = await fetch('/api/paypal/capture', {
                   method: 'POST', headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ orderID: data2.orderID }),
+                  // ref: 서버가 캡처 전에 '이미 결제됨·다른 창의 새 결제창'을 알아보는 데 쓴다
+                  body: JSON.stringify({ orderID: data2.orderID, ref: wrap.dataset.ref }),
                 });
                 const j2 = await r2.json();
                 if (!r2.ok || !j2.ok) {
+                  // 캡처 전에 멈춘 경우(돈은 빠지지 않았다) — 이 결제창으로 다시 시도하지 않게 닫고 새로고침을 안내한다
+                  if (j2.error === 'stale_order' || j2.error === 'already_paid') {
+                    showSpecific(j2.error === 'stale_order' ? P.mStale : P.mPaid);
+                    killPay();
+                    throw new Error(j2.error);
+                  }
                   // verify_failed/not_found = 결제는 성사·자동 확정 불가 → 재결제 금지 안내(이중 청구 방지)
                   // capture_pending: PayPal 이 돈은 받았지만 확정을 미룬 상태 — 다시 결제하면 이중 청구가 된다(10-12)
-                  const held = j2.error === 'verify_failed' || j2.error === 'not_found' || j2.error === 'capture_pending';
+                  // duplicate_payment: 이미 결제된 주문에 이 결제가 또 들어옴 — 담당자가 확인 후 연락(10-23)
+                  const held = j2.error === 'verify_failed' || j2.error === 'not_found' || j2.error === 'capture_pending' || j2.error === 'duplicate_payment';
                   showSpecific(held ? P.mHeld : (j2.restart ? P.mDeclined : P.mCapture));
                   if (held) killPay();
                   throw new Error(j2.error || 'capture_failed');
