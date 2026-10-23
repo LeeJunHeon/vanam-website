@@ -16,12 +16,15 @@ const DASH = '—';
 // 고객이 쓴 글을 구글챗 문법으로 해석시키지 않는다 (10-12 점검).
 //   구글챗은 꺾쇠 문법을 해석한다 — <users/all>(방 전원 호출) · <https://주소|글자>(다른 주소로 가는 링크).
 //   고객이 쓴 칸의 꺾쇠만 전각(＜＞)으로 바꾼다. 꺾쇠가 없는 보통 글은 **바이트 단위로 그대로**다.
+//   주문 알림(buildOrderChatDetail)·결제 완료 알림(safeStoredChat)도 같은 규칙을 쓴다(10-23).
 const safe = (v) => String(v ?? '').replace(/</g, '＜').replace(/>/g, '＞');
+export const chatSafe = safe;
 
 /** 알림 한 통에 싣는 요청 본문 상한(글자) — 넘는 부분은 관리자 화면에서 본다(DB·확인 메일 PDF 에는 전체가 있다) */
 export const CHAT_BODY_MAX = 3000;
 // 구글챗 메시지 크기 한도 안에 들게 한다 — 넘으면 알림 자체가 실패한다.
-const clip = (s) => (s.length > CHAT_BODY_MAX ? `${s.slice(0, CHAT_BODY_MAX)}\n… (이하 생략 — 관리자 화면에서 전체 보기)` : s);
+const MORE = '\n… (이하 생략 — 관리자 화면에서 전체 보기)';
+const clip = (s) => (s.length > CHAT_BODY_MAX ? `${s.slice(0, CHAT_BODY_MAX)}${MORE}` : s);
 
 /**
  * 견적/문의 알림 본문.
@@ -84,4 +87,100 @@ export function buildEstimateChatLine(p) {
   const shown = list.slice(0, ESTIMATE_LINE_MAX).join(' / ');
   const more = list.length > ESTIMATE_LINE_MAX ? ` 외 ${list.length - ESTIMATE_LINE_MAX}건` : '';
   return `💰 예상 견적(자동): 담당자 확인 필요 — ${shown}${more}`;
+}
+
+// ── 주문 알림 ────────────────────────────────────────────────────────────────────
+// 새 주문(계좌이체 — 접수 즉시)·PayPal 결제 완료(paypal-settle — orders.chat_detail 을 다시 보냄) 알림의 본문.
+// 예전에는 api/order.ts 안에서 템플릿으로 직접 조립했다 — 고객 입력이 꺾쇠 그대로 · 길이 상한 없이 실렸다(10-23).
+// ⚠️ 꺾쇠 없는 입력이면 옮기기 전과 **바이트 단위로 같다**(줄 순서·문구·filter(Boolean)) — scripts/test-order-chat.mjs 가 옛 조립과 비교한다.
+
+/** 주문 알림 본문 상한(글자) — CHAT_BODY_MAX 와 같은 기준(구글챗 메시지 크기 한도 안에 들게 한다 — 넘으면 알림 자체가 실패한다) */
+export const ORDER_CHAT_MAX = CHAT_BODY_MAX;
+
+/** 앞 n 글자 + '…'(서로게이트 쌍을 가르지 않는다) */
+function cutTo(s, n) {
+  if (s.length <= n) return s;
+  let k = Math.max(0, n - 1);
+  if (k > 0 && /[\uD800-\uDBFF]/.test(s[k - 1])) k--;
+  return `${s.slice(0, k)}…`;
+}
+
+/**
+ * 주문 알림 본문(orders.chat_detail 로도 저장된다).
+ * 고객 입력 칸은 모두 chatSafe · 서버 값(주문번호·금액·환율·상품 줄·locale·접수 시각)은 그대로.
+ * 전체가 ORDER_CHAT_MAX 를 넘으면 요청사항 → 배송 주소 → 세금계산서 순으로 줄이고, 그래도 넘치면 상품 줄을 '외 N건'으로 줄인 뒤
+ * 끝에 생략 표시를 붙인다. 주문번호·금액·상품(최소 '외 N건')·주문자·접수 시각 줄은 항상 남는다.
+ *
+ * @param {{
+ *   orderId: string, amount: number, amountUsd: number, rate: number,
+ *   lines: { sku: string, name: string, qty: number, subtotal: number, dicing: boolean, dicingFee: number }[],
+ *   buyerName: string, buyerCompany?: string, buyerEmail: string, buyerPhone?: string,
+ *   desiredDate?: string, orderNote?: string,
+ *   needsShipping: boolean, shipCountry?: string, shipName?: string, shipPhone?: string, shipZip?: string,
+ *   shipAddr1?: string, shipAddr2?: string, shipCity?: string, shipState?: string, shipCourierAcct?: string,
+ *   taxInvoice: boolean, taxBizName?: string, taxBizNo?: string, taxEmail?: string,
+ *   inquiryId?: string, locale: string, receivedKst: string,
+ * }} p
+ * @returns {string}
+ */
+export function buildOrderChatDetail(p) {
+  const won = (n) => Number(n).toLocaleString('ko-KR');
+  const rate = Number(p.rate);
+  // 다이싱 표기는 웨이퍼 줄에만 붙인다 (다른 상품에는 존재하지 않는 옵션이라 '불필요'가 정보를 주지 않는다).
+  const productLines = (p.lines ?? []).map((l) => {
+    const dice = !String(l.sku).startsWith('wafer:')
+      ? ''
+      : l.dicing
+        ? ` · 다이싱: 필요 (+₩${won(l.dicingFee)}/박스 × ${l.qty})`
+        : ' · 다이싱: 불필요';
+    return `· ${l.name} × ${l.qty} = ₩${won(l.subtotal)} (≈ $${(l.subtotal / rate).toFixed(2)})${dice}`;
+  });
+  // 줄이기 대상(고객 글) — 접두어는 그대로 두고 내용만 줄인다
+  const note = { pre: '요청사항: ', body: p.orderNote ? safe(p.orderNote) : '' };
+  const ship = p.needsShipping
+    ? { pre: `배송[${safe(p.shipCountry)}]: `, body: `${safe(p.shipName)} · ${safe(p.shipPhone)}\n  (${safe(p.shipZip)}) ${[p.shipAddr1, p.shipAddr2, p.shipCity, p.shipState].filter(Boolean).map(safe).join(', ')}` }
+    : null;
+  const tax = p.taxInvoice ? { pre: '📄 세금계산서 요청 — ', body: `${safe(p.taxBizName)} (${safe(p.taxBizNo)}) → ${safe(p.taxEmail)}` } : null;
+  let shown = productLines.length; // 보일 상품 줄 수(나머지는 '외 N건')
+
+  const assemble = (more) => [
+    `주문번호: ${p.orderId}`,
+    `금액: ₩${won(p.amount)} (≈ $${Number(p.amountUsd).toFixed(2)} USD · 환율 ${Math.round(rate).toLocaleString('ko-KR')})`,
+    ...productLines.slice(0, shown),
+    shown < productLines.length ? `· 외 ${productLines.length - shown}건` : '',
+    `주문자: ${safe(p.buyerName)}${p.buyerCompany ? ` (${safe(p.buyerCompany)})` : ''} · ${safe(p.buyerEmail)}${p.buyerPhone ? ` · ${safe(p.buyerPhone)}` : ''}`,
+    p.desiredDate ? `희망 완료: ${safe(p.desiredDate)}` : '',
+    note.body ? note.pre + note.body : '',
+    ship ? ship.pre + ship.body : '배송 없음 (분석 서비스)',
+    p.shipCourierAcct ? `택배사 계정(착불): ${safe(p.shipCourierAcct)}` : '',
+    tax ? tax.pre + tax.body : '세금계산서: 미요청',
+    p.inquiryId ? `견적: ${safe(p.inquiryId)}` : '',
+    // 이 본문은 결제 완료 알림에도 그대로 재사용되므로 '접수' 라고 못 박아 결제 시각으로 오해하지 않게 한다.
+    `(${p.locale} · 접수 ${p.receivedKst} KST)`,
+  ].filter(Boolean).join('\n') + (more ? MORE : '');
+
+  let out = assemble(false);
+  if (out.length <= ORDER_CHAT_MAX) return out;
+  // 넘침 — 요청사항 → 배송 주소 → 세금계산서 순으로 넘친 만큼 줄인다(생략 표시 길이까지 계산)
+  for (const part of [note, ship, tax]) {
+    if (!part || !part.body) continue;
+    const over = assemble(true).length - ORDER_CHAT_MAX;
+    if (over <= 0) break;
+    part.body = cutTo(part.body, Math.max(1, part.body.length - over));
+  }
+  // 그래도 넘치면 상품 줄을 뒤에서부터 줄인다('외 N건')
+  while (assemble(true).length > ORDER_CHAT_MAX && shown > 0) shown--;
+  out = assemble(true);
+  // 마지막 안전장치(주문자 줄 등 남겨야 할 줄만으로도 넘는 비정상 입력) — 상한에서 자른다
+  return out.length <= ORDER_CHAT_MAX ? out : cutTo(out, ORDER_CHAT_MAX - MORE.length) + MORE;
+}
+
+/**
+ * 저장해 둔 알림 본문을 다시 보낼 때(결제 완료 — orders.chat_detail) — 꺾쇠 무력화 + 상한 자르기.
+ * 옛 주문(10-23 전 저장, 꺾쇠·길이 그대로)의 본문도 안전하게 만든다. 두 번 적용해도 같다.
+ * @param {unknown} text @returns {string}
+ */
+export function safeStoredChat(text) {
+  const s = safe(text);
+  return s.length <= ORDER_CHAT_MAX ? s : cutTo(s, ORDER_CHAT_MAX - MORE.length) + MORE;
 }

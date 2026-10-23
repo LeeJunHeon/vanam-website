@@ -16,6 +16,8 @@
 //   ③ '결제 완료' 알림은 조건부 UPDATE 가 실제로 1행을 바꾼 쪽만 보낸다(브라우저·웹훅 동시 도착 → 한 번).
 import { notifyChat, expectedUsdStr, toCents } from './paypal';
 import { readRate } from './fx';
+// 저장해 둔 주문 알림 본문을 다시 보낼 때 — 꺾쇠 무력화 + 상한(10-23 전에 저장된 옛 주문 본문 대비)
+import { safeStoredChat } from './chat-message.js';
 
 type Row = Record<string, unknown>;
 /** D1 run() 결과 — meta.changes = 실제로 바뀐 행 수 */
@@ -156,7 +158,7 @@ export async function settlePayment(
   // PayPal 을 고르고 결제하지 않는 경우가 많아 소음이 된다).
   // 주문 접수 때 저장해 둔 상세를 그대로 붙여 담당자가 한 번에 파악하게 한다.
   const head = `💳 *결제 완료* — $${args.paidUsd.toFixed(2)} USD (paypal: ${args.ppOrderId})`;
-  const detail = String(row.chat_detail ?? '').trim();
+  const detail = safeStoredChat(String(row.chat_detail ?? '').trim());
   await notifyChat(detail ? `${head}\n${detail}` : `${head}\n주문번호: ${ref}`);
   return { ok: true, ref, paidUsd: args.paidUsd, duplicate: false };
 }

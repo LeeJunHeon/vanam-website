@@ -14,6 +14,8 @@ import { getRate, pickWaitUntil } from '../../lib/fx';
 import { isEmail } from '../../lib/email-rule.js';
 // 구글챗은 이 통로로만 보낸다 — Cloudflare main 빌드가 아니면 코드에서 차단된다.
 import { sendChat } from '../../lib/chat-send';
+// 주문 알림 본문(고객 입력 꺾쇠 무력화 · 길이 상한) — 견적·문의 알림과 같은 파일
+import { buildOrderChatDetail } from '../../lib/chat-message.js';
 
 export const prerender = false;
 
@@ -38,12 +40,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
   // 예기치 못한 예외가 그대로 500(빈 본문)으로 나가면 화면에는
   // "Unexpected end of JSON input" 만 보여 원인을 알 수 없다.
   // 어떤 실패든 JSON 으로 사유를 돌려주고 서버 로그에 남긴다.
+  // 응답에는 내부 오류 메시지를 싣지 않는다(10-23 — 고객 화면은 쓰지 않고, 서버 구조가 드러난다). 원인은 서버 로그(stack)로 본다.
   try {
     return await handleOrder({ request, locals });
   } catch (e) {
     const err = e as Error;
     console.error('[order] 처리 실패:', err?.stack ?? err);
-    return json({ ok: false, error: 'server_error', detail: String(err?.message ?? e).slice(0, 200) }, 500);
+    return json({ ok: false, error: 'server_error' }, 500);
   }
 };
 
@@ -300,32 +303,14 @@ async function handleOrder({ request, locals }: { request: Request; locals: unkn
 
   // ── 7) 구글챗 알림 (chat-send.ts 가 유일한 발송 통로) ──────────────
   // 주문 상세 — 계좌이체는 접수 즉시, PayPal 은 결제가 완료된 뒤에 이 내용을 보낸다.
-  const detail = [
-    `주문번호: ${orderId}`,
-    `금액: ₩${amount.toLocaleString('ko-KR')} (≈ $${amountUsd.toFixed(2)} USD · 환율 ${Math.round(fx.rate).toLocaleString('ko-KR')})`,
-    // 다이싱 표기는 웨이퍼 줄에만 붙인다 (다른 상품에는 존재하지 않는 옵션이라 '불필요'가 정보를 주지 않는다).
-    ...lines.map((l) => {
-      const dice = !l.sku.startsWith('wafer:')
-        ? ''
-        : l.dicing
-          ? ` · 다이싱: 필요 (+₩${l.dicingFee.toLocaleString('ko-KR')}/박스 × ${l.qty})`
-          : ' · 다이싱: 불필요';
-      return `· ${l.name} × ${l.qty} = ₩${l.subtotal.toLocaleString('ko-KR')} (≈ $${(l.subtotal / fx.rate).toFixed(2)})${dice}`;
-    }),
-    `주문자: ${buyerName}${buyerCompany ? ` (${buyerCompany})` : ''} · ${buyerEmail}${buyerPhone ? ` · ${buyerPhone}` : ''}`,
-    desiredDate ? `희망 완료: ${desiredDate}` : '',
-    orderNote ? `요청사항: ${orderNote}` : '',
-    needsShipping
-      ? `배송[${shipCountry}]: ${shipName} · ${shipPhone}\n  (${shipZip}) ${[shipAddr1, shipAddr2, shipCity, shipState].filter(Boolean).join(', ')}`
-      : '배송 없음 (분석 서비스)',
-    shipCourierAcct ? `택배사 계정(착불): ${shipCourierAcct}` : '',
-    taxInvoice ? `📄 세금계산서 요청 — ${taxBizName} (${taxBizNo}) → ${taxEmail}` : '세금계산서: 미요청',
-    inquiryId ? `견적: ${inquiryId}` : '',
-    // ⚠️ created 는 DB 저장용 UTC 다. 알림에는 한국 시간으로 보여준다.
-    //    이 본문은 결제 완료 알림에도 그대로 재사용되므로 '접수' 라고 못 박아
-    //    결제 시각으로 오해하지 않게 한다.
-    `(${locale} · 접수 ${nowKst()} KST)`,
-  ].filter(Boolean).join('\n');
+  //   조립은 lib/chat-message.js — 고객 입력 칸은 꺾쇠 무력화(견적·문의 알림과 같은 규칙) · 길이 상한(넘으면 긴 고객 글부터 줄인다).
+  //   ⚠️ created 는 DB 저장용 UTC 다. 알림에는 한국 시간(접수 시각)으로 보여준다.
+  const detail = buildOrderChatDetail({
+    orderId, amount, amountUsd, rate: fx.rate, lines,
+    buyerName, buyerCompany, buyerEmail, buyerPhone, desiredDate, orderNote,
+    needsShipping, shipCountry, shipName, shipPhone, shipZip, shipAddr1, shipAddr2, shipCity, shipState, shipCourierAcct,
+    taxInvoice, taxBizName, taxBizNo, taxEmail, inquiryId, locale, receivedKst: nowKst(),
+  });
 
   // 결제 완료 시 같은 내용을 보낼 수 있도록 주문에 저장해 둔다.
   // (결제는 시간이 지난 뒤 다른 경로(웹훅)로 확정될 수 있어, 그 시점에 재구성이 어렵다)
