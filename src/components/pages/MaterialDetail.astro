@@ -207,7 +207,7 @@ const quoteHref = productId
       </>
     ) : (
       <>
-        <!-- 상세 이미지 (있으면 노출, 없으면 placeholder) -->
+        {/* 상세 이미지 (있으면 노출, 없으면 placeholder) */}
         <div class="mt-10 overflow-hidden v-card">
           {detailImg ? (
             <img src={detailImg.src} alt={displayName} class="w-full" loading="lazy" />
@@ -221,7 +221,7 @@ const quoteHref = productId
           )}
         </div>
 
-        <!-- 상세 설명 (있으면 노출, 없으면 placeholder) -->
+        {/* 상세 설명 (있으면 노출, 없으면 placeholder) */}
         <div class="mt-10 max-w-3xl">
           {desc ? (
             <p class="whitespace-pre-line text-base leading-relaxed text-ink/75">{desc}</p>

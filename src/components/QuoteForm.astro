@@ -259,7 +259,7 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
 
       {!simple && (
       <>
-      <!-- ②-1 배송지 — 기판 전달 방식이 '배송/택배'일 때만 표시 (0216: 웨이퍼 주문과 동일 구성) -->
+      {/* ②-1 배송지 — 기판 전달 방식이 '배송/택배'일 때만 표시 (0216: 웨이퍼 주문과 동일 구성) */}
       <div id="q-ship" hidden data-ship-values={JSON.stringify(shipValues)} class="mt-6 space-y-6 rounded-2xl border border-ink/10 bg-ink/[0.02] p-5">
         <p class="text-sm font-semibold text-ink/70">{isKo ? '배송지' : 'Shipping address'}</p>
 
@@ -377,7 +377,7 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
         })();
       </script>
 
-      <!-- ③ 공정 시퀀스 빌더 (엑셀 대체) — 필수 -->
+      {/* ③ 공정 시퀀스 빌더 (엑셀 대체) — 필수 */}
       <fieldset>
         <legend class={legendClass}>{q.sectionProcess} <span class="text-danger">*</span></legend>
         <p class="mt-4 text-sm leading-relaxed text-ink/50">{q.processIntro}</p>
@@ -398,7 +398,7 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
         <input type="hidden" name="processSequence" id="q-process-sequence" />
       </fieldset>
 
-      <!-- ④ 분석 (선택) -->
+      {/* ④ 분석 (선택) */}
       <fieldset>
         <legend class={legendClass}>{q.sectionMeasure}</legend>
         <p class="mt-4 text-sm leading-relaxed text-ink/50">{q.measureIntro}</p>
