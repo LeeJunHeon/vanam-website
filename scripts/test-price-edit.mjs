@@ -12,7 +12,7 @@ import { editSpec, rowFromInput, sameRow, changedCols, checkEdit, dataForValidat
 import { buildXlsx, crc32 } from '../src/lib/xlsx-write.js';
 import { zipEntries, openWorkbook } from '../src/lib/xlsx-core.js';
 import { readPriceWorkbook, validatePriceData, priceRowsForDb, priceFingerprint, REQUIRED_POLICY_KEYS, PRICE_TABLE_ORDER } from '../src/lib/price-sheet.js';
-import { SETTINGS, checkSetting, settingsFromRows, settingDefaults, quoteLimitsOf, fillDays } from '../src/lib/site-settings.js';
+import { SETTINGS, checkSetting, settingsFromRows, settingDefaults, settingSpec, quoteLimitsOf, fillDays } from '../src/lib/site-settings.js';
 import { ackContent } from '../src/lib/quote-ack.js';
 
 let total = 0, failed = 0;
@@ -122,9 +122,18 @@ eq('지금 가짜 DB 는 엑셀 올리기 검사를 통과(DB 1/0 → TRUE/FALSE
 }
 
 // ── ④ 운영 설정 ─────────────────────────────────────────────────────────────────
-eq('운영 설정 6개 · 키', SETTINGS.map((s) => s.key), ['reply_business_days', 'quote_sample_manual_min', 'quote_auto_max_nm', 'quote_auto_max_min', 'ack_recipient_daily_max', 'ack_global_daily_max']);
-eq('기본값 = 지금까지 코드 값', settingDefaults(), { reply_business_days: 2, quote_sample_manual_min: 10, quote_auto_max_nm: 10000, quote_auto_max_min: 1440, ack_recipient_daily_max: 3, ack_global_daily_max: 50 });
-eq('메일 상한은 낮추기만(최댓값 = 기본값)', SETTINGS.filter((s) => s.key.startsWith('ack_')).map((s) => s.max === s.def), [true, true]);
+eq('운영 설정 7개 · 키', SETTINGS.map((s) => s.key), ['reply_business_days', 'quote_sample_manual_min', 'quote_auto_max_nm', 'quote_auto_max_min', 'ack_recipient_daily_max', 'ack_global_daily_max', 'ack_pdf_attach']);
+eq('기본값 = 지금까지 코드 값 · PDF 첨부는 끔', settingDefaults(), { reply_business_days: 2, quote_sample_manual_min: 10, quote_auto_max_nm: 10000, quote_auto_max_min: 1440, ack_recipient_daily_max: 3, ack_global_daily_max: 50, ack_pdf_attach: 0 });
+eq('메일 상한은 낮추기만(최댓값 = 기본값)', SETTINGS.filter((s) => s.key.endsWith('_daily_max')).map((s) => s.max === s.def), [true, true]);
+// PDF 첨부 스위치 — '낮추기만'의 예외(켤 수 있다) · 켬/끔(kind toggle) · 0/1 만
+eq('PDF 첨부 스위치: 켬/끔 · 묶음 · 범위 0~1 · 다른 항목은 숫자', [settingSpec('ack_pdf_attach'), SETTINGS.filter((s) => s.kind === 'toggle').map((s) => s.key)],
+  [{ key: 'ack_pdf_attach', group: '접수 확인 메일', label: 'PDF 첨부', unit: '', kind: 'toggle',
+    help: '켜면 접수 확인 메일·다시 보내기에 견적 요청서 PDF(자동 견적이 켜져 있으면 예상 견적서도)를 붙입니다. 끄면 조회 링크만 보냅니다.', def: 0, min: 0, max: 1 }, ['ack_pdf_attach']]);
+eq('PDF 첨부 검사: 0/1 · "1" 통과 · 2·-1·문자·0.5 거절', [0, 1, '1', 2, -1, 'on', 0.5, true].map((v) => { const c = checkSetting('ack_pdf_attach', v); return c.ok ? c.value : c.error; }),
+  [0, 1, 1, 'out_of_range', 'out_of_range', 'not_integer', 'not_integer', 'not_integer']);
+eq('PDF 첨부 DB 값: 없으면 0 · 1 이면 1 · 이상값은 0', [settingsFromRows([]).ack_pdf_attach, settingsFromRows(null).ack_pdf_attach,
+  settingsFromRows([{ key: 'ack_pdf_attach', value: 1 }]).ack_pdf_attach, settingsFromRows([{ key: 'ack_pdf_attach', value: '1' }]).ack_pdf_attach,
+  settingsFromRows([{ key: 'ack_pdf_attach', value: 5 }]).ack_pdf_attach, settingsFromRows([{ key: 'ack_pdf_attach', value: 'yes' }]).ack_pdf_attach], [0, 0, 1, 1, 0, 0]);
 eq('검사: 범위 · 정수 · 모르는 키', [checkSetting('reply_business_days', 5), checkSetting('reply_business_days', '7'), checkSetting('reply_business_days', 0).error,
   checkSetting('reply_business_days', 2.5).error, checkSetting('ack_global_daily_max', 51).error, checkSetting('ack_global_daily_max', 0).ok, checkSetting('admin_password', 1).error, checkSetting('reply_business_days', '').error],
   [{ ok: true, key: 'reply_business_days', value: 5 }, { ok: true, key: 'reply_business_days', value: 7 }, 'out_of_range', 'not_integer', 'out_of_range', true, 'unknown_key', 'not_integer']);

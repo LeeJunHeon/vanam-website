@@ -26,9 +26,9 @@ const t = isKo
       heading: '견적 요청이 접수되었습니다',
       refNo: '접수번호',
       copy: '복사', copied: '복사됨',
-      // 메일 안내 세 줄은 확인 메일이 나갈 건(세션 ack)일 때만 보인다 · {email} 은 입력 주소로 바꾼다
+      // 메일 안내 두 줄은 확인 메일이 나갈 건(세션 ack)일 때만 보인다 · {email} 은 입력 주소로 바꾼다
+      //   (10-23: 'PDF 가 들어 있다'는 줄은 없앴다 — 첨부는 운영 설정 스위치라 약속하지 않는다)
       mailSent: '{email} 주소로 접수 확인 메일을 보내드렸습니다.',
-      mailBody: '메일에 견적 요청서(PDF)와 진행 상태 조회 버튼이 들어 있습니다.',
       mailSpam: '몇 분이 지나도 메일이 보이지 않으면 스팸함을 확인해 주세요.',
       // {days} = 운영 설정 '회신 기한(영업일)' — 먼저 기본값으로 그리고, 접수 응답(세션)·/api/site-settings 값으로 바꾼다
       reply: '담당자가 확인한 뒤 영업일 기준 {days}일 이내에 이메일로 회신드리겠습니다.',
@@ -47,7 +47,6 @@ const t = isKo
       refNo: 'Reference no.',
       copy: 'Copy', copied: 'Copied',
       mailSent: "We've sent a confirmation email to {email}.",
-      mailBody: 'It includes your request sheet (PDF) and a button to check its status.',
       mailSpam: "If it doesn't arrive within a few minutes, please check your spam folder.",
       reply: 'Our team will review your request and reply by email within {days} business days.',
       keep: 'Please keep this reference number. You can check the status anytime with the number and your email.',
@@ -82,7 +81,6 @@ const t = isKo
       </div>
       <div class="mt-4 flex flex-col gap-1.5 text-sm leading-relaxed">
         <p id="qd-mail" hidden class="font-medium text-ink/80" data-tpl={t.mailSent}></p>
-        <p id="qd-mail-body" hidden class="text-ink/60">{t.mailBody}</p>
         <p id="qd-reply" class="text-ink/60" data-tpl={t.reply}>{fillDays(t.reply, undefined)}</p>
         <p id="qd-mail-spam" hidden class="text-ink/45">{t.mailSpam}</p>
       </div>
@@ -149,14 +147,14 @@ const t = isKo
     else fetch('/api/site-settings').then((r) => r.json()).then((j) => { if (j?.ok) setReply(j.replyDays); }).catch(() => { /* 기본값 유지 */ });
   }
 
-  // 접수 확인 메일 안내 — 서버가 '나갈 건'이라고 답했고(ack) 세션에 주소가 있을 때만 세 줄을 보인다.
+  // 접수 확인 메일 안내 — 서버가 '나갈 건'이라고 답했고(ack) 세션에 주소가 있을 때만 두 줄을 보인다.
   // 주소는 글자로만 넣는다(HTML 아님 · '$' 가 든 주소도 그대로 — replace 에 함수를 넘긴다).
   const sentTo = raw ? String(raw.email ?? '').trim() : '';
   const ackPlanned = (raw as Record<string, unknown> | null)?.ack === true; // 세션 값은 JSON 이라 불리언이 그대로 온다
   const mailEl = document.getElementById('qd-mail');
   if (mailEl && sentTo && ackPlanned && mailEl.dataset.tpl) {
     mailEl.textContent = mailEl.dataset.tpl.replace('{email}', () => sentTo);
-    for (const elId of ['qd-mail', 'qd-mail-body', 'qd-mail-spam']) {
+    for (const elId of ['qd-mail', 'qd-mail-spam']) {
       const el = document.getElementById(elId);
       if (el) el.hidden = false;
     }

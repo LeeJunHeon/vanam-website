@@ -1,5 +1,5 @@
 // 관리자 전용: 운영 설정(설정 탭 '운영 설정' 카드).
-//   GET                      → 항목마다 { key, group, label, help, unit, value, def, min, max, updated_at }
+//   GET                      → 항목마다 { key, group, label, help, unit, kind, value, def, min, max, updated_at }  (kind 'toggle' = 켬/끔 0/1 · 'number')
 //   POST { key, value }      → 범위 검사 후 저장(즉시 반영)
 // 규칙(항목·범위)은 src/lib/site-settings.js 한 곳. 예민한 값(비밀값·발송 차단·남용 방지)은 여기서 바꿀 수 없다.
 import type { APIRoute } from 'astro';
@@ -17,7 +17,7 @@ async function view(d: NonNullable<Awaited<ReturnType<typeof db>>>) {
   const rows = await readSettingRows(d);
   const values = settingsFromRows(rows);
   return SETTINGS.map((s) => ({
-    key: s.key, group: s.group, label: s.label, help: s.help, unit: s.unit,
+    key: s.key, group: s.group, label: s.label, help: s.help, unit: s.unit, kind: s.kind ?? 'number',
     value: values[s.key], def: s.def, min: s.min, max: s.max,
     updated_at: rows.find((r) => r.key === s.key)?.updated_at ?? null,
   }));

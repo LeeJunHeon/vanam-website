@@ -12,7 +12,7 @@ import {
 } from '../src/lib/mail-mime.js';
 import {
   ackContent, estimateOf, attachmentName, pdfTitle, kstText, pageOf, mergeDocPages, fitScript,
-  ackRecord, parseAck, ackLabel, requestDocArgs, ACK_REASON_KO, hostAllowed, safeShort, isFreshPending, ACK_PENDING_MS, lookupLink, ackLang,
+  ackRecord, parseAck, ackLabel, pdfKo, requestDocArgs, ACK_REASON_KO, hostAllowed, safeShort, isFreshPending, ACK_PENDING_MS, lookupLink, ackLang,
 } from '../src/lib/quote-ack.js';
 import { DELIVERY_METHODS } from '../src/lib/quote-fields.js';
 import { buildQuoteHtml, buildRequestHtml, requestDocFrom, fitCells, STYLE } from '../src/lib/doc-excel.js';
@@ -349,9 +349,24 @@ eq('defang(조회 화면 요청 내용): 줄바꿈·길이는 그대로 · 주�
   eq('관리자 줄: PDF 없이 보냄', ackLabel(ackRecord(null, { status: 'sent', pdf: 'none:rate_limited', by: 'auto', at: '2026-10-01T07:50:20.000Z' })).text,
     '확인 메일: 보냄 · 2026-10-01 16:50 · PDF 못 만듦 — 조회 링크만');
   eq('관리자 줄: 기록 없음(이 기능 전 접수) → null', ackLabel(null), null);
+  // 운영 설정 'PDF 첨부' 꺼짐 — 못 만듦·설정 없음과 다른 글자
+  eq('PDF 글자: 꺼짐(설정) · 설정 없음 · 못 만듦 · 첨부 — 서로 다름', ['none:off', 'none:no_credentials', 'none:rate_limited', 'request', 'quote'].map(pdfKo),
+    ['PDF 첨부 꺼짐(설정)', 'PDF 없음(설정 없음)', 'PDF 못 만듦 — 조회 링크만', '요청서 PDF 첨부', '예상 견적서·요청서 PDF 첨부']);
+  eq('관리자 줄: PDF 첨부 꺼짐으로 보냄', ackLabel(ackRecord(null, { status: 'sent', pdf: 'none:off', by: 'auto', at: '2026-10-01T07:50:20.000Z' })).text,
+    '확인 메일: 보냄 · 2026-10-01 16:50 · PDF 첨부 꺼짐(설정)');
   eq('사유 한글: 발송 통로의 모든 사유 + 실행부 사유', ['blocked_build', 'blocked_host', 'bad_recipient', 'no_credentials', 'unverified', 'recipient_cap', 'daily_cap', 'disabled_by_setting',
     'auth_failed', 'http_error', 'fetch_error', 'in_progress', 'no_inquiry', 'not_quote', 'error']
     .every((k) => typeof ACK_REASON_KO[k] === 'string' && ACK_REASON_KO[k]), true);
+}
+
+// ⑤ 홈페이지 문구 — PDF 첨부는 운영 설정 스위치(기본 끔)라 고객 화면에서 약속하지 않는다(10-23)
+{
+  const raw = readFileSync('src/data/site.json', 'utf8');
+  const PROMISES = ['(PDF)를 첨부한', 'PDF)를 첨부', '첨부한 접수 확인 메일', 'attached right away', '(PDF) attached', 'with your request sheet (PDF)'];
+  eq('site.json: PDF 첨부 약속 문구 없음', PROMISES.filter((w) => raw.includes(w)), []);
+  eq('site.json: ackHint 항목 없음(한/영)', [site.ko.quote.form.ackHint, site.en.quote.form.ackHint], [undefined, undefined]);
+  eq('site.json: 다운로드 안내는 앞 문장(직접 인쇄·PDF 저장)만', [site.ko.quote.form.downloadHint.includes('PDF로 저장'), site.en.quote.form.downloadHint.includes('save it as PDF'),
+    site.ko.quote.form.downloadHint.includes('전송되지 않으며'), site.en.quote.form.downloadHint.includes('Nothing is sent')], [true, true, false, false]);
 }
 
 if (failed) {

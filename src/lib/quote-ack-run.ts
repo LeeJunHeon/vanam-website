@@ -4,10 +4,12 @@
 //            ② 관리자 [확인 메일 (다시) 보내기](api/admin/quote-mail.ts)
 // 순서: 접수 행 읽기 → 보낼 수 있는지(주소·빌드·설정·보안 확인·하루 상한 — 아니면 PDF 도 만들지 않고 '안 보냄'으로 기록)
 //       → '보내는 중' 기록 → 고객 견적 요약(조회 화면과 같은 customerQuoteView)
-//       → 서류 PDF(예상 견적서 + 견적 요청서 / 요청서만) → 메일(mail-send.ts — 유일한 발송 통로)
+//       → 서류 PDF(예상 견적서 + 견적 요청서 / 요청서만 — 운영 설정 'PDF 첨부'가 켜졌을 때만) → 메일(mail-send.ts — 유일한 발송 통로)
 //       → inquiries.ack_mail 에 결과 기록 → 실패면 담당자 구글챗(운영 빌드만)
 // 원칙: 여기서 무슨 일이 나도 접수 자체에는 영향이 없다(예외를 밖으로 던지지 않는다).
 //       PDF 를 못 만들면 PDF 없이 보낸다(본문에 조회 링크 — 거기서 인쇄·PDF 저장 가능).
+//       운영 설정 'PDF 첨부'(ack_pdf_attach · 기본 끔)가 꺼져 있으면 PDF 를 아예 만들지 않는다(pdf 'none:off' · 조회 링크만).
+//       자동 발송·관리자 다시 보내기 모두 같다.
 //       워커의 백그라운드 작업은 응답 뒤 30초 안에 끝나야 한다 → 전체 마감 24초, 메일 보낼 몫 7초를 남기고 PDF 를 만든다.
 //       마감을 넘겨 끊겨도 '보내는 중' 기록이 남아 관리자 화면에 '중단됨'으로 보인다(조용히 사라지지 않는다).
 //       로그에는 접수번호와 결과만 — 이름·주소·내용은 남기지 않는다.
@@ -32,7 +34,7 @@ import { readRate } from './fx';
 import { formatUsd } from './price';
 import { SUBSTRATE_SIZES, DELIVERY_METHODS } from './processes';
 import { sendChat } from './chat-send';
-// 운영 설정 — 확인 메일 하루 상한 · 회신 기한(메일 본문 "영업일 기준 N일")
+// 운영 설정 — 확인 메일 하루 상한 · 회신 기한(메일 본문 "영업일 기준 N일") · PDF 첨부 켬/끔
 import { readSiteSettings } from './site-settings-db';
 import company from '../data/company.json';
 import siteData from '../data/site.json';
@@ -41,7 +43,7 @@ import docLogo from '../assets/brand/logo-light.png';
 export type AckResult = {
   status: 'sent' | 'failed' | 'skipped';
   reason: string | null;
-  /** 'quote'(예상 견적서+요청서) · 'request'(요청서) · 'none:사유'(못 붙임) · null(만들 단계 전에 끝남) */
+  /** 'quote'(예상 견적서+요청서) · 'request'(요청서) · 'none:off'(운영 설정에서 꺼짐) · 'none:사유'(못 붙임) · null(만들 단계 전에 끝남) */
   pdf: string | null;
   code?: number | null;
 };
@@ -197,6 +199,8 @@ async function finish(d: D1, id: string, q: Record<string, unknown>, by: 'auto' 
 async function compose(
   d: D1, q: Record<string, unknown>, id: string, lang: 'ko' | 'en', to: string, origin: string, deadline: number,
 ): Promise<AckResult> {
+  // 운영 설정은 여기서 한 번만 읽는다 — 회신 기한·PDF 첨부 스위치에 같이 쓴다(읽기 실패면 기본값 = PDF 끔)
+  const settings = await readSiteSettings(d);
   // 고객 견적 요약 — 조회 화면과 같은 함수. 실패하면 견적 없이(요청서만) 간다.
   let view: ReturnType<typeof customerQuoteView> = null;
   try {
@@ -217,9 +221,11 @@ async function compose(
   const estimate = estimateOf(view);
 
   // 서류 PDF — 예상 견적이면 [예상 견적서, 견적 요청서], 아니면 [견적 요청서]. 요청서 날짜 = 접수일(조회 화면과 같게).
+  //   운영 설정 'PDF 첨부'가 꺼져 있으면 만들지 않는다(로고·PDF 렌더 호출 없음) — 본문은 attachNone 문장 + 조회 링크.
   let attachment: { filename: string; contentType: string; bytes: Uint8Array } | null = null;
   let pdf: string;
-  if (!pdfConfigured()) pdf = 'none:no_credentials';
+  if (settings.ack_pdf_attach !== 1) pdf = 'none:off';
+  else if (!pdfConfigured()) pdf = 'none:no_credentials';
   else {
     try {
       const logoUrl = (await logoDataUri(docLogo.src)) ?? new URL(docLogo.src, SITE).href;
@@ -249,7 +255,7 @@ async function compose(
     // 조회 링크 — 운영은 vanam.co.kr · 테스트 빌드는 지금 접속한 주소. 받는 주소를 # 뒤에 실어 누르면 바로 조회된다
     lookupUrl: lookupLink({ live: MAIL_LIVE, site: SITE, origin, lang, id, email: to }),
     tel: lang === 'en' ? String(company.tel ?? '') : telKr(company.tel), email: String(company.email ?? ''), site: SITE,
-    replyDays: (await readSiteSettings(d)).reply_business_days,
+    replyDays: settings.reply_business_days,
   });
   const sent = await sendMail({
     to, fromName: lang === 'en' ? 'VanaM Inc.' : '반암 VanaM',

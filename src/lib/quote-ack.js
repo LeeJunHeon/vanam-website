@@ -351,10 +351,11 @@ export const ACK_REASON_KO = Object.freeze({
 });
 
 /** PDF 결과 → 관리자용 한글(보냄 줄 뒤에 붙는다) @param {unknown} pdf */
-function pdfKo(pdf) {
+export function pdfKo(pdf) {
   const p = str(pdf);
   if (p === 'quote') return '예상 견적서·요청서 PDF 첨부';
   if (p === 'request') return '요청서 PDF 첨부';
+  if (p === 'none:off') return 'PDF 첨부 꺼짐(설정)'; // 운영 설정 'PDF 첨부'를 끔 — 못 만든 것·설정 없음과 다르다
   if (p === 'none:no_credentials') return 'PDF 없음(설정 없음)';
   if (p.startsWith('none:')) return 'PDF 못 만듦 — 조회 링크만';
   return '';

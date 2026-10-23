@@ -9,12 +9,16 @@
 //    확인 메일 상한은 '낮추기만' — 최댓값이 지금 코드 기본값이다(관리자 계정이 털려도 회사 메일이 스팸 통로가 되지 않게).
 // ⚠️ DB 값이 없거나 범위를 벗어났으면(손으로 고친 값 등) 기본값을 쓴다 — 이상한 값으로 동작하지 않게.
 // settings.value 는 REAL 이라 숫자만 담는다(텍스트 설정은 여기 넣지 않는다).
+// ⚠️ 예외 — 'ack_pdf_attach'(확인 메일 PDF 첨부, 10-23 사용자 결정): 켬/끔 스위치(kind 'toggle', 0 = 끔 · 1 = 켬, 기본 끔).
+//    '낮추기만' 원칙의 예외다 — 관리자가 켤 수 있다.
+//    ⚠️ 켜면 고객 입력 글이 담긴 PDF 가 메일로 나간다 — 켜기 전에 첨부 PDF 내용 보호·상한 정확히 세기를 먼저 검토(Obsidian Decisions 2026-10-23).
 // ⚠️ 이 모듈은 서버·관리자 화면 전용 — 공개 화면 스크립트에서 import 하지 않는다(상한 값이 번들에 실린다). 화면은 reply-days.js.
 import { REPLY_DAYS } from './reply-days.js';
 
 /**
  * @typedef {{ key: string, group: string, label: string, help: string, unit: string,
- *   def: number, min: number, max: number }} SettingSpec
+ *   def: number, min: number, max: number, kind?: 'toggle' }} SettingSpec
+ *   kind 'toggle' = 관리자 화면에서 켬/끔 스위치(0/1) · 없으면 숫자 칸
  */
 
 /** @type {SettingSpec[]} */
@@ -54,6 +58,13 @@ export const SETTINGS = [
     label: '하루 전체 상한', unit: '통',
     help: '하루(24시간)에 자동으로 보내는 전체 최대 수 — 낮추기만 가능, 0 이면 자동 발송 안 함',
     def: 50, min: 0, max: 50,
+  },
+  {
+    // ⚠️ 위 머리 주석의 예외 — 켜면 고객 입력 글이 담긴 PDF 가 메일로 나간다. 켜기 전에 첨부 PDF 내용 보호·상한 정확히 세기를 먼저 검토(Obsidian Decisions 2026-10-23).
+    key: 'ack_pdf_attach', group: '접수 확인 메일',
+    label: 'PDF 첨부', unit: '', kind: 'toggle',
+    help: '켜면 접수 확인 메일·다시 보내기에 견적 요청서 PDF(자동 견적이 켜져 있으면 예상 견적서도)를 붙입니다. 끄면 조회 링크만 보냅니다.',
+    def: 0, min: 0, max: 1,
   },
 ];
 

@@ -5,7 +5,8 @@
 //   · [예상 견적 보기](#quote-estimate-run) 있음·hidden · 결과 상자(#quote-estimate-result) hidden
 //   · name="estimateSeenKrw" 정확히 1개
 //   · [견적 요청서 다운로드](#quote-print) 있음·hidden 아님 · 다운로드 안내(#q-download-hint) 있음·hidden 아님
-//   · 확인 메일 안내(#q-ack-hint — 스위치가 켜졌을 때만 보임) 있음·hidden
+//   · 'PDF 를 첨부한 확인 메일' 안내(#q-ack-hint) 없음 · PDF 첨부 약속 문구 없음
+//     (10-23: 첨부는 운영 설정 'PDF 첨부' 스위치 — 기본 끔 — 라 고객 화면에서 약속하지 않는다)
 //   · 기판 등급 칸: #q-grade disabled · #q-grade-wrap hidden · 옵션 = SUBSTRATE_GRADES
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
@@ -15,6 +16,8 @@ const PAGES = [];
 for (const p of ['metals', 'multilayers', 'nitrides', 'oxides', 'wafers']) PAGES.push(`product/${p}/index.html`, `ko/product/${p}/index.html`);
 
 const errs = [];
+// 고객 화면에서 'PDF 를 첨부해 메일로 보낸다'고 약속하는 문구(한/영) — 제품 페이지 · 홈 · 견적 완료 화면에 없어야 한다
+const PDF_PROMISES = ['(PDF)를 첨부한', '첨부한 접수 확인 메일', '견적 요청서(PDF)와', 'attached right away', 'request sheet (PDF) attached', 'It includes your request sheet (PDF)'];
 /** id 로 여는 태그를 찾는다 */
 const openTag = (html, id) => new RegExp(`<[a-z]+\\b[^>]*\\bid="${id}"[^>]*>`, 'i').exec(html)?.[0] ?? null;
 const hasAttr = (tag, name) => new RegExp(`\\s${name}(?=[\\s>=/])`, 'i').test(tag);
@@ -32,7 +35,8 @@ for (const p of PAGES) {
   need('quote-estimate-result', (t) => hasAttr(t, 'hidden'), '가 hidden 이 아니다');
   need('quote-print', (t) => !hasAttr(t, 'hidden'), '가 hidden 이다(스위치 꺼짐 기본 화면에서는 보여야 한다)');
   need('q-download-hint', (t) => !hasAttr(t, 'hidden'), '가 hidden 이다(스위치 꺼짐 기본 화면에서는 보여야 한다)');
-  need('q-ack-hint', (t) => hasAttr(t, 'hidden'), '가 hidden 이 아니다(스위치가 켜졌을 때만 보여야 한다)');
+  if (openTag(h, 'q-ack-hint')) errs.push(`${p}: #q-ack-hint 가 남아 있다(PDF 첨부 안내는 없앴다)`);
+  for (const w of PDF_PROMISES) if (h.includes(w)) errs.push(`${p}: PDF 첨부 약속 문구 "${w}" 가 남아 있다`);
   need('q-grade', (t) => hasAttr(t, 'disabled'), '가 disabled 가 아니다');
   need('q-grade-wrap', (t) => hasAttr(t, 'hidden'), '가 hidden 이 아니다');
   const seen = (h.match(/name="estimateSeenKrw"/g) ?? []).length;
@@ -42,9 +46,16 @@ for (const p of PAGES) {
   if (JSON.stringify(opts) !== JSON.stringify(SUBSTRATE_GRADES)) errs.push(`${p}: 등급 옵션 ${JSON.stringify(opts)} ≠ ${JSON.stringify(SUBSTRATE_GRADES)}`);
 }
 
+for (const p of ['index.html', 'ko/index.html', 'quote/done/index.html', 'ko/quote/done/index.html']) {
+  const f = join('dist', 'client', p);
+  if (!existsSync(f)) { errs.push(`${p}: 파일 없음 — npm run build 뒤에 실행하세요`); continue; }
+  const h = readFileSync(f, 'utf8');
+  for (const w of PDF_PROMISES) if (h.includes(w)) errs.push(`${p}: PDF 첨부 약속 문구 "${w}" 가 남아 있다`);
+}
+
 if (errs.length) {
   for (const e of errs) console.error('  ✗', e);
   console.error(`\n견적 폼 UI 게이트 실패 — ${errs.length}건.`);
   process.exit(1);
 }
-console.log(`✓ 견적 폼 UI 게이트 — 제품 페이지 ${PAGES.length}개 · 예상 견적 숨김 · 다운로드 버튼·안내 유지 · 확인 메일 안내 숨김 · 등급 칸 숨김/비활성 · 옵션 ${SUBSTRATE_GRADES.join('/')}`);
+console.log(`✓ 견적 폼 UI 게이트 — 제품 페이지 ${PAGES.length}개 · 예상 견적 숨김 · 다운로드 버튼·안내 유지 · PDF 첨부 안내 없음 · 등급 칸 숨김/비활성 · 옵션 ${SUBSTRATE_GRADES.join('/')}`);

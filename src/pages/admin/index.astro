@@ -16,6 +16,9 @@ import { summarizeRevisions } from '../../lib/quote-admin.js';
 import { MAIL_LIVE, gmailConfigured } from '../../lib/mail-send';
 import { pdfConfigured } from '../../lib/doc-pdf';
 import { ackLabel, isFreshPending } from '../../lib/quote-ack.js';
+// 운영 설정 'PDF 첨부'(ack_pdf_attach) — 맨 위 확인 메일 줄 · 다시 보내기 확인창 문구
+import { settingDefaults } from '../../lib/site-settings.js';
+import { readSiteSettings } from '../../lib/site-settings-db';
 
 const authed = await isAdmin(Astro.request);
 // 로그인 폼이 스크립트 없이 제출됐을 때(/api/admin/login 이 303 으로 돌려보냄) 보여줄 문구
@@ -29,8 +32,8 @@ const LOGIN_MSG: Record<string, string> = {
 const loginMsg = authed ? '' : (LOGIN_MSG[Astro.url.searchParams.get('login') ?? ''] ?? '');
 const configured = adminConfigured();
 const mailReady = gmailConfigured();
-const mailLine = (MAIL_LIVE ? '확인 메일: 운영 — 고객에게 발송' : '확인 메일: 테스트 — 회사 주소(@vanam.co.kr)로만 발송') +
-  (!mailReady ? ' · Gmail 설정 없음(보내지 않음)' : !pdfConfigured() ? ' · PDF 설정 없음(조회 링크만)' : '');
+// PDF 첨부 스위치 — 로그인했고 DB 가 있으면 아래에서 읽는다(읽기 실패는 readSiteSettings 가 기본값 = 끔)
+let ackPdfOn = settingDefaults().ack_pdf_attach === 1;
 
 type Row = {
   id: string; type: string; status: string;
@@ -58,6 +61,7 @@ if (authed) {
   if (!d) {
     dbError = 'D1 데이터베이스가 연결되지 않았습니다. (로컬 dev에서는 동작하지 않습니다 — 배포된 사이트에서 확인하세요)';
   } else {
+    ackPdfOn = (await readSiteSettings(d)).ack_pdf_attach === 1;
     try {
       const { results } = await d
         .prepare(`SELECT * FROM inquiries ORDER BY created_at DESC LIMIT 300`)
@@ -97,6 +101,11 @@ if (authed) {
     }
   }
 }
+
+const mailLine = (MAIL_LIVE ? '확인 메일: 운영 — 고객에게 발송' : '확인 메일: 테스트 — 회사 주소(@vanam.co.kr)로만 발송') +
+  (!mailReady ? ' · Gmail 설정 없음(보내지 않음)'
+    : !ackPdfOn ? ' · PDF 첨부 꺼짐(조회 링크만)'
+    : !pdfConfigured() ? ' · PDF 설정 없음(조회 링크만)' : '');
 
 // 주문 상태 (결제 연동 전에는 관리자가 통장을 확인하고 '결제 완료'로 바꾼다)
 // 배지 표시용 전체 목록 (paid·refunded 는 결제/환불 경로가 기록하며 관리자가 고를 수 없다)
@@ -739,7 +748,7 @@ const spec = (r: Row) =>
                       <div class="mt-2 flex flex-wrap items-center gap-3 text-sm">
                         {ack && <p class:list={[ack.tone === 'ok' ? 'text-ok' : ack.tone === 'bad' ? 'text-danger' : 'text-ink/40']}>{ack.text}</p>}
                         {r.status === 'new' && !isFreshPending(r.ack_mail) && (
-                          <button type="button" data-ack-resend={r.id}
+                          <button type="button" data-ack-resend={r.id} data-ack-pdf={ackPdfOn ? '1' : '0'}
                             class="rounded-lg border border-ink/15 px-3 py-2 text-sm text-ink/60 transition hover:border-ink/40 hover:text-ink">
                             {ack ? '확인 메일 다시 보내기' : '확인 메일 보내기'}
                           </button>
@@ -1094,7 +1103,24 @@ const spec = (r: Row) =>
           msg.style.color = ok ? 'var(--color-ok)' : 'var(--color-danger)';
         };
         const kst = (iso: string | null) => (iso ? new Date(Date.parse(iso) + 9 * 3600e3).toISOString().slice(0, 16).replace('T', ' ') : '');
-        type S = { key: string; group: string; label: string; help: string; unit: string; value: number; def: number; min: number; max: number; updated_at: string | null };
+        type S = { key: string; group: string; label: string; help: string; unit: string; kind?: 'toggle' | 'number'; value: number; def: number; min: number; max: number; updated_at: string | null };
+        const onOff = (v: unknown) => (Number(v) === 1 ? '켬' : '끔');
+        // kind 'toggle' — 숫자 칸 대신 켬/끔 스위치(체크박스 + 저장). 저장 값은 0/1 이고 서버 범위 검사는 같다.
+        const control = (s: S) => s.kind === 'toggle'
+          ? `<label style="display:flex;align-items:center;gap:.4rem;cursor:pointer">
+                    <input type="checkbox" class="ss-in ss-toggle" ${Number(s.value) === 1 ? 'checked' : ''} aria-label="${esc(s.label)}" />
+                    <span class="ss-state" style="min-width:1.5rem">${onOff(s.value)}</span>
+                  </label>`
+          : `<input type="number" inputmode="numeric" step="1" min="${esc(s.min)}" max="${esc(s.max)}" value="${esc(s.value)}" aria-label="${esc(s.label)}"
+                    class="ss-in w-28 rounded-lg border border-ink/15 bg-canvas px-3 py-1.5 text-sm" />
+                  <span style="opacity:.6">${esc(s.unit)}</span>`;
+        const meta = (s: S) => (s.kind === 'toggle' ? `기본 ${onOff(s.def)}` : `기본 ${esc(s.def)}${esc(s.unit)} · 범위 ${esc(s.min)}~${esc(s.max)}`);
+        // PDF 첨부 스위치가 바뀌면 견적 카드의 [확인 메일 다시 보내기] 확인창 문구도 맞춘다
+        const syncAckPdf = (list: S[]) => {
+          const v = list.find((s) => s.key === 'ack_pdf_attach')?.value;
+          if (v === undefined) return;
+          document.querySelectorAll<HTMLElement>('[data-ack-resend]').forEach((b) => { b.dataset.ackPdf = Number(v) === 1 ? '1' : '0'; });
+        };
         const render = (list: S[]) => {
           const groups = [...new Set(list.map((s) => s.group))];
           body.innerHTML = groups.map((g) => `<p style="margin-top:1rem;font-weight:600;opacity:.8">${esc(g)}</p>` +
@@ -1103,15 +1129,14 @@ const spec = (r: Row) =>
                 <label style="min-width:15rem;flex:1">
                   <span style="display:block;color:var(--color-ink)">${esc(s.label)}</span>
                   <span style="display:block;font-size:.75rem;opacity:.55;margin-top:.15rem">${esc(s.help)}</span>
-                  <span style="display:block;font-size:.75rem;opacity:.45;margin-top:.15rem">기본 ${esc(s.def)}${esc(s.unit)} · 범위 ${esc(s.min)}~${esc(s.max)}${s.updated_at ? ` · 마지막 수정 ${esc(kst(s.updated_at))}` : ''}</span>
+                  <span style="display:block;font-size:.75rem;opacity:.45;margin-top:.15rem">${meta(s)}${s.updated_at ? ` · 마지막 수정 ${esc(kst(s.updated_at))}` : ''}</span>
                 </label>
                 <span style="display:flex;align-items:center;gap:.4rem">
-                  <input type="number" inputmode="numeric" step="1" min="${esc(s.min)}" max="${esc(s.max)}" value="${esc(s.value)}" aria-label="${esc(s.label)}"
-                    class="ss-in w-28 rounded-lg border border-ink/15 bg-canvas px-3 py-1.5 text-sm" />
-                  <span style="opacity:.6">${esc(s.unit)}</span>
+                  ${control(s)}
                   <button type="button" class="ss-save rounded-lg border border-ink/15 px-3 py-1.5 text-sm text-ink/70 transition hover:border-accent hover:text-accent">저장</button>
                 </span>
               </div>`).join('')).join('');
+          syncAckPdf(list);
         };
         const load = async () => {
           try {
@@ -1126,9 +1151,10 @@ const spec = (r: Row) =>
           const row = btn.closest<HTMLElement>('.ss-row')!;
           const input = row.querySelector<HTMLInputElement>('.ss-in')!;
           const key = row.dataset.key!;
-          const v = input.value.trim();
+          const toggle = input.type === 'checkbox';
+          const v = toggle ? (input.checked ? '1' : '0') : input.value.trim();
           const n = Number(v);
-          if (v === '' || !Number.isInteger(n) || n < Number(input.min) || n > Number(input.max)) {
+          if (!toggle && (v === '' || !Number.isInteger(n) || n < Number(input.min) || n > Number(input.max))) {
             say(`${input.min}~${input.max} 사이 정수를 입력해 주세요.`, false);
             input.focus();
             return;
@@ -1146,6 +1172,13 @@ const spec = (r: Row) =>
             render(j.settings);
             say('저장했습니다. 바로 반영됩니다.');
           } catch (e) { say('저장하지 못했습니다.', false); } finally { btn.disabled = false; }
+        });
+        // 스위치를 눌렀을 때 옆 글자(켬/끔)만 바꾼다 — 저장은 [저장]을 눌러야 한다
+        body.addEventListener('change', (ev) => {
+          const input = ev.target as HTMLInputElement;
+          if (!input.classList?.contains('ss-toggle')) return;
+          const state = input.closest('.ss-row')?.querySelector('.ss-state');
+          if (state) state.textContent = `${onOff(input.checked ? 1 : 0)} (저장 전)`;
         });
         void load();
       })();
@@ -1420,7 +1453,9 @@ const spec = (r: Row) =>
       document.querySelectorAll<HTMLButtonElement>('[data-ack-resend]').forEach((btn) => {
         btn.addEventListener('click', async () => {
           const id = btn.dataset.ackResend!;
-          if (!confirm(`${id}\n\n고객에게 접수 확인 메일(견적 요청서 PDF 첨부)을 보냅니다.\n진행하시겠습니까?`)) return;
+          // PDF 첨부 스위치가 켜져 있을 때만 '(견적 요청서 PDF 첨부)' — 값은 서버 렌더 때 읽은 것(운영 설정에서 바꾸면 버튼 값도 바꾼다)
+          const withPdf = btn.dataset.ackPdf === '1' ? '(견적 요청서 PDF 첨부)' : '';
+          if (!confirm(`${id}\n\n고객에게 접수 확인 메일${withPdf}을 보냅니다.\n진행하시겠습니까?`)) return;
           const msg = document.querySelector(`[data-ack-msg="${id}"]`) as HTMLElement | null;
           const say = (t: string, ok = true) => {
             if (!msg) return;
