@@ -284,7 +284,7 @@ const t = isKo
                 onApprove: function (data) {
                   return fetch('/api/paypal/capture', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    // ref: 서버가 캡처 전에 '이미 결제됨·다른 창의 새 결제창'을 알아보는 데 쓴다
+                    // ref: 서버가 캡처 전에 '이미 결제됨·다른 창의 새 결제창·결제 불가'를 알아보는 데 쓴다(없으면 캡처하지 않고 bad_request)
                     body: JSON.stringify({ orderID: data.orderID, ref: host.dataset.ref }),
                   }).then(function (r) { return r.json(); }).then(function (j) {
                     if (!j.ok) {
@@ -292,6 +292,11 @@ const t = isKo
                       if (j.error === 'stale_order' || j.error === 'already_paid') {
                         showSpecific(j.error === 'stale_order' ? host.dataset.mStale : host.dataset.mPaid);
                         disablePay();
+                        throw new Error(j.error);
+                      }
+                      // 캡처 전에 멈춤(돈은 빠지지 않았다) — 일반 안내만, 버튼은 닫지 않는다
+                      if (j.error === 'not_payable' || j.error === 'bad_request') {
+                        showSpecific(j.error === 'not_payable' ? host.dataset.mCreate : host.dataset.mError);
                         throw new Error(j.error);
                       }
                       // verify_failed/not_found = PayPal 결제는 성사됐으나 서버 대조에 실패한 상태.
@@ -309,9 +314,11 @@ const t = isKo
                     // 여기 도달했다면 PayPal 승인은 이미 끝난 상태다.
                     // 통신 끊김 등으로 확정 요청이 실패해도 '오류' 로만 안내하면 고객이 재결제해 이중 청구가 난다.
                     // 웹훅이 곧 확정하므로 결제 수단을 닫고 상태 확인을 안내한다.
-                    // 서버가 답해 구체 안내를 이미 띄운 경우(handled)는 덮어쓰지 않는다 — 'stale_order' 등이 '승인됨'으로 바뀌면 안 된다.
+                    // 서버가 답한 경우는 덮어쓰지 않는다 — 돈이 빠지지 않은 경우(stale_order·already_paid·not_payable·bad_request)에
+                    // '승인 완료·확정 중'이 뜨면 안 되고, duplicate_payment 는 이미 mHeld 를 보였다. 응답을 못 받은 경우만 mApproved.
+                    var NO_OVERWRITE = ['capture_failed', 'already_paid', 'stale_order', 'not_payable', 'bad_request', 'duplicate_payment'];
                     var m = String((err && err.message) || '');
-                    if (!handled && m !== 'capture_failed' && m !== 'already_paid') {
+                    if (!handled && NO_OVERWRITE.indexOf(m) < 0) {
                       showSpecific(host.dataset.mApproved);
                       disablePay();
                     }

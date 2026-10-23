@@ -458,7 +458,7 @@ const inputClass =
               onApprove: async (data2: { orderID: string }) => {
                 const r2 = await fetch('/api/paypal/capture', {
                   method: 'POST', headers: { 'Content-Type': 'application/json' },
-                  // ref: 서버가 캡처 전에 '이미 결제됨·다른 창의 새 결제창'을 알아보는 데 쓴다
+                  // ref: 서버가 캡처 전에 '이미 결제됨·다른 창의 새 결제창·결제 불가'를 알아보는 데 쓴다(없으면 캡처하지 않고 bad_request)
                   body: JSON.stringify({ orderID: data2.orderID, ref: wrap.dataset.ref }),
                 });
                 const j2 = await r2.json();
@@ -467,6 +467,11 @@ const inputClass =
                   if (j2.error === 'stale_order' || j2.error === 'already_paid') {
                     showSpecific(j2.error === 'stale_order' ? P.mStale : P.mPaid);
                     killPay();
+                    throw new Error(j2.error);
+                  }
+                  // 캡처 전에 멈춤(돈은 빠지지 않았다) — 일반 안내만, 버튼은 닫지 않는다
+                  if (j2.error === 'not_payable' || j2.error === 'bad_request') {
+                    showSpecific(j2.error === 'not_payable' ? P.mCreate : P.mError);
                     throw new Error(j2.error);
                   }
                   // verify_failed/not_found = 결제는 성사·자동 확정 불가 → 재결제 금지 안내(이중 청구 방지)

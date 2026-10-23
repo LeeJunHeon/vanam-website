@@ -1,6 +1,7 @@
 // PayPal 결제 캡처(확정) — 성공 시 D1 에 결제 기록 + 구글챗 알림.
-// 순서: 사전 확인(precheckCapture — 주문서 없음·이미 결제됨·오래된 결제창이면 캡처하지 않는다) → 캡처 → settlePayment(대조·확정·알림).
-// 본문: { orderID, ref? } — ref(주문/견적 번호)는 화면이 같이 보낸다(오래된 결제창을 알아보는 데 쓴다).
+// 순서: ref 형식 → 사전 확인(precheckCapture — 이미 결제됨·오래된 결제창·결제 불가면 캡처하지 않는다)
+//       → 캡처 → settlePayment(대조·확정·알림).
+// 본문: { orderID, ref } — ref 는 화면의 주문/견적 번호. 없거나 형식이 틀리면 캡처하지 않고 400(옛 화면이 캐시된 경우도 돈이 빠지지 않는다).
 import type { APIRoute } from 'astro';
 import { db } from '../../../lib/db';
 import { rateLimit, tooMany } from '../../../lib/rate-limit';
@@ -27,15 +28,17 @@ export const POST: APIRoute = async ({ request }) => {
   }
   const orderID = typeof body.orderID === 'string' ? body.orderID.trim() : '';
   if (!orderID || orderID.length > 64) return json({ ok: false, error: 'bad_request' }, 400);
-  const reqRef = typeof body.ref === 'string' ? body.ref.trim().toUpperCase().slice(0, 32) : '';
+  const reqRef = typeof body.ref === 'string' ? body.ref.trim().toUpperCase() : '';
+  if (!isOrdRef(reqRef) && !isInqRef(reqRef)) return json({ ok: false, error: 'bad_request' }, 400);
 
   try {
     // 돈을 가져오기 전에 확인 — 여기서 막힌 건은 캡처하지 않으므로 고객 돈이 빠지지 않는다.
     //   already_paid: 이미 결제된 주문(다른 창에서 결제 끝남) · stale_order: 다른 창에서 새 결제창이 만들어짐 → 새로고침 안내
-    const pre = await precheckCapture(d, { ppOrderId: orderID, ref: reqRef || null });
+    //   not_payable: 주문이 없거나 결제할 수 있는 상태가 아님
+    const pre = await precheckCapture(d, { ref: reqRef, ppOrderId: orderID });
     if (!pre.ok) {
-      console.warn('[paypal] 캡처 전 확인에서 멈춤:', pre.code, pre.ref ?? '-', orderID);
-      return json({ ok: false, error: pre.code }, pre.code === 'not_found' ? 404 : 409);
+      console.warn('[paypal] 캡처 전 확인에서 멈춤:', pre.code, pre.ref, orderID);
+      return json({ ok: false, error: pre.code }, 409);
     }
 
     const { httpOk, body: cap } = await ppCapture(orderID);

@@ -8,12 +8,12 @@
 //
 // 이중 결제 방어(10-23):
 //   ① 돈을 가져오기 전(precheckCapture) — 브라우저 캡처·웹훅 APPROVED 캡처가 같이 쓴다.
-//      주문서 없음 → not_found · 이미 결제됨 → already_paid · 저장된 결제창 번호와 다름(다른 창에서 새로 만듦) → stale_order.
+//      행 없음·결제 불가 상태 → not_payable · 이미 결제됨 → already_paid · 저장된 결제창 번호와 다름(다른 창에서 새로 만듦) → stale_order.
 //      이 경우들은 캡처하지 않으므로 고객 돈이 빠지지 않는다.
-//   ② 확정 때(settlePayment) — 이미 결제된 주문에 '다른' 결제창(또는 캡처)이 들어오면 정상 중복이 아니라 이중 결제 의심 → 🚨 알림.
-//      비교 기준은 확정 때 그대로 남는 paypal_order_id · paypal_capture_id 다.
-//      create-order 는 paid_at 이 있으면 막고(already_paid), 저장도 'paid_at IS NULL' 조건부라 확정 뒤에는 덮어쓰지 않는다.
-//   ③ '결제 완료' 알림은 조건부 UPDATE 로 실제 1행을 바꾼 쪽만 보낸다(브라우저·웹훅 동시 도착 → 한 번).
+//   ② 확정 때(settlePayment) — 이미 결제된 주문에 '다른' 결제(캡처 번호 → 결제창 번호 순으로 비교)가 들어오면
+//      정상 중복이 아니라 이중 결제 의심 → 🚨 알림(DB 는 그대로).
+//      비교 기준은 확정 때 남는 paypal_capture_id · paypal_order_id 다(create-order 는 결제된 주문을 막고, 저장도 'paid_at IS NULL' 조건부).
+//   ③ '결제 완료' 알림은 조건부 UPDATE 가 실제로 1행을 바꾼 쪽만 보낸다(브라우저·웹훅 동시 도착 → 한 번).
 import { notifyChat, expectedUsdStr, toCents } from './paypal';
 import { readRate } from './fx';
 
@@ -36,53 +36,53 @@ export type SettleResult = SettleOk | SettleErr;
 export const isOrdRef = (ref: string) => /^ORD-\d{8}-[A-Z0-9]{4}$/.test(ref);
 export const isInqRef = (ref: string) => /^INQ-\d{8}-[A-Z0-9]{4}$/.test(ref);
 
+export type PrecheckCode = 'not_payable' | 'already_paid' | 'stale_order';
 export type PrecheckResult =
   | { ok: true; ref: string; table: 'orders' | 'inquiries' }
-  | { ok: false; code: 'not_found' | 'already_paid' | 'stale_order'; ref: string | null };
+  | { ok: false; code: PrecheckCode; ref: string };
 
 /**
- * 캡처(돈 가져오기) 전 확인 — 브라우저 캡처(/api/paypal/capture)와 웹훅 APPROVED 캡처가 같이 쓴다.
- * 순서: 주문서 찾기(ref 가 있으면 ref 로, 없으면 결제창 번호로) → 이미 결제됨 → 저장된 결제창 번호와 같은가.
- * ref 는 찾는 데만 쓴다 — 통과하려면 저장된 paypal_order_id 가 요청 결제창 번호와 같아야 한다(ref 를 속여도 캡처되지 않는다).
+ * 캡처(돈 가져오기) 전 확인 — 브라우저 캡처(/api/paypal/capture)와 웹훅 APPROVED 캡처가 같이 쓴다. 돈을 가져오기 전에만 쓴다.
+ * 순서: 행 없음 → not_payable · 이미 결제됨 → already_paid · 저장된 결제창 번호가 비었거나 다름 → stale_order
+ *       · 결제 가능 상태 아님(create-order 와 같은 기준: ORD 'pending' · INQ 'quoted'/'replied') → not_payable.
+ * 여기서 거절된 건은 모두 '돈이 빠지지 않은 상태'다 — 그래서 not_found·verify_failed(돈이 빠졌을 수 있음)는 쓰지 않는다.
+ * ref 형식 검사는 부르는 쪽 몫이다(형식이 틀리면 여기서는 not_payable).
  */
-export async function precheckCapture(d: DBLike, args: { ppOrderId: string; ref?: string | null }): Promise<PrecheckResult> {
+export async function precheckCapture(d: DBLike, args: { ref: string; ppOrderId: string }): Promise<PrecheckResult> {
+  const ref = String(args.ref || '').trim().toUpperCase();
   const pp = String(args.ppOrderId || '');
-  const want = String(args.ref || '').trim().toUpperCase();
-  let row: Row | null = null;
-  let table: 'orders' | 'inquiries' = 'orders';
-  if (isOrdRef(want) || isInqRef(want)) {
-    table = isInqRef(want) ? 'inquiries' : 'orders';
-    row = await d.prepare(`SELECT id, paid_at, paypal_order_id FROM ${table} WHERE id = ?`).bind(want).first<Row>();
-  } else if (pp) {
-    // ref 없이 온 요청(옛 화면 등) — 결제창 번호로 찾는다. 못 찾으면 오래된 결제창인지 알 수 없으니 not_found(캡처 안 함).
-    for (const t of ['orders', 'inquiries'] as const) {
-      row = await d.prepare(`SELECT id, paid_at, paypal_order_id FROM ${t} WHERE paypal_order_id = ?`).bind(pp).first<Row>();
-      if (row) { table = t; break; }
-    }
-  }
-  if (!row) return { ok: false, code: 'not_found', ref: want || null };
-  const ref = String(row.id ?? want).toUpperCase();
+  const inq = isInqRef(ref);
+  if (!inq && !isOrdRef(ref)) return { ok: false, code: 'not_payable', ref };
+  const table = inq ? 'inquiries' : 'orders';
+  const row = await d.prepare(`SELECT id, status, paid_at, paypal_order_id FROM ${table} WHERE id = ?`).bind(ref).first<Row>();
+  if (!row) return { ok: false, code: 'not_payable', ref };
   if (row.paid_at) return { ok: false, code: 'already_paid', ref };
-  if (!pp || String(row.paypal_order_id ?? '') !== pp) return { ok: false, code: 'stale_order', ref };
+  const saved = String(row.paypal_order_id ?? '');
+  if (!saved || saved !== pp) return { ok: false, code: 'stale_order', ref };
+  const st = String(row.status ?? '');
+  if (inq ? !['quoted', 'replied'].includes(st) : st !== 'pending') return { ok: false, code: 'not_payable', ref };
   return { ok: true, ref, table };
 }
 
-/** 확정 때 기록된 결제와 같은 결제인가(웹훅 재전송·동시 도착) — 결제창 번호(있으면 캡처 번호도)로 본다 */
-function sameAsSettled(row: Row, ppOrderId: string, captureId?: string): boolean {
-  const recPp = String(row.paypal_order_id ?? '');
+/**
+ * 이미 확정된 주문에 들어온 결제가 확정 때와 '같은 결제'인가(웹훅 재전송·동시 도착).
+ *   ① 캡처 번호가 양쪽에 있으면 그것으로 · ② 아니면 결제창 번호(둘 다 비어 있지 않을 때) · ③ 비교할 값이 없으면 같은 결제로 본다(거짓 경보 방지 — 경고 로그만)
+ */
+function sameAsSettled(row: Row, ref: string, ppOrderId: string, captureId?: string): boolean {
   const recCap = String(row.paypal_capture_id ?? '');
-  const capSame = captureId && recCap ? captureId === recCap : null; // null = 비교할 값이 없음
-  if (ppOrderId) return ppOrderId === recPp && capSame !== false;
-  // 결제창 번호 없이 온 웹훅(PAYMENT.CAPTURE.COMPLETED 에 related_ids 가 빠진 경우) — 캡처 번호가 같을 때만 같은 결제
-  return capSame === true;
+  const recPp = String(row.paypal_order_id ?? '');
+  if (captureId && recCap) return captureId === recCap;
+  if (ppOrderId && recPp) return ppOrderId === recPp;
+  console.warn('[paypal] 이미 결제된 주문 — 비교할 결제 번호가 없어 정상 중복으로 처리:', ref);
+  return true;
 }
 
 /** 이미 결제된 주문에 다른 결제가 들어옴 — DB 는 바꾸지 않고 알린다 */
 async function duplicatePayment(ref: string, args: { ppOrderId: string; paidUsd: number; source: string; captureId?: string }): Promise<SettleErr> {
   const amt = Number.isFinite(args.paidUsd) ? args.paidUsd.toFixed(2) : String(args.paidUsd);
-  console.error('[paypal] 이중 결제 의심:', ref, args.source, args.ppOrderId, args.captureId ?? '');
-  await notifyChat(`🚨 [PayPal 이중 결제 의심] ${ref} — 이미 결제 완료된 주문에 다른 결제(${args.ppOrderId || args.captureId || '번호 없음'}, $${amt} USD)가 들어왔습니다 · PayPal 에서 환불 여부 확인 필요`);
-  return { ok: false, code: 'duplicate_payment', detail: `pp=${args.ppOrderId || 'none'} cap=${args.captureId ?? 'none'}` };
+  console.error('[paypal] 이중 결제 의심:', ref, args.source, args.ppOrderId || '-', args.captureId || '-');
+  await notifyChat(`🚨 [PayPal 이중 결제 의심] ${ref} — 이미 결제 완료된 주문에 다른 결제가 들어왔습니다 (paypal: ${args.ppOrderId || '-'}, capture: ${args.captureId || '-'}, $${amt} USD) · PayPal 에서 확인 후 환불해 주세요`);
+  return { ok: false, code: 'duplicate_payment', detail: `pp=${args.ppOrderId || 'none'} cap=${args.captureId || 'none'}` };
 }
 
 /**
@@ -110,7 +110,7 @@ export async function settlePayment(
 
   // 이미 확정된 건 — 같은 결제면 멱등(DB·알림 없음), 다른 결제면 이중 결제 의심
   if (row.paid_at) {
-    if (sameAsSettled(row, args.ppOrderId, args.captureId)) return { ok: true, ref, paidUsd: Number(row.paid_usd ?? args.paidUsd), duplicate: true };
+    if (sameAsSettled(row, ref, args.ppOrderId, args.captureId)) return { ok: true, ref, paidUsd: Number(row.paid_usd ?? args.paidUsd), duplicate: true };
     return duplicatePayment(ref, args);
   }
 
@@ -136,28 +136,20 @@ export async function settlePayment(
   }
 
   // 조건부 UPDATE — 두 경로가 동시에 도착해도 먼저 도착한 쪽만 반영된다.
-  //   결제창 번호도 조건에 넣는다 — 대조한 뒤 그 사이에 다른 창이 새 결제창을 만들었으면 반영하지 않는다.
   const now = new Date().toISOString();
   const res = await d
-    .prepare(`UPDATE ${table} SET status = 'paid', paid_at = ?, paid_usd = ?, paypal_capture_id = ? WHERE id = ? AND paid_at IS NULL AND paypal_order_id = ?`)
-    .bind(now, args.paidUsd, args.captureId ?? null, ref, args.ppOrderId)
+    .prepare(`UPDATE ${table} SET status = 'paid', paid_at = ?, paid_usd = ?, paypal_capture_id = ? WHERE id = ? AND paid_at IS NULL`)
+    .bind(now, args.paidUsd, args.captureId ?? null, ref)
     .run();
+  // 실제로 바뀐 행 수 — 0 이면 다른 경로가 먼저 확정했다: 알림 없이 다시 읽어 같은 결제인지 가린다.
+  // meta 를 못 읽는 환경이면 지금까지처럼 알림을 보낸다(알림이 빠지는 쪽보다 두 번 가는 쪽이 낫다).
   const changes = (res as { meta?: { changes?: number } } | null | undefined)?.meta?.changes;
-  if (changes !== 1) {
-    // 0행 — 다른 경로가 먼저 확정했거나(같은 결제면 정상 중복) 그 사이 결제창이 바뀌었다. 다시 읽어 판정한다.
-    // (meta 가 없는 드라이버면 다시 읽은 paid_at 이 이번 시각인지로 판정한다)
-    const now2 = await d.prepare(`SELECT * FROM ${table} WHERE id = ?`).bind(ref).first<Row>();
-    const mine = changes === undefined && now2?.paid_at === now && String(now2?.paypal_order_id ?? '') === args.ppOrderId;
-    if (!mine) {
-      if (now2?.paid_at) {
-        if (sameAsSettled(now2, args.ppOrderId, args.captureId)) return { ok: true, ref, paidUsd: Number(now2.paid_usd ?? args.paidUsd), duplicate: true };
-        return duplicatePayment(ref, args);
-      }
-      const detail = `order_id(db=${String(now2?.paypal_order_id ?? '') || 'none'} req=${args.ppOrderId}) — 확정 직전 결제창이 바뀜`;
-      console.error('[paypal] 결제 검증 실패:', ref, args.source, detail);
-      await notifyChat(`🚨 [PayPal 검증실패] ${ref} — ${detail} · 자동 처리 중단, 수동 확인 필요`);
-      return { ok: false, code: 'verify_failed', detail };
+  if (changes === 0) {
+    const cur = await d.prepare(`SELECT * FROM ${table} WHERE id = ?`).bind(ref).first<Row>();
+    if (!cur || sameAsSettled(cur, ref, args.ppOrderId, args.captureId)) {
+      return { ok: true, ref, paidUsd: Number(cur?.paid_usd ?? args.paidUsd), duplicate: true };
     }
+    return duplicatePayment(ref, args);
   }
 
   // 결제가 확정된 지금이 알릴 시점이다(주문 접수 시점에는 알리지 않는다 —

@@ -3,8 +3,9 @@
 // 실제 라우트(api/paypal/create-order · capture · webhook)와 lib/paypal · lib/paypal-settle 을 esbuild 로 묶어 그대로 돌린다.
 //   가짜: PayPal(전역 fetch — 토큰·결제창 만들기·캡처·웹훅 서명 확인) · D1(주문 표 한 개, 바뀐 행 수 meta.changes 포함)
 //         · 구글챗(chat-send — 보낸 글만 모은다) · 환율(fx) · 요청 횟수 제한(rate-limit) · cloudflare:workers(env)
-// 확인: 정상 1회 · 탭 두 개(오래된 결제창) · 결제 끝난 뒤 다른 창 · 캡처 뒤 확정 틈(이중 결제 의심) · 웹훅 재전송 ·
-//       브라우저·웹훅 동시 도착 · 금액·통화 불일치 · 확정 뒤 결제창 번호를 덮어쓰지 않음(create-order)
+// 확인: 정상 1회 · 탭 두 개(오래된 결제창) · 결제 끝난 뒤 다른 창 · ref 없음 · 결제 불가 상태 · 웹훅 APPROVED(오래된 결제창) ·
+//       캡처 뒤 확정 틈(이중 결제 의심) · 웹훅 재전송 · 브라우저·웹훅 동시 도착(+ meta 없는 환경) · 금액·통화 불일치 ·
+//       확정 뒤 결제창 번호를 덮어쓰지 않음(create-order)
 // 네트워크·비밀값 없이 돈다. 주문은 가짜.
 import { build } from 'esbuild';
 import { mkdtempSync, rmSync } from 'node:fs';
@@ -69,10 +70,11 @@ const R = await loadRoutes();
 // ── 가짜 D1 — orders 한 표. 쓰는 SQL 만 안다(모르는 SQL 은 오류 — 새 쿼리가 생기면 시험이 알려준다) ─────────
 const REF = 'ORD-20261023-TEST';
 const tick = () => new Promise((r) => setTimeout(r, 0)); // 동시 도착이 실제로 엇갈리게
-function fakeDb() {
+function fakeDb({ noMeta = false } = {}) {
   const rows = new Map([[REF, { id: REF, status: 'pending', amount: 140000, amount_usd: 100, currency: 'KRW', buyer_email: 'a@example.com',
     paid_at: null, paid_usd: null, paypal_order_id: null, paypal_capture_id: null, chat_detail: '' }]]);
   const log = { paidUpdates: 0, ppWrites: 0 };
+  const done = (n) => (noMeta ? {} : { meta: { changes: n } }); // noMeta: run() 결과에 바뀐 행 수가 없는 환경
   const pick = (r, cols) => (r ? (cols === '*' ? { ...r } : Object.fromEntries(cols.split(',').map((c) => c.trim()).map((c) => [c, r[c]]))) : null);
   const db = {
     rows, log,
@@ -95,15 +97,15 @@ function fakeDb() {
           let r;
           if (/^UPDATE orders SET paypal_order_id = \? WHERE id = \? AND paid_at IS NULL$/.test(q)) {
             r = rows.get(args[1]);
-            if (!r || r.paid_at) return { meta: { changes: 0 } };
+            if (!r || r.paid_at) return done(0);
             r.paypal_order_id = args[0]; log.ppWrites++;
-            return { meta: { changes: 1 } };
+            return done(1);
           }
-          if (/^UPDATE orders SET status = 'paid', paid_at = \?, paid_usd = \?, paypal_capture_id = \? WHERE id = \? AND paid_at IS NULL AND paypal_order_id = \?$/.test(q)) {
+          if (/^UPDATE orders SET status = 'paid', paid_at = \?, paid_usd = \?, paypal_capture_id = \? WHERE id = \? AND paid_at IS NULL$/.test(q)) {
             r = rows.get(args[3]);
-            if (!r || r.paid_at || r.paypal_order_id !== args[4]) return { meta: { changes: 0 } };
+            if (!r || r.paid_at) return done(0);
             Object.assign(r, { status: 'paid', paid_at: args[0], paid_usd: args[1], paypal_capture_id: args[2] }); log.paidUpdates++;
-            return { meta: { changes: 1 } };
+            return done(1);
           }
           throw new Error(`fake D1: 모르는 SQL — ${q}`);
         },
@@ -148,8 +150,8 @@ function fakePayPal() {
 }
 
 // ── 한 장면 준비 · 부르기 ───────────────────────────────────────────────────────
-function scene() {
-  globalThis.__pp = { db: fakeDb(), chats: [] };
+function scene(dbOpts) {
+  globalThis.__pp = { db: fakeDb(dbOpts), chats: [] };
   const pp = fakePayPal();
   const post = async (route, body, headers = {}) => {
     const request = new Request('https://vanam.co.kr/api/paypal/x', { method: 'POST', headers: { 'Content-Type': 'application/json', ...headers }, body: JSON.stringify(body) });
@@ -158,6 +160,7 @@ function scene() {
   };
   const create = () => post(R.createOrder, { ref: REF });
   const capture = (orderID, ref = REF) => post(R.capture, ref ? { orderID, ref } : { orderID });
+  const setStatus = (v) => { st.db.rows.get(REF).status = v; };
   const hook = (event) => post(R.webhook, event, { 'paypal-transmission-id': 't1', 'paypal-transmission-sig': 's1' });
   const completedEvent = (orderID, captureId = `CAP-${orderID}`, value = '100.00') => ({ event_type: 'PAYMENT.CAPTURE.COMPLETED',
     resource: { id: captureId, custom_id: REF, amount: { value, currency_code: 'USD' }, supplementary_data: { related_ids: { order_id: orderID } } } });
@@ -165,7 +168,7 @@ function scene() {
   const st = globalThis.__pp;
   const chats = (kind) => st.chats.filter((t) => t.includes(kind)).length;
   const row = () => ({ ...st.db.rows.get(REF) });
-  return { pp, st, create, capture, hook, completedEvent, approvedEvent, chats, row };
+  return { pp, st, create, capture, hook, completedEvent, approvedEvent, chats, row, setStatus };
 }
 const PAID = '💳 *결제 완료*'; // 알림 머리 — 이중 결제 알림의 '이미 결제 완료된'과 구분
 const DUP = '이중 결제 의심';
@@ -197,12 +200,29 @@ await quiet(async () => {
     eq('탭 두 개: A 로 결제 → 409 stale_order', [c.status, c.error], [409, 'stale_order']);
     eq('탭 두 개: 캡처 0번 · 확정 0 · 알림 0', [s.pp.captureCalls, s.st.db.log.paidUpdates, s.st.chats.length], [0, 0, 0]);
     eq('탭 두 개: 저장된 결제창은 B · 아직 미결제', [s.row().paypal_order_id, s.row().paid_at], [b.id, null]);
-    // ref 없이 온 옛 요청도 캡처하지 않는다(결제창 번호로 못 찾음 → not_found)
-    const c2 = await s.capture(a.id, null);
-    eq('탭 두 개: ref 없는 A 요청 → 404 not_found · 캡처 0', [c2.status, c2.error, s.pp.captureCalls], [404, 'not_found', 0]);
-    // 웹훅 APPROVED(A)도 같은 사전 확인 — 캡처하지 않는다
+    // 웹훅 APPROVED 가 오래된 결제창(A)으로 옴 — 같은 사전 확인, 캡처하지 않고 200 skipped · 구글챗 없음
     const h = await s.hook(s.approvedEvent(a.id));
-    eq('탭 두 개: 웹훅 APPROVED(A) → 캡처 안 함(stale_order)', [h.status, h.skipped, s.pp.captureCalls], [200, 'stale_order', 0]);
+    eq('웹훅 APPROVED(오래된 결제창): 200 skipped stale_order · 캡처 0 · 알림 0', [h.status, h.ok, h.skipped, s.pp.captureCalls, s.st.chats.length], [200, true, 'stale_order', 0, 0]);
+  }
+
+  // ref 없이 확정 요청(옛 화면이 캐시된 경우) · ref 형식 틀림 — 캡처하지 않는다
+  {
+    const s = scene();
+    const a = await s.create();
+    const c1 = await s.capture(a.id, null);
+    const c2 = await s.capture(a.id, 'ORD-BAD');
+    eq('ref 없음·형식 틀림: 400 bad_request · 캡처 0 · 알림 0', [c1.status, c1.error, c2.status, c2.error, s.pp.captureCalls, s.st.chats.length], [400, 'bad_request', 400, 'bad_request', 0, 0]);
+  }
+
+  // 주문 상태가 결제 불가(취소 등) — 캡처하지 않는다
+  {
+    const s = scene();
+    const a = await s.create();
+    s.setStatus('cancelled');
+    const c = await s.capture(a.id);
+    const h = await s.hook(s.approvedEvent(a.id));
+    eq('결제 불가 상태: 409 not_payable · 웹훅 APPROVED 도 skipped · 캡처 0 · 알림 0',
+      [c.status, c.error, h.skipped, s.pp.captureCalls, s.st.chats.length, s.row().paid_at], [409, 'not_payable', 'not_payable', 0, 0, null]);
   }
 
   // ③ B 로 결제 완료 뒤 A 로 결제 시도
@@ -229,7 +249,7 @@ await quiet(async () => {
     eq('틈: 🚨 이중 결제 의심 1번 · 결제 완료 1번(B) · 확정 1번', [s.chats(DUP), s.chats(PAID), s.st.db.log.paidUpdates], [1, 1, 1]);
     eq('틈: DB 는 B 확정 그대로(A 로 바꾸지 않음)', [s.row().paypal_order_id, s.row().paypal_capture_id, s.row().paid_usd], [b?.id, `CAP-${b?.id}`, 100]);
     const msg = s.st.chats.find((t) => t.includes(DUP)) ?? '';
-    eq('틈: 알림 글 — 주문번호 · 결제창 · 금액 · 환불 확인', [msg.includes(REF), msg.includes(a.id), msg.includes('$100.00 USD'), msg.includes('PayPal 에서 환불 여부 확인 필요')], [true, true, true, true]);
+    eq('틈: 알림 글', msg, `🚨 [PayPal 이중 결제 의심] ${REF} — 이미 결제 완료된 주문에 다른 결제가 들어왔습니다 (paypal: ${a.id}, capture: CAP-${a.id}, $100.00 USD) · PayPal 에서 확인 후 환불해 주세요`);
   }
 
   // ⑤ 같은 결제창 웹훅 재전송 · 확정 뒤 APPROVED
@@ -249,6 +269,9 @@ await quiet(async () => {
     // 결제창 번호 없이 온 웹훅 — 캡처 번호가 같으면 정상 중복
     const h5 = await s.hook({ event_type: 'PAYMENT.CAPTURE.COMPLETED', resource: { id: `CAP-${a.id}`, custom_id: REF, amount: { value: '100.00', currency_code: 'USD' } } });
     eq('재전송: 결제창 번호 없음 + 같은 캡처 번호 → 정상 중복', [h5.ok, s.chats(DUP)], [true, 1]);
+    // 비교할 번호가 둘 다 없으면 정상 중복(거짓 경보 방지)
+    const h6 = await s.hook({ event_type: 'PAYMENT.CAPTURE.COMPLETED', resource: { custom_id: REF, amount: { value: '100.00', currency_code: 'USD' } } });
+    eq('재전송: 결제창·캡처 번호 모두 없음 → 정상 중복 · 알림 없음', [h6.ok, s.chats(DUP), s.chats(PAID)], [true, 1, 1]);
   }
 
   // ⑥ 브라우저·웹훅 동시 도착(같은 결제창)
@@ -267,6 +290,14 @@ await quiet(async () => {
     const [c, h] = await Promise.all([s.capture(a.id), s.hook(s.approvedEvent(a.id))]);
     eq('동시(캡처+APPROVED): 실제 캡처 1번 · DB 반영 1번 · 결제 완료 알림 1번 · 🚨 0',
       [s.pp.captured, s.st.db.log.paidUpdates, s.chats(PAID), s.chats('🚨'), c.ok || h.ok], [1, 1, 1, 0, true]);
+  }
+
+  {
+    // run() 결과에 바뀐 행 수가 없는 환경 — 알림이 빠지지 않는 쪽(지금까지 동작: 양쪽 다 알림)
+    const s = scene({ noMeta: true });
+    const a = await s.create();
+    const [c, h] = await Promise.all([s.capture(a.id), s.hook(s.completedEvent(a.id))]);
+    eq('meta 없음: DB 반영 1번 · 결제 완료 알림은 보내는 쪽(2번) · 🚨 0', [c.ok, h.ok, s.st.db.log.paidUpdates, s.chats(PAID), s.chats('🚨')], [true, true, 1, 2, 0]);
   }
 
   // ⑦ 금액·통화 불일치 — 지금처럼 verify_failed
@@ -296,11 +327,11 @@ await quiet(async () => {
     eq('결제창 만드는 중 확정됨 → already_paid · 결제창 번호 A 그대로', [late.status, late.error, s.row().paypal_order_id, s.st.db.log.paidUpdates], [409, 'already_paid', a.id, 1]);
   }
 
-  // ⑨ 주문서 없음 — 캡처하지 않는다
+  // ⑨ 주문서 없음 — 캡처하지 않는다(돈이 빠지지 않았으니 not_found 가 아니라 not_payable)
   {
     const s = scene();
     const c = await s.capture('PP999', 'ORD-20261023-NONE');
-    eq('주문서 없음: 404 not_found · 캡처 0', [c.status, c.error, s.pp.captureCalls], [404, 'not_found', 0]);
+    eq('주문서 없음: 409 not_payable · 캡처 0 · 알림 0', [c.status, c.error, s.pp.captureCalls, s.st.chats.length], [409, 'not_payable', 0, 0]);
   }
 });
 
@@ -308,4 +339,4 @@ if (failed) {
   console.error(`\nPayPal 이중 결제 방어 테스트 실패 — ${failed}/${total}건.`);
   process.exit(1);
 }
-console.log(`✓ PayPal 이중 결제 방어(capture·webhook·settle) — ${total}건 통과 · 캡처 전 확인(이미 결제·오래된 결제창) · 이중 결제 의심 알림 · 결제 완료 알림 1회`);
+console.log(`✓ PayPal 이중 결제 방어(capture·webhook·settle) — ${total}건 통과 · 캡처 전 확인(이미 결제·오래된 결제창·결제 불가·ref 없음) · 이중 결제 의심 알림 · 결제 완료 알림 1회`);

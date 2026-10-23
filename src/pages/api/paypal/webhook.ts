@@ -71,11 +71,11 @@ export const POST: APIRoute = async ({ request }) => {
         const ref = String(res?.purchase_units?.[0]?.custom_id ?? '').toUpperCase();
         if (!ppOrderId || !ref) return ok({ ok: true, skipped: 'no_ref' });
 
-        // 브라우저 캡처와 같은 사전 확인 — 이미 결제됨·오래된 결제창·주문서 없음이면 캡처하지 않는다(이중 청구 방지).
-        //   200 으로 받아준다(4xx 면 PayPal 이 계속 재전송한다).
-        const pre = await precheckCapture(d, { ppOrderId, ref });
+        // 브라우저 캡처와 같은 사전 확인 — 이미 결제됨·오래된 결제창·결제 불가면 캡처하지 않는다(이중 청구 방지).
+        //   200 으로 받아준다(4xx 면 PayPal 이 계속 재전송한다). 돈이 빠지지 않았으므로 구글챗은 보내지 않는다.
+        const pre = await precheckCapture(d, { ref, ppOrderId });
         if (!pre.ok) {
-          if (pre.code !== 'already_paid') console.warn('[paypal-webhook] 승인건 캡처 안 함:', pre.code, ref, ppOrderId);
+          console.warn('[paypal-webhook] 승인건 캡처 안 함:', pre.code, ref, ppOrderId);
           return ok({ ok: true, skipped: pre.code });
         }
 
