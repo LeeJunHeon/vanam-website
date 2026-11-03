@@ -512,7 +512,7 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
   // 입력칸 판정 공통 규칙(견적·주문·문의 같은 규칙) — 남은 '틀림 표시' 지우기 · 보이는 칸만 · 서버와 같은 이메일 규칙
   import { firstFieldIssue, firstInDocument, isShown, msgs, type Issue } from '../lib/form-check';
   // 소재 value 문자열을 만드는 함수는 한 곳뿐이다 — 옵션 파생·CTA 링크·여기(프리필)가 같은 걸 쓴다.
-  import { materialValue, materialLabel, formProcessFor } from '../lib/material-value.js';
+  import { materialValue, materialLabel, materialLabels, formProcessFor } from '../lib/material-value.js';
   // 박막 증착 여부의 저장값 정규화 — 서버 검증·검증 스크립트와 같은 파일을 쓴다.
   import { preFilmFields, displayName } from '../lib/quote-fields.js';
   import { fillDays } from '../lib/reply-days.js';
@@ -1046,7 +1046,7 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
 
     // 요청 내용 요약 — 화면·요청서에 그대로 쓰인다. (저장하지 않고 그때그때 만든다)
     const lines = [
-      { l: M.lblMaterial2 || 'Material', v: String(data.material ?? '') },
+      { l: M.lblMaterial2 || 'Material', v: materialLabels(data.material) },
       { l: M.lblMethod2 || 'Process', v: String(data.method ?? '') },
       { l: M.lblSubstrate2 || 'Substrate', v: String(data.substrate ?? '') },
       { l: DL.samples, v: String(data.sampleCount ?? '') },

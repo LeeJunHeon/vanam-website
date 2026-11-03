@@ -16,6 +16,8 @@
 //   · 아무것도 넣지 않은 카드는 모든 칸을 비워 보낸다 — 엔진이 빈 줄로 보고 건너뛴다(엑셀의 빈 행과 같다).
 //   · 아무것도 넣지 않은 층 줄(레시피·두께·온도가 모두 빈칸)은 보내지 않는다.
 
+import { recipeMaterialLabel } from './material-value.js';
+
 export const MAX_ITEMS = 15;   // 엑셀 V3_견적입력 15~29행 (quote-calc·quote-rev 와 같다)
 export const MAX_LAYERS = 100; // 엑셀 V3_박막공정 2~101행
 
@@ -254,7 +256,7 @@ export function equipmentOptions(equipment, recipes) {
  */
 export function recipeOptions(recipes, equipmentId = '') {
   const list = (recipes ?? []).filter((r) => !equipmentId || str(r.equipment_id) === equipmentId);
-  const base = (r) => [str(r.material_name).trim(), str(r.method).trim()].filter(Boolean).join(' · ') || str(r.recipe_id);
+  const base = (r) => [recipeMaterialLabel(str(r.material_name).trim()), str(r.method).trim()].filter(Boolean).join(' · ') || str(r.recipe_id);
   const count = new Map();
   for (const r of list) {
     const k = `${str(r.equipment_id)}\u0000${base(r)}`;

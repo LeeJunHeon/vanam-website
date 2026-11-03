@@ -575,7 +575,7 @@ export function buildRequestHtml(o) {
       rows: (o?.items ?? []).map((it) => [{ v: str(it.name), k: 't' }, { v: str(it.spec), k: 't' }, { v: str(it.qty), k: 'c' }, { v: str(it.note), k: 't' }]) })
     : table({ cols: RCOLS, head: L.stepHead,
       rows: (o?.steps ?? []).map((s, k) => [{ v: String(k + 1), k: 'c' }, { v: str(s.process), k: 't' },
-        { v: str(s.material), k: 't' }, { v: str(s.value), k: 't' }, { v: str(s.etc), k: 't' }]) });
+        { v: materialLabel(str(s.material)), k: 't' }, { v: str(s.value), k: 't' }, { v: str(s.etc), k: 't' }]) });
   return page({
     lang: en ? 'en' : 'ko',
     docTitle: `${en ? 'Quote request' : '견적 요청서'} ${str(o?.id) || str(o?.date)}`.trim(),

@@ -257,6 +257,14 @@ eq('표시 온도 우선', lspec({ recipeId: 'R-ALD', thicknessNm: 100, tempC: 2
 // 반복 1 은 표기하지 않고, 2 이상만 붙인다
 eq('반복 2 표기', lspec({ recipeId: 'R-T1', thicknessNm: 100, repeat: 2 }), 'MatA 100 nm × 2');
 
+// 표시 이름이 있는 물질(IGZO)만 규격 문구가 바뀌고, 그 밖의 물질명은 바이트 동일. 원가용 materialName 은 불변.
+{
+  const db2 = { ...DB, recipes: [...RECIPES, R('R-IGZO', 'IGZO', 'Sputter', 'EQ-A'), R('R-FAKE', 'AlN(Fake)', 'Sputter', 'EQ-A')] };
+  const sp = (id) => calc(film(), [L({ recipeId: id, thicknessNm: 100 })], db2).layers[0];
+  eq('IGZO 규격 → 표시 이름', sp('R-IGZO').spec, 'InGaZnO 100 nm');
+  eq('괄호 물질명은 그대로', sp('R-FAKE').spec, 'AlN(Fake) 100 nm');
+}
+
 console.log('4-5 품목 규격 문구');
 // 층 규격 + 플라즈마 + 대기 + 추가 규격을 줄바꿈으로 잇는다
 eq('품목 규격 전체',

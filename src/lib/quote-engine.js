@@ -19,6 +19,8 @@
 //
 // 네트워크·DB·환경변수 접근이 전혀 없는 순수 함수다(테스트 가능성이 유일한 방어선이라서).
 
+import { recipeMaterialLabel } from './material-value.js';
+
 // ── 엑셀 의미론 ────────────────────────────────────────────────────────────
 
 /** 엑셀의 빈 셀(`X=""`). null·undefined·빈 문자열만 비움이다 — 0 은 비움이 아니다. */
@@ -348,7 +350,7 @@ function layerCompute(layer, d, pol) {
 
   // Z 출력 규격: Sputter/ALD 는 방법(DC Power 등)을 붙이지 않는다. 30°C 는 R.T 로 읽는다.
   const proc = d.processType.toUpperCase();
-  const spec = d.materialName + ' ' + numText(layer.thicknessNm) + ' nm'
+  const spec = recipeMaterialLabel(d.materialName) + ' ' + numText(layer.thicknessNm) + ' nm'
     + (proc === 'SPUTTER' || proc === 'ALD' ? '' : (d.method === '' ? '' : ' (' + d.method + ')'))
     + (layer.repeat === 1 ? '' : ' × ' + numText(layer.repeat))
     + (isBlank(d.tempApplied) ? '' : ' / ' + (d.tempApplied === 30 ? 'R.T' : numText(d.tempApplied) + '°C'));

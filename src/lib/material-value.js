@@ -79,6 +79,27 @@ export function materialLabels(list) {
 }
 
 /**
+ * 가격 DB 레시피 물질명 → 표시용. 괄호 앞 기본 이름이 표시 이름이 있는 value 와 일치할 때만
+ * 그 부분을 label 로 바꾸고(괄호 등 나머지 보존), 아니면 name 을 그대로(바이트 동일) 돌려준다.
+ * 표시부 전용 — 레시피 매칭·저장은 DB 의 물질명 그대로.
+ * @param {unknown} name 예: 'IGZO' | 'IGZO (RF)' | 'AlN(Fake)'
+ * @returns {string}
+ */
+export function recipeMaterialLabel(name) {
+  const s = String(name ?? '');
+  const open = s.indexOf('(');
+  const head = open < 0 ? s : s.slice(0, open);
+  const tail = open < 0 ? '' : s.slice(open);
+  const base = head.trim();
+  if (!base) return s;
+  const value = materialValue(base);
+  if (!Object.prototype.hasOwnProperty.call(DISPLAY_LABELS, value)) return s;
+  const lead = head.slice(0, head.indexOf(base));
+  const trail = head.slice(lead.length + base.length);
+  return lead + DISPLAY_LABELS[value] + trail + tail;
+}
+
+/**
  * 그룹 안 정렬 키 — MaterialsLibrary.astro 의 칩 정렬과 같은 규칙(소문자 알파벳순).
  * @param {string} value
  */

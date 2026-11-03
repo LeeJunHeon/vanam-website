@@ -399,6 +399,7 @@ const qvText = editId ? JSON.stringify({ ko: siteData.ko.quote.view, en: siteDat
 
     <script>
       import { buildQuoteDoc, openDoc } from '../../lib/quote-doc';
+      import { recipeMaterialLabel } from '../../lib/material-value.js';
       import { renderQuoteBox, docOptions, injectQuoteViewStyle, kstStamp } from '../../lib/quote-view-render.js';
       import {
         METHODS, MARGINS, MAX_ITEMS, MAX_LAYERS, STATUS_HINT, newCard, newLayer, isBlankCard, inputFromCards, cardsFromInput,
@@ -462,7 +463,7 @@ const qvText = editId ? JSON.stringify({ ko: siteData.ko.quote.view, en: siteDat
         const opt = (v: string, label: string, cur: string) => `<option value="${esc(v)}"${v === cur ? ' selected' : ''}>${esc(label)}</option>`;
         const recipeLabel = (id: string) => {
           const r = meta?.recipes.find((x) => String(x.recipe_id) === id);
-          return r ? [r.material_name, r.method].filter(Boolean).join(' · ') : id;
+          return r ? [recipeMaterialLabel(r.material_name), r.method].filter(Boolean).join(' · ') : id;
         };
         const eqSelect = (c: Card, i: number) => {
           let body = opt('', '장비 선택', c.equipmentId);
@@ -1070,8 +1071,8 @@ const qvText = editId ? JSON.stringify({ ko: siteData.ko.quote.view, en: siteDat
           const r = exampleRecipe();
           if (!r) return;
           const c1 = newCard('박막자동', {
-            name: `${r.material_name} 20nm 증착`, qty: '2', margin: '기본', plasma: 'N', equipmentId: String(r.equipment_id),
-            rawText: `${r.material_name} 20nm 2회, 플라즈마 미포함, 기본 마진`,
+            name: `${recipeMaterialLabel(r.material_name)} 20nm 증착`, qty: '2', margin: '기본', plasma: 'N', equipmentId: String(r.equipment_id),
+            rawText: `${recipeMaterialLabel(r.material_name)} 20nm 2회, 플라즈마 미포함, 기본 마진`,
           });
           c1.layers = [newLayer({ recipeId: String(r.recipe_id), thicknessNm: '20' })];
           const c2 = newCard('단가입력', { name: '샘플박스', qty: '1', unit: 'BOX', amount: '40000', vat: '별도', rawText: '샘플박스 1 BOX, 부가세 별도' });
