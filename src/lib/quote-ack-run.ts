@@ -22,6 +22,7 @@ import { nowIso } from './db';
 import { sendMail, gmailConfigured, MAIL_LIVE } from './mail-send';
 import { renderPdf, pdfConfigured, logoDataUri } from './doc-pdf';
 import { isSafeAddress } from './mail-mime.js';
+import { materialLabels } from './material-value.js';
 import {
   mailAllowed, hostAllowed, isFreshPending, ackContent, estimateOf, attachmentName, pdfTitle, mergeDocPages, fitScript,
   ackRecord, requestDocArgs, ACK_REASON_KO, kstText, lookupLink, ackLang,
@@ -71,7 +72,7 @@ async function productLabel(q: Record<string, unknown>, lang: 'ko' | 'en'): Prom
   } catch {
     /* 저장된 이름으로 */
   }
-  return String(q.product_name ?? q.material ?? '');
+  return String(q.product_name ?? materialLabels(q.material) ?? '');
 }
 
 /**

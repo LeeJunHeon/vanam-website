@@ -23,9 +23,9 @@ PVD (Sputter, Evaporator), ALD, PLD, MOCVD. Process big-data collection is also 
 ## Materials library
 Special thin films and process conditions unavailable in conventional fabs — across oxides, nitrides, and metals (산화물·질화물·금속).
 - PVD / Sputter & Evaporator:
-  - Oxide: VO2, V2O5, TiO2, Ta2O5, HfO2, ZnO, ITO, IGZO
-  - Nitride: TiN, AlN, AlScN, SiNx
-  - Metal: Au, Pt, Ag, Al, Ti, Cr, Ni, Bi, Mo, Hf, Sc, W
+  - Oxide: VO2, V2O5, TiO2, Ta2O5, HfO2, ZnO, ITO, InGaZnO (IGZO)
+  - Nitride: TiN, AlN, AlScN, SiN (SiNx)
+  - Metal: Au, Pt, Ag, Al, Ti, Cr, Ni, Bi, Mo, Hf, Sc, W, Nb, V
 - ALD:
   - Oxide: Al2O3, HfO2, ZrO2, HZO, ZnO, TiO2, In2O3, Ga2O3, SnO2, SnO
   - Metal: Pt, Ru
@@ -64,7 +64,7 @@ Q: What deposition methods do you offer?
 A: PVD (sputter, evaporator) and ALD, plus PLD and MOCVD — customized thin-film deposition, including special films and process conditions that are hard to achieve in conventional production lines.
 
 Q: Which materials do you work with?
-A: A broad library across oxides, nitrides, and metals — including oxides such as VO2, HfO2, IGZO; nitrides such as TiN, AlN; and metals such as Pt, Ru — that are difficult to handle in conventional fabs.
+A: A broad library across oxides, nitrides, and metals — including oxides such as VO2, HfO2, InGaZnO (IGZO); nitrides such as TiN, AlN; and metals such as Pt, Ru — that are difficult to handle in conventional fabs.
 
 Q: What about eco-friendliness and ESG?
 A: A vacuum deposition process with no toxic organic materials or gases, minimizing environmental impact for ESG-aligned manufacturing.

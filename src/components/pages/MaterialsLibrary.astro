@@ -44,7 +44,7 @@ const matImages = import.meta.glob<{ default: ImageMetadata }>(
 // 팝업 패널 데이터: A4 구성(도판·사양·타깃)을 서버에서 미리 최적화·조립한다.
 // 패널은 실제 HTML 로 렌더되어 hidden 토글만 하므로 /technology 자체가 SEO 대상이 된다.
 type MatPanel = {
-  id: string; formula: string; name: string; system: string; category: string;
+  id: string; formula: string; aka: string[]; name: string; system: string; category: string;
   quoteHref: string; desc: string;
   // 도판 — 캡션이 있는 소재(m25·m26·m30·m11)만 caption 이 채워진다. 나머지는 undefined.
   figs: { src: string; caption?: string }[];
@@ -100,6 +100,7 @@ for (const m of allMaterials) {
   matPanels.push({
     id: m.id,
     formula: d.formula,
+    aka: d.aka ?? [],
     name: locale === 'ko' ? (d.name_ko ?? d.name ?? d.formula) : (d.name ?? d.formula),
     system: d.system === 'ald' ? 'ALD' : 'PVD — Sputter & Evaporator',
     category: catLabel[d.category],
@@ -124,6 +125,7 @@ const mt = {
   preparing: locale === 'ko' ? '상세 자료를 준비 중입니다. 견적 문의는 아래 버튼으로 가능합니다.' : 'Detailed data is being prepared. You can still request a quote below.',
   cta: locale === 'ko' ? '이 물질로 견적 문의' : 'Request a quote for this material',
   close: locale === 'ko' ? '닫기' : 'Close',
+  aka: locale === 'ko' ? '다른 이름' : 'Also known as',
 };
 
 // SEO(0169): 아코디언 본문(HTML 내 존재 = 색인 대상)과 별개로, 소재 전목록을 기계가독 형태로 명시 제공
@@ -145,6 +147,7 @@ const materialsLd = {
     item: {
       '@type': 'Thing',
       name: p.name ? `${p.formula} (${p.name})` : p.formula,
+      ...(p.aka.length ? { alternateName: p.aka } : {}),
       description: `${p.system} · ${p.category}`,
       url: new URL(lhref(`/materials/${p.id}`), Astro.site).href,
     },
@@ -253,6 +256,7 @@ const materialsLd = {
             <div class="mt-3 flex flex-wrap gap-x-8 gap-y-1.5 text-sm">
               <div><span class="text-ink/45">{mt.system}: </span><span class="text-ink/80">{p.system}</span></div>
               <div><span class="text-ink/45">{mt.category}: </span><span class="text-ink/80">{p.category}</span></div>
+              {p.aka.length > 0 && <div><span class="text-ink/45">{mt.aka}: </span><span class="text-ink/80">{p.aka.join(', ')}</span></div>}
             </div>
           </div>
 

@@ -9,6 +9,7 @@
 import {
   materialValue,
   materialSortKey,
+  materialLabel,
   PRODUCT_MAT_FILTER as PRODUCT_MAT_FILTER_RAW,
   EVAPORATOR_ONLY,
 } from './material-value.js';
@@ -25,8 +26,8 @@ export type MatCat = 'Oxide' | 'Nitride' | 'Metal' | 'Semiconductor' | 'gas';
 
 export type ProcessDef = {
   name: string;
-  /** [물질명, 분류] 쌍. 분류로 제품 카테고리 필터링. 빈 배열이면 물질 선택 없음 */
-  materials: [string, MatCat][];
+  /** [value, 분류, 표시 이름] 쌍. 분류로 제품 카테고리 필터링. 빈 배열이면 물질 선택 없음. value 는 저장·전송값, 표시 이름은 화면용 */
+  materials: [string, MatCat, string][];
   /** 두께/시간 단위. 'nm'=두께, 'min'=시간, null=값 입력 없음 */
   unit: 'nm' | 'min' | null;
   /** 측정 공정인가 (측정은 별도 섹션·선택 사항) */
@@ -90,7 +91,7 @@ function evaporatorMaterials(): [string, MatCat][] {
 }
 
 // 증착·처리 공정 (엑셀 Sheet2). 순서·이름·단위는 기존 그대로.
-export const PROCESSES: ProcessDef[] = [
+const PROCESSES_RAW: (Omit<ProcessDef, 'materials'> & { materials: [string, MatCat][] })[] = [
   { name: 'PlasmaCleaning (In-situ)', unit: 'min', materials: EXTRAS['PlasmaCleaning (In-situ)']! },
   { name: 'PlasmaTreatment (Ex-situ)', unit: 'min', materials: EXTRAS['PlasmaTreatment (Ex-situ)']! },
   { name: 'Sputter', unit: 'nm', materials: fromLibrary('sputter', (v) => !isEvaporatorOnly(v)) },
@@ -98,6 +99,12 @@ export const PROCESSES: ProcessDef[] = [
   { name: 'Evaporator', unit: 'nm', materials: evaporatorMaterials() },
   { name: 'Annealing', unit: 'min', materials: EXTRAS['Annealing']! },
 ];
+
+// 화면 표시 이름을 붙인다. value(첫 칸)는 그대로 — 표시 이름만 DISPLAY_LABELS 로 바뀐다.
+export const PROCESSES: ProcessDef[] = PROCESSES_RAW.map((p) => ({
+  ...p,
+  materials: p.materials.map(([value, cat]): [string, MatCat, string] => [value, cat, materialLabel(value)]),
+}));
 
 // 측정 공정 (별도 섹션 · 선택 사항). 물질·값 없음.
 export const MEASUREMENTS: ProcessDef[] = [

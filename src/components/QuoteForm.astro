@@ -512,7 +512,7 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
   // 입력칸 판정 공통 규칙(견적·주문·문의 같은 규칙) — 남은 '틀림 표시' 지우기 · 보이는 칸만 · 서버와 같은 이메일 규칙
   import { firstFieldIssue, firstInDocument, isShown, msgs, type Issue } from '../lib/form-check';
   // 소재 value 문자열을 만드는 함수는 한 곳뿐이다 — 옵션 파생·CTA 링크·여기(프리필)가 같은 걸 쓴다.
-  import { materialValue, formProcessFor } from '../lib/material-value.js';
+  import { materialValue, materialLabel, formProcessFor } from '../lib/material-value.js';
   // 박막 증착 여부의 저장값 정규화 — 서버 검증·검증 스크립트와 같은 파일을 쓴다.
   import { preFilmFields, displayName } from '../lib/quote-fields.js';
   import { fillDays } from '../lib/reply-days.js';
@@ -530,7 +530,7 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
     }
   }
 
-  type MatPair = [string, string]; // [물질명, 분류(Oxide/Nitride/Metal/gas)]
+  type MatPair = [string, string, string]; // [value, 분류(Oxide/Nitride/Metal/gas), 표시 이름]
   type ProcessDef = { name: string; materials: MatPair[]; unit: 'nm' | 'min' | null };
 
   // 분류 → 표시 라벨 (드롭다운 optgroup 제목). 언어에 맞춰 고른다.
@@ -644,10 +644,10 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
       matWrap.hidden = false;
       const ko = isKoDoc();
       // 물질을 분류별로 묶는다. 실제 존재하는 분류만, 정해진 순서로.
-      const groups = new Map<string, string[]>();
-      for (const [mat, cat] of def.materials) {
+      const groups = new Map<string, [string, string][]>();
+      for (const [mat, cat, label] of def.materials) {
         if (!groups.has(cat)) groups.set(cat, []);
-        groups.get(cat)!.push(mat);
+        groups.get(cat)!.push([mat, label]);
       }
       const cats = CAT_ORDER.filter((c) => groups.has(c));
       let html = `<option value="" disabled selected>${L.materialPh}</option>`;
@@ -656,12 +656,12 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
         html += cats
           .map((cat) => {
             const lbl = CAT_LABELS[cat] ? (ko ? CAT_LABELS[cat].ko : CAT_LABELS[cat].en) : cat;
-            const opts = groups.get(cat)!.map((m) => `<option value="${m}">${m}</option>`).join("");
+            const opts = groups.get(cat)!.map(([m, l]) => `<option value="${m}">${l}</option>`).join("");
             return `<optgroup label="${lbl}">${opts}</optgroup>`;
           })
           .join("");
       } else {
-        html += def.materials.map(([m]) => `<option value="${m}">${m}</option>`).join("");
+        html += def.materials.map(([m, , l]) => `<option value="${m}">${l}</option>`).join("");
       }
       matSel.innerHTML = html;
     } else {
@@ -766,7 +766,7 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
       json.push({ step: i + 1, process: proc, material: mat, value: val, unit: val ? unit : "", etc });
 
       let line = `${i + 1}. ${displayName(proc)}`;
-      if (mat) line += ` | ${mat}`;
+      if (mat) line += ` | ${materialLabel(mat)}`; // 화면·문서용 글자. json 의 material 은 value 그대로
       if (val) line += ` | ${val}${unit}`;
       if (etc) line += ` | ${etc}`;
       lines.push(line);

@@ -18,15 +18,25 @@ const SUBSCRIPTS = /** @type {Record<string, string>} */ ({
 });
 
 /**
- * 정규화 예외표 — [정규화한 문자열 → 실제로 써야 할 value].
+ * 정규화 예외표 — [현재 라이브러리 표기를 정규화한 문자열 → 실제로 써야 할 value].
  *
  * 등재 기준은 하나뿐이다: **정규화만 하면 이미 쓰이고 있는 기존 value 와 달라지는 것**.
  * 기존 value 는 견적 요청 payload·D1 저장·구글챗 알림·조회 화면에 그대로 남아 있으므로
  * 바꾸면 과거 데이터와 어긋난다.
- *   - SiNₓ: 정규화하면 "SiNx" 지만, 폼의 기존 value 는 "SiN" 이다.
+ *   - InGaZnO: 화면 표기는 InGaZnO, 폼의 기존 value 는 IGZO
  * 누락은 scripts/check-material-values.mjs 가 기존 value 전수 대조로 잡는다.
  */
 export const VALUE_EXCEPTIONS = /** @type {Record<string, string>} */ ({
+  InGaZnO: 'IGZO',
+});
+
+/**
+ * 옛 링크 별칭 — [옛 정규화 문자열 → 현재 value].
+ * 라이브러리에서 표기가 바뀌어 더 이상 나오지 않는 옛 정규화 문자열 → 현재 value.
+ * 이미 나간 ?material= 링크 호환용(예: SiNₓ→SiN 표기 변경 전 링크의 ?material=SiNx).
+ * VALUE_EXCEPTIONS 와 달리 현재 라이브러리 소재와 겹치면 안 된다(검사 스크립트가 확인).
+ */
+export const LEGACY_ALIASES = /** @type {Record<string, string>} */ ({
   SiNx: 'SiN',
 });
 
@@ -38,7 +48,34 @@ export const VALUE_EXCEPTIONS = /** @type {Record<string, string>} */ ({
  */
 export function materialValue(formula) {
   const ascii = String(formula ?? '').replace(/[₀-₉ₓ]/g, (c) => SUBSCRIPTS[c] ?? c);
-  return VALUE_EXCEPTIONS[ascii] ?? ascii;
+  return VALUE_EXCEPTIONS[ascii] ?? LEGACY_ALIASES[ascii] ?? ascii;
+}
+
+/**
+ * 표시 이름 — [견적 폼 value → 화면에 보이는 글자].
+ * value 는 기존 데이터(견적 payload·D1·가격 DB) 호환을 위해 고정하고, 사람이 보는 글자만 바꾼다.
+ */
+export const DISPLAY_LABELS = /** @type {Record<string, string>} */ ({
+  IGZO: 'InGaZnO',
+});
+
+/**
+ * 견적 폼 value → 화면 표기. 표시부에서만 쓴다(저장·비교·가격 매칭은 value 그대로).
+ * @param {string} value 예: 'IGZO'
+ * @returns {string} 예: 'InGaZnO'
+ */
+export function materialLabel(value) {
+  const v = String(value ?? '');
+  return Object.prototype.hasOwnProperty.call(DISPLAY_LABELS, v) ? DISPLAY_LABELS[v] : v;
+}
+
+/**
+ * 쉼표로 이어 저장된 value 목록("IGZO, ITO") → 각각 표시 이름으로. 표시부 전용.
+ * @param {unknown} list
+ * @returns {string}
+ */
+export function materialLabels(list) {
+  return String(list ?? '').split(/(\s*,\s*)/).map((t, i) => (i % 2 ? t : materialLabel(t))).join('');
 }
 
 /**

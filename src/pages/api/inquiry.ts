@@ -26,6 +26,7 @@ import { sendChat } from '../../lib/chat-send';
 import { runQuoteAck, ackPlanned } from '../../lib/quote-ack-run';
 // 담당자 알림 메일(접수 내용 전문 → 비밀값 INQUIRY_NOTIFY_TO) — 운영 빌드만 · 예외를 던지지 않는다.
 import { runStaffNotify } from '../../lib/staff-notify-run';
+import { materialLabels } from '../../lib/material-value.js';
 
 // 서버에서 온디맨드 실행 (정적 생성 금지)
 export const prerender = false;
@@ -296,7 +297,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   const scheduleStaff = () => {
     const staff = runStaffNotify({
       type, id, receivedKst, locale, origin: ackOrigin,
-      name, company, email, phone, productName, product, material, method, substrate, sampleCount,
+      name, company, email, phone, productName, product, material: materialLabels(material), method, substrate, sampleCount,
       waferLine, details, estimateLine, message,
     }).catch(() => undefined);
     pickWaitUntil(locals)?.(staff);

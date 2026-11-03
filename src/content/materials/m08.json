@@ -1,7 +1,8 @@
 {
   "system": "sputter",
   "category": "Oxide",
-  "formula": "IGZO",
+  "formula": "InGaZnO",
+  "aka": ["IGZO"],
   "order": 8,
   "home": 8,
   "name": "Indium Gallium Zinc Oxide",

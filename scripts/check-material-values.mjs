@@ -14,6 +14,7 @@
 //   ② 라이브러리 소재 중 옵션에 못 들어간 것 0
 //   ③ 파생 value 중복 없음 (같은 방식 안에서)
 //   ④ VALUE_EXCEPTIONS 에 죽은 항목 없음 (정규화만으로 충분한데 예외로 적어둔 것)
+//      + LEGACY_ALIASES(옛 링크 별칭): 현재 소재와 안 겹침 · 가리키는 value 가 옵션에 존재 · materialValue 가 그대로 반환
 //   ⑤ CTA↔필터 정합: 소재의 CTA 가 향하는 제품 페이지의 필터가 그 소재의 분류를 통과시킨다
 //   ⑥ Evaporator 전용(EVAPORATOR_ONLY): 라이브러리에 sputter 로 실재 · Sputter 선택지에 없음 ·
 //      프리필 규칙(formProcessFor)이 Evaporator 로 보냄 · 나머지 소재는 기본 공정 그대로
@@ -22,7 +23,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 // 파생에 쓰는 함수 그대로 가져온다 — 검증이 별도 규칙을 다시 구현하면 게이트가 아니라 사본이 된다.
-import { materialValue, materialSortKey, VALUE_EXCEPTIONS, CATEGORY_TO_PRODUCT, PRODUCT_MAT_FILTER, SYSTEM_TO_PROCESS, EVAPORATOR_ONLY, formProcessFor } from '../src/lib/material-value.js';
+import { materialValue, materialSortKey, VALUE_EXCEPTIONS, LEGACY_ALIASES, DISPLAY_LABELS, materialLabel, CATEGORY_TO_PRODUCT, PRODUCT_MAT_FILTER, SYSTEM_TO_PROCESS, EVAPORATOR_ONLY, formProcessFor } from '../src/lib/material-value.js';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const MAT_DIR = join(ROOT, 'src/content/materials');
@@ -110,6 +111,36 @@ const normalized = new Set(library.map((m) => m.formula.replace(/[₀-₉ₓ]/g,
 const deadExceptions = Object.keys(VALUE_EXCEPTIONS).filter((k) => !normalized.has(k));
 for (const key of deadExceptions) fail(`쓰이지 않는 예외: VALUE_EXCEPTIONS['${key}'] — 대응 소재가 라이브러리에 없다`);
 if (!deadExceptions.length) console.log(`  ✓ 예외표 ${Object.keys(VALUE_EXCEPTIONS).length}건 전부 실제 사용`);
+
+// ④-b 옛 링크 별칭 — 이미 나간 ?material= 링크 호환용. 현재 라이브러리에서는 나오지 않는 문자열이어야 한다.
+{
+  const optionValues = new Set([...Object.values(derived).flat(), ...evapRouted].map((m) => m.value));
+  const aliasEntries = Object.entries(LEGACY_ALIASES);
+  let aliasBad = 0;
+  for (const [key, target] of aliasEntries) {
+    if (normalized.has(key)) { fail(`옛 링크 별칭 '${key}' 가 현재 라이브러리 소재와 겹침 — VALUE_EXCEPTIONS 로 옮길 것`); aliasBad++; }
+    if (!optionValues.has(target)) { fail(`옛 링크 별칭 '${key}' → '${target}' 가 파생 옵션(Sputter/ALD/Evaporator)에 없음`); aliasBad++; }
+    if (materialValue(key) !== target) { fail(`materialValue('${key}') = '${materialValue(key)}' — 별칭 '${target}' 를 반환해야 함`); aliasBad++; }
+  }
+  if (!aliasBad) console.log(`  ✓ 옛 링크 별칭 ${aliasEntries.length}종(${aliasEntries.map(([k, v]) => `${k}→${v}`).join(', ')}) — 현재 옵션에 존재`);
+}
+
+// ④-c 표시 이름 — 화면 글자(label)는 라이브러리 표기(아래첨자만 ASCII 화한 formula) 그대로여야 하고,
+//      DISPLAY_LABELS 의 키는 실제 옵션 value 여야 한다(죽은 라벨 방지).
+{
+  const SUB = { '₀': '0', '₁': '1', '₂': '2', '₃': '3', '₄': '4', '₅': '5', '₆': '6', '₇': '7', '₈': '8', '₉': '9', 'ₓ': 'x' };
+  const ascii = (f) => f.replace(/[₀-₉ₓ]/g, (c) => SUB[c] ?? c);
+  const allValues = new Set([...Object.values(derived).flat(), ...evapRouted].map((m) => m.value));
+  let labelBad = 0;
+  for (const m of library) {
+    const got = materialLabel(materialValue(m.formula));
+    if (got !== ascii(m.formula)) { fail(`표시 이름 불일치: ${m.id} 라이브러리 '${m.formula}' → 화면 '${got}'`); labelBad++; }
+  }
+  for (const key of Object.keys(DISPLAY_LABELS)) {
+    if (!allValues.has(key)) { fail(`쓰이지 않는 표시 이름: DISPLAY_LABELS['${key}'] — 그 value 의 옵션이 없다`); labelBad++; }
+  }
+  if (!labelBad) console.log(`  ✓ 표시 이름 ${library.length}종 = 라이브러리 표기`);
+}
 
 // ⑤ CTA↔필터 정합 — "링크는 열리는데 프리필만 안 되는" 조합을 막는다.
 // 0907b 의 Si 가 그랬다: 분류가 Semiconductor 인데 금속 페이지 필터가 Metal 만 통과시켜

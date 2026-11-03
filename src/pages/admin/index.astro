@@ -16,6 +16,7 @@ import { summarizeRevisions } from '../../lib/quote-admin.js';
 import { MAIL_LIVE, gmailConfigured } from '../../lib/mail-send';
 import { pdfConfigured } from '../../lib/doc-pdf';
 import { ackLabel, isFreshPending } from '../../lib/quote-ack.js';
+import { materialLabels } from '../../lib/material-value.js';
 // 운영 설정 'PDF 첨부'(ack_pdf_attach) — 맨 위 확인 메일 줄 · 다시 보내기 확인창 문구
 import { settingDefaults } from '../../lib/site-settings.js';
 import { readSiteSettings } from '../../lib/site-settings-db';
@@ -189,7 +190,7 @@ const amountMismatch = (r: Row) => {
 
 const spec = (r: Row) =>
   [
-    r.material && `소재 ${r.material}`,
+    r.material && `소재 ${materialLabels(r.material)}`,
     r.method && `방식 ${r.method}`,
     r.substrate && `기판 ${r.substrate}`,
     // 두께·수량·납기는 지금 견적 폼에 없는 항목이라 뺐다(항상 비어 있었다)
@@ -705,7 +706,7 @@ const spec = (r: Row) =>
                   data-status={r.status}
                   data-ts={r.created_at}
                   data-amt={Number(r.quoted_amount) || 0}
-                  data-search={[r.id, r.name, r.company, r.email, r.phone, r.product_name, r.material].filter(Boolean).join(' ').toLowerCase()}>
+                  data-search={[r.id, r.name, r.company, r.email, r.phone, r.product_name, r.material, materialLabels(r.material)].filter(Boolean).join(' ').toLowerCase()}>
                   <div class="flex flex-wrap items-start justify-between gap-3">
                     <div class="min-w-0">
                       <div class="flex flex-wrap items-center gap-2">

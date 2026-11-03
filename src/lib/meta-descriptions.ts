@@ -16,8 +16,8 @@ const TEMPLATES: Record<string, Record<Loc, string>> = {
     en: 'Custom oxide thin-film deposition by sputtering and ALD — {oxides}. Silicon, oxide, glass and sapphire substrates from 2 to 6 inch; specify thickness, process sequence, annealing and analysis (XRD, SEM, TEM, XPS, AFM, electrical) and request a quote online. Small-batch R&D welcome.',
   },
   'product/nitrides': {
-    ko: '질화물 박막 맞춤 증착 서비스 — 스퍼터로 {nitrides} 박막을 증착합니다. 압전·강유전(AlScN), 초전도 단광자 검출기(NbN·NbTiN), 확산 방지·경질 코팅(TiN), 광도파로·패시베이션(SiNₓ) 용도. 2~6인치 기판, 두께·공정 순서·분석까지 지정해 온라인 견적을 요청하세요.',
-    en: 'Custom nitride thin-film deposition by sputtering — {nitrides}. Piezoelectric and ferroelectric (AlScN), superconducting single-photon detectors (NbN, NbTiN), diffusion barriers and hard coatings (TiN), waveguides and passivation (SiNₓ). Substrates 2–6 inch; specify thickness, sequence and analysis to request a quote.',
+    ko: '질화물 박막 맞춤 증착 서비스 — 스퍼터로 {nitrides} 박막을 증착합니다. 압전·강유전(AlScN), 초전도 단광자 검출기(NbN·NbTiN), 확산 방지·경질 코팅(TiN), 광도파로·패시베이션(SiN) 용도. 2~6인치 기판, 두께·공정 순서·분석까지 지정해 온라인 견적을 요청하세요.',
+    en: 'Custom nitride thin-film deposition by sputtering — {nitrides}. Piezoelectric and ferroelectric (AlScN), superconducting single-photon detectors (NbN, NbTiN), diffusion barriers and hard coatings (TiN), waveguides and passivation (SiN). Substrates 2–6 inch; specify thickness, sequence and analysis to request a quote.',
   },
   'product/metals': {
     ko: '금속 박막 맞춤 증착 서비스 — 스퍼터·증발·ALD로 {metals} 박막을 증착합니다. 전극·배선, 접착층, 확산 방지막, 촉매층, 수소 센서 용도. 2~6인치 기판, 두께·다층 순서·분석까지 지정해 온라인 견적을 요청하세요.',

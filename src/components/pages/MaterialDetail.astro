@@ -19,6 +19,9 @@ const displayName = isKo
   ? (d.name_ko ?? d.name ?? d.formula)
   : (d.name ?? d.formula);
 const desc = isKo ? (d.description_ko ?? d.description) : d.description;
+// 다른 이름(검색용) — 옛 표기·약칭. 화면 보조 줄·meta description·JSON-LD alternateName 에 쓴다.
+const aka = d.aka ?? [];
+const withAka = [d.formula, ...aka].join(', ');
 
 const catLabel = isKo
   ? { Oxide: '산화물', Nitride: '질화물', Metal: '금속', Semiconductor: '반도체' }
@@ -29,9 +32,9 @@ const sysLabel = d.system === 'ald' ? 'ALD' : 'PVD — Sputter & Evaporator';
 // → 제목과 기본 설명에 증착 방식을 넣어 구분한다. (실제로 9쌍 18페이지가 겹쳐 있었다)
 const sysShort = d.system === 'ald' ? 'ALD' : 'PVD';
 const metaTitle = `${displayName} (${sysShort}) | ${locale === 'ko' ? '반암(VanaM)' : 'VanaM'}`;
-const metaDesc = desc ?? (isKo
-  ? `${sysShort} 방식으로 증착하는 ${displayName}(${d.formula}) 박막 — VanaM 소재 라이브러리의 사양·측정 데이터.`
-  : `${displayName} (${d.formula}) thin film deposited by ${sysShort} — specifications and measured data from the VanaM materials library.`);
+const metaDesc = (desc && aka.length ? desc.replace(`(${d.formula})`, `(${withAka})`) : desc) ?? (isKo
+  ? `${sysShort} 방식으로 증착하는 ${displayName}(${withAka}) 박막 — VanaM 소재 라이브러리의 사양·측정 데이터.`
+  : `${displayName} (${withAka}) thin film deposited by ${sysShort} — specifications and measured data from the VanaM materials library.`);
 
 // 상세 이미지: 파일이 실제로 있을 때만 최적화 생성. 없으면 null → placeholder 표시.
 const matImages = import.meta.glob<{ default: ImageMetadata }>(
@@ -90,6 +93,7 @@ const t = {
   system: isKo ? '증착 방식' : 'Deposition',
   category: isKo ? '분류' : 'Category',
   formula: isKo ? '화학식' : 'Formula',
+  aka: isKo ? '다른 이름' : 'Also known as',
   imgSoon: isKo ? '상세 이미지 준비 중입니다.' : 'Detailed image coming soon.',
   descSoon: isKo ? '상세 설명이 곧 추가됩니다.' : 'A detailed description will be added soon.',
   cta: isKo ? '이 물질로 견적 문의' : 'Request a quote for this material',
@@ -117,7 +121,18 @@ const quoteHref = productId
       <div><span class="text-ink/45">{t.system}: </span><span class="text-ink/80">{sysLabel}</span></div>
       <div><span class="text-ink/45">{t.category}: </span><span class="text-ink/80">{catLabel[d.category]}</span></div>
       <div><span class="text-ink/45">{t.formula}: </span><span class="text-ink/80">{d.formula}</span></div>
+      {aka.length > 0 && <div><span class="text-ink/45">{t.aka}: </span><span class="text-ink/80">{aka.join(', ')}</span></div>}
     </div>
+    {aka.length > 0 && (
+      <script type="application/ld+json" is:inline set:html={JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'Thing',
+        name: d.formula,
+        alternateName: aka,
+        description: `${displayName} · ${sysShort}`,
+        url: new URL(Astro.url.pathname, Astro.site).href,
+      })} />
+    )}
 
     <!-- A4 사양 레이아웃 (PPT 이식) — 구조화 데이터가 있으면 슬라이드 구성 그대로,
          없으면 기존 이미지·설명 폴백 -->

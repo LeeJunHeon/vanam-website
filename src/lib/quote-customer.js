@@ -14,6 +14,7 @@
 // ⚠️ 엔진(computeQuote)과 USD 표기(formatUsd)는 인자로 받는다 — node 테스트가 빌드 없이 쓰기 위해.
 import { mapFormToQuote, conv, parseThickness, REASON, QuoteMapError } from './quote-map.js';
 import { SUBSTRATE_GRADES, GRADED_SUBSTRATES, displayName } from './quote-fields.js';
+import { materialLabel } from './material-value.js';
 
 /** 입력 오류 목록은 앞에서 이만큼만 돌려준다(단계가 아주 많은 요청에서 응답이 커지지 않게). */
 export const MAX_FORM_ERRORS = 30;
@@ -209,7 +210,7 @@ export function manualLabel(e, locale) {
     case 'samples': return T.manySamples(Number.isInteger(e.min) ? e.min : SAMPLE_MANUAL_MIN);
     case 'substrate': return T.substrate(...substrateParts(e, T));
     // 공정·분석 이름은 표시용 띄어쓰기(SheetResistance → Sheet Resistance) — 폼·요청서와 같은 함수
-    case 'step': return T.step(e.step, displayName(e.process), prettyFormula(e.material));
+    case 'step': return T.step(e.step, displayName(e.process), prettyFormula(materialLabel(e.material)));
     case 'measure': return T.measure(displayName(e.name));
     case 'pricing': return T.pricing;
     case 'size': return T.size;
@@ -234,7 +235,7 @@ export function manualLabelAdmin(e) {
     case 'samples': return T.manySamples(Number.isInteger(e.min) ? e.min : SAMPLE_MANUAL_MIN);
     case 'substrate':
       return `${T.substrate(...substrateParts(e, T))} — ${e.status === 'ambiguous' ? '같은 사양 원가가 다름' : '목록에 없음'}`;
-    case 'step': return `${T.step(e.step, displayName(e.process), prettyFormula(e.material))} — ${REASON[e.reason] ?? e.reason}`;
+    case 'step': return `${T.step(e.step, displayName(e.process), prettyFormula(materialLabel(e.material)))} — ${REASON[e.reason] ?? e.reason}`;
     case 'measure': return `${T.measure(displayName(e.name))} — 가격 자료 없음`;
     case 'pricing': return `${T.pricing} — 엔진 상태: ${e.engineStatus}`;
     case 'size':

@@ -23,6 +23,7 @@
 import { koreanAmount } from './quote-engine.js';
 // 공정·분석 이름 표시(붙여 쓴 영문에 띄어쓰기) — 폼·조회 화면과 같은 함수. 저장값은 그대로.
 import { displayName } from './quote-fields.js';
+import { materialLabel } from './material-value.js';
 
 export { koreanAmount };
 
@@ -527,7 +528,7 @@ function requestDocCore(a) {
       ...base, kind: 'process',
       qty: str(dj.sampleCount), delivery: deliveryMap[str(dj.delivery)] ?? str(dj.delivery), due: str(dj.completionDate),
       info,
-      steps: dj.seq.map((s) => ({ process: displayName(str(s?.process)), material: str(s?.material), value: stepValue(s), etc: str(s?.etc) })),
+      steps: dj.seq.map((s) => ({ process: displayName(str(s?.process)), material: materialLabel(str(s?.material)), value: stepValue(s), etc: str(s?.etc) })),
       items: [],
     };
   }
@@ -552,7 +553,7 @@ export function specFromDetails(a) {
   if (dj && Array.isArray(dj.seq) && dj.seq.length) {
     const size = (a.sizeMap ?? {})[str(dj.substrateSize)] ?? str(dj.substrateSize);
     const substrate = [str(dj.substrateType), size, str(dj.substrateGrade)].filter(Boolean).join(' / ');
-    const steps = dj.seq.map((s) => [displayName(str(s?.process)), str(s?.material), stepValue(s)].filter(Boolean).join(' '));
+    const steps = dj.seq.map((s) => [displayName(str(s?.process)), materialLabel(str(s?.material)), stepValue(s)].filter(Boolean).join(' '));
     return [...steps, substrate ? `${L.substrateShort}: ${substrate}` : ''].filter(Boolean).join('\n');
   }
   return str(a.fallback);

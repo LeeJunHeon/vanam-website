@@ -8,6 +8,7 @@
 // 여기서는 화면·네트워크를 만지지 않는다 — 문구·HTML 조립·판정만. 넣는 값은 전부 이스케이프한다.
 import { fillDays } from './reply-days.js';
 import { safeShort } from './safe-text.js';
+import { materialLabels } from './material-value.js';
 
 const esc = (v) =>
   String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -396,7 +397,7 @@ export function requestDocArgs(q, lang, date, maps) {
   return {
     lang, id: str(q?.id), draft: false, date,
     requester: { company: str(q?.company), name: str(q?.name), phone: str(q?.phone), email: str(q?.email) },
-    product: str(q?.product_name) || str(q?.material),
+    product: str(q?.product_name) || materialLabels(str(q?.material)),
     dj, detailsText: str(q?.details),
     sizeMap: maps.sizeMap, deliveryMap: maps.deliveryMap,
   };

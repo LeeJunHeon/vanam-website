@@ -598,6 +598,11 @@ export default config({
           ],
           defaultValue: 'Oxide',
         }),
+        aka: fields.array(fields.text({ label: '이름' }), {
+          label: '다른 이름(검색용)',
+          description: '선택 — 옛 표기·약칭. 상세 페이지·검색 설명·구조화 데이터에 함께 실립니다. 예: IGZO',
+          itemLabel: (props) => props.value,
+        }),
         name: fields.text({ label: '정식 명칭 (영문, 선택)', description: '예: Vanadium Dioxide — 비우면 화학식이 표시됩니다' }),
         name_ko: fields.text({ label: '정식 명칭 (한글, 선택)', description: '예: 이산화바나듐' }),
         image: fields.image({
