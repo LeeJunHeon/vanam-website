@@ -16,5 +16,11 @@
     "Substrate: Si (100)",
     "Thickness : 36.2 nm",
     "Applications : Display TFT Channels, Transparent Electronics, Thin-Film Sensors"
+  ],
+  "band2Title": "Target Specifications",
+  "band2Specs": [
+    "Target Material : Indium Gallium Zinc Oxide (IGZO)",
+    "Purity : 99.99%",
+    "Diameter : 3”"
   ]
 }

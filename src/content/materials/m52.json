@@ -16,5 +16,11 @@
     "Film Crystallinity : (100) single-oriented film",
     "RMS Roughness : 0.885 nm",
     "Applications : High-k Dielectrics, Epitaxial Buffer Layers, Tunable Capacitors, Cryogenic Electro-Optic Devices (Engineered Films)"
+  ],
+  "band2Title": "Target Specifications",
+  "band2Specs": [
+    "Target Material : Strontium titanate (STO)",
+    "Purity : 99.9%",
+    "Diameter : 3”"
   ]
 }

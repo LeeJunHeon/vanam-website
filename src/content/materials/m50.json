@@ -15,5 +15,11 @@
     "Extinction Coefficient (k) : < 1E-6 (@ 587 nm)",
     "Film Crystallinity : (100) single-oriented film",
     "Applications : Epitaxial Buffer Layers, Optical Coatings, Oxygen Sensors, Catalytic Layers"
+  ],
+  "band2Title": "Target Specifications",
+  "band2Specs": [
+    "Target Material : Cerium Oxide (CeO2)",
+    "Purity : 99.9%",
+    "Diameter : 2”"
   ]
 }
