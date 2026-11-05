@@ -7,6 +7,15 @@
   "name_ko": "금",
   "description": "Gold (Au) thin films deposited by sputtering and evaporation — used for contacts, plasmonics and mirror coatings. Targets: 99.99 %, 2 in.",
   "description_ko": "스퍼터링·증발 증착으로 형성하는 금(Au) 박막입니다. 전극·플라즈모닉스·미러 코팅에 활용됩니다. 타깃: 순도 99.99 %, 2 인치.",
+  "filmSpecs": [
+    "Film-coated by DC magnetron sputtering vacuum < 1.0 × 10⁻⁶ Torr",
+    "Substrate: Si (100)",
+    "Thickness : 96.5 nm",
+    "Film Resistivity : 6.36 µΩ·cm",
+    "Film Crystallinity : (220) oriented polycrystals",
+    "RMS Roughness : 0.713 nm",
+    "Applications : Electrodes and Interconnects, Wire Bonding, Plasmonic Devices, Biosensors"
+  ],
   "band2Title": "Target Specifications",
   "band2Specs": [
     "Target Material : Gold (Au)",

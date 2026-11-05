@@ -4,5 +4,11 @@
   "formula": "Nb",
   "order": 53,
   "name": "Niobium",
-  "name_ko": "나이오븀"
+  "name_ko": "나이오븀",
+  "band2Title": "Target Specifications",
+  "band2Specs": [
+    "Target Material : Niobium (Nb)",
+    "Purity : 99.95%",
+    "Diameter : 2”"
+  ]
 }

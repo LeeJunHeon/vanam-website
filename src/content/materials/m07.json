@@ -12,10 +12,11 @@
     "Film-coated by RF magnetron sputtering vacuum < 1.0 × 10⁻⁶ Torr",
     "Substrate: Si (100)",
     "Thickness : 125 nm",
-    "Sheet resistance: 44 Ω/sq  / Resistivity: 5.49E-06 Ω·m",
+    "Sheet resistance: 44 Ω/sq / Resistivity: 5.49E-06 Ω·m",
     "Transmittance: >90%",
-    "Refractive Index (n) : 1.991928 (@ 587 nm)",
-    "Extinction Coefficient (k) : 0.007197 (@ 587 nm)"
+    "Refractive Index (n) : 1.99 (@ 587 nm)",
+    "Extinction Coefficient (k) : < 0.01 (@ 587 nm)",
+    "Applications : Display and Touch Electrodes, Solar Cells, Transparent Heaters"
   ],
   "band2Title": "Target Specifications",
   "band2Specs": [

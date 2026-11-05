@@ -7,6 +7,15 @@
   "name_ko": "몰리브데넘",
   "description": "Molybdenum (Mo) thin films deposited by sputtering and evaporation — used for back contacts and refractory electrodes. Targets: 99.95 %, 2 in.",
   "description_ko": "스퍼터링·증발 증착으로 형성하는 몰리브데넘(Mo) 박막입니다. 후면 전극·내열 전극에 활용됩니다. 타깃: 순도 99.95 %, 2 인치.",
+  "filmSpecs": [
+    "Film-coated by DC magnetron sputtering vacuum < 1.0 × 10⁻⁶ Torr",
+    "Substrate: Si (100)",
+    "Thickness : 850 nm",
+    "Film Resistivity : 12 µΩ·cm",
+    "Film Crystallinity : (110) oriented polycrystals",
+    "RMS Roughness : 1.855 nm",
+    "Applications : Electrodes and Interconnects, TFT Backplanes, Solar-Cell Back Contacts"
+  ],
   "band2Title": "Target Specifications",
   "band2Specs": [
     "Target Material : Molybdenum (Mo)",
