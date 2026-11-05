@@ -1,0 +1,14 @@
+{
+  "system": "sputter",
+  "category": "Metal",
+  "formula": "β-W",
+  "order": 56,
+  "name": "Beta-Phase Tungsten",
+  "name_ko": "베타상 텅스텐",
+  "band2Title": "Target Specifications",
+  "band2Specs": [
+    "Target Material : Tungsten (W)",
+    "Purity : 99.95%",
+    "Diameter : 2”"
+  ]
+}

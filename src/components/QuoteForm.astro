@@ -541,8 +541,9 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
     gas: { en: 'Gases', ko: '가스' },
     // 0907b — 소재 라이브러리에서 파생하며 새로 들어온 분류(Si). 기존 그룹 순서는 건드리지 않고 뒤에 붙인다.
     Semiconductor: { en: 'Semiconductors', ko: '반도체' },
+    Multilayer: { en: 'Multilayers', ko: '다층막' },
   };
-  const CAT_ORDER = ['Oxide', 'Nitride', 'Metal', 'gas', 'Semiconductor'];
+  const CAT_ORDER = ['Oxide', 'Nitride', 'Metal', 'gas', 'Semiconductor', 'Multilayer'];
   const isKoDoc = () => (document.documentElement.lang || 'en') === 'ko';
 
   const form = document.getElementById("quote-form") as HTMLFormElement | null;

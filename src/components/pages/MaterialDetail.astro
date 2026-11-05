@@ -24,8 +24,8 @@ const aka = d.aka ?? [];
 const withAka = [d.formula, ...aka].join(', ');
 
 const catLabel = isKo
-  ? { Oxide: '산화물', Nitride: '질화물', Metal: '금속', Semiconductor: '반도체' }
-  : { Oxide: 'Oxide', Nitride: 'Nitride', Metal: 'Metal', Semiconductor: 'Semiconductor' };
+  ? { Oxide: '산화물', Nitride: '질화물', Metal: '금속', Semiconductor: '반도체', Multilayer: '다층막' }
+  : { Oxide: 'Oxide', Nitride: 'Nitride', Metal: 'Metal', Semiconductor: 'Semiconductor', Multilayer: 'Multilayer' };
 const sysLabel = d.system === 'ald' ? 'ALD' : 'PVD — Sputter & Evaporator';
 // 같은 물질을 PVD·ALD 두 방식으로 각각 제공한다(예: TiO₂ = m03 sputter / m30 ald).
 // 본문은 사양이 완전히 다르지만 제목·설명이 똑같으면 검색엔진이 중복 문서로 본다.
@@ -146,7 +146,7 @@ const quoteHref = productId
         </div>
 
         <div class="mt-6">
-          <p class="v-badge">Thin-Film Specifications</p>
+          {((d.filmSpecs?.length ?? 0) + figImgs.length) > 0 && <p class="v-badge">Thin-Film Specifications</p>}
           {figImgs.length > 0 && (
             <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {figImgs.map((g, i) => (

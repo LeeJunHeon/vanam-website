@@ -22,7 +22,8 @@ import {
 // 물질의 소재 분류. 제품(Oxides/Nitrides/Metals)에 맞는 물질만 보여주는 데 쓴다.
 // 'gas' 는 플라즈마 공정의 가스라 분류와 무관하게 항상 노출.
 // 'Semiconductor' 는 라이브러리 분류(Si)를 그대로 받은 것 — content.config.ts 의 category enum 과 같다.
-export type MatCat = 'Oxide' | 'Nitride' | 'Metal' | 'Semiconductor' | 'gas';
+// 'Multilayer' 는 다층막(OMO) 분류 — 제품 페이지 multilayers 는 필터가 null(전체 노출)이다.
+export type MatCat = 'Oxide' | 'Nitride' | 'Metal' | 'Semiconductor' | 'Multilayer' | 'gas';
 
 export type ProcessDef = {
   name: string;

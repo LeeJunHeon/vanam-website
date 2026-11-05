@@ -31,8 +31,8 @@ const ald = groupBySystem(allMaterials, 'ald');
 
 // 소재 카테고리 라벨 (표시용) — 로직(enum)은 그대로, 표시만 locale별.
 const catLabel = locale === 'ko'
-  ? { Oxide: '산화물', Nitride: '질화물', Metal: '금속', Semiconductor: '반도체' }
-  : { Oxide: 'Oxide', Nitride: 'Nitride', Metal: 'Metal', Semiconductor: 'Semiconductor' };
+  ? { Oxide: '산화물', Nitride: '질화물', Metal: '금속', Semiconductor: '반도체', Multilayer: '다층막' }
+  : { Oxide: 'Oxide', Nitride: 'Nitride', Metal: 'Metal', Semiconductor: 'Semiconductor', Multilayer: 'Multilayer' };
 
 // ── 물질 상세 팝업(모달)용 데이터 ──────────────────────────
 //   배지를 누르면 페이지 이동 대신 모달로 표시한다.
@@ -267,7 +267,7 @@ const materialsLd = {
                 <h3 class="text-xl font-bold text-ink">Specifications</h3>
               </div>
 
-              <p class="mt-4 inline-flex items-center gap-2 rounded-md border border-accent/30 bg-accent/[0.08] px-3 py-1 text-[13px] font-bold text-accent">Thin-Film Specifications</p>
+              {(p.filmSpecs.length + p.figs.length) > 0 && <p class="mt-4 inline-flex items-center gap-2 rounded-md border border-accent/30 bg-accent/[0.08] px-3 py-1 text-[13px] font-bold text-accent">Thin-Film Specifications</p>}
               {p.figs.length > 0 && (
                 <div class={'mt-3 grid grid-cols-2 gap-2 ' + (p.figs.length <= 2 ? 'sm:grid-cols-2' : 'sm:grid-cols-3')}>
                   {p.figs.map((g, i) => (

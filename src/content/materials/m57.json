@@ -1,0 +1,21 @@
+{
+  "system": "sputter",
+  "category": "Multilayer",
+  "formula": "OMO",
+  "order": 57,
+  "name": "Oxide-Metal-Oxide",
+  "name_ko": "산화물-금속-산화물",
+  "filmSpecs": [
+    "Film-coated by RF magnetron sputtering vacuum < 1.0 × 10⁻⁶ Torr",
+    "Substrate: PET, glass",
+    "Film Sheet Resistance : 3~7 Ω/sq",
+    "Transmittance : 70 ~ 86 %",
+    "Applications : Transparent Electrodes, Flexible Displays, Transparent Heaters, Photovoltaics"
+  ],
+  "band2Title": "Target Specifications",
+  "band2Specs": [
+    "Optically high grade PET & glass",
+    "Oxide target — Purity : 99.99% · Diameter : 3”",
+    "Metal target — Purity : 99.99% · Diameter : 3”"
+  ]
+}

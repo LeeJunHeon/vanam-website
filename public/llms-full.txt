@@ -25,7 +25,8 @@ Special thin films and process conditions unavailable in conventional fabs — a
 - PVD / Sputter & Evaporator:
   - Oxide: VO2, V2O5, TiO2, Ta2O5, HfO2, ZnO, ITO, InGaZnO (IGZO)
   - Nitride: TiN, AlN, AlScN, SiN (SiNx)
-  - Metal: Au, Pt, Ag, Al, Ti, Cr, Ni, Bi, Mo, Hf, Sc, W, Nb, V
+  - Metal: Au, Pt, Ag, Al, Ti, Cr, Ni, Bi, Mo, Hf, Sc, α-W, β-W, Ta, Nb, V
+  - Multilayer: OMO
 - ALD:
   - Oxide: Al2O3, HfO2, ZrO2, HZO, ZnO, TiO2, In2O3, Ga2O3, SnO2, SnO
   - Metal: Pt, Ru

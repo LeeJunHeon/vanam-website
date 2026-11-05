@@ -84,7 +84,7 @@ const materials = defineCollection({
   loader: glob({ pattern: '*.json', base: './src/content/materials' }),
   schema: z.object({
     system: z.enum(['sputter', 'ald']),  // sputter = PVD(Sputter & Evaporator)
-    category: z.enum(['Oxide', 'Nitride', 'Metal', 'Semiconductor']),
+    category: z.enum(['Oxide', 'Nitride', 'Metal', 'Semiconductor', 'Multilayer']),
     formula: z.string(),
     aka: opt(z.array(z.string())),       // 다른 이름(검색용) — 예: InGaZnO 의 옛 표기 IGZO
     order: z.number(),                   // technology 그룹 내 표시 순서
