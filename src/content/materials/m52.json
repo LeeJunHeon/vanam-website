@@ -7,6 +7,13 @@
   "name_ko": "티탄산 스트론튬",
   "description": "Strontium titanate (SrTiO₃) thin films by RF magnetron sputtering (vacuum < 1.0 × 10⁻⁶ Torr, Si (100) and sapphire). A 108.8 nm film grows as a (100) single-oriented film with RMS roughness of 0.885 nm and n = 2.04 @ 587 nm — suited to high-k dielectrics, epitaxial buffer layers, tunable capacitors and cryogenic electro-optic devices (engineered films).",
   "description_ko": "RF 마그네트론 스퍼터링(1.0 × 10⁻⁶ Torr 이하, Si (100)·사파이어 기판)으로 증착하는 티타늄산 스트론튬(SrTiO₃) 박막입니다. 108.8 nm 막은 (100) 단일 배향으로 성장하며 RMS 거칠기 0.885 nm, 굴절률 2.04 @ 587 nm로 고유전(high-k) 절연막·에피택셜 버퍼층·가변 커패시터·극저온 전기광학 소자(설계된 박막)에 적합합니다.",
+  "figs": [
+    "fig-1.webp",
+    "fig-2.webp",
+    "fig-3.webp",
+    "fig-4.webp",
+    "fig-5.webp"
+  ],
   "filmSpecs": [
     "Film-coated by RF magnetron sputtering vacuum < 1.0 × 10⁻⁶ Torr",
     "Substrate: Si (100), Sapphire",
@@ -18,6 +25,7 @@
     "Applications : High-k Dielectrics, Epitaxial Buffer Layers, Tunable Capacitors, Cryogenic Electro-Optic Devices (Engineered Films)"
   ],
   "band2Title": "Target Specifications",
+  "targetImg": "target.webp",
   "band2Specs": [
     "Target Material : Strontium titanate (STO)",
     "Purity : 99.9%",

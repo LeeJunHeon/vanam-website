@@ -7,6 +7,9 @@
   "name_ko": "산화 인듐",
   "description": "Indium oxide (In₂O₃) thin films by RF magnetron sputtering (vacuum < 1.0 × 10⁻⁶ Torr, Si (100)). A 98.47 nm film shows n = 2.03 @ 587 nm with extinction below 1E-6 — used for transparent conductive electrodes, oxide TFT channels and gas sensors. Targets: 99.99 %, 3 in.",
   "description_ko": "RF 마그네트론 스퍼터링(1.0 × 10⁻⁶ Torr 이하, Si (100))으로 증착하는 산화 인듐(In₂O₃) 박막입니다. 98.47 nm 막 기준 굴절률 2.03 @ 587 nm, 소광계수 1E-6 미만으로 투명 전도 전극·산화물 TFT 채널·가스 센서에 활용됩니다. 타깃: 순도 99.99 %, 3인치.",
+  "figs": [
+    "fig-1.webp"
+  ],
   "filmSpecs": [
     "Film-coated by RF magnetron sputtering under vacuum < 1.0 × 10⁻⁶ Torr",
     "Substrate: Si (100)",
@@ -16,6 +19,7 @@
     "Applications : Transparent Conductive Electrodes, Oxide TFT Channels, Gas Sensors"
   ],
   "band2Title": "Target Specifications",
+  "targetImg": "target.webp",
   "band2Specs": [
     "Target Material : Indium Oxide",
     "Purity : 99.99%",

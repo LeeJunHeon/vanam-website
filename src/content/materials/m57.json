@@ -12,6 +12,26 @@
     "Transmittance : 70 ~ 86 %",
     "Applications : Transparent Electrodes, Flexible Displays, Transparent Heaters, Photovoltaics"
   ],
+  "figs": [
+    "fig-1.webp",
+    "fig-2.webp",
+    "fig-3.webp"
+  ],
+  "figCaptions": {
+    "fig-1.webp": "Oxide",
+    "fig-2.webp": "Metal",
+    "fig-3.webp": "Thin Film"
+  },
+  "targetImgs": [
+    {
+      "file": "target-oxide.webp",
+      "label": "Oxide Target"
+    },
+    {
+      "file": "target-metal.webp",
+      "label": "Metal Target"
+    }
+  ],
   "band2Title": "Target Specifications",
   "band2Specs": [
     "Optically high grade PET & glass",

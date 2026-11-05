@@ -13,6 +13,7 @@
     "Applications : Diffusion Barriers, Electrodes, Thin-Film Resistors, Capacitor Anodes"
   ],
   "band2Title": "Target Specifications",
+  "targetImg": "target.webp",
   "band2Specs": [
     "Target Material : Tantalum (Ta)",
     "Purity : 99.99%",

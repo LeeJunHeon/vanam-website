@@ -18,6 +18,7 @@
     "Applications : Display TFT Channels, Transparent Electronics, Thin-Film Sensors"
   ],
   "band2Title": "Target Specifications",
+  "targetImg": "target.webp",
   "band2Specs": [
     "Target Material : Indium Gallium Zinc Oxide (IGZO)",
     "Purity : 99.99%",
