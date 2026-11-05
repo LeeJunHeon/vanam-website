@@ -1,27 +1,23 @@
+# robots.txt for https://vanam.co.kr
+# One shared rule set for every crawler (search engines and AI crawlers),
+# so the Disallow lines below always apply to all of them.
+
 User-agent: *
+User-agent: GPTBot
+User-agent: OAI-SearchBot
+User-agent: ChatGPT-User
+User-agent: ClaudeBot
+User-agent: Claude-SearchBot
+User-agent: PerplexityBot
+User-agent: Google-Extended
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
 Allow: /
 Disallow: /admin
 Disallow: /keystatic
 Disallow: /api/
 
-# AI 크롤러 명시 허용 (AEO/GEO)
-User-agent: GPTBot
-Allow: /
-User-agent: OAI-SearchBot
-Allow: /
-User-agent: ChatGPT-User
-Allow: /
-User-agent: ClaudeBot
-Allow: /
-User-agent: Claude-SearchBot
-Allow: /
-User-agent: PerplexityBot
-Allow: /
-User-agent: Google-Extended
-Allow: /
-
-# AI 컨텍스트 파일 (GEO/AEO)
-# llms: https://vanam.co.kr/llms.txt
-# llms-full: https://vanam.co.kr/llms-full.txt
+# AI-readable site summaries
+# https://vanam.co.kr/llms.txt
+# https://vanam.co.kr/llms-full.txt
 
 Sitemap: https://vanam.co.kr/sitemap-index.xml
