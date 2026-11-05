@@ -1,0 +1,22 @@
+{
+  "system": "sputter",
+  "category": "Metal",
+  "formula": "Ta",
+  "order": 55,
+  "name": "Tantalum",
+  "name_ko": "탄탈럼",
+  "filmSpecs": [
+    "Film-coated by DC magnetron sputtering vacuum < 1.0 × 10⁻⁶ Torr",
+    "Substrate: Si (100)",
+    "Thickness : 35.92 nm",
+    "Film Resistivity : 203 µΩ·cm",
+    "Applications : Diffusion Barriers, Electrodes, Thin-Film Resistors, Capacitor Anodes"
+  ],
+  "band2Title": "Target Specifications",
+  "targetImg": "target.webp",
+  "band2Specs": [
+    "Target Material : Tantalum (Ta)",
+    "Purity : 99.99%",
+    "Diameter : 3”"
+  ]
+}

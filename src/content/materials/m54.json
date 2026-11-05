@@ -4,5 +4,11 @@
   "formula": "V",
   "order": 54,
   "name": "Vanadium",
-  "name_ko": "바나듐"
+  "name_ko": "바나듐",
+  "band2Title": "Target Specifications",
+  "band2Specs": [
+    "Target Material : Vanadium (V)",
+    "Purity : 99.95%",
+    "Diameter : 2”"
+  ]
 }

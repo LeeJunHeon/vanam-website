@@ -4,7 +4,7 @@
 //   ⚠️ 상세 이미지·설명은 추후 제공 예정 → 지금은 "준비 중" placeholder 로 처리해
 //      콘텐츠가 비어도 페이지가 깨지지 않게 한다. (image 필드가 채워지면 자동으로 이미지 노출)
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { getImage } from 'astro:assets';
+import { materialImage } from '../../lib/material-image';
 import type { ImageMetadata } from 'astro';
 // 견적 폼으로 넘길 ?material= 문자열은 이 함수 하나로만 만든다 (폼 옵션 파생과 같은 규칙)
 import { quoteParams, CATEGORY_TO_PRODUCT } from '../../lib/material-value.js';
@@ -24,8 +24,8 @@ const aka = d.aka ?? [];
 const withAka = [d.formula, ...aka].join(', ');
 
 const catLabel = isKo
-  ? { Oxide: '산화물', Nitride: '질화물', Metal: '금속', Semiconductor: '반도체' }
-  : { Oxide: 'Oxide', Nitride: 'Nitride', Metal: 'Metal', Semiconductor: 'Semiconductor' };
+  ? { Oxide: '산화물', Nitride: '질화물', Metal: '금속', Semiconductor: '반도체', Multilayer: '다층막' }
+  : { Oxide: 'Oxide', Nitride: 'Nitride', Metal: 'Metal', Semiconductor: 'Semiconductor', Multilayer: 'Multilayer' };
 const sysLabel = d.system === 'ald' ? 'ALD' : 'PVD — Sputter & Evaporator';
 // 같은 물질을 PVD·ALD 두 방식으로 각각 제공한다(예: TiO₂ = m03 sputter / m30 ald).
 // 본문은 사양이 완전히 다르지만 제목·설명이 똑같으면 검색엔진이 중복 문서로 본다.
@@ -40,10 +40,10 @@ const metaDesc = (desc && aka.length ? desc.replace(`(${d.formula})`, `(${withAk
 const matImages = import.meta.glob<{ default: ImageMetadata }>(
   '/src/assets/materials/**/*.{png,jpg,jpeg,webp,avif}',
 );
-let detailImg: Awaited<ReturnType<typeof getImage>> | null = null;
+let detailImg: ReturnType<typeof materialImage> | null = null;
 if (d.image && matImages[d.image]) {
   const mod = await matImages[d.image]();
-  detailImg = await getImage({ src: mod.default, width: 1200, format: 'webp', quality: 90 });
+  detailImg = materialImage(mod.default);
 }
 
 // ── A4 사양 레이아웃 자산 (materials/<id>/fig-*.webp, target.webp) ──
@@ -52,7 +52,7 @@ async function resolveAsset(name: string) {
   const key = `${matDir}/${name}`;
   if (!matImages[key]) return null;
   const mod = await matImages[key]();
-  return await getImage({ src: mod.default, width: 900, format: 'webp', quality: 88 });
+  return materialImage(mod.default);
 }
 // 도판 캡션: figCaptions 맵(파일명 → 영어 한 줄)에서 찾는다. 없는 소재는 undefined → 캡션 없이 지금과 동일.
 // ⚠️ 한글 페이지도 같은 영어 캡션을 쓴다 — 바로 아래 사양 목록이 이미 영어라 섞이면 더 어색하다.
@@ -146,7 +146,7 @@ const quoteHref = productId
         </div>
 
         <div class="mt-6">
-          <p class="v-badge">Thin-Film Specifications</p>
+          {((d.filmSpecs?.length ?? 0) + figImgs.length) > 0 && <p class="v-badge">Thin-Film Specifications</p>}
           {figImgs.length > 0 && (
             <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {figImgs.map((g, i) => (

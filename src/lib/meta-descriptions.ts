@@ -35,8 +35,8 @@ const TEMPLATES: Record<string, Record<Loc, string>> = {
     en: 'Semiconductor wafers for sale — 4-inch (Test) and 6-inch (Prime/Test) p-type boron silicon, oxide-coated silicon (300 nm SiO₂) in 4 and 6 inch, and 2-inch sapphire, sold per box of 25. Check prices and order online; dicing available for the silicon and oxide wafers.',
   },
   materials: {
-    ko: '반암 박막 소재 라이브러리 — 스퍼터·ALD로 증착하는 소재 {count}종의 사양·측정 데이터. 산화물({oxides}), 질화물({nitrides}), 금속({metals}). XRD·SEM·TEM·전기 특성과 타겟·전구체 정보를 확인하고 바로 견적을 요청하세요.',
-    en: 'VanaM thin-film materials library — specifications and measurement data for {count} materials deposited by sputtering and ALD: oxides ({oxides}), nitrides ({nitrides}), metals ({metals}). XRD, SEM, TEM, electrical data, target and precursor specs; request a quote directly.',
+    ko: '반암 박막 소재 라이브러리 — 스퍼터·ALD로 증착하는 소재 {count}종의 사양·측정 데이터. 산화물({oxides}), 질화물({nitrides}), 금속({metals}), 다층막({multilayers}). XRD·SEM·TEM·전기 특성과 타겟·전구체 정보를 확인하고 바로 견적을 요청하세요.',
+    en: 'VanaM thin-film materials library — specifications and measurement data for {count} materials deposited by sputtering and ALD: oxides ({oxides}), nitrides ({nitrides}), metals ({metals}), multilayers ({multilayers}). XRD, SEM, TEM, electrical data, target and precursor specs; request a quote directly.',
   },
   contact: {
     ko: '박막 증착·분석 의뢰, 웨이퍼 구매, 협업 문의를 남겨 주세요. 서울 도심형 마이크로 파운드리 반암(VanaM)의 담당자가 확인 후 회신합니다.',
@@ -63,6 +63,7 @@ export async function metaDescriptionFor(key: string, locale: string): Promise<s
     .replaceAll('{oxides}', joinFormulas(m.oxides))
     .replaceAll('{nitrides}', joinFormulas(m.nitrides))
     .replaceAll('{metals}', metalsWithSi)
+    .replaceAll('{multilayers}', joinFormulas(m.multilayers))
     .replaceAll('{count}', String(m.total));
 }
 

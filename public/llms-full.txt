@@ -21,13 +21,15 @@ Team: Ph.D.-level semiconductor researchers, IP & patent attorneys, and facility
 PVD (Sputter, Evaporator), ALD, PLD, MOCVD. Process big-data collection is also available.
 
 ## Materials library
-Special thin films and process conditions unavailable in conventional fabs — across oxides, nitrides, and metals (산화물·질화물·금속).
+Special thin films and process conditions unavailable in conventional fabs — across oxides, nitrides, metals, semiconductors, and multilayers (산화물·질화물·금속·반도체·다층막).
 - PVD / Sputter & Evaporator:
-  - Oxide: VO2, V2O5, TiO2, Ta2O5, HfO2, ZnO, ITO, InGaZnO (IGZO)
-  - Nitride: TiN, AlN, AlScN, SiN (SiNx)
-  - Metal: Au, Pt, Ag, Al, Ti, Cr, Ni, Bi, Mo, Hf, Sc, W, Nb, V
+  - Oxide: VO2, V2O5, TiO2, Ta2O5, HfO2, ZnO, ITO, InGaZnO (IGZO), Al2O3, Ga2O3, In2O3, NiO, SiO2, SnO2, CeO2, BaTiO3, SrTiO3
+  - Nitride: TiN, AlN, AlScN, SiN (SiNx), NbN, NbTiN
+  - Metal: Au, Pt, Ag, Al, Ti, Cr, Ni, Bi, Mo, Hf, Sc, Pd, Rh, Te, α-W, β-W, Ta, Nb, V
+  - Semiconductor: Si
+  - Multilayer: OMO
 - ALD:
-  - Oxide: Al2O3, HfO2, ZrO2, HZO, ZnO, TiO2, In2O3, Ga2O3, SnO2, SnO
+  - Oxide: Al2O3, HfO2, ZrO2, HZO, ZnO, TiO2, In2O3, Ga2O3, SnO2, SnO, SiO2
   - Metal: Pt, Ru
 
 ## Services

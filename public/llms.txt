@@ -12,8 +12,8 @@ Site languages: English (default) and Korean (한국어, under /ko). Full-contex
 
 ## Deposition & materials capability
 - Methods: PVD (Sputter, Evaporator), ALD, PLD, MOCVD.
-- Sputter oxides: VO2, V2O5, TiO2, Ta2O5, HfO2, ZnO, ITO, InGaZnO (IGZO). Nitrides: TiN, AlN, AlScN, SiN (SiNx). Metals: Au, Pt, Ag, Al, Ti, Cr, Ni, Bi, Mo, Hf, Sc, W, Nb, V.
-- ALD oxides: Al2O3, HfO2, ZrO2, HZO, ZnO, TiO2, In2O3, Ga2O3, SnO2, SnO. Metals: Pt, Ru.
+- Sputter oxides: VO2, V2O5, TiO2, Ta2O5, HfO2, ZnO, ITO, InGaZnO (IGZO), Al2O3, Ga2O3, In2O3, NiO, SiO2, SnO2, CeO2, BaTiO3, SrTiO3. Nitrides: TiN, AlN, AlScN, SiN (SiNx), NbN, NbTiN. Metals: Au, Pt, Ag, Al, Ti, Cr, Ni, Bi, Mo, Hf, Sc, Pd, Rh, Te, α-W, β-W, Ta, Nb, V. Semiconductor: Si. Multilayer: OMO.
+- ALD oxides: Al2O3, HfO2, ZrO2, HZO, ZnO, TiO2, In2O3, Ga2O3, SnO2, SnO, SiO2. Metals: Pt, Ru.
 
 ## Services
 - Customized thin-film deposition service (증착 서비스).

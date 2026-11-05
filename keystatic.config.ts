@@ -595,6 +595,7 @@ export default config({
             { label: 'Oxide (산화물)', value: 'Oxide' },
             { label: 'Nitride (질화물)', value: 'Nitride' },
             { label: 'Metal (금속)', value: 'Metal' },
+            { label: 'Multilayer (다층막)', value: 'Multilayer' },
           ],
           defaultValue: 'Oxide',
         }),

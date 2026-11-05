@@ -23,7 +23,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 // 파생에 쓰는 함수 그대로 가져온다 — 검증이 별도 규칙을 다시 구현하면 게이트가 아니라 사본이 된다.
-import { materialValue, materialSortKey, VALUE_EXCEPTIONS, LEGACY_ALIASES, DISPLAY_LABELS, materialLabel, CATEGORY_TO_PRODUCT, PRODUCT_MAT_FILTER, SYSTEM_TO_PROCESS, EVAPORATOR_ONLY, formProcessFor } from '../src/lib/material-value.js';
+import { materialValue, materialSortKey, VALUE_EXCEPTIONS, MERGED_FORMS, LEGACY_ALIASES, DISPLAY_LABELS, materialLabel, CATEGORY_TO_PRODUCT, PRODUCT_MAT_FILTER, SYSTEM_TO_PROCESS, EVAPORATOR_ONLY, formProcessFor } from '../src/lib/material-value.js';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const MAT_DIR = join(ROOT, 'src/content/materials');
@@ -87,7 +87,9 @@ for (const [proc, values] of Object.entries(BASELINE)) {
 }
 
 // ② 라이브러리 소재 중 옵션 누락
-const optioned = new Set([...Object.values(derived).flat(), ...evapRouted].filter((m) => !m.dup).map((m) => m.id));
+// 중복으로 표시됐어도 MERGED_FORMS 에 명시 등록된 표기는 같은 value 의 선택지로 흡수된 것이다(예: β-W → W).
+const mergedFormulas = new Set(Object.values(MERGED_FORMS).flat());
+const optioned = new Set([...Object.values(derived).flat(), ...evapRouted].filter((m) => !m.dup || mergedFormulas.has(m.formula)).map((m) => m.id));
 // 폼에 대응 공정이 없는 system 이 라이브러리에 생기면(예: evaporator 를 별도 system 으로 추가) 여기서 멈춘다.
 const orphanSystems = [...new Set(library.map((m) => m.system))].filter((s) => !Object.values(SYSTEMS).includes(s));
 if (orphanSystems.length) fail(`라이브러리에 대응 폼 공정이 없는 system: ${orphanSystems.join(', ')}`);
@@ -100,8 +102,19 @@ if (notInOptions.length) {
 }
 
 // ③ 같은 방식 안 중복
+// 단, MERGED_FORMS 에 "여러 표기 → 한 value" 로 명시 등록한 묶음은 허용한다(그 외 중복은 그대로 실패).
+for (const [value, forms] of Object.entries(MERGED_FORMS)) {
+  const inLib = library.filter((m) => m.system === 'sputter' || m.system === 'ald')
+    .filter((m) => materialValue(m.formula) === value);
+  const libForms = new Set(inLib.map((m) => m.formula));
+  const missing = forms.filter((f) => !libForms.has(f));
+  const unregistered = [...libForms].filter((f) => !forms.includes(f));
+  if (missing.length) fail(`MERGED_FORMS['${value}'] 에 등록됐지만 라이브러리에 없는 표기: ${missing.join(', ')}`);
+  if (unregistered.length) fail(`'${value}' 로 묶이는데 MERGED_FORMS 에 등록되지 않은 표기: ${unregistered.join(', ')}`);
+  for (const f of forms) if (materialValue(f) !== value) fail(`MERGED_FORMS: materialValue('${f}') = '${materialValue(f)}' ≠ '${value}'`);
+}
 for (const [proc, list] of Object.entries(derived)) {
-  const dups = list.filter((m) => m.dup);
+  const dups = list.filter((m) => m.dup && !mergedFormulas.has(m.formula));
   if (dups.length) fail(`${proc}: 화학식 중복 → ${dups.map((m) => `${m.id}/${m.formula}`).join(', ')}`);
 }
 
@@ -134,7 +147,9 @@ if (!deadExceptions.length) console.log(`  ✓ 예외표 ${Object.keys(VALUE_EXC
   let labelBad = 0;
   for (const m of library) {
     const got = materialLabel(materialValue(m.formula));
-    if (got !== ascii(m.formula)) { fail(`표시 이름 불일치: ${m.id} 라이브러리 '${m.formula}' → 화면 '${got}'`); labelBad++; }
+    // 묶음(MERGED_FORMS)의 표기는 폼에서 value 그대로(예: α-W·β-W → W) 보인다.
+    const want = mergedFormulas.has(m.formula) ? materialValue(m.formula) : ascii(m.formula);
+    if (got !== want) { fail(`표시 이름 불일치: ${m.id} 라이브러리 '${m.formula}' → 화면 '${got}'`); labelBad++; }
   }
   for (const key of Object.keys(DISPLAY_LABELS)) {
     if (!allValues.has(key)) { fail(`쓰이지 않는 표시 이름: DISPLAY_LABELS['${key}'] — 그 value 의 옵션이 없다`); labelBad++; }

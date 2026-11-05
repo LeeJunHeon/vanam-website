@@ -28,6 +28,19 @@ const SUBSCRIPTS = /** @type {Record<string, string>} */ ({
  */
 export const VALUE_EXCEPTIONS = /** @type {Record<string, string>} */ ({
   InGaZnO: 'IGZO',
+  // 상(相)이 다른 텅스텐 — 화면 표기는 α-W·β-W 지만 견적 폼에서는 기존 value 'W' 하나로 받는다.
+  'α-W': 'W',
+  'β-W': 'W',
+});
+
+/**
+ * 여러 라이브러리 표기가 하나의 견적 value 로 묶이는 경우 — [value → 묶이는 라이브러리 표기들].
+ * 같은 방식(system) 안에서 value 가 겹치는 것은 원래 오류(검사 ③)지만, 여기에 명시한 묶음만 허용한다.
+ * 폼 선택지는 value 하나(예: 'W')만 나오고, 라이브러리 CTA 는 모두 ?material=<value> 로 프리필한다.
+ * 검사 스크립트가 "등록된 표기가 라이브러리에 실재 · value 로 정확히 정규화 · 등록 밖의 중복 없음" 을 확인한다.
+ */
+export const MERGED_FORMS = /** @type {Record<string, string[]>} */ ({
+  W: ['α-W', 'β-W'],
 });
 
 /**
@@ -161,6 +174,7 @@ export const CATEGORY_TO_PRODUCT = /** @type {Record<string, string>} */ ({
   Nitride: 'nitrides',
   Metal: 'metals',
   Semiconductor: 'metals',
+  Multilayer: 'multilayers',
 });
 
 /**
