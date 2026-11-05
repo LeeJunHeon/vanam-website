@@ -8,6 +8,7 @@ import { materialImage } from '../../lib/material-image';
 import type { ImageMetadata } from 'astro';
 // 견적 폼으로 넘길 ?material= 문자열은 이 함수 하나로만 만든다 (폼 옵션 파생과 같은 규칙)
 import { quoteParams, CATEGORY_TO_PRODUCT } from '../../lib/material-value.js';
+import { materialNodes, abs } from '../../lib/structured-data';
 
 const { material } = Astro.props;
 const d = material.data;
@@ -105,6 +106,36 @@ const productId = CATEGORY_TO_PRODUCT[d.category] ?? null;
 const quoteHref = productId
   ? (isKo ? `/ko/product/${productId}/` : `/product/${productId}/`) + quoteParams(d.system, d.formula)
   : (isKo ? '/ko/contact/' : '/contact/');
+
+// ── 구조화 데이터: 위에서 화면에 쓰는 변수(displayName·desc·aka·sysLabel·figImgs·sideImgs·filmSpecs·band2Specs)로만 만든다 ──
+const pageUrl = new URL(Astro.url.pathname, Astro.site).href;
+const ldImages = hasA4
+  ? [
+      ...figImgs.map((g) => ({ url: abs(g.src), caption: g.caption })),
+      ...sideImgs.map((tg) => ({ url: abs(tg.src), caption: tg.label })),
+    ]
+  : detailImg
+    ? [{ url: abs(detailImg.src) }]
+    : [];
+const ldSections = hasA4
+  ? [
+      { title: 'Thin-Film Specifications', rows: d.filmSpecs ?? [] },
+      { title: d.band2Title ?? 'Target Specifications', rows: d.band2Specs ?? [] },
+    ].filter((x) => x.rows.length > 0)
+  : [];
+const ld = materialNodes({
+  isKo,
+  pageUrl,
+  homeUrl: new URL(isKo ? '/ko/' : '/', Astro.site).href,
+  materialsUrl: new URL(backHref, Astro.site).href,
+  displayName,
+  formula: d.formula,
+  aka,
+  category: sysLabel,
+  desc,
+  images: ldImages,
+  sections: ldSections,
+});
 ---
 
 <BaseLayout title={metaTitle} description={metaDesc}>
@@ -123,16 +154,6 @@ const quoteHref = productId
       <div><span class="text-ink/45">{t.formula}: </span><span class="text-ink/80">{d.formula}</span></div>
       {aka.length > 0 && <div><span class="text-ink/45">{t.aka}: </span><span class="text-ink/80">{aka.join(', ')}</span></div>}
     </div>
-    {aka.length > 0 && (
-      <script type="application/ld+json" is:inline set:html={JSON.stringify({
-        '@context': 'https://schema.org',
-        '@type': 'Thing',
-        name: d.formula,
-        alternateName: aka,
-        description: `${displayName} · ${sysShort}`,
-        url: new URL(Astro.url.pathname, Astro.site).href,
-      })} />
-    )}
 
     <!-- A4 사양 레이아웃 (PPT 이식) — 구조화 데이터가 있으면 슬라이드 구성 그대로,
          없으면 기존 이미지·설명 폴백 -->
@@ -255,4 +276,5 @@ const quoteHref = productId
       </a>
     </div>
   </section>
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(ld)} />
 </BaseLayout>

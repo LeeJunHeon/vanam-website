@@ -8,6 +8,7 @@ import type { ImageMetadata } from 'astro';
 import siteData from '../../data/site.json';
 import company from '../../data/company.json';
 import { formatUsd } from '../../lib/price';
+import { breadcrumbNode, NAV } from '../../lib/structured-data';
 
 const { wafer } = Astro.props;
 const locale = Astro.currentLocale ?? 'en';
@@ -64,6 +65,11 @@ const boxNote = isKo ? '25장 1박스 단위 판매' : 'Sold per box of 25';
 const hasBoxNote = isKo ? /박스/.test(metaDesc) : /per box/i.test(metaDesc);
 const ldDesc = hasBoxNote ? metaDesc : `${metaDesc} ${boxNote}`;
 const hasPrice = typeof d.priceKrw === 'number' && d.priceKrw > 0;
+const crumbLd = breadcrumbNode([
+  { name: (isKo ? NAV.ko : NAV.en).home, url: `${base}/` },
+  { name: s.catWafer, url: `${base}/wafers/` },
+  { name, url: `${base}/wafers/${wafer.id}/` },
+]);
 const productLd = {
   '@context': 'https://schema.org',
   '@type': 'Product',
@@ -334,6 +340,7 @@ const productLd = {
 </script>
 
   <script type="application/ld+json" is:inline set:html={JSON.stringify(productLd)} />
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(crumbLd)} />
 </BaseLayout>
 
 <script>

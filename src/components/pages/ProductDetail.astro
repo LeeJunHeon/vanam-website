@@ -7,6 +7,7 @@ import QuoteForm from '../QuoteForm.astro';
 import company from '../../data/company.json';
 import { formatUsd } from '../../lib/price';
 import { metaDescriptionFor } from '../../lib/meta-descriptions';
+import { breadcrumbNode, NAV } from '../../lib/structured-data';
 
 const { product } = Astro.props;
 const locale = Astro.currentLocale ?? 'en';
@@ -36,6 +37,13 @@ const usdRate = company.usdRate || 1380;
 //   /product/wafers 는 /wafers 와 같은 문장을 쓴다(둘 다 웨이퍼 판매 안내).
 const metaKey = product.id === 'wafers' ? 'wafers' : `product/${product.id}`;
 const metaDesc = (await metaDescriptionFor(metaKey, locale)) ?? summary;
+// 구조화 데이터: 화면 이름(h1 = name) 그대로. 이 페이지에는 물질·웨이퍼 카드가 없어 ItemList 는 만들지 않는다.
+const nav = isKo ? NAV.ko : NAV.en;
+const crumbLd = breadcrumbNode([
+  { name: nav.home, url: `${base}/` },
+  { name: nav.product, url: `${base}/product/` },
+  { name, url: `${base}/product/${product.id}/` },
+]);
 ---
 
 <BaseLayout title={`${name} | ${locale === 'ko' ? '반암(VanaM)' : 'VanaM'}`} description={metaDesc}>
@@ -150,6 +158,7 @@ const metaDesc = (await metaDescriptionFor(metaKey, locale)) ?? summary;
 
     {!isFixed && <QuoteForm product={product} productName={name} />}
   </section>
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(crumbLd)} />
 </BaseLayout>
 
 <script>

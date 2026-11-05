@@ -6,6 +6,7 @@ import type { ImageMetadata } from 'astro';
 import siteData from '../../data/site.json';
 import company from '../../data/company.json';
 import { formatUsd } from '../../lib/price';
+import { productServicesNode, breadcrumbNode, NAV } from '../../lib/structured-data';
 const locale = Astro.currentLocale ?? 'en';
 const site = siteData[locale] ?? siteData.en;
 const s = site.shop;
@@ -81,6 +82,39 @@ const waferMinKrw = waferKrws.length ? Math.min(...waferKrws) : 0;
 const waferFromLabel = waferMinKrw
   ? (isKo ? `${formatUsd(waferMinKrw, usdRate)} 부터` : `From ${formatUsd(waferMinKrw, usdRate)}`)
   : null;
+
+// ── 구조화 데이터: 화면에 렌더되는 바로 그 변수(products·tech·equipment)에서 만든다 ──
+const waferCard = products.find((p) => p.data.category === 'wafer');
+const eqName = (e) => (locale === 'ko' ? (e.data.name_ko ?? e.data.name) : e.data.name);
+const eqDesc = (e) => (locale === 'ko' ? (e.data.description_ko ?? e.data.description) : e.data.description);
+const nav = isKo ? NAV.ko : NAV.en;
+const servicesLd = productServicesNode({
+  isKo,
+  base,
+  deposition: {
+    name: tech.processHeading,
+    description: tech.processSub,
+    categories: products
+      .filter((p) => p.data.category === 'coating')
+      .map((p) => ({ name: name(p), url: `${base}/product/${p.id}/` })),
+  },
+  wafers: waferCard
+    ? { name: name(waferCard), description: summary(waferCard) }
+    : { name: s.catWafer, description: '' },
+  analysis: { name: tech.analysisHeading, description: tech.analysisSub },
+  equipment: {
+    name: tech.equipmentHeading,
+    description: tech.equipmentSub,
+    groups: [
+      { name: tech.equipGroupTitle, description: tech.equipGroupDesc },
+      ...equipment.filter((e) => e.data.category === 'data').map((e) => ({ name: eqName(e), description: eqDesc(e) })),
+    ],
+  },
+});
+const crumbLd = breadcrumbNode([
+  { name: nav.home, url: `${base}/` },
+  { name: nav.product, url: `${base}/product/` },
+]);
 ---
 
 <BaseLayout title={s.metaTitle} description={s.metaDescription} zebra>
@@ -394,6 +428,8 @@ const waferFromLabel = waferMinKrw
 
     </div>
   </section>
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(servicesLd)} />
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(crumbLd)} />
 </BaseLayout>
 
 <script>

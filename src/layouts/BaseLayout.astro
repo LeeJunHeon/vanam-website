@@ -9,6 +9,7 @@ import logo from '../assets/brand/logo.png';
 import logoLight from '../assets/brand/logo-light.png';
 import company from '../data/company.json';
 import { isNoindexPath } from '../lib/seo-noindex';
+import { websiteNode } from '../lib/structured-data';
 import { ogDescriptionFrom } from '../lib/meta-descriptions';
 import banner from '../data/banner.json';
 import popup from '../data/popup.json';
@@ -44,15 +45,7 @@ const localizedHref = (path) => getRelativeLocaleUrl(currentLocale, path);
 
 // ── GEO/AEO 구조화 데이터 (locale별) ──
 const homeUrl = getAbsoluteLocaleUrl(currentLocale, '/');
-const websiteSchema = {
-  "@context": "https://schema.org",
-  "@type": "WebSite",
-  "name": "VanaM",
-  "alternateName": ["VANAM", "반암"],
-  "url": "https://vanam.co.kr",
-  "inLanguage": inLang,
-  "publisher": { "@type": "Organization", "name": "VanaM Inc.", "url": "https://vanam.co.kr" },
-};
+const websiteSchema = websiteNode(inLang);
 const cleanPath = basePath !== '/' ? basePath.replace(/\/$/, '') : '/';
 const crumbLabels = currentLocale === 'ko'
   ? { '/about': '회사 소개', '/technology': '기술·솔루션', '/news': '뉴스', '/blog': '블로그', '/contact': '문의' }

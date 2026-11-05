@@ -4,9 +4,8 @@
 // 실제 로고(src/assets/brand/logo.png, 640×155 — 양변 ≥112px 충족)를 public/logo.png 로
 // 배포해 고정 URL 로 복원한다. 해시 URL 을 안 쓰는 이유: 스키마 로고가 빌드마다 바뀌면
 // 검색엔진 캐시가 매번 무효화되기 때문.
-const schema = {
-  "@context": "https://schema.org",
-  "@type": "Organization",
+import { organizationNode } from '../lib/structured-data';
+const schema = organizationNode({
   "name": "VanaM Inc.",
   "alternateName": ["VANAM", "반암"],
   "url": "https://vanam.co.kr",
@@ -30,6 +29,6 @@ const schema = {
     "https://smartstore.naver.com/ybjstore",
     "https://linktr.ee/vanaminc"
   ]
-};
+});
 ---
 <script type="application/ld+json" set:html={JSON.stringify(schema)} />

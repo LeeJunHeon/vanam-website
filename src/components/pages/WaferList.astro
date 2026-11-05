@@ -10,6 +10,7 @@ import siteData from '../../data/site.json';
 import company from '../../data/company.json';
 import { formatUsd } from '../../lib/price';
 import { metaDescriptionFor } from '../../lib/meta-descriptions';
+import { breadcrumbNode, itemListNode, NAV } from '../../lib/structured-data';
 const locale = Astro.currentLocale ?? 'en';
 const site = siteData[locale] ?? siteData.en;
 const s = site.shop;
@@ -31,6 +32,13 @@ const name = (w) => (isKo ? w.data.name : (w.data.name_en ?? w.data.name));
 const summary = (w) => (isKo ? (w.data.summary ?? '') : (w.data.summary_en ?? w.data.summary ?? ''));
 // 검색 스니펫용 설명 — 물질·사양 나열은 웨이퍼 컬렉션 실데이터와 대조해 적었다.
 const metaDesc = (await metaDescriptionFor('wafers', locale)) ?? s.waferMetaDescription;
+// 구조화 데이터: 화면에 그려지는 카드(wafers)와 같은 배열·같은 순서·같은 이름·같은 링크
+const nav = isKo ? NAV.ko : NAV.en;
+const crumbLd = breadcrumbNode([
+  { name: nav.home, url: `${base}/` },
+  { name: s.catWafer, url: `${base}/wafers/` },
+]);
+const listLd = itemListNode(wafers.map((w) => ({ name: name(w), url: `${base}/wafers/${w.id}/` })));
 ---
 
 <BaseLayout title={s.waferMetaTitle} description={metaDesc}>
@@ -90,6 +98,8 @@ const metaDesc = (await metaDescriptionFor('wafers', locale)) ?? s.waferMetaDesc
       </div>
     )}
   </section>
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(crumbLd)} />
+  {wafers.length > 0 && <script type="application/ld+json" is:inline set:html={JSON.stringify(listLd)} />}
 </BaseLayout>
 
 <script>
