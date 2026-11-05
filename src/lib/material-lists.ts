@@ -69,6 +69,7 @@ export type MaterialLists = {
   nitrides: string[];    // 질화물
   metals: string[];      // PVD 금속 ∪ ALD 금속 (Si 는 별도)
   semiconductors: string[]; // Si
+  multilayers: string[]; // OMO 등 다층막(분류 Multilayer)
   total: number;         // 라이브러리 전체 소재 수
 };
 
@@ -82,6 +83,7 @@ export async function materialsForDescription(): Promise<MaterialLists> {
     nitrides: mergeSystems(s.Nitride, a.Nitride),
     metals: mergeSystems(s.Metal, a.Metal),
     semiconductors: mergeSystems(s.Semiconductor, a.Semiconductor),
+    multilayers: mergeSystems(s.Multilayer, a.Multilayer),
     total: all.length,
   };
 }
