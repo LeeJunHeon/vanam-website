@@ -5,7 +5,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { allMaterialsSorted, groupBySystem } from '../../lib/material-lists';
 import { metaDescriptionFor } from '../../lib/meta-descriptions';
-import { getImage } from 'astro:assets';
+import { materialImage } from '../../lib/material-image';
 import { getRelativeLocaleUrl } from 'astro:i18n';
 import type { ImageMetadata } from 'astro';
 import siteData from '../../data/site.json';
@@ -65,7 +65,7 @@ for (const m of allMaterials) {
     if (matImages[key]) {
       const mod = await matImages[key]();
       figs.push({
-        src: (await getImage({ src: mod.default, width: 900, format: 'webp', quality: 88 })).src,
+        src: materialImage(mod.default).src,
         caption: figCaption(f),
       });
     }
@@ -78,7 +78,7 @@ for (const m of allMaterials) {
     if (!matImages[key]) continue;
     const mod = await matImages[key]();
     targets.push({
-      src: (await getImage({ src: mod.default, width: 520, format: 'webp', quality: 88 })).src,
+      src: materialImage(mod.default).src,
       label: t.label,
       alt: t.label === 'Target' ? 'sputtering target' : `${t.label.replace(/\s*Target$/i, '')} sputtering target`,
     });
@@ -90,7 +90,7 @@ for (const m of allMaterials) {
     if (!matImages[key]) continue;
     const mod = await matImages[key]();
     precursors.push({
-      src: (await getImage({ src: mod.default, width: 520, format: 'webp', quality: 88 })).src,
+      src: materialImage(mod.default).src,
       label: pc.label,
       alt: `${pc.label} precursor structure`,
     });
