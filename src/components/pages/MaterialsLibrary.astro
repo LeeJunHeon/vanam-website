@@ -4,6 +4,7 @@
 // "상단 인덱스 → 하단 전체 상세 카드" 로 재구성. 배지 클릭 = 해당 카드로 스크롤(+하이라이트).
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import FaqSection from '../FaqSection.astro';
+import { toLoc, faqShownOn, type FaqEntry } from '../../lib/faq';
 import { allMaterialsSorted, groupBySystem } from '../../lib/material-lists';
 import { metaDescriptionFor } from '../../lib/meta-descriptions';
 import { materialImage } from '../../lib/material-image';
@@ -53,6 +54,10 @@ type MatPanel = {
   // ALD 는 전구체 구조식. 둘 다 같은 카드·배지로 그리므로 한 배열로 합쳐 넘긴다.
   sideImgs: { src: string; label: string; alt: string }[];
   filmSpecs: string[]; band2Title: string; band2Specs: string[]; hasA4: boolean;
+  // 이 소재의 FAQ — 소재 상세 페이지의 FAQ·관련 질문과 같은 목록(src/data/faq.json 의 page · related). 대상이 아니면 빈 배열.
+  //   HTML 에는 질문 문구만 원래 위치로 가는 링크로 넣는다(답 원문은 그 질문의 페이지 한 곳에만 둔다).
+  //   모달을 열면 아래 스크립트가 검색 JSON 에서 답을 받아 접히는 목록으로 바꾼다.
+  faq: FaqEntry[];
 };
 const matPanels: MatPanel[] = [];
 for (const m of allMaterials) {
@@ -117,6 +122,7 @@ for (const m of allMaterials) {
     band2Title: d.band2Title ?? 'Target Specifications',
     band2Specs,
     hasA4: filmSpecs.length + band2Specs.length + figs.length > 0,
+    faq: faqShownOn(`/materials/${m.id}/`, toLoc(locale)),
   });
 }
 const mt = {
@@ -239,6 +245,7 @@ const materialsLd = {
     role="dialog"
     aria-modal="true"
     aria-label={locale === "ko" ? "물질 상세" : "Material details"}
+    data-faq-src={`${locale === 'ko' ? '/ko' : ''}/faq-search.json`}
   >
     <div class="mat-backdrop absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
     <div class="mat-panel relative max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-ink/10 bg-canvas p-6 shadow-2xl md:p-8">
@@ -351,7 +358,16 @@ const materialsLd = {
             <a href={p.quoteHref} class="v-btn-sm">
               {mt.cta} →
             </a>
-          </div>
+          </div>{/* ⚠️ 아래 식을 </div> 에 붙여 쓴 것은 의도다 — 띄어 쓰면 FAQ 가 없는 물질 패널의 HTML 에도 공백이 생긴다 */p.faq.length > 0 && (
+            <div data-mat-faq class="mt-10">
+              <h3 class="text-lg font-bold text-ink">{site.contact.faqHeading}</h3>
+              <ul class="mt-4 space-y-2 text-sm">
+                {p.faq.map((x) => (
+                  <li><a href={x.href} data-faq-id={x.id} class="text-accent underline underline-offset-4 transition hover:text-accent/80">{x.q}</a></li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       ))}
     </div>
@@ -367,12 +383,55 @@ const materialsLd = {
       const backdrop = modal.querySelector<HTMLElement>('.mat-backdrop');
       let lastFocused: HTMLElement | null = null;
 
+      // ── 모달 FAQ ──
+      // HTML 에는 질문 링크 목록만 있다. 모달을 열면 언어별 검색 JSON(/faq-search.json)에서 답을 받아
+      // FAQ 영역(FaqSection.astro)과 같은 모양의 접히는 목록으로 바꾼다. JSON 은 한 번만 받는다.
+      // 못 받으면 링크 목록 그대로 둔다 — 링크를 누르면 답이 있는 원래 위치로 간다.
+      let faqAnswers: Promise<Map<string, string>> | null = null;
+      const loadFaqAnswers = () =>
+        (faqAnswers ??= fetch(modal.dataset.faqSrc!)
+          .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
+          .then((rows: { id: string; a: string }[]) => new Map(rows.map((r) => [r.id, r.a])))
+          .catch((e) => { faqAnswers = null; throw e; }));
+      function showFaq(panel: HTMLElement) {
+        const box = panel.querySelector<HTMLElement>('[data-mat-faq]');
+        if (!box) return;
+        if (box.dataset.ready) { box.querySelectorAll('details').forEach((d) => { d.open = false; }); return; } // 다시 열면 접힌 상태로
+        loadFaqAnswers().then((answers) => {
+          const list = box.querySelector('ul');
+          if (box.dataset.ready || !list) return;
+          const links = Array.from(list.querySelectorAll<HTMLAnchorElement>('a[data-faq-id]'));
+          if (!links.length || links.some((a) => !answers.get(a.dataset.faqId ?? ''))) return; // 답이 하나라도 없으면 링크 목록 그대로
+          const wrap = document.createElement('div');
+          wrap.className = 'mt-4 divide-y divide-ink/10 border-t border-ink/10';
+          for (const a of links) {
+            const item = document.createElement('details');
+            item.className = 'group py-5';
+            const head = document.createElement('summary');
+            head.className = 'flex cursor-pointer list-none items-center justify-between gap-4 text-base font-medium text-ink/90 transition hover:text-ink';
+            const q = document.createElement('span');
+            q.textContent = (a.textContent ?? '').trim();
+            const mark = document.createElement('span');
+            mark.className = 'shrink-0 text-xl leading-none text-accent transition-transform duration-200 group-open:rotate-45';
+            mark.textContent = '+';
+            head.append(q, mark);
+            const body = document.createElement('p');
+            body.className = 'mt-3 text-sm leading-relaxed text-ink/60';
+            body.textContent = answers.get(a.dataset.faqId ?? '') ?? '';
+            item.append(head, body);
+            wrap.append(item);
+          }
+          list.replaceWith(wrap);
+          box.dataset.ready = '1';
+        }).catch(() => { /* 링크 목록 그대로 */ });
+      }
+
       function open(id: string) {
         let found = false;
         panels.forEach((p) => {
           const on = p.getAttribute('data-mat-panel') === id;
           p.classList.toggle('hidden', !on);
-          if (on) found = true;
+          if (on) { found = true; showFaq(p); }
         });
         if (!found) return;
         lastFocused = document.activeElement as HTMLElement;

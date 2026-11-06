@@ -108,5 +108,14 @@ export function faqRelatedFor(page: string, loc: Loc): FaqEntry[] {
   return ids.map((id) => all.find((x) => x.id === id)).filter((x): x is FaqEntry => !!x);
 }
 
+/**
+ * 한 페이지에 보여줄 질문 전체 — 그 페이지에 답이 있는 항목(FaqSection 이 그리는 것) 다음에 관련 질문(FaqRelated 가 그리는 것).
+ * 소재 라이브러리의 모달이 소재 상세 페이지와 같은 목록을 쓰기 위한 것이다(대상을 따로 적지 않는다).
+ */
+export const faqShownOn = (page: string, loc: Loc): FaqEntry[] => [
+  ...faqGroupsFor(page, loc).flatMap((g) => g.items),
+  ...faqRelatedFor(page, loc),
+];
+
 /** 색인 페이지 주소(같은 언어). */
 export const faqIndexHref = (loc: Loc) => getRelativeLocaleUrl(loc, '/faq/');

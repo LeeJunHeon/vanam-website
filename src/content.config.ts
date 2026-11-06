@@ -145,20 +145,7 @@ const achievements = defineCollection({
 });
 
 
-// 8. FAQ ───────────────────────────────
-// 근거(사이트/콘텐츠 데이터)가 있는 답만 작성. 운영 정보처럼 근거 없는 항목은
-// answer를 빈 문자열로 두고 published:false 로 표시(렌더·JSON-LD에서 제외).
-const faq = defineCollection({
-  loader: glob({ pattern: '*.json', base: './src/content/faq' }),
-  schema: z.object({
-    question: z.string(),             // KO (원문)
-    answer: z.string(),               // KO — 빈 값 허용 (미작성 placeholder)
-    question_en: opt(z.string()), // EN
-    answer_en: opt(z.string()),   // EN
-    published: z.boolean().default(true),
-    order: z.number().default(0),
-  }),
-});
+// 8. (FAQ 컬렉션 없음) — FAQ 는 확정본 데이터 파일 src/data/faq.json 하나에서 나온다(src/lib/faq.ts).
 
 // 9. PRODUCTS ──────────────────────────
 // 제품 상품. 가격 유형 2종:
@@ -276,7 +263,7 @@ const analysis = defineCollection({
 });
 
 export const collections = {
-  team, news, blog, history, materials, partners, achievements, faq,
+  team, news, blog, history, materials, partners, achievements,
   products, certificates, policies, equipment, analysis,
   wafers,
 };

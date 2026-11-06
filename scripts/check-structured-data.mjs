@@ -7,6 +7,8 @@
 //   · FAQPage 의 질문·답 = 데이터 파일 문구 = 그 페이지 화면 글자 (공백 접기만 허용).
 //   · 색인 페이지(/faq/)의 ItemList·목록이 38개이고, 모든 링크의 앵커가 실제 그 페이지에 있다. 검색 JSON 이 데이터와 같다.
 //   · 관련 질문 링크와 "전체 질문 보기" 링크의 대상이 있다.
+//   · 소재 라이브러리(/materials/)의 모달: 대상 물질 집합과 질문 링크가 데이터에서 만든 것과 같고(소재 상세의 FAQ·관련 질문과 같은 목록),
+//     그 답 원문은 /materials/ HTML 에 없다(답은 그 질문의 페이지 한 곳에만) — 모달은 검색 JSON 에서 답을 받아 보여준다.
 //   · llms.txt · llms-full.txt 의 FAQ 목록이 데이터에서 만든 것과 같다.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -134,7 +136,7 @@ const ws = (s) => String(s ?? '').replace(/\s+/g, ' ').trim(); // 공백 접기�
 // 태그를 공백 없이 지운 글자(엔티티는 풀어서)
 const inlineText = (s) => ws(decode(s.replace(/<!--[\s\S]*?-->/g, '').replace(/<[^>]+>/g, '')));
 const attr = (tag, name) => { const m = new RegExp(`\\b${name}="([^"]*)"`).exec(tag); return m ? decode(m[1]) : null; };
-const faqStats = { pages: new Set(), idPages: { en: new Map(), ko: new Map() }, qa: 0, index: 0, related: 0, seeAll: 0 };
+const faqStats = { pages: new Set(), idPages: { en: new Map(), ko: new Map() }, qa: 0, index: 0, related: 0, seeAll: 0, modal: 0 };
 const htmlCache = new Map();
 /** 사이트 내부 경로(/ko/contact/)의 HTML. 없으면 null. */
 function htmlOfPath(p) {
@@ -249,6 +251,41 @@ function checkFaq(page, html, nodes) {
     const pageText = ws(decode(html.replace(/<[^>]+>/g, ' ')));
     const leaked = FAQ.items.filter((it) => pageText.includes(ws(it[loc].a)));
     if (leaked.length) fail(page, '색인 페이지에 답 문구', leaked.map((it) => it.id).join(' '), '답은 그 질문의 페이지 한 곳에만 있어야 함');
+  }
+
+  // 소재 라이브러리의 모달 — 대상 물질 패널에 질문 링크만(답 원문은 HTML 에 넣지 않는다)
+  if (bare === '/materials/') {
+    // 대상 = 소재 상세 페이지에 FAQ(그 페이지에 답이 있는 항목)나 관련 질문이 있는 물질. 순서는 상세 페이지와 같다(FAQ → 관련 질문).
+    const matPages = [...new Set([...FAQ.items.map((it) => it.page), ...Object.keys(FAQ.related)])].filter((p) => /^\/materials\/m\d+\/$/.test(p));
+    const want = new Map(matPages.map((p) => [p.split('/')[2], [...FAQ.items.filter((it) => it.page === p), ...(FAQ.related[p] ?? []).map((id) => FAQ.items.find((it) => it.id === id))]]));
+    const starts = [...html.matchAll(/<div\b[^>]*\bdata-mat-panel="([^"]*)"[^>]*>/g)];
+    const got = new Map();
+    starts.forEach((m, i) => {
+      const chunk = html.slice(m.index, i + 1 < starts.length ? starts[i + 1].index : html.length);
+      const box = /<div\b[^>]*\bdata-mat-faq\b[^>]*>([\s\S]*?)<\/ul>/.exec(chunk);
+      if (box) got.set(m[1], [...box[1].matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/g)].map((a) => ({ id: attr(a[1], 'data-faq-id'), href: attr(a[1], 'href'), q: inlineText(a[2]) })));
+    });
+    if (!starts.length) fail(page, '소재 모달', 'data-mat-panel', '패널이 없음');
+    if ([...got.keys()].sort().join(' ') !== [...want.keys()].sort().join(' ')) fail(page, '모달 FAQ 대상 물질', [...got.keys()].sort().join(' '), `데이터에서 만든 대상: ${[...want.keys()].sort().join(' ')}`);
+    let searchJ = null;
+    const sf = findInRoots(`${loc === 'ko' ? 'ko/' : ''}faq-search.json`);
+    try { searchJ = sf ? new Map(JSON.parse(fs.readFileSync(sf, 'utf8')).map((r) => [r.id, r])) : null; } catch { searchJ = null; }
+    if (!searchJ) fail(page, '모달 FAQ 검색 JSON', 'faq-search.json', '파일이 없거나 JSON 이 아님');
+    const pageText = ws(decode(html.replace(/<[^>]+>/g, ' ')));
+    for (const [mat, items] of want) {
+      const links = got.get(mat) ?? [];
+      if (links.map((l) => l.id).join(' ') !== items.map((it) => it.id).join(' ')) fail(page, `모달 FAQ ${mat} 항목`, links.map((l) => l.id).join(' '), `${items.map((it) => it.id).join(' ')} 여야 함`);
+      items.forEach((it, i) => {
+        const l = links[i]; if (!l) return;
+        if (l.q !== ws(it[loc].q)) fail(page, `모달 FAQ ${mat} ${it.id} 문구`, l.q, '데이터 질문 문구와 다름');
+        if (l.href !== faqPath(it, loc)) fail(page, `모달 FAQ ${mat} ${it.id} 링크`, l.href, `${faqPath(it, loc)} 여야 함`);
+        else { const e = anchorTargetError(l.href); if (e) fail(page, `모달 FAQ ${mat} ${it.id} 링크`, l.href, e); }
+        // 답 원문은 이 페이지 HTML 에 없어야 한다(모달이 검색 JSON 에서 받아 보여준다)
+        if (pageText.includes(ws(it[loc].a))) fail(page, `모달 FAQ ${mat} ${it.id} 답`, it.id, '답 원문이 /materials/ HTML 에 들어 있음(중복 금지)');
+        if (searchJ && searchJ.get(it.id)?.a !== it[loc].a) fail(page, `모달 FAQ ${mat} ${it.id} 검색 JSON 답`, it.id, '데이터 답 문구와 다름');
+        faqStats.modal++;
+      });
+    }
   }
 
   // 관련 질문 링크 — 질문 문구만, 답 위치로
@@ -445,7 +482,7 @@ for (const file of files) {
 // FAQ — 사이트 전체 검사(디렉터리 전체를 검사할 때)
 if (stat.isDirectory()) checkFaqSite();
 console.log('check-structured-data 페이지 종류별:', JSON.stringify(counts));
-console.log(`check-structured-data FAQ: 페이지 ${faqStats.pages.size}개 · 질문·답 문구 ${faqStats.qa}건 · 색인 질문 ${faqStats.index}건 · 관련 질문 링크 ${faqStats.related}건 · 전체 질문 보기 링크 ${faqStats.seeAll}건`);
+console.log(`check-structured-data FAQ: 페이지 ${faqStats.pages.size}개 · 질문·답 문구 ${faqStats.qa}건 · 색인 질문 ${faqStats.index}건 · 관련 질문 링크 ${faqStats.related}건 · 전체 질문 보기 링크 ${faqStats.seeAll}건 · 소재 모달 질문 링크 ${faqStats.modal}건`);
 if (errors.length) {
   console.error(`check-structured-data FAIL (${errors.length}건, ${arg}):`);
   for (const e of errors.slice(0, 60)) console.error('  - ' + e);

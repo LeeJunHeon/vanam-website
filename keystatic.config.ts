@@ -37,7 +37,7 @@ export default config({
   ui: {
     brand: { name: 'VANAM 콘텐츠 관리' },
     navigation: {
-      '콘텐츠': ['banner', 'popup', 'news', 'blog', 'team', 'faq'],
+      '콘텐츠': ['banner', 'popup', 'news', 'blog', 'team'],
       '회사 정보': ['history', 'achievements', 'partners', 'certificates'],
       '기술 데이터': ['materials'],
       '스토어': ['products', 'wafers'],
@@ -457,26 +457,6 @@ export default config({
           publicPath: '/src/assets/team/',
         }),
         linkedin: fields.url({ label: 'LinkedIn 주소 (선택)' }),
-        order: fields.integer({ label: '표시 순서', defaultValue: 99, validation: { isRequired: true } }),
-      },
-    }),
-
-    // ── FAQ ───────────────────────────────────────────
-    faq: collection({
-      label: 'FAQ (자주 묻는 질문)',
-      path: 'src/content/faq/*',
-      format: { data: 'json' },
-      slugField: 'question',
-      columns: ['published', 'order'],
-      schema: {
-        question: fields.slug({
-          name: { label: '질문 (한글)', validation: { isRequired: true } },
-          slug: { label: '파일 ID (영문)', description: '예: lead-time' },
-        }),
-        answer: fields.text({ label: '답변 (한글)', multiline: true, description: '비워두면 사이트에 표시되지 않습니다' }),
-        question_en: fields.text({ label: '질문 (영문)', description: '비우면 한글이 표시됩니다' }),
-        answer_en: fields.text({ label: '답변 (영문)', multiline: true }),
-        published: fields.checkbox({ label: '사이트에 공개', defaultValue: true }),
         order: fields.integer({ label: '표시 순서', defaultValue: 99, validation: { isRequired: true } }),
       },
     }),

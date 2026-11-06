@@ -41,7 +41,7 @@ const TEMPLATES: Record<string, Record<Loc, string>> = {
   contact: {
     // 문의 + 이 페이지 FAQ(일반 · 파운드리·주문·품질)의 주제
     ko: '반암에 박막 증착 견적과 기술 상담을 문의하세요. 증착 공정, 소재, 소량 주문, 견적 사양, 납기, 해외 배송 등 자주 묻는 질문을 확인할 수 있습니다.',
-    en: 'Contact VanaM for thin-film deposition quotes and technical consultation. See FAQs on deposition methods, materials, small-volume orders, quotation details, lead times and international shipping.',
+    en: 'Contact VanaM for thin-film deposition quotes and technical consultation, with FAQs on methods, materials, small orders, lead times and shipping.',
   },
 };
 
