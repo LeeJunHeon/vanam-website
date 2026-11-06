@@ -39,3 +39,6 @@ build-logs/
 quote-db*.xlsx
 price-db*.sql
 test-excel-cases.mjs
+
+# Python 캐시 (scripts/extract-faq-docx.py 실행 시 생길 수 있다)
+__pycache__/
