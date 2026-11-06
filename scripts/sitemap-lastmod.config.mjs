@@ -7,6 +7,15 @@ export default {
   // 지문 기록 파일(커밋 대상). { "<URL 경로>": { "hash": "<sha256>", "date": "YYYY-MM-DD" } }
   record: 'src/data/sitemap-lastmod.json',
 
+  // 공개 기록 — 이번 빌드가 사이트맵에 실제로 쓴 { 지문, 날짜 } 를 사이트에 함께 내보내고, 다음 빌드가 이어받는다.
+  //   Keystatic 으로 고친 페이지는 저장소 기록에 새 지문이 없다. 그때 Cloudflare 가 찍은 날짜를 다음 배포가 여기서 찾아 그대로 쓴다.
+  publicRecord: {
+    file: 'sitemap-lastmod.json', // dist/client 기준 출력 파일 → https://vanam.co.kr/sitemap-lastmod.json (사이트맵 URL 목록에는 없다)
+    liveUrl: 'https://vanam.co.kr/sitemap-lastmod.json', // 이전 배포의 공개 기록. 환경변수 SITEMAP_LASTMOD_LIVE_URL 로 바꿀 수 있다(파일 경로도 허용 — 테스트용)
+    timeoutMs: 10000, // 빌드당 한 번만 받는다
+    retries: 1,
+  },
+
   // 지문에서 통째로 빼는 요소 (지원 선택자: tag, .class, #id, [attr], [attr="값"] 과 그 조합)
   exclude: [
     '.cart-count', // 장바구니 개수 배지 — 방문자 브라우저마다 다른 숫자(빌드 결과는 항상 0)

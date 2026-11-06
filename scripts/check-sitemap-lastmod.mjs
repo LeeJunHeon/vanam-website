@@ -7,6 +7,8 @@
 //   · sitemap-index 의 lastmod ≠ 자식 sitemap 의 가장 최근 날짜
 //   · URL 수·hreflang 수·lastmod 를 뺀 XML 이 astro 가 만든 결과와 다르다 (lastmod 외의 것이 바뀜)
 //   · 지문이 기록과 같은 URL 인데 lastmod 가 기록 날짜와 다르다 (적용 단계가 안 돌았다)
+//   · 공개 기록 dist/client/sitemap-lastmod.json 이 없다 / 형식이 잘못됐다 / 키가 사이트맵 URL 과 다르다 /
+//     date 가 사이트맵 lastmod 와 다르다 / hash 가 그 페이지의 지문과 다르다 / 사이트맵 URL 목록에 들어 있다
 // 로컬에서만 실패 (Cloudflare 빌드 WORKERS_CI=1 에서는 경고):
 //   · 지문이 기록과 다른 URL · 기록에 없는 URL · 사이트맵에서 사라졌는데 기록에 남은 URL
 //     → npm run sitemap:stamp 후 다시 빌드
@@ -16,6 +18,7 @@ import {
   config, parseArgs, kstDate, isCloudflareBuild, isValidDate, loadRecord,
   evaluate, summarize, xmlError, reportFile,
 } from './lib/sitemap-lastmod-lib.mjs';
+import { publicRecordFile, publicRecordError } from './sitemap-lastmod.mjs';
 
 const args = parseArgs(process.argv.slice(2));
 const today = kstDate();
@@ -87,6 +90,30 @@ if (localOnly.length) {
   else { localOnly.forEach(fail); fail(guide); }
 }
 
+// 6) 공개 기록 — 다음 빌드가 이어받을 값. 사이트맵에 실제로 쓴 값과 한 글자도 달라서는 안 된다
+const pubFile = publicRecordFile(args.dist);
+const pubName = '/' + path.basename(pubFile);
+const listed = rows.filter((r) => r.path === pubName || r.path.endsWith(pubName));
+if (listed.length) fail(`공개 기록 파일이 사이트맵 URL 목록에 들어 있다: ${some(listed.map((r) => r.path))}`);
+if (!fs.existsSync(pubFile)) fail(`${pubFile} 가 없다 — 적용 단계(scripts/sitemap-lastmod.mjs)가 돌지 않았다. npm run build 로 빌드한다`);
+else {
+  let pub = null;
+  try { pub = JSON.parse(fs.readFileSync(pubFile, 'utf8')); } catch (e) { fail(`공개 기록 ${pubFile} 이 JSON 이 아니다: ${e.message}`); }
+  const pe = pub === null ? null : publicRecordError(pub, today);
+  if (pe) fail(`공개 기록 ${pubFile} 형식 오류: ${pe}`);
+  else if (pub !== null) {
+    const expect = rows.filter((r) => r.lastmod);
+    const keys = new Set(Object.keys(pub)); const want = new Set(expect.map((r) => r.path));
+    const lack = [...want].filter((k) => !keys.has(k)); const extra = [...keys].filter((k) => !want.has(k));
+    if (lack.length) fail(`공개 기록에 없는 사이트맵 URL ${lack.length}개: ${some(lack)}`);
+    if (extra.length) fail(`사이트맵에 없는데 공개 기록에 있는 URL ${extra.length}개: ${some(extra)}`);
+    const dateDiff = expect.filter((r) => keys.has(r.path) && pub[r.path].date !== r.lastmod);
+    if (dateDiff.length) fail(`공개 기록의 date 가 사이트맵 lastmod 와 다른 URL ${dateDiff.length}개: ${some(dateDiff.map((r) => `${r.path} ${pub[r.path].date}≠${r.lastmod}`))}`);
+    const hashDiff = expect.filter((r) => keys.has(r.path) && pub[r.path].hash !== r.hash);
+    if (hashDiff.length) fail(`공개 기록의 hash 가 그 페이지의 본문 지문과 다른 URL ${hashDiff.length}개: ${some(hashDiff.map((r) => r.path))}`);
+  }
+}
+
 const urls = rows.length; const hreflang = rows.reduce((n, r) => n + r.hreflang, 0);
 for (const w of warnings) console.warn('  ⚠ ' + w);
 if (errors.length) {
@@ -95,4 +122,4 @@ if (errors.length) {
   process.exit(1);
 }
 const dates = rows.map((r) => r.lastmod).filter(Boolean).sort();
-console.log(`check-sitemap-lastmod OK — URL ${urls}개 · hreflang ${hreflang}개 · lastmod ${dates.length}개 (${dates[0]} ~ ${dates[dates.length - 1]}) · 기록 일치 ${rows.filter((r) => r.status === 'same').length}${cf ? ' · Cloudflare 빌드' : ''}`);
+console.log(`check-sitemap-lastmod OK — URL ${urls}개 · hreflang ${hreflang}개 · lastmod ${dates.length}개 (${dates[0]} ~ ${dates[dates.length - 1]}) · 기록 일치 ${rows.filter((r) => r.status === 'same').length} · 공개 기록 일치${cf ? ' · Cloudflare 빌드' : ''}`);
