@@ -144,11 +144,15 @@ for (const file of files) {
   for (const s of walkStrings(bl)) {
     if (s.startsWith(SITE)) { const u = s.split('#')[0]; if (!pageExists(u)) fail(page, '내부 링크', s, 'dist 에 페이지 없음'); }
   }
-  // 타입별 허용 속성 (Product·Blog·FAQ 등 기존 블록은 ALLOWED 에 없어 제외)
-  for (const o of walkObjs(bl)) {
-    const t = types(o).find((x) => ALLOWED[x]);
-    if (!t) continue;
-    for (const k of Object.keys(o)) if (!k.startsWith('@') && !ALLOWED[t].includes(k)) fail(page, `${t}.${k}`, JSON.stringify(o[k]), `schema.org ${t} 에 없는 속성`);
+  // 타입별 허용 속성 — 최상위 노드가 이 모듈 타입일 때만 그 하위까지 검사한다.
+  //   Product·Blog·FAQ 등 기존 블록은 안에 든 Offer·Organization 까지 통째로 제외한다.
+  for (const n of nodes) {
+    if (!types(n).some((x) => ALLOWED[x])) continue;
+    for (const o of walkObjs(n)) {
+      const t = types(o).find((x) => ALLOWED[x]);
+      if (!t) continue;
+      for (const k of Object.keys(o)) if (!k.startsWith('@') && !ALLOWED[t].includes(k)) fail(page, `${t}.${k}`, JSON.stringify(o[k]), `schema.org ${t} 에 없는 속성`);
+    }
   }
   // Product 는 웨이퍼 상세에만
   for (const o of walkObjs(bl)) if (types(o).includes('Product') && kind !== 'waferdetail') fail(page, 'Product 타입', page, '웨이퍼 상세 외 사용 금지');
