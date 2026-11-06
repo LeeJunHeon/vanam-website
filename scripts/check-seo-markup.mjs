@@ -4,7 +4,8 @@
 //   ① 소재 상세 52개로 가는 내부 링크 — 링크가 사라져도 화면은 멀쩡하고, 색인만 몇 달 밀린다.
 //      (실제로 0910 이전까지 상세 104개가 사이트맵에만 있고 앵커는 0개였다)
 //   ② 사이트맵 lastmod — 빌드 시각이 새어 들어가면 매 배포마다 전 페이지가 "갱신됨"이 되어
-//      크롤러가 lastmod 자체를 무시하게 된다.
+//      크롤러가 lastmod 자체를 무시하게 된다. → GEO 3단계부터 scripts/check-sitemap-lastmod.mjs 가 전담한다
+//      (본문 지문 기록과 대조). 여기서는 사이트맵에 올라간 URL 구성(②③)만 본다.
 //   ③ canonical 이 다른 곳을 가리키는 URL(/blog/ → /news/)이 사이트맵에 남아 상충 신호를 준다.
 //   ④ 웨이퍼 Product/Offer — 필드 하나만 빠져도 리치 결과에서 통째로 탈락한다.
 //
@@ -86,28 +87,9 @@ if (!existsSync(smPath)) {
   else ok('블로그 목록(/blog/, /ko/blog/) 제외됨');
 
   const posts = entries.filter((e) => /^\/(?:ko\/)?blog\/[^/]+\/$/.test(e.path));
-  const postsNoDate = posts.filter((e) => !e.lastmod);
   if (!posts.length) fail('블로그 글이 사이트맵에 하나도 없다');
-  else if (postsNoDate.length) fail(`lastmod 없는 블로그 글 ${postsNoDate.length}개: ${postsNoDate.slice(0, 3).map((e) => e.path).join(', ')}`);
-  else ok(`블로그 글 ${posts.length}개 전부 lastmod 보유`);
-
-  const others = entries.filter((e) => !/^\/(?:ko\/)?blog\/[^/]+\/$/.test(e.path));
-  const strayLastmod = others.filter((e) => e.lastmod);
-  if (strayLastmod.length) fail(`실제 날짜가 없는 페이지에 lastmod 가 붙었다(빌드 시각 누출 의심) ${strayLastmod.length}개: ${strayLastmod.slice(0, 3).map((e) => e.path).join(', ')}`);
-  else ok(`나머지 ${others.length}개 페이지에는 lastmod 없음`);
-
-  // 블로그 글의 lastmod 가 콘텐츠의 date 와 같은지 (빌드 시각이 아닌지) 표본 확인
-  const blogDir = join(ROOT, 'src/content/blog');
-  let mismatch = 0;
-  for (const e of posts) {
-    const slug = e.path.replace(/^\/(?:ko\/)?blog\//, '').replace(/\/$/, '');
-    const f = join(blogDir, `${slug}.json`);
-    if (!existsSync(f)) continue;
-    const want = new Date(JSON.parse(readFileSync(f, 'utf8')).date).toISOString().slice(0, 10);
-    if (e.lastmod.slice(0, 10) !== want) mismatch++;
-  }
-  if (mismatch) fail(`lastmod 가 글의 date 와 다른 항목 ${mismatch}개`);
-  else ok('블로그 lastmod = 콘텐츠 date');
+  else ok(`블로그 글 ${posts.length}개 사이트맵 포함`);
+  // lastmod(모든 URL 보유 · 본문이 바뀐 날짜만 · 빌드 시각 누출 금지)는 scripts/check-sitemap-lastmod.mjs 가 검사한다.
 }
 
 // ── ⑤ 메타 설명 (0911c) ─────────────────────────────────
@@ -224,4 +206,4 @@ if (bad) {
   console.error(`\n✗ 검색 노출 마크업 게이트 실패 — ${bad}건`);
   process.exit(1);
 }
-console.log('✓ 검색 노출 마크업 게이트 통과 — 소재 내부 링크 · 사이트맵 lastmod · 웨이퍼 Product/Offer');
+console.log('✓ 검색 노출 마크업 게이트 통과 — 소재 내부 링크 · 사이트맵 URL 구성 · 웨이퍼 Product/Offer');

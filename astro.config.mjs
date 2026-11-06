@@ -1,5 +1,5 @@
 // @ts-check
-import { readdirSync, readFileSync, rmSync } from 'node:fs';
+import { rmSync } from 'node:fs';
 import { defineConfig } from 'astro/config';
 
 import tailwindcss from '@tailwindcss/vite';
@@ -68,26 +68,12 @@ const clearContentLayerCache = {
   },
 };
 
-// ── 사이트맵 lastmod 의 유일한 출처 (0911) ────────────────────────────────
-// 블로그 글에만 실제 게시일을 넣는다. 날짜가 없는 페이지에는 lastmod 를 아예 붙이지 않는다.
+// ── 사이트맵 lastmod (GEO 3단계) ─────────────────────────────────────────
+// 여기서는 lastmod 를 넣지 않는다. astro build 는 lastmod 없는 사이트맵을 만들고,
+// npm run build 가 이어서 실행하는 scripts/sitemap-lastmod.mjs 가 "본문 글자가 실제로 바뀐 날"을
+// 기록 파일(src/data/sitemap-lastmod.json)에서 읽어 모든 URL 에 넣는다. 날짜 출처는 그 스크립트 하나다.
 //   ⚠️ 빌드 시각을 lastmod 로 넣으면 안 된다 — 내용이 그대로인데 매 배포마다 "갱신됨"이라고
-//      알리는 꼴이라, 크롤러가 곧 lastmod 를 신뢰하지 않게 된다(넣느니 안 넣는 게 낫다).
-// getCollection 은 config 단계에서 못 쓰므로 원본 JSON 을 직접 읽는다(같은 파일이 단일 소스).
-const BLOG_DATES = (() => {
-  const dir = new URL('./src/content/blog/', import.meta.url);
-  const out = new Map();
-  for (const f of readdirSync(dir)) {
-    if (!f.endsWith('.json')) continue;
-    try {
-      const d = JSON.parse(readFileSync(new URL(f, dir), 'utf8'));
-      if (d?.date) out.set(f.replace(/\.json$/, ''), new Date(d.date));
-    } catch {
-      // 한 글이 깨져도 사이트맵 전체를 잃지 않는다 — 그 글만 lastmod 없이 나간다.
-    }
-  }
-  return out;
-})();
-const BLOG_POST_RE = /^\/(?:ko\/)?blog\/([^/]+)\/?$/;
+//      알리는 꼴이라, 크롤러가 곧 lastmod 를 신뢰하지 않게 된다.
 // 블로그 목록(/blog/, /ko/blog/)은 canonical 이 /news/·/ko/news/ 를 가리킨다.
 // canonical 이 다른 곳을 향하는 URL 을 사이트맵에 올리면 크롤러에게 상충 신호를 준다.
 const BLOG_INDEX_RE = /^\/(?:ko\/)?blog\/?$/;
@@ -146,14 +132,7 @@ export default defineConfig({
         if (BLOG_INDEX_RE.test(p)) return false;   // 0911: canonical 이 /news/ 인 목록 페이지
         return true;
       },
-      // 블로그 글에만 게시일을 lastmod 로 붙인다. 그 외 페이지는 lastmod 없이 내보낸다.
-      serialize: (item) => {
-        const m = BLOG_POST_RE.exec(new URL(item.url).pathname);
-        const date = m && BLOG_DATES.get(m[1]);
-        if (date) item.lastmod = date.toISOString();
-        else delete item.lastmod;
-        return item;
-      },
+      // lastmod 는 여기서 넣지 않는다 — 빌드 뒤 scripts/sitemap-lastmod.mjs 가 넣는다(위 주석).
       i18n: {
         defaultLocale: 'en',
         locales: { en: 'en', ko: 'ko' },
