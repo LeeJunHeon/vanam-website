@@ -1,0 +1,8 @@
+{
+  "order": 301,
+  "published": true,
+  "question": "어떤 기판에 증착할 수 있나요?",
+  "answer": "실리콘, 실리콘 산화막, 유리, 사파이어 기판에 증착할 수 있습니다. 그 밖의 기판은 견적 요청서에 직접 적어 주시면 검토해 드립니다.",
+  "question_en": "What substrates can you deposit on?",
+  "answer_en": "We deposit on silicon, silicon oxide, glass and sapphire substrates. For other substrates, enter the details in the quote request and we will review them."
+}

@@ -9,6 +9,7 @@ import company from '../../data/company.json';
 import FaqSchema from '../FaqSchema.astro';
 import ProcessPicker from '../ProcessPicker.astro';
 import { metaDescriptionFor } from '../../lib/meta-descriptions';
+import { faqGroups } from '../../lib/faq';
 const locale = Astro.currentLocale ?? 'en';
 const site = siteData[locale] ?? siteData.en;
 const c = site.contact;
@@ -17,12 +18,10 @@ const title = c.metaTitle;
 // 검색 스니펫용 설명 — 문의 유형(증착·분석·웨이퍼·협업)을 구체적으로 적는다.
 const description = (await metaDescriptionFor('contact', locale)) ?? c.metaDescription;
 
-// FAQ: published:true 이고 answer가 비어있지 않은 항목만 표시. 언어는 locale별.
-const faqs = (await getCollection('faq'))
-  .filter((x) => x.data.published && x.data.answer.trim() !== '')
-  .sort((a, b) => a.data.order - b.data.order);
-const faqQ = (x) => locale === 'en' ? (x.data.question_en ?? x.data.question) : x.data.question;
-const faqA = (x) => locale === 'en' ? (x.data.answer_en ?? x.data.answer) : x.data.answer;
+// FAQ — 화면과 FAQPage 구조화 데이터가 같은 원본(src/lib/faq.ts ← src/content/faq)을 쓴다.
+// 분류별 묶음. '일반'은 소제목 없이 맨 위, 나머지는 소제목 아래에 같은 접힘 형태로 나온다.
+const faqs = await faqGroups(locale);
+const faqItems = faqs.flatMap((g) => g.items);
 
 // 웨이퍼 상세의 '대량 주문·국내 구매' 링크에서 넘어온 경우(?product=&qty=&dicing=)
 // 문의 내용을 미리 채워 준다. 상품명·다이싱 비용은 **여기(웨이퍼 컬렉션)에서만** 읽는다 —
@@ -221,27 +220,32 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
     </div>
   </section>
 
-  {faqs.length > 0 && (
+  {faqItems.length > 0 && (
     <section id="faq" class="scroll-mt-24 v-wrap pb-28">
       <div class="v-reveal">
         <p class="text-sm font-medium uppercase tracking-widest text-accent">{c.faqEyebrow}</p>
         <h2 class="mt-4 v-h2">{c.faqHeading}</h2>
       </div>
-      <div class="mt-10 divide-y divide-ink/10 border-t border-ink/10">
-        {faqs.map((x) => (
-          <details class="group py-5">
-            <summary class="flex cursor-pointer list-none items-center justify-between gap-4 text-base font-medium text-ink/90 transition hover:text-ink">
-              <span>{faqQ(x)}</span>
-              <span class="shrink-0 text-xl leading-none text-accent transition-transform duration-200 group-open:rotate-45">+</span>
-            </summary>
-            <p class="mt-3 text-sm leading-relaxed text-ink/60">{faqA(x)}</p>
-          </details>
-        ))}
-      </div>
+      {faqs.map((g) => (
+        <Fragment>
+          {g.key !== 'general' && <h3 class="mt-12 text-lg font-bold text-ink">{g.label}</h3>}
+          <div class={`${g.key === 'general' ? 'mt-10' : 'mt-4'} divide-y divide-ink/10 border-t border-ink/10`}>
+            {g.items.map((x) => (
+              <details class="group py-5">
+                <summary class="flex cursor-pointer list-none items-center justify-between gap-4 text-base font-medium text-ink/90 transition hover:text-ink">
+                  <span>{x.question}</span>
+                  <span class="shrink-0 text-xl leading-none text-accent transition-transform duration-200 group-open:rotate-45">+</span>
+                </summary>
+                <p class="mt-3 text-sm leading-relaxed text-ink/60">{x.parts.map((p) => p.href ? <a href={p.href} class="text-accent underline underline-offset-4 transition hover:text-accent/80">{p.text}</a> : p.text)}</p>
+              </details>
+            ))}
+          </div>
+        </Fragment>
+      ))}
     </section>
   )}
 
-  <FaqSchema />
+  <FaqSchema items={faqItems} />
   <ProcessPicker />
 </BaseLayout>
 

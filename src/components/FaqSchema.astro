@@ -1,26 +1,22 @@
 ---
-// FAQPage JSON-LD. published:true 이고 answer가 비어있지 않은 항목만 포함. locale별 언어.
-import { getCollection } from 'astro:content';
+// FAQPage JSON-LD. 화면의 FAQ 와 같은 원본(src/lib/faq.ts)에서 받은 항목을 그대로 쓴다 —
+// 호출부(Contact.astro)가 화면에 그린 항목 목록을 items 로 넘긴다. 답은 같은 문장의 일반 텍스트다.
+import type { FaqItem } from '../lib/faq';
 
-const locale = Astro.currentLocale ?? 'en';
-const q = (f) => locale === 'en' ? (f.data.question_en ?? f.data.question) : f.data.question;
-const a = (f) => locale === 'en' ? (f.data.answer_en ?? f.data.answer) : f.data.answer;
-
-const faqs = (await getCollection('faq'))
-  .filter((f) => f.data.published && f.data.answer.trim() !== '')
-  .sort((a, b) => a.data.order - b.data.order);
+interface Props { items: FaqItem[] }
+const { items } = Astro.props;
 
 const schema = {
   "@context": "https://schema.org",
   "@type": "FAQPage",
-  "mainEntity": faqs.map((f) => ({
+  "mainEntity": items.map((f) => ({
     "@type": "Question",
-    "name": q(f),
+    "name": f.question,
     "acceptedAnswer": {
       "@type": "Answer",
-      "text": a(f),
+      "text": f.answer,
     },
   })),
 };
 ---
-{faqs.length > 0 && <script type="application/ld+json" set:html={JSON.stringify(schema)} />}
+{items.length > 0 && <script type="application/ld+json" set:html={JSON.stringify(schema)} />}

@@ -1,0 +1,8 @@
+{
+  "order": 203,
+  "published": true,
+  "question": "증착에 쓰는 타겟의 순도는 어느 정도인가요?",
+  "answer": "소재마다 다르며, 각 소재 페이지의 타겟 사양에 순도와 크기를 표시하고 있습니다. 예를 들어 [AlScN](/materials/m11/)은 AlN 99.95 %와 Sc 99.99 % 3인치 타겟을 사용합니다.",
+  "question_en": "What purity are your sputtering targets?",
+  "answer_en": "It varies by material; each material page lists target purity and size under its target specifications. For example, [AlScN](/materials/m11/) uses 3-inch AlN (99.95 %) and Sc (99.99 %) targets."
+}

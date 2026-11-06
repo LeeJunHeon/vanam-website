@@ -42,6 +42,7 @@ KIST, Seoul National University, Korea University, Hanyang University, Inha Univ
 - [Technology](https://vanam.co.kr/technology) · [한국어](https://vanam.co.kr/ko/technology): Core technology, materials, services, applications.
 - [News](https://vanam.co.kr/news) · [한국어](https://vanam.co.kr/ko/news): Press coverage and announcements.
 - [Contact](https://vanam.co.kr/contact) · [한국어](https://vanam.co.kr/ko/contact): Partnership, supply, and technical inquiries; FAQ.
+- [FAQ](https://vanam.co.kr/contact/#faq) · [한국어](https://vanam.co.kr/ko/contact/#faq): Frequently asked questions on process, materials, substrates and samples, ordering and shipping, analysis, and wafers.
 
 ## Contact
 - Email: hello@vanam.co.kr

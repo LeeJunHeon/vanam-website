@@ -1,0 +1,8 @@
+{
+  "order": 102,
+  "published": true,
+  "question": "증착 외에 어닐링이나 플라즈마 처리도 함께 의뢰할 수 있나요?",
+  "answer": "네. 견적 요청서의 공정 순서에 어닐링, 플라즈마 클리닝(In-situ), 플라즈마 처리(Ex-situ)를 증착 단계와 함께 넣을 수 있습니다. 어닐링은 대기·N₂·O₂·Ar 분위기, 플라즈마 클리닝은 Ar·O₂, 플라즈마 처리는 Ar·O₂·N₂·CF₄ 중에서 선택할 수 있습니다.",
+  "question_en": "Can I also request annealing or plasma treatment?",
+  "answer_en": "Yes. In the quote request's process sequence you can add annealing, in-situ plasma cleaning and ex-situ plasma treatment alongside deposition steps. Annealing is available in atmosphere, N₂, O₂ or Ar; plasma cleaning with Ar or O₂; and plasma treatment with Ar, O₂, N₂ or CF₄."
+}

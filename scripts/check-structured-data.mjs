@@ -1,6 +1,9 @@
 // 구조화 데이터(JSON-LD) 게이트 — 빌드 결과(dist/client)를 검사한다. Node 만 사용.
 //   node scripts/check-structured-data.mjs [디렉터리|파일]   (인자 없으면 dist/client)
 // 핵심 규칙: JSON-LD 의 값은 그 페이지 화면에 실제로 보이는 텍스트에 있어야 한다.
+// FAQ(문의 페이지): FAQPage 는 /contact/·/ko/contact/ 에만 있고, 질문·답이 화면의 FAQ 항목과 순서까지 같아야 한다.
+//   소재 전체 목록 답(자동 생성)은 소재 라이브러리(/materials/)의 항목 수·소재 집합·화면 묶음과 같아야 한다.
+//   FAQ_BASELINE_DIST=<이전 빌드 디렉터리> 를 주면 그 빌드에 있던 FAQ 항목이 지금도 같은 글자·같은 순서로 맨 앞에 있는지 확인한다.
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -109,6 +112,116 @@ function* walkStrings(v) {
 const arr = (x) => (x == null ? [] : Array.isArray(x) ? x : [x]);
 
 const counts = {}; const bump = (k, n = 1) => (counts[k] = (counts[k] || 0) + n);
+
+// ── FAQ(문의 페이지) ──
+const FAQ_PAGES = ['/contact/', '/ko/contact/'];
+const FAQ_BASELINE = process.env.FAQ_BASELINE_DIST || '';
+const faqSeen = new Set();
+// 태그를 공백 없이 지운 글자 — 답 안의 링크(<a>)가 문장을 끊지 않게 한다.
+const inlineText = (s) => fold(decode(s.replace(/<!--[\s\S]*?-->/g, '').replace(/<[^>]+>/g, '')));
+/** 화면의 FAQ 항목(접히는 details) — [{ q, a }]. id="faq" 영역이 없으면 null. */
+function faqScreen(html) {
+  const i = html.indexOf('<section id="faq"');
+  if (i < 0) return null;
+  const end = html.indexOf('</section>', i);
+  const sec = html.slice(i, end < 0 ? html.length : end);
+  return [...sec.matchAll(/<details\b[\s\S]*?<\/details>/g)].map((m) => {
+    const q = /<summary\b[^>]*>\s*<span>([\s\S]*?)<\/span>/.exec(m[0]);
+    const a = /<\/summary>\s*<p\b[^>]*>([\s\S]*?)<\/p>/.exec(m[0]);
+    return { q: q ? inlineText(q[1]) : '', a: a ? inlineText(a[1]) : '' };
+  });
+}
+const faqLd = (html, page) => blocks(html, page).flatMap(topNodes).filter((n) => arr(n['@type']).includes('FAQPage'));
+/** 소재 전체 목록 답 → { n, groups: [{ system, category, formulas }] }. 목록 형식: "[묶음] 분류: A, B. 분류: C. [묶음] …" */
+function parseMaterialAnswer(text) {
+  const n = Number((/\d+/.exec(text) || [])[0]);
+  const groups = [];
+  for (const m of text.matchAll(/\[([^\]]+)\]([^\[]*)/g)) {
+    for (const seg of m[2].split(/\.(?:\s+|$)/)) {
+      const i = seg.indexOf(': ');
+      if (i < 0) continue;
+      groups.push({ system: m[1].trim(), category: seg.slice(0, i).trim(), formulas: seg.slice(i + 2).split(', ').map((x) => x.trim()).filter(Boolean) });
+    }
+  }
+  return { n, groups };
+}
+/** 소재 라이브러리 화면의 묶음 — 카드 제목(h2) → 분류 이름(p) → 칩(a[data-mat]) 순서 그대로. */
+function libraryScreenGroups(html) {
+  const groups = []; let system = null; let cur = null;
+  const re = /<h2 class="text-lg font-bold text-accent">([\s\S]*?)<\/h2>|<p class="text-xs font-semibold uppercase tracking-wider text-ink\/55">([\s\S]*?)<\/p>|<a\b[^>]*\bdata-mat="[^"]*"[^>]*>([\s\S]*?)<\/a>/g;
+  for (const m of html.matchAll(re)) {
+    if (m[1] != null) { system = inlineText(m[1]); cur = null; }
+    else if (m[2] != null) { cur = { system, category: inlineText(m[2]), formulas: [] }; groups.push(cur); }
+    else if (cur) cur.formulas.push(inlineText(m[3]));
+  }
+  return groups.filter((g) => g.formulas.length);
+}
+function checkFaq(page, html, nodes) {
+  const isKo = page.startsWith('/ko');
+  const ld = nodes.filter((n) => arr(n['@type']).includes('FAQPage'));
+  if (!FAQ_PAGES.includes(page)) { if (ld.length) fail(page, 'FAQPage', ld.length, '문의 페이지(/contact/, /ko/contact/) 외 사용 금지'); return; }
+  faqSeen.add(page);
+  const screen = faqScreen(html);
+  if (!screen) { fail(page, 'FAQ 영역', 'id="faq"', '문의 페이지에 id="faq" 영역이 없음'); return; }
+  if (ld.length !== 1) { fail(page, '필수 노드 FAQPage', ld.length, '1개'); return; }
+  const qs = arr(ld[0].mainEntity);
+  if (qs.length !== screen.length) fail(page, 'FAQPage 질문 수', qs.length, `화면 항목 ${screen.length}개`);
+  qs.forEach((q, i) => {
+    if (!arr(q['@type']).includes('Question') || !arr(q.acceptedAnswer?.['@type']).includes('Answer')) fail(page, `FAQ ${i + 1} 타입`, JSON.stringify(q).slice(0, 80));
+    const s = screen[i];
+    if (!s) return;
+    if (fold(String(q.name ?? '')) !== s.q) fail(page, `FAQ ${i + 1} 질문`, q.name, `화면 질문과 다름: ${s.q.slice(0, 60)}`);
+    if (fold(String(q.acceptedAnswer?.text ?? '')) !== s.a) fail(page, `FAQ ${i + 1} 답`, q.acceptedAnswer?.text, `화면 답과 다름: ${s.a.slice(0, 60)}`);
+    if (!s.q || !s.a) fail(page, `FAQ ${i + 1}`, s.q, '화면 항목의 질문 또는 답이 비었음');
+  });
+  bump('faq', qs.length);
+
+  // 소재 전체 목록(자동 생성) — 소재 라이브러리와 같아야 한다
+  const mat = qs.map((q) => String(q.acceptedAnswer?.text ?? '')).filter((t) => /\[[^\]]+\][^\[]*: /.test(t));
+  if (mat.length !== 1) fail(page, 'FAQ 소재 전체 목록', mat.length, '자동 생성 답이 정확히 1개여야 함');
+  const libFile = findInRoots(`${isKo ? 'ko/' : ''}materials/index.html`);
+  if (mat.length === 1 && !libFile) fail(page, 'FAQ 소재 전체 목록', 'materials/index.html', '대조할 소재 라이브러리 페이지가 없음');
+  if (mat.length === 1 && libFile) {
+    const libHtml = fs.readFileSync(libFile, 'utf8');
+    const list = blocks(libHtml, page).flatMap(topNodes).filter((n) => arr(n['@type']).includes('ItemList'))[0];
+    const libNames = arr(list?.itemListElement).map((li) => String(li.item?.name ?? li.name ?? '')).map((nm) => fold(nm.includes(' (') ? nm.slice(0, nm.indexOf(' (')) : nm));
+    const { n, groups } = parseMaterialAnswer(fold(mat[0]));
+    const listed = groups.flatMap((g) => g.formulas);
+    if (!list) fail(page, 'FAQ 소재 전체 목록', '/materials/', 'ItemList 없음');
+    else {
+      if (n !== list.numberOfItems || n !== libNames.length) fail(page, 'FAQ 소재 수 {N}', n, `소재 라이브러리 항목 ${list.numberOfItems}개`);
+      if (listed.length !== n) fail(page, 'FAQ 나열된 소재 수', listed.length, `{N} = ${n}`);
+      const key = (xs) => JSON.stringify([...xs].sort());
+      if (key(listed) !== key(libNames)) {
+        const a = [...listed], b = [...libNames];
+        for (const x of [...a]) { const j = b.indexOf(x); if (j >= 0) { b.splice(j, 1); a.splice(a.indexOf(x), 1); } }
+        fail(page, 'FAQ 소재 집합', `FAQ 에만: ${a.join(', ') || '-'} / 라이브러리에만: ${b.join(', ') || '-'}`, '/materials/ ItemList 이름 집합과 다름');
+      }
+    }
+    // 분류 이름·순서·표기 = 소재 라이브러리 화면
+    const want = libraryScreenGroups(libHtml);
+    const show = (gs) => gs.map((g) => `[${g.system}] ${g.category}: ${g.formulas.join(', ')}`).join(' | ');
+    if (show(groups) !== show(want)) fail(page, 'FAQ 소재 묶음', show(groups).slice(0, 120), `소재 라이브러리 화면과 다름: ${show(want).slice(0, 120)}`);
+    bump('faq-materials', n);
+  }
+
+  // 이전 빌드에 있던 항목이 그대로인가(선택) — FAQ_BASELINE_DIST
+  if (FAQ_BASELINE) {
+    const rel = `${page.replace(/^\//, '')}index.html`;
+    const bf = path.join(FAQ_BASELINE, rel);
+    if (!fs.existsSync(bf)) { fail(page, 'FAQ 기준 빌드', bf, '파일 없음'); return; }
+    const bh = fs.readFileSync(bf, 'utf8');
+    const bs = faqScreen(bh) || [];
+    const bq = arr(faqLd(bh, page)[0]?.mainEntity);
+    if (!bs.length) fail(page, 'FAQ 기준 빌드', bf, 'FAQ 항목이 없음');
+    bs.forEach((b, i) => {
+      if (screen[i]?.q !== b.q) fail(page, `기존 FAQ ${i + 1} 질문(화면)`, screen[i]?.q, `기준: ${b.q.slice(0, 60)}`);
+      if (screen[i]?.a !== b.a) fail(page, `기존 FAQ ${i + 1} 답(화면)`, screen[i]?.a, `기준: ${b.a.slice(0, 60)}`);
+    });
+    bq.forEach((b, i) => { if (JSON.stringify(qs[i]) !== JSON.stringify(b)) fail(page, `기존 FAQ ${i + 1} (FAQPage)`, JSON.stringify(qs[i]).slice(0, 80), '기준 빌드와 다름'); });
+    bump('faq-baseline', bs.length);
+  }
+}
 const pageExists = (urlStr) => {
   let p; try { p = new URL(urlStr).pathname; } catch { return false; }
   p = decodeURIComponent(p);
@@ -156,6 +269,8 @@ for (const file of files) {
   }
   // Product 는 웨이퍼 상세에만
   for (const o of walkObjs(bl)) if (types(o).includes('Product') && kind !== 'waferdetail') fail(page, 'Product 타입', page, '웨이퍼 상세 외 사용 금지');
+  // FAQPage — 문의 페이지 전용, 화면 항목과 일치
+  checkFaq(page, html, nodes);
   // Organization / WebSite 공통
   if (bl.length) {
     const org = ofType('Organization')[0]; const ws = ofType('WebSite')[0];
@@ -252,7 +367,10 @@ for (const file of files) {
   } else { bump('other'); }
 }
 
+// FAQPage 는 문의 페이지 두 곳에 반드시 있어야 한다(디렉터리 전체를 검사할 때)
+if (stat.isDirectory()) for (const p of FAQ_PAGES) if (!faqSeen.has(p)) fail(p, 'FAQPage', '페이지 없음', '문의 페이지가 빌드 결과에 없음');
 console.log('check-structured-data 페이지 종류별:', JSON.stringify(counts));
+if (FAQ_BASELINE) console.log(`check-structured-data 기존 FAQ 불변 검사: 기준 ${FAQ_BASELINE}`);
 if (errors.length) {
   console.error(`check-structured-data FAIL (${errors.length}건, ${arg}):`);
   for (const e of errors.slice(0, 60)) console.error('  - ' + e);

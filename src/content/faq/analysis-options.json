@@ -1,0 +1,8 @@
+{
+  "order": 501,
+  "published": true,
+  "question": "증착과 함께 어떤 분석을 받을 수 있나요?",
+  "answer": "견적 요청서에서 면저항(Sheet Resistance), 엘립소미터, SEM(EDS 포함), TEM(EDS 포함), XRD, XPS, UPS, AFM, Raman, I–V, C–V, Pulse, 강유전(Ferroelectric), 압전(Piezoelectric), Hall, PPMS 측정을 선택할 수 있습니다.",
+  "question_en": "What analyses can I request with deposition?",
+  "answer_en": "The quote request lets you add sheet resistance, ellipsometry, SEM (with EDS), TEM (with EDS), XRD, XPS, UPS, AFM, Raman, I–V, C–V, pulse, ferroelectric, piezoelectric, Hall and PPMS measurements."
+}

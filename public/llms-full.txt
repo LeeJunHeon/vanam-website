@@ -62,6 +62,8 @@ KIST, Seoul National University, Korea University, Hanyang University, Inha Univ
 - "[Seeing the future of semiconductors ⑧] VanaM."
 
 ## FAQ
+Full FAQ (process, materials, substrates and samples, ordering and shipping, analysis, wafers): https://vanam.co.kr/contact/#faq (한국어: https://vanam.co.kr/ko/contact/#faq)
+
 Q: What deposition methods do you offer?
 A: PVD (sputter, evaporator) and ALD, plus PLD and MOCVD — customized thin-film deposition, including special films and process conditions that are hard to achieve in conventional production lines.
 

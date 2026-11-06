@@ -39,8 +39,9 @@ const TEMPLATES: Record<string, Record<Loc, string>> = {
     en: 'VanaM thin-film materials library — specifications and measurement data for {count} materials deposited by sputtering and ALD: oxides ({oxides}), nitrides ({nitrides}), metals ({metals}), multilayers ({multilayers}). XRD, SEM, TEM, electrical data, target and precursor specs; request a quote directly.',
   },
   contact: {
-    ko: '박막 증착·분석 의뢰, 웨이퍼 구매, 협업 문의를 남겨 주세요. 서울 도심형 마이크로 파운드리 반암(VanaM)의 담당자가 확인 후 회신합니다.',
-    en: 'Contact VanaM for thin-film deposition and analysis requests, wafer purchases and partnerships. Seoul-based urban micro-foundry — our team will follow up.',
+    // 문의 + FAQ 주제(공정·소재·기판·주문·배송·분석·웨이퍼) — FAQ 분류(lib/faq.ts FAQ_CATEGORIES)와 맞춘다.
+    ko: '반암에 박막 증착·견적을 문의하세요. 스퍼터·증발·ALD 공정, 소재, 기판, 주문·배송, 분석, 웨이퍼에 관한 자주 묻는 질문도 확인할 수 있습니다.',
+    en: 'Contact VanaM about thin-film deposition and quotes. See FAQs on sputtering, evaporation and ALD, materials, substrates, ordering and shipping, analysis and wafers.',
   },
 };
 

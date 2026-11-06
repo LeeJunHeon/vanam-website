@@ -18,6 +18,16 @@ const SUBSCRIPTS: Record<string, string> = {
 export const chipSortKey = (formula: string) =>
   formula.replace(/[₀-₉ₓ]/g, (c) => SUBSCRIPTS[c] ?? c).toLowerCase();
 
+/**
+ * 화면 표기 — 소재 라이브러리(MaterialsLibrary.astro)의 카드 제목·분류 이름과 같은 글자.
+ * 문의 페이지 FAQ 의 소재 목록(lib/faq.ts)이 쓴다. 화면과 어긋나면 scripts/check-structured-data.mjs 가 잡는다.
+ */
+export const SYSTEM_LABEL: Record<string, string> = { sputter: 'PVD — Sputter & Evaporator', ald: 'ALD' };
+export const CATEGORY_LABEL: Record<'ko' | 'en', Record<string, string>> = {
+  ko: { Oxide: '산화물', Nitride: '질화물', Metal: '금속', Semiconductor: '반도체', Multilayer: '다층막' },
+  en: { Oxide: 'Oxide', Nitride: 'Nitride', Metal: 'Metal', Semiconductor: 'Semiconductor', Multilayer: 'Multilayer' },
+};
+
 /** 예외 한 건: PVD 산화물의 VO₂(m01)는 대표 소재라 늘 맨 앞. 나머지는 순수 알파벳순. */
 const CHIP_PINNED: Record<string, Record<string, string>> = { sputter: { Oxide: 'm01' } };
 
