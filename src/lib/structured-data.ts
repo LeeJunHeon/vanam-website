@@ -197,7 +197,7 @@ export function materialNodes(m: MaterialInput) {
     provider: { '@id': ORG_ID },
     areaServed: 'Worldwide',
     url: m.pageUrl,
-    about: {
+    serviceOutput: {
       '@type': 'Thing',
       name: m.displayName,
       alternateName: dedupe([m.formula, ...m.aka]),

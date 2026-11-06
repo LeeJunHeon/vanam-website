@@ -92,11 +92,12 @@ const servicesLd = productServicesNode({
   isKo,
   base,
   deposition: {
-    name: tech.processHeading,
-    description: tech.processSub,
+    // 서비스 이름은 고정 어구(섹션 제목은 서비스 이름으로 부적절), 설명은 화면 안내문(s.intro)의 맞춤 증착 문장
+    name: isKo ? '맞춤형 박막 증착' : 'Custom thin-film deposition',
+    description: s.intro.split(/(?<=[.])\s+/).pop(),
     categories: products
       .filter((p) => p.data.category === 'coating')
-      .map((p) => ({ name: name(p), url: `${base}/product/${p.id}/` })),
+      .map((p) => ({ name: name(p), description: summary(p), url: `${base}/product/${p.id}/` })),
   },
   wafers: waferCard
     ? { name: name(waferCard), description: summary(waferCard) }

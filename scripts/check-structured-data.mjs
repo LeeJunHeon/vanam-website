@@ -13,6 +13,23 @@ const SERVICE_KEYS = ['deposition', 'wafers', 'analysis', 'equipment'];
 const FIXED_IDS = new Set([ORG_ID, WEBSITE_ID,
   ...SERVICE_KEYS.flatMap((k) => [`${SITE}/product/#service-${k}`, `${SITE}/ko/product/#service-${k}`])]);
 
+// 타입별 허용 속성(schema.org 정의에 있는 것만). 이 모듈이 만드는 타입만 검사한다.
+const THING = ['name', 'alternateName', 'description', 'url', 'image', 'sameAs', 'identifier', 'mainEntityOfPage', 'potentialAction', 'subjectOf', 'disambiguatingDescription', 'additionalType'];
+const ALLOWED = {
+  Thing: THING,
+  Organization: [...THING, 'logo', 'slogan', 'foundingDate', 'email', 'telephone', 'address', 'areaServed', 'knowsAbout', 'hasOfferCatalog', 'founder', 'contactPoint', 'legalName', 'brand', 'numberOfEmployees', 'taxID', 'vatID'],
+  WebSite: [...THING, 'inLanguage', 'publisher', 'potentialAction', 'copyrightHolder', 'issn'],
+  Service: [...THING, 'serviceType', 'provider', 'areaServed', 'category', 'hasOfferCatalog', 'serviceOutput', 'offers', 'brand', 'audience', 'termsOfService', 'availableChannel', 'isRelatedTo', 'isSimilarTo', 'produces', 'providerMobility', 'review', 'aggregateRating', 'slogan', 'logo', 'serviceAudience', 'broker', 'hoursAvailable', 'serviceArea'],
+  Dataset: [...THING, 'creator', 'isAccessibleForFree', 'license', 'variableMeasured', 'keywords', 'distribution', 'measurementTechnique', 'temporalCoverage', 'spatialCoverage', 'publisher', 'datePublished', 'dateModified', 'includedInDataCatalog', 'version', 'citation'],
+  PropertyValue: [...THING, 'value', 'unitCode', 'unitText', 'propertyID', 'minValue', 'maxValue', 'measurementTechnique'],
+  ImageObject: [...THING, 'contentUrl', 'caption', 'width', 'height', 'encodingFormat', 'thumbnailUrl', 'embedUrl', 'creator', 'license', 'representativeOfPage', 'uploadDate'],
+  BreadcrumbList: ['itemListElement', 'numberOfItems', 'itemListOrder', 'name', 'url', 'description'],
+  ItemList: ['itemListElement', 'numberOfItems', 'itemListOrder', 'name', 'url', 'description'],
+  ListItem: ['position', 'item', 'name', 'url', 'description', 'nextItem', 'previousItem'],
+  OfferCatalog: ['itemListElement', 'numberOfItems', 'itemListOrder', 'name', 'url', 'description', 'image'],
+  Offer: [...THING, 'itemOffered', 'price', 'priceCurrency', 'availability', 'itemCondition', 'seller', 'validFrom', 'priceValidUntil', 'eligibleRegion', 'areaServed', 'category', 'sku'],
+  PostalAddress: [...THING, 'addressCountry', 'addressRegion', 'addressLocality', 'streetAddress', 'postalCode', 'postOfficeBoxNumber'],
+};
 const errors = [];
 const fail = (page, field, value, msg = '') =>
   errors.push(`${page} :: ${field} :: ${String(value).slice(0, 140)}${msg ? '  → ' + msg : ''}`);
@@ -127,6 +144,12 @@ for (const file of files) {
   for (const s of walkStrings(bl)) {
     if (s.startsWith(SITE)) { const u = s.split('#')[0]; if (!pageExists(u)) fail(page, '내부 링크', s, 'dist 에 페이지 없음'); }
   }
+  // 타입별 허용 속성 (Product·Blog·FAQ 등 기존 블록은 ALLOWED 에 없어 제외)
+  for (const o of walkObjs(bl)) {
+    const t = types(o).find((x) => ALLOWED[x]);
+    if (!t) continue;
+    for (const k of Object.keys(o)) if (!k.startsWith('@') && !ALLOWED[t].includes(k)) fail(page, `${t}.${k}`, JSON.stringify(o[k]), `schema.org ${t} 에 없는 속성`);
+  }
   // Product 는 웨이퍼 상세에만
   for (const o of walkObjs(bl)) if (types(o).includes('Product') && kind !== 'waferdetail') fail(page, 'Product 타입', page, '웨이퍼 상세 외 사용 금지');
   // Organization / WebSite 공통
@@ -156,11 +179,15 @@ for (const file of files) {
     if (svc.length !== 4) fail(page, '필수 노드 Service', svc.length, '4개');
     need('BreadcrumbList');
     for (const s of svc) {
-      vis('Service.name', s.name); vis('Service.description', s.description);
+      if (s['@id'].endsWith('service-deposition')) {
+        if (s.name !== (page.startsWith('/ko') ? '맞춤형 박막 증착' : 'Custom thin-film deposition')) fail(page, 'Service.name', s.name, '증착 서비스는 고정 어구만 허용');
+      } else vis('Service.name', s.name);
+      vis('Service.description', s.description);
+      if (s['@id'].endsWith('service-deposition')) for (const c of arr(s.hasOfferCatalog?.itemListElement)) if (!c.description) fail(page, '카테고리 description', c.name, '없음');
       if (s.areaServed !== 'Worldwide') fail(page, 'Service.areaServed', s.areaServed);
       if (s.provider?.['@id'] !== ORG_ID) fail(page, 'Service.provider', JSON.stringify(s.provider));
       if (JSON.stringify(s).includes('"price')) fail(page, 'Service', 'price', '가격 금지');
-      for (const o of walkObjs(s.hasOfferCatalog)) { vis('Service.catalog.name', o.name); vis('Service.catalog.description', o.description); }
+      for (const o of walkObjs(s.hasOfferCatalog)) { if (o.name !== s.name) vis('Service.catalog.name', o.name); vis('Service.catalog.description', o.description); }
     }
     const isKo = page.startsWith('/ko');
     for (const k of SERVICE_KEYS) if (!svc.some((s) => s['@id'] === `${SITE}${isKo ? '/ko' : ''}/product/#service-${k}`)) fail(page, 'Service @id', k, '없음');
@@ -195,8 +222,9 @@ for (const file of files) {
     if (ofType('Thing').length) fail(page, '옛 Thing 블록', ofType('Thing').length, '중복 블록 남음');
     for (const s of ofType('Service')) {
       vis('Service.description', s.description);
-      vis('Service.about.name', s.about?.name);
-      arr(s.about?.alternateName).forEach((a) => vis('Service.about.alternateName', a));
+      if ('about' in s) fail(page, 'Service.about', JSON.stringify(s.about), 'serviceOutput 을 써야 함');
+      vis('Service.serviceOutput.name', s.serviceOutput?.name);
+      arr(s.serviceOutput?.alternateName).forEach((a) => vis('Service.serviceOutput.alternateName', a));
       vis('Service.category', s.category);
       arr(s.image).forEach((im) => vis('ImageObject.caption', im.caption));
       if (s.provider?.['@id'] !== ORG_ID) fail(page, 'Service.provider', JSON.stringify(s.provider));
