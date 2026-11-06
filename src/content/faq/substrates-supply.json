@@ -1,8 +1,0 @@
-{
-  "order": 303,
-  "published": true,
-  "question": "기판이 없으면 준비해 주나요?",
-  "answer": "네. 견적 요청서에서 '구매 요청'을 선택하시면 반암이 원하시는 종류·크기의 기판을 구매해 진행합니다. 실리콘·실리콘 산화막 기판은 등급(Test/Prime)도 선택할 수 있습니다. 기판이 있으시면 방문 전달이나 택배로 보내 주시면 됩니다.",
-  "question_en": "Can you supply the substrate?",
-  "answer_en": "Yes. Choose \"Purchase request\" in the quote request and we will buy substrates of the type and size you need. For silicon and silicon oxide substrates you can also choose the grade (Test/Prime). If you have your own substrates, you can deliver them in person or send them by courier."
-}

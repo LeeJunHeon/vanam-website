@@ -1,0 +1,136 @@
+---
+// FAQ 색인 페이지(/faq/, /ko/faq/) — 확정 FAQ 38개의 질문만 분류별로 나열하고, 각 질문을 답이 있는 페이지의 앵커로 보낸다.
+//   · 답은 여기 싣지 않는다(각 질문의 답은 사이트에서 한 곳에만 있다). FAQPage 구조화 데이터도 넣지 않는다.
+//   · 검색: 언어별 정적 JSON(/faq-search.json, /ko/faq-search.json)을 받아 질문·답을 함께 찾고, 목록을 거른다.
+//     JS 가 없어도 전체 목록은 그대로 보인다. 검색 데이터를 HTML 안에 숨겨 넣지 않는다.
+//   · 문구·배치: src/data/faq.json(확정본) ← src/lib/faq.ts
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import siteData from '../../data/site.json';
+import { toLoc, faqIndexGroups, FAQ_UI } from '../../lib/faq';
+import { breadcrumbNode, itemListNode, NAV } from '../../lib/structured-data';
+
+const loc = toLoc(Astro.currentLocale);
+const isKo = loc === 'ko';
+const c = (siteData[loc] ?? siteData.en).contact;
+const ui = FAQ_UI[loc];
+const groups = faqIndexGroups(loc);
+const all = groups.flatMap((g) => g.items);
+const base = isKo ? '/ko' : '';
+const searchSrc = `${base}/faq-search.json`;
+
+const crumbLd = breadcrumbNode([
+  { name: (isKo ? NAV.ko : NAV.en).home, url: `${base}/` },
+  { name: ui.crumb, url: `${base}/faq/` },
+]);
+// ItemList — 질문 38개. url 은 답이 있는 위치(페이지 + 앵커).
+const listLd = itemListNode(all.map((x) => ({ name: x.q, url: x.href })));
+---
+
+<BaseLayout title={ui.indexTitle} description={ui.indexDescription}>
+  <section class="v-wrap py-16">
+    <p class="text-sm font-medium uppercase tracking-widest text-accent">{c.faqEyebrow}</p>
+    <h1 class="mt-4 text-4xl font-bold text-ink">{c.faqHeading}</h1>
+
+    <div id="faq-index" data-src={searchSrc} class="mt-10">
+      <label for="faq-q" class="block text-sm font-medium text-ink/80">{ui.searchLabel}</label>
+      <input id="faq-q" type="search" autocomplete="off" class="v-input" placeholder={ui.searchPlaceholder} />
+      <p id="faq-empty" hidden role="status" class="mt-10 text-sm text-ink/60">{ui.noResult}</p>
+
+      {groups.map((g) => (
+        <div data-faq-group>
+          <h2 class="mt-12 text-lg font-bold text-ink">{g.label}</h2>
+          <ul class="mt-4 divide-y divide-ink/10 border-t border-ink/10">
+            {g.items.map((x) => (
+              <li data-faq-id={x.id} class="py-5">
+                <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                  <a href={x.href} class="text-base font-medium text-ink/90 transition hover:text-accent">{x.q}</a>
+                  <span class="shrink-0 text-xs text-ink/45">{x.where}</span>
+                </div>
+                <p data-faq-excerpt hidden class="mt-3 text-sm leading-relaxed text-ink/60"></p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+  </section>
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(crumbLd)} />
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(listLd)} />
+</BaseLayout>
+
+<script>
+  // FAQ 검색 — 질문과 답을 함께 찾아 목록을 거르고, 답에서 맞은 곳을 120자 이내로 보여준다.
+  // 비교는 NFKC(전각/반각 · 아래첨자 VO₂=VO2) + 소문자로 한다. 보여주는 글자는 원문 그대로다.
+  const root = document.getElementById('faq-index');
+  const input = document.getElementById('faq-q') as HTMLInputElement | null;
+  if (root && input) {
+    type Row = { id: string; q: string; a: string };
+    type Idx = { id: string; nq: string; a: string; na: string; map: number[] };
+    // 비교용 글자열과, 그 각 글자가 원문의 몇 번째 글자에서 왔는지(map) — 발췌를 원문에서 잘라 내기 위해서다.
+    const normMap = (s: string) => {
+      let out = '';
+      const map: number[] = [];
+      let i = 0;
+      for (const ch of s) {
+        const n = ch.normalize('NFKC').toLowerCase();
+        for (let k = 0; k < n.length; k++) map.push(i);
+        out += n;
+        i += ch.length;
+      }
+      return { out, map };
+    };
+    const terms = (s: string) => normMap(s).out.replace(/\s+/g, ' ').trim().split(' ').filter(Boolean);
+
+    let idx: Idx[] | null = null;
+    let loading: Promise<void> | null = null;
+    const load = () =>
+      (loading ??= fetch(root.dataset.src!)
+        .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
+        .then((rows: Row[]) => {
+          idx = rows.map((r) => { const a = normMap(r.a); return { id: r.id, nq: normMap(r.q).out, a: r.a, na: a.out, map: a.map }; });
+        })
+        .catch((e) => { loading = null; throw e; }));
+
+    const MAX = 120; // 발췌 길이(말줄임표 포함)
+    const excerpt = (r: Idx, term: string) => {
+      const at = r.na.indexOf(term);
+      if (at < 0) return '';
+      const hit = r.map[at]; // 원문에서 맞은 곳
+      let start = Math.max(0, hit - 40);
+      let end = Math.min(r.a.length, start + MAX - 2);
+      if (end === r.a.length) start = Math.max(0, end - (MAX - 2));
+      if (start > 0) { const sp = r.a.indexOf(' ', start); if (sp >= 0 && sp < hit) start = sp + 1; } // 낱말 중간에서 시작하지 않게
+      return (start > 0 ? '…' : '') + r.a.slice(start, end).trim() + (end < r.a.length ? '…' : '');
+    };
+
+    const items = Array.from(root.querySelectorAll<HTMLElement>('li[data-faq-id]'));
+    const groups = Array.from(root.querySelectorAll<HTMLElement>('[data-faq-group]'));
+    const empty = document.getElementById('faq-empty');
+    const apply = () => {
+      const ts = terms(input.value);
+      let shown = 0;
+      for (const li of items) {
+        const r = idx?.find((x) => x.id === li.dataset.faqId);
+        let ok = true;
+        let text = '';
+        if (ts.length && r) {
+          ok = ts.every((t) => r.nq.includes(t) || r.na.includes(t));
+          const t = ok ? ts.find((x) => r.na.includes(x)) : undefined;
+          if (t) text = excerpt(r, t);
+        }
+        li.hidden = !ok;
+        if (ok) shown++;
+        const ex = li.querySelector<HTMLElement>('[data-faq-excerpt]');
+        if (ex) { ex.textContent = text; ex.hidden = !text; }
+      }
+      for (const g of groups) g.hidden = !g.querySelector('li[data-faq-id]:not([hidden])');
+      if (empty) empty.hidden = shown > 0;
+    };
+    input.addEventListener('input', () => {
+      if (!terms(input.value).length) { apply(); return; } // 검색어를 지우면 전체 목록
+      load().then(apply).catch(() => { /* 검색 데이터를 못 받으면 전체 목록을 그대로 둔다 */ });
+    });
+    input.addEventListener('focus', () => { load().catch(() => {}); }, { once: true });
+    if (input.value) load().then(apply).catch(() => {}); // 뒤로 가기로 돌아왔을 때 남아 있는 검색어
+  }
+</script>

@@ -1,11 +1,16 @@
 // 구조화 데이터(JSON-LD) 게이트 — 빌드 결과(dist/client)를 검사한다. Node 만 사용.
 //   node scripts/check-structured-data.mjs [디렉터리|파일]   (인자 없으면 dist/client)
 // 핵심 규칙: JSON-LD 의 값은 그 페이지 화면에 실제로 보이는 텍스트에 있어야 한다.
-// FAQ(문의 페이지): FAQPage 는 /contact/·/ko/contact/ 에만 있고, 질문·답이 화면의 FAQ 항목과 순서까지 같아야 한다.
-//   소재 전체 목록 답(자동 생성)은 소재 라이브러리(/materials/)의 항목 수·소재 집합·화면 묶음과 같아야 한다.
-//   FAQ_BASELINE_DIST=<이전 빌드 디렉터리> 를 주면 그 빌드에 있던 FAQ 항목이 지금도 같은 글자·같은 순서로 맨 앞에 있는지 확인한다.
+// FAQ(확정 FAQ 38개, src/data/faq.json):
+//   · FAQPage 는 FAQ 영역이 있는 6개 페이지(EN·KO)에만 있고, 그 페이지에 답이 있는 항목만 담는다.
+//   · 각 질문(id)은 사이트 전체에서 정확히 한 페이지에만 있다.
+//   · FAQPage 의 질문·답 = 데이터 파일 문구 = 그 페이지 화면 글자 (공백 접기만 허용).
+//   · 색인 페이지(/faq/)의 ItemList·목록이 38개이고, 모든 링크의 앵커가 실제 그 페이지에 있다. 검색 JSON 이 데이터와 같다.
+//   · 관련 질문 링크와 "전체 질문 보기" 링크의 대상이 있다.
+//   · llms.txt · llms-full.txt 의 FAQ 목록이 데이터에서 만든 것과 같다.
 import fs from 'node:fs';
 import path from 'node:path';
+import { loadFaq, faqPath, faqUrl, faqIndexPath, llmsFaqSection, faqSectionRange } from './lib/faq-data.mjs';
 
 const DEFAULT = 'dist/client';
 const arg = process.argv[2] || DEFAULT;
@@ -31,6 +36,9 @@ const ALLOWED = {
   ListItem: ['position', 'item', 'name', 'url', 'description', 'nextItem', 'previousItem'],
   OfferCatalog: ['itemListElement', 'numberOfItems', 'itemListOrder', 'name', 'url', 'description', 'image'],
   Offer: [...THING, 'itemOffered', 'price', 'priceCurrency', 'availability', 'itemCondition', 'seller', 'validFrom', 'priceValidUntil', 'eligibleRegion', 'areaServed', 'category', 'sku'],
+  FAQPage: [...THING, 'mainEntity', 'inLanguage', 'about', 'dateModified', 'datePublished', 'isPartOf', 'breadcrumb', 'headline', 'publisher', 'author'],
+  Question: [...THING, 'acceptedAnswer', 'suggestedAnswer', 'answerCount', 'text', 'author', 'dateCreated', 'inLanguage', 'upvoteCount'],
+  Answer: [...THING, 'text', 'author', 'dateCreated', 'inLanguage', 'upvoteCount'],
   PostalAddress: [...THING, 'addressCountry', 'addressRegion', 'addressLocality', 'streetAddress', 'postalCode', 'postOfficeBoxNumber'],
 };
 const errors = [];
@@ -113,115 +121,182 @@ const arr = (x) => (x == null ? [] : Array.isArray(x) ? x : [x]);
 
 const counts = {}; const bump = (k, n = 1) => (counts[k] = (counts[k] || 0) + n);
 
-// ── FAQ(문의 페이지) ──
-const FAQ_PAGES = ['/contact/', '/ko/contact/'];
-const FAQ_BASELINE = process.env.FAQ_BASELINE_DIST || '';
-const faqSeen = new Set();
-// 태그를 공백 없이 지운 글자 — 답 안의 링크(<a>)가 문장을 끊지 않게 한다.
-const inlineText = (s) => fold(decode(s.replace(/<!--[\s\S]*?-->/g, '').replace(/<[^>]+>/g, '')));
-/** 화면의 FAQ 항목(접히는 details) — [{ q, a }]. id="faq" 영역이 없으면 null. */
+// ── FAQ (확정 FAQ 38개) ──
+const FAQ = loadFaq();
+// FAQ 영역(= FAQPage)이 있어야 하는 페이지 — 이 목록과 정확히 같아야 한다(EN·KO).
+const FAQ_ALLOWED = ['/contact/', '/technology/', '/product/', '/materials/', '/materials/m01/', '/materials/m11/'];
+const FAQ_INDEX = '/faq/';
+const withKo = (list) => list.flatMap((p) => [p, '/ko' + p]);
+const FAQ_PAGE_SET = new Set(withKo(FAQ_ALLOWED));
+const locOf = (page) => (page === '/ko' || page.startsWith('/ko/') ? 'ko' : 'en');
+const barePage = (page) => (locOf(page) === 'ko' ? page.slice(3) : page);
+const ws = (s) => String(s ?? '').replace(/\s+/g, ' ').trim(); // 공백 접기만 — 글자는 그대로 비교한다
+// 태그를 공백 없이 지운 글자(엔티티는 풀어서)
+const inlineText = (s) => ws(decode(s.replace(/<!--[\s\S]*?-->/g, '').replace(/<[^>]+>/g, '')));
+const attr = (tag, name) => { const m = new RegExp(`\\b${name}="([^"]*)"`).exec(tag); return m ? decode(m[1]) : null; };
+const faqStats = { pages: new Set(), idPages: { en: new Map(), ko: new Map() }, qa: 0, index: 0, related: 0, seeAll: 0 };
+const htmlCache = new Map();
+/** 사이트 내부 경로(/ko/contact/)의 HTML. 없으면 null. */
+function htmlOfPath(p) {
+  if (!htmlCache.has(p)) {
+    const f = findInRoots(path.join(p.replace(/^\//, ''), 'index.html'));
+    htmlCache.set(p, f ? fs.readFileSync(f, 'utf8') : null);
+  }
+  return htmlCache.get(p);
+}
+/** 링크(/ko/contact/#faq-e01)의 대상 — 페이지가 있고, 그 페이지에 그 id 의 FAQ 항목(details)이 있는가 */
+function anchorTargetError(href) {
+  const [p, hash] = href.split('#');
+  const h = htmlOfPath(p);
+  if (!h) return '대상 페이지가 없음';
+  if (hash && !new RegExp(`<details\\b[^>]*\\bid="${hash}"`).test(h)) return `대상 페이지에 id="${hash}" 항목이 없음`;
+  return null;
+}
+/** 화면의 FAQ 영역 — { items: [{ id, q, a }], seeAll }. id="faq" 영역이 없으면 null. */
 function faqScreen(html) {
   const i = html.indexOf('<section id="faq"');
   if (i < 0) return null;
   const end = html.indexOf('</section>', i);
   const sec = html.slice(i, end < 0 ? html.length : end);
-  return [...sec.matchAll(/<details\b[\s\S]*?<\/details>/g)].map((m) => {
-    const q = /<summary\b[^>]*>\s*<span>([\s\S]*?)<\/span>/.exec(m[0]);
-    const a = /<\/summary>\s*<p\b[^>]*>([\s\S]*?)<\/p>/.exec(m[0]);
-    return { q: q ? inlineText(q[1]) : '', a: a ? inlineText(a[1]) : '' };
+  const items = [...sec.matchAll(/<details\b([^>]*)>([\s\S]*?)<\/details>/g)].map((m) => {
+    const q = /<summary\b[^>]*>\s*<span>([\s\S]*?)<\/span>/.exec(m[2]);
+    const a = /<\/summary>\s*<p\b[^>]*>([\s\S]*?)<\/p>/.exec(m[2]);
+    return { id: attr(m[1], 'id') ?? '', q: q ? inlineText(q[1]) : '', a: a ? inlineText(a[1]) : '' };
   });
-}
-const faqLd = (html, page) => blocks(html, page).flatMap(topNodes).filter((n) => arr(n['@type']).includes('FAQPage'));
-/** 소재 전체 목록 답 → { n, groups: [{ system, category, formulas }] }. 목록 형식: "[묶음] 분류: A, B. 분류: C. [묶음] …" */
-function parseMaterialAnswer(text) {
-  const n = Number((/\d+/.exec(text) || [])[0]);
-  const groups = [];
-  for (const m of text.matchAll(/\[([^\]]+)\]([^\[]*)/g)) {
-    for (const seg of m[2].split(/\.(?:\s+|$)/)) {
-      const i = seg.indexOf(': ');
-      if (i < 0) continue;
-      groups.push({ system: m[1].trim(), category: seg.slice(0, i).trim(), formulas: seg.slice(i + 2).split(', ').map((x) => x.trim()).filter(Boolean) });
-    }
-  }
-  return { n, groups };
-}
-/** 소재 라이브러리 화면의 묶음 — 카드 제목(h2) → 분류 이름(p) → 칩(a[data-mat]) 순서 그대로. */
-function libraryScreenGroups(html) {
-  const groups = []; let system = null; let cur = null;
-  const re = /<h2 class="text-lg font-bold text-accent">([\s\S]*?)<\/h2>|<p class="text-xs font-semibold uppercase tracking-wider text-ink\/55">([\s\S]*?)<\/p>|<a\b[^>]*\bdata-mat="[^"]*"[^>]*>([\s\S]*?)<\/a>/g;
-  for (const m of html.matchAll(re)) {
-    if (m[1] != null) { system = inlineText(m[1]); cur = null; }
-    else if (m[2] != null) { cur = { system, category: inlineText(m[2]), formulas: [] }; groups.push(cur); }
-    else if (cur) cur.formulas.push(inlineText(m[3]));
-  }
-  return groups.filter((g) => g.formulas.length);
+  const all = /<a\b[^>]*\bdata-faq-all\b[^>]*>/.exec(sec);
+  return { items, seeAll: all ? attr(all[0], 'href') : null };
 }
 function checkFaq(page, html, nodes) {
-  const isKo = page.startsWith('/ko');
+  const loc = locOf(page); const bare = barePage(page);
   const ld = nodes.filter((n) => arr(n['@type']).includes('FAQPage'));
-  if (!FAQ_PAGES.includes(page)) { if (ld.length) fail(page, 'FAQPage', ld.length, '문의 페이지(/contact/, /ko/contact/) 외 사용 금지'); return; }
-  faqSeen.add(page);
-  const screen = faqScreen(html);
-  if (!screen) { fail(page, 'FAQ 영역', 'id="faq"', '문의 페이지에 id="faq" 영역이 없음'); return; }
-  if (ld.length !== 1) { fail(page, '필수 노드 FAQPage', ld.length, '1개'); return; }
-  const qs = arr(ld[0].mainEntity);
-  if (qs.length !== screen.length) fail(page, 'FAQPage 질문 수', qs.length, `화면 항목 ${screen.length}개`);
-  qs.forEach((q, i) => {
-    if (!arr(q['@type']).includes('Question') || !arr(q.acceptedAnswer?.['@type']).includes('Answer')) fail(page, `FAQ ${i + 1} 타입`, JSON.stringify(q).slice(0, 80));
-    const s = screen[i];
-    if (!s) return;
-    if (fold(String(q.name ?? '')) !== s.q) fail(page, `FAQ ${i + 1} 질문`, q.name, `화면 질문과 다름: ${s.q.slice(0, 60)}`);
-    if (fold(String(q.acceptedAnswer?.text ?? '')) !== s.a) fail(page, `FAQ ${i + 1} 답`, q.acceptedAnswer?.text, `화면 답과 다름: ${s.a.slice(0, 60)}`);
-    if (!s.q || !s.a) fail(page, `FAQ ${i + 1}`, s.q, '화면 항목의 질문 또는 답이 비었음');
-  });
-  bump('faq', qs.length);
-
-  // 소재 전체 목록(자동 생성) — 소재 라이브러리와 같아야 한다
-  const mat = qs.map((q) => String(q.acceptedAnswer?.text ?? '')).filter((t) => /\[[^\]]+\][^\[]*: /.test(t));
-  if (mat.length !== 1) fail(page, 'FAQ 소재 전체 목록', mat.length, '자동 생성 답이 정확히 1개여야 함');
-  const libFile = findInRoots(`${isKo ? 'ko/' : ''}materials/index.html`);
-  if (mat.length === 1 && !libFile) fail(page, 'FAQ 소재 전체 목록', 'materials/index.html', '대조할 소재 라이브러리 페이지가 없음');
-  if (mat.length === 1 && libFile) {
-    const libHtml = fs.readFileSync(libFile, 'utf8');
-    const list = blocks(libHtml, page).flatMap(topNodes).filter((n) => arr(n['@type']).includes('ItemList'))[0];
-    const libNames = arr(list?.itemListElement).map((li) => String(li.item?.name ?? li.name ?? '')).map((nm) => fold(nm.includes(' (') ? nm.slice(0, nm.indexOf(' (')) : nm));
-    const { n, groups } = parseMaterialAnswer(fold(mat[0]));
-    const listed = groups.flatMap((g) => g.formulas);
-    if (!list) fail(page, 'FAQ 소재 전체 목록', '/materials/', 'ItemList 없음');
-    else {
-      if (n !== list.numberOfItems || n !== libNames.length) fail(page, 'FAQ 소재 수 {N}', n, `소재 라이브러리 항목 ${list.numberOfItems}개`);
-      if (listed.length !== n) fail(page, 'FAQ 나열된 소재 수', listed.length, `{N} = ${n}`);
-      const key = (xs) => JSON.stringify([...xs].sort());
-      if (key(listed) !== key(libNames)) {
-        const a = [...listed], b = [...libNames];
-        for (const x of [...a]) { const j = b.indexOf(x); if (j >= 0) { b.splice(j, 1); a.splice(a.indexOf(x), 1); } }
-        fail(page, 'FAQ 소재 집합', `FAQ 에만: ${a.join(', ') || '-'} / 라이브러리에만: ${b.join(', ') || '-'}`, '/materials/ ItemList 이름 집합과 다름');
-      }
-    }
-    // 분류 이름·순서·표기 = 소재 라이브러리 화면
-    const want = libraryScreenGroups(libHtml);
-    const show = (gs) => gs.map((g) => `[${g.system}] ${g.category}: ${g.formulas.join(', ')}`).join(' | ');
-    if (show(groups) !== show(want)) fail(page, 'FAQ 소재 묶음', show(groups).slice(0, 120), `소재 라이브러리 화면과 다름: ${show(want).slice(0, 120)}`);
-    bump('faq-materials', n);
+  // 어느 페이지에 어떤 질문 id 가 있는지(사이트 전체에서 한 곳에만 있어야 한다)
+  for (const m of html.matchAll(/<details\b[^>]*\bid="(faq-[^"]*)"/g)) {
+    const map = faqStats.idPages[loc]; map.set(m[1], [...(map.get(m[1]) ?? []), page]);
   }
 
-  // 이전 빌드에 있던 항목이 그대로인가(선택) — FAQ_BASELINE_DIST
-  if (FAQ_BASELINE) {
-    const rel = `${page.replace(/^\//, '')}index.html`;
-    const bf = path.join(FAQ_BASELINE, rel);
-    if (!fs.existsSync(bf)) { fail(page, 'FAQ 기준 빌드', bf, '파일 없음'); return; }
-    const bh = fs.readFileSync(bf, 'utf8');
-    const bs = faqScreen(bh) || [];
-    const bq = arr(faqLd(bh, page)[0]?.mainEntity);
-    if (!bs.length) fail(page, 'FAQ 기준 빌드', bf, 'FAQ 항목이 없음');
-    bs.forEach((b, i) => {
-      if (screen[i]?.q !== b.q) fail(page, `기존 FAQ ${i + 1} 질문(화면)`, screen[i]?.q, `기준: ${b.q.slice(0, 60)}`);
-      if (screen[i]?.a !== b.a) fail(page, `기존 FAQ ${i + 1} 답(화면)`, screen[i]?.a, `기준: ${b.a.slice(0, 60)}`);
+  if (FAQ_PAGE_SET.has(page)) {
+    faqStats.pages.add(page);
+    const want = FAQ.items.filter((it) => it.page === bare);
+    const screen = faqScreen(html);
+    if (!screen) fail(page, 'FAQ 영역', 'id="faq"', 'FAQ 영역이 없음');
+    else {
+      if (screen.items.map((x) => x.id).join(' ') !== want.map((it) => it.anchor).join(' ')) fail(page, 'FAQ 화면 항목', screen.items.map((x) => x.id).join(' '), `데이터의 이 페이지 항목: ${want.map((it) => it.anchor).join(' ')}`);
+      want.forEach((it, i) => {
+        const sc = screen.items[i]; if (!sc) return;
+        if (sc.q !== ws(it[loc].q)) fail(page, `${it.id} 질문(화면)`, sc.q, '데이터 문구와 다름');
+        if (sc.a !== ws(it[loc].a)) fail(page, `${it.id} 답(화면)`, sc.a, '데이터 문구와 다름');
+        faqStats.qa += 2;
+      });
+      // "전체 질문 보기" 링크
+      if (screen.seeAll !== faqIndexPath(loc)) fail(page, '전체 질문 보기 링크', screen.seeAll, `${faqIndexPath(loc)} 여야 함`);
+      else if (!htmlOfPath(screen.seeAll)) fail(page, '전체 질문 보기 링크', screen.seeAll, '대상 페이지가 없음');
+      else faqStats.seeAll++;
+    }
+    if (ld.length !== 1) fail(page, '필수 노드 FAQPage', ld.length, '1개');
+    else {
+      const qs = arr(ld[0].mainEntity);
+      if (qs.length !== want.length) fail(page, 'FAQPage 질문 수', qs.length, `이 페이지 항목 ${want.length}개`);
+      want.forEach((it, i) => {
+        const q = qs[i]; if (!q) return;
+        if (!arr(q['@type']).includes('Question') || !arr(q.acceptedAnswer?.['@type']).includes('Answer')) fail(page, `${it.id} 타입`, JSON.stringify(q).slice(0, 80));
+        if (ws(q.name) !== ws(it[loc].q)) fail(page, `${it.id} 질문(FAQPage)`, q.name, '데이터 문구와 다름');
+        if (ws(q.acceptedAnswer?.text) !== ws(it[loc].a)) fail(page, `${it.id} 답(FAQPage)`, q.acceptedAnswer?.text, '데이터 문구와 다름');
+      });
+    }
+    bump('faq', want.length);
+  } else {
+    if (ld.length) fail(page, 'FAQPage', ld.length, `허용 페이지(${FAQ_ALLOWED.join(', ')} · EN·KO) 외 사용 금지`);
+    if (/<section id="faq"/.test(html)) fail(page, 'FAQ 영역', 'id="faq"', '허용 페이지 외에 FAQ 영역이 있음');
+  }
+
+  // 색인 페이지 — 질문 38개, 답 위치 링크
+  if (bare === FAQ_INDEX) {
+    faqStats.pages.add(page);
+    const list = nodes.filter((n) => arr(n['@type']).includes('ItemList'))[0];
+    const els = arr(list?.itemListElement);
+    if (!list) fail(page, '필수 노드 ItemList', 0, '1개');
+    else if (els.length !== FAQ.items.length || list.numberOfItems !== FAQ.items.length) fail(page, 'ItemList 항목 수', els.length, `${FAQ.items.length}개`);
+    if (!nodes.some((n) => arr(n['@type']).includes('BreadcrumbList'))) fail(page, '필수 노드 BreadcrumbList', 0, '1개');
+    const rows = [...html.matchAll(/<li\b([^>]*\bdata-faq-id="[^"]*"[^>]*)>([\s\S]*?)<\/li>/g)].map((m) => {
+      const a = /<a\b([^>]*)>([\s\S]*?)<\/a>/.exec(m[2]);
+      return { id: attr(m[1], 'data-faq-id'), href: a ? attr(a[1], 'href') : null, q: a ? inlineText(a[2]) : '' };
     });
-    bq.forEach((b, i) => { if (JSON.stringify(qs[i]) !== JSON.stringify(b)) fail(page, `기존 FAQ ${i + 1} (FAQPage)`, JSON.stringify(qs[i]).slice(0, 80), '기준 빌드와 다름'); });
-    bump('faq-baseline', bs.length);
+    if (rows.length !== FAQ.items.length) fail(page, '색인 목록 항목 수', rows.length, `${FAQ.items.length}개`);
+    FAQ.items.forEach((it, i) => {
+      const li = els[i]; const row = rows[i];
+      if (li) {
+        if (ws(li.name) !== ws(it[loc].q)) fail(page, `${it.id} ItemList.name`, li.name, '데이터 질문 문구와 다름');
+        if (li.url !== faqUrl(it, loc)) fail(page, `${it.id} ItemList.url`, li.url, `${faqUrl(it, loc)} 여야 함`);
+      }
+      if (row) {
+        if (row.id !== it.id) fail(page, `색인 목록 ${i + 1}번`, row.id, `${it.id} 여야 함`);
+        if (row.q !== ws(it[loc].q)) fail(page, `${it.id} 질문(색인 화면)`, row.q, '데이터 문구와 다름');
+        if (row.href !== faqPath(it, loc)) fail(page, `${it.id} 색인 링크`, row.href, `${faqPath(it, loc)} 여야 함`);
+        else { const e = anchorTargetError(row.href); if (e) fail(page, `${it.id} 색인 링크`, row.href, e); }
+        faqStats.index++;
+      }
+    });
+    // 검색 JSON = 데이터
+    const sf = findInRoots(`${loc === 'ko' ? 'ko/' : ''}faq-search.json`);
+    if (!sf) fail(page, '검색 JSON', 'faq-search.json', '파일 없음');
+    else {
+      let rowsJ = null;
+      try { rowsJ = JSON.parse(fs.readFileSync(sf, 'utf8')); } catch (e) { fail(page, '검색 JSON', sf, e.message); }
+      const wantJ = FAQ.items.map((it) => ({ id: it.id, q: it[loc].q, a: it[loc].a }));
+      if (rowsJ && JSON.stringify(rowsJ) !== JSON.stringify(wantJ)) fail(page, '검색 JSON', sf, '데이터 문구와 다름');
+    }
+    // 검색 데이터를 HTML 안에 넣지 않는다 — 답 문구가 색인 페이지에 있으면 안 된다
+    const pageText = ws(decode(html.replace(/<[^>]+>/g, ' ')));
+    const leaked = FAQ.items.filter((it) => pageText.includes(ws(it[loc].a)));
+    if (leaked.length) fail(page, '색인 페이지에 답 문구', leaked.map((it) => it.id).join(' '), '답은 그 질문의 페이지 한 곳에만 있어야 함');
+  }
+
+  // 관련 질문 링크 — 질문 문구만, 답 위치로
+  const relWant = (FAQ.related[bare] ?? []).map((id) => FAQ.items.find((it) => it.id === id));
+  const relSec = /<section\b[^>]*\bdata-faq-related\b[^>]*>([\s\S]*?)<\/section>/.exec(html);
+  if (!relWant.length) { if (relSec) fail(page, '관련 질문', 'data-faq-related', '대상이 아닌 페이지에 관련 질문이 있음'); }
+  else if (!relSec) fail(page, '관련 질문', relWant.map((it) => it.id).join(' '), '관련 질문 영역이 없음');
+  else {
+    const links = [...relSec[1].matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/g)].map((m) => ({ href: attr(m[1], 'href'), q: inlineText(m[2]) }));
+    if (links.length !== relWant.length) fail(page, '관련 질문 수', links.length, `${relWant.length}개`);
+    relWant.forEach((it, i) => {
+      const l = links[i]; if (!l) return;
+      if (l.q !== ws(it[loc].q)) fail(page, `관련 질문 ${it.id} 문구`, l.q, '데이터 문구와 다름');
+      if (l.href !== faqPath(it, loc)) fail(page, `관련 질문 ${it.id} 링크`, l.href, `${faqPath(it, loc)} 여야 함`);
+      else { const e = anchorTargetError(l.href); if (e) fail(page, `관련 질문 ${it.id} 링크`, l.href, e); }
+      faqStats.related++;
+    });
   }
 }
+/** 사이트 전체 검사(디렉터리를 통째로 볼 때) — 페이지 목록, id 가 한 곳에만, llms 목록 */
+function checkFaqSite() {
+  const dataPages = [...new Set(FAQ.items.map((it) => it.page))].sort();
+  if (JSON.stringify(dataPages) !== JSON.stringify([...FAQ_ALLOWED].sort())) fail('(FAQ)', '데이터의 배치 페이지', dataPages.join(' '), `허용 목록: ${FAQ_ALLOWED.join(' ')}`);
+  for (const p of [...FAQ_PAGE_SET, ...withKo([FAQ_INDEX])]) if (!faqStats.pages.has(p)) fail(p, 'FAQ 페이지', '없음', '빌드 결과에 페이지가 없음');
+  for (const loc of ['en', 'ko']) {
+    const map = faqStats.idPages[loc];
+    for (const it of FAQ.items) {
+      const pages = map.get(it.anchor) ?? [];
+      const wantPage = (loc === 'ko' ? '/ko' : '') + it.page;
+      if (pages.length !== 1 || pages[0] !== wantPage) fail('(FAQ)', `${it.id} 위치(${loc})`, pages.join(' ') || '없음', `정확히 ${wantPage} 한 곳에만 있어야 함`);
+    }
+    const known = new Set(FAQ.items.map((it) => it.anchor));
+    for (const id of map.keys()) if (!known.has(id)) fail('(FAQ)', `알 수 없는 FAQ id(${loc})`, id, map.get(id).join(' '));
+  }
+  // llms 의 FAQ 목록 = 데이터에서 만든 목록
+  for (const [file, kind] of [['llms.txt', 'llms'], ['llms-full.txt', 'full']]) {
+    const f = findInRoots(file);
+    if (!f) { fail(`/${file}`, 'llms FAQ', file, '파일 없음'); continue; }
+    const text = fs.readFileSync(f, 'utf8');
+    try {
+      const { start, end } = faqSectionRange(text);
+      const want = llmsFaqSection(kind, FAQ);
+      const got = text.slice(start, end);
+      if (ws(got) !== ws(want) || got.split('\n').filter((l) => l.startsWith('- [')).length !== want.split('\n').filter((l) => l.startsWith('- [')).length) fail(`/${file}`, 'llms FAQ 목록', got.slice(0, 80), '데이터에서 만든 목록과 다름 — npm run build 로 빌드한다(scripts/llms-faq.mjs)');
+    } catch (e) { fail(`/${file}`, 'llms FAQ 섹션', file, e.message); }
+  }
+}
+
 const pageExists = (urlStr) => {
   let p; try { p = new URL(urlStr).pathname; } catch { return false; }
   p = decodeURIComponent(p);
@@ -269,7 +344,7 @@ for (const file of files) {
   }
   // Product 는 웨이퍼 상세에만
   for (const o of walkObjs(bl)) if (types(o).includes('Product') && kind !== 'waferdetail') fail(page, 'Product 타입', page, '웨이퍼 상세 외 사용 금지');
-  // FAQPage — 문의 페이지 전용, 화면 항목과 일치
+  // FAQ — 허용 페이지·문구·색인·관련 질문
   checkFaq(page, html, nodes);
   // Organization / WebSite 공통
   if (bl.length) {
@@ -367,10 +442,10 @@ for (const file of files) {
   } else { bump('other'); }
 }
 
-// FAQPage 는 문의 페이지 두 곳에 반드시 있어야 한다(디렉터리 전체를 검사할 때)
-if (stat.isDirectory()) for (const p of FAQ_PAGES) if (!faqSeen.has(p)) fail(p, 'FAQPage', '페이지 없음', '문의 페이지가 빌드 결과에 없음');
+// FAQ — 사이트 전체 검사(디렉터리 전체를 검사할 때)
+if (stat.isDirectory()) checkFaqSite();
 console.log('check-structured-data 페이지 종류별:', JSON.stringify(counts));
-if (FAQ_BASELINE) console.log(`check-structured-data 기존 FAQ 불변 검사: 기준 ${FAQ_BASELINE}`);
+console.log(`check-structured-data FAQ: 페이지 ${faqStats.pages.size}개 · 질문·답 문구 ${faqStats.qa}건 · 색인 질문 ${faqStats.index}건 · 관련 질문 링크 ${faqStats.related}건 · 전체 질문 보기 링크 ${faqStats.seeAll}건`);
 if (errors.length) {
   console.error(`check-structured-data FAIL (${errors.length}건, ${arg}):`);
   for (const e of errors.slice(0, 60)) console.error('  - ' + e);

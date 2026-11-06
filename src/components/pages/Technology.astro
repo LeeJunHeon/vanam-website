@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import FaqSection from '../FaqSection.astro';
 import { getCollection } from 'astro:content';
 import { getRelativeLocaleUrl } from 'astro:i18n';
 import { Image, getImage } from 'astro:assets';
@@ -579,6 +580,9 @@ const techAsset = (pth: string) => techImages[`/src/assets/tech/${pth}`]?.defaul
   </section>
 
 
+
+  {/* FAQ — 확정 FAQ 중 이 페이지에 답이 있는 항목(양자 포토닉스·SNSPD·PIC · 분석·공정개발·장비). 마지막 CTA 앞. */}
+  <FaqSection page="/technology/" band />
 
   <section>
     <div class="v-wrap py-24 text-center">

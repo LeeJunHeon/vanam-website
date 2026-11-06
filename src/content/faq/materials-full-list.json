@@ -1,8 +1,0 @@
-{
-  "order": 201,
-  "published": true,
-  "question": "현재 증착할 수 있는 소재 전체 목록을 볼 수 있나요?",
-  "answer": "[소재 라이브러리](/materials/)에는 현재 {materialCount}종이 있습니다. {materialList} 각 소재 페이지에서 사양과 측정 자료를 볼 수 있으며, 일부 소재는 자료를 준비 중입니다.",
-  "question_en": "Can I see the full list of materials you can deposit?",
-  "answer_en": "Our [materials library](/materials/) currently lists {materialCount} materials. {materialList} Each material page shows its specifications and measurement data; data for some materials is still being prepared."
-}

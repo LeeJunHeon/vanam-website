@@ -1,8 +1,0 @@
-{
-  "order": 103,
-  "published": true,
-  "question": "여러 층을 쌓는 다층막도 가능한가요?",
-  "answer": "네. 견적 요청서에서 공정을 순서대로 여러 단계 구성할 수 있어, 서로 다른 소재를 차례로 쌓는 다층막을 의뢰할 수 있습니다. [산화물-금속-산화물(OMO) 다층막](/materials/m57/) 사례는 소재 라이브러리에서 확인할 수 있습니다.",
-  "question_en": "Can you deposit multilayer stacks?",
-  "answer_en": "Yes. The quote request lets you build the process step by step, so you can stack different materials in sequence. See the [Oxide-Metal-Oxide (OMO) multilayer](/materials/m57/) in our materials library for an example."
-}

@@ -1,8 +1,0 @@
-{
-  "order": 401,
-  "published": true,
-  "question": "증착 의뢰는 어떤 순서로 진행되나요?",
-  "answer": "의뢰 접수 → 전문가 검토 → 견적 → 증착 → 품질 검사 → 출하 순서로 진행됩니다. 필요한 소재·기판·공정 조건을 알려주시면 실현 가능성과 전·후처리 요구사항을 검토한 뒤 금액과 납기를 안내해 드리고, 자체 장비로 증착한 뒤 출하 전 기본 검사를 거쳐 보내 드립니다.",
-  "question_en": "How does a deposition order work?",
-  "answer_en": "Request → Expert review → Quotation → Deposition → Quality check → Shipping. Tell us the material, substrate and process conditions you need; we check feasibility and pre-/post-process requirements, send a price and lead time, run the process on our own equipment, and ship after a basic inspection."
-}

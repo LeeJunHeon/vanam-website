@@ -1,0 +1,67 @@
+---
+// FAQ 영역 — 그 페이지에 답이 있는 항목을 접히는 목록으로 보여주고, 같은 항목으로 FAQPage 구조화 데이터를 낸다.
+//   <FaqSection page="/contact/" />          문의·소재 상세(안쪽 여백을 스스로 가진 섹션)
+//   <FaqSection page="/technology/" band />  줄무늬(zebra) 페이지 — 다른 섹션과 같은 "섹션 > v-wrap" 구조
+// 항목이 없는 페이지에서는 아무것도 그리지 않는다.
+// 문구·배치는 src/data/faq.json(확정본), 읽는 곳은 src/lib/faq.ts 하나다. 문구를 여기서 가공하지 않는다.
+// 분류 제목은 그 페이지에 분류가 둘 이상일 때만 보인다(문의·기술 2개 / 제품·소재 라이브러리·소재 상세 없음).
+// 각 항목은 id="faq-e01" 형식의 주소를 가진다. 그 해시로 들어오면 아래 스크립트가 항목을 펼친다.
+import siteData from '../data/site.json';
+import { toLoc, faqGroupsFor, faqIndexHref, FAQ_UI } from '../lib/faq';
+
+interface Props { page: string; band?: boolean }
+const { page, band = false } = Astro.props;
+const loc = toLoc(Astro.currentLocale);
+const c = (siteData[loc] ?? siteData.en).contact;
+const ui = FAQ_UI[loc];
+const groups = faqGroupsFor(page, loc);
+const items = groups.flatMap((g) => g.items);
+const titled = groups.length > 1;
+
+// #faq-… 해시로 들어오면 그 항목을 펼친다.
+//   위치 이동은 BaseLayout 의 해시 처리가 맡는다 — 첫 도착은 body 끝의 스크립트가(이 스크립트가 먼저 실행돼
+//   펼친 뒤의 높이로 자리를 잡는다), 같은 페이지 안의 링크 클릭은 클릭 처리기가(details 를 펼치고 부드럽게 이동) 한다.
+//   여기서는 그 둘이 다루지 않는 경우(주소창에서 해시만 바꿈 · 뒤로/앞으로)만 직접 이동한다.
+const HASH_SCRIPT = `(function(){var open=function(move){var id;try{id=decodeURIComponent(location.hash.slice(1))}catch(e){return}if(id.indexOf('faq-')!==0)return;var el=document.getElementById(id);if(!el||el.tagName!=='DETAILS')return;el.open=true;if(move)el.scrollIntoView()};open(false);addEventListener('hashchange',function(){open(true)})})();`;
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: items.map((x) => ({
+    '@type': 'Question',
+    name: x.q,
+    acceptedAnswer: { '@type': 'Answer', text: x.a },
+  })),
+};
+---
+{items.length > 0 && (
+  <Fragment>
+  <section id="faq" class={band ? 'scroll-mt-24' : 'scroll-mt-24 v-wrap pb-28'}>
+    <div class={band ? 'v-wrap py-20' : undefined}>
+      <div class="v-reveal">
+        <p class="text-sm font-medium uppercase tracking-widest text-accent">{c.faqEyebrow}</p>
+        <h2 class="mt-4 v-h2">{c.faqHeading}</h2>
+      </div>
+      {groups.map((g, gi) => (
+        <Fragment>
+          {titled && <h3 class={`${gi === 0 ? 'mt-10' : 'mt-12'} text-lg font-bold text-ink`}>{g.label}</h3>}
+          <div class={`${titled ? 'mt-4' : 'mt-10'} divide-y divide-ink/10 border-t border-ink/10`}>
+            {g.items.map((x) => (
+              <details id={x.anchor} class="group scroll-mt-24 py-5">
+                <summary class="flex cursor-pointer list-none items-center justify-between gap-4 text-base font-medium text-ink/90 transition hover:text-ink">
+                  <span>{x.q}</span>
+                  <span class="shrink-0 text-xl leading-none text-accent transition-transform duration-200 group-open:rotate-45">+</span>
+                </summary>
+                <p class="mt-3 text-sm leading-relaxed text-ink/60">{x.a}</p>
+              </details>
+            ))}
+          </div>
+        </Fragment>
+      ))}
+      <p class="mt-8 text-sm"><a href={faqIndexHref(loc)} data-faq-all class="text-accent underline underline-offset-4 transition hover:text-accent/80">{ui.seeAll}</a></p>
+    </div>
+  </section>
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(schema)} />
+  <script is:inline set:html={HASH_SCRIPT} />
+  </Fragment>
+)}

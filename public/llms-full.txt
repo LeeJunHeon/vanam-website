@@ -62,25 +62,7 @@ KIST, Seoul National University, Korea University, Hanyang University, Inha Univ
 - "[Seeing the future of semiconductors ⑧] VanaM."
 
 ## FAQ
-Full FAQ (process, materials, substrates and samples, ordering and shipping, analysis, wafers): https://vanam.co.kr/contact/#faq (한국어: https://vanam.co.kr/ko/contact/#faq)
-
-Q: What deposition methods do you offer?
-A: PVD (sputter, evaporator) and ALD, plus PLD and MOCVD — customized thin-film deposition, including special films and process conditions that are hard to achieve in conventional production lines.
-
-Q: Which materials do you work with?
-A: A broad library across oxides, nitrides, and metals — including oxides such as VO2, HfO2, InGaZnO (IGZO); nitrides such as TiN, AlN; and metals such as Pt, Ru — that are difficult to handle in conventional fabs.
-
-Q: What about eco-friendliness and ESG?
-A: A vacuum deposition process with no toxic organic materials or gases, minimizing environmental impact for ESG-aligned manufacturing.
-
-Q: What fields is it applied to?
-A: Quantum computing, AI semiconductors, power electronics, glass substrates, advanced materials, fire detectors, protection circuits, neuromorphic semiconductors, and more.
-
-Q: What services do you provide?
-A: Customized deposition, material analysis, R&D services, an IP/patent package, and construction of an urban micro foundry.
-
-Q: Where are you and how can we reach you?
-A: 21-1 Dosin-ro 4-gil, Yeongdeungpo-gu, Seoul (07377). Email hello@vanam.co.kr or call +82-2-6951-0922; replies within 1–2 business days of a form submission.
+- [FAQ index](https://vanam.co.kr/faq/) · [한국어](https://vanam.co.kr/ko/faq/)
 
 ## Contact
 - Email: hello@vanam.co.kr

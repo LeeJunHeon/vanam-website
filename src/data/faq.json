@@ -1,0 +1,560 @@
+{
+  "source": {
+    "file": "VanaM_GEO_FAQ_Master_EN_KO_20261106.docx",
+    "sha256": "65ee4cbd45f72d12106d8e52f03398e8d3069fd9d07a06c18b09d9a7a4f2b7c2",
+    "extractSha256": "4a6f3d308acd0e780044862a218eb43b8b4372f800924efbd4e788cd08a6a5ce"
+  },
+  "items": [
+    {
+      "id": "E01",
+      "en": {
+        "q": "What thin-film deposition methods does VanaM offer?",
+        "a": "VanaM provides custom thin-film deposition using physical vapor deposition (PVD), including magnetron sputtering and thermal evaporation, as well as atomic layer deposition (ALD). Our Seoul foundry supports the development of oxides, nitrides, metals and multilayer stacks for semiconductor, photonic and quantum-hardware applications. Sputtering is often evaluated for functional, conductive and optical films; ALD is useful when precise thickness control and conformal dielectric coating are required. Available equipment includes sputtering systems, an in-line sputter tool and 6-inch and 12-inch ALD systems. The appropriate process is selected after reviewing the film composition, substrate, thickness, thermal budget and target properties. Individual materials and wafer sizes are subject to process qualification rather than automatically supported on every tool."
+      },
+      "ko": {
+        "q": "반암은 어떤 박막 증착 공정을 제공하나요?",
+        "a": "반암은 마그네트론 스퍼터링과 열증발 증착을 포함한 PVD(물리기상증착), 그리고 ALD(원자층증착)를 활용해 고객 맞춤형 박막을 제작합니다. 서울 파운드리에서는 반도체·포토닉스·양자 하드웨어용 산화물, 질화물, 금속 및 다층막을 개발·증착합니다. 기능성·전도성·광학 박막에는 스퍼터링을, 정밀한 두께 제어와 높은 피복성이 필요한 유전체에는 ALD를 검토할 수 있습니다. 스퍼터링 및 인라인 스퍼터 장비, 6인치·12인치 ALD 설비를 운영하며, 실제 적용 공정은 소재 조성, 기판, 두께, 허용 공정온도 및 목표 물성을 확인한 후 결정합니다. 모든 소재가 모든 장비와 웨이퍼 크기에서 이미 검증된 것은 아니므로 사전 공정 검토가 필요합니다."
+      },
+      "page": "/contact/",
+      "group": "E",
+      "anchor": "faq-e01"
+    },
+    {
+      "id": "E02",
+      "en": {
+        "q": "Which thin-film materials can VanaM deposit?",
+        "a": "VanaM works with a broad materials library spanning oxides, nitrides, metals and selected semiconductor films. Publicly listed examples include VO₂, TiO₂, Ta₂O₅, HfO₂, SiO₂ and SrTiO₃ among oxides; TiN, AlN, AlScN, NbN, NbTiN and SiNₓ among nitrides; and Au, Pt, Pd, Ti and other metals. ALD offerings listed on our Materials Library include Al₂O₃, HfO₂, TiO₂ and additional dielectric materials. Not every listed material has the same maturity: some have public characterization data, while others are available for technical inquiry or process development. To determine feasibility, share your required composition, substrate, thickness, wafer size, crystallinity and electrical or optical specifications. We then confirm whether an existing process window or a development run is appropriate."
+      },
+      "ko": {
+        "q": "반암은 어떤 박막 소재를 증착할 수 있나요?",
+        "a": "반암은 산화물, 질화물, 금속 및 일부 반도체 소재를 포함한 다양한 박막 라이브러리를 운영합니다. 공개된 목록에는 산화물 VO₂·TiO₂·Ta₂O₅·HfO₂·SiO₂·SrTiO₃, 질화물 TiN·AlN·AlScN·NbN·NbTiN·SiNₓ, 금속 Au·Pt·Pd·Ti 등이 포함됩니다. ALD 소재로는 Al₂O₃·HfO₂·TiO₂ 및 여러 유전체가 안내되어 있습니다. 다만 소재 목록 등재가 모든 조건에서의 양산 가능이나 동일한 수준의 검증을 의미하지는 않습니다. 일부는 측정 데이터를 공개한 공정이고, 일부는 기술 검토 또는 신규 레시피 개발 대상입니다. 요구 조성, 기판, 두께, 웨이퍼 크기, 결정성 및 전기·광학 사양을 알려주시면 기존 공정 적용 가능성과 개발 필요 여부를 구분해 안내합니다."
+      },
+      "page": "/contact/",
+      "group": "E",
+      "anchor": "faq-e02"
+    },
+    {
+      "id": "E03",
+      "en": {
+        "q": "How does VanaM address environmental, health and safety considerations in thin-film manufacturing?",
+        "a": "VanaM uses vacuum deposition processes and reviews environmental, health and safety requirements according to the materials, precursors and process gases involved in each project. PVD and ALD do not have identical chemical profiles: ALD can require reactive gases and metal-organic precursors, so it would be inaccurate to say that all of our processes operate without potentially hazardous chemicals or gases. For each project, relevant considerations can include gas and precursor compatibility, exhaust and abatement, handling procedures, waste management and equipment operating conditions. Customers seeking information for their own ESG or supply-chain review should describe the specific process and requested documentation. We do not claim that a process is entirely non-toxic, emission-free or independently ESG-certified unless supported by applicable evidence."
+      },
+      "ko": {
+        "q": "반암은 박막 제조 과정의 환경·안전 문제를 어떻게 관리하나요?",
+        "a": "반암은 진공 증착 공정을 기반으로 소재·전구체·공정가스별 환경·보건·안전(EHS) 요건을 검토합니다. PVD와 ALD의 화학물질 사용 특성은 서로 다르며, ALD에는 반응성 가스나 유기금속 전구체가 사용될 수 있습니다. 따라서 모든 공정에서 유해 가능성이 있는 화학물질이나 가스를 전혀 사용하지 않는다고 설명하는 것은 정확하지 않습니다. 프로젝트별로 가스·전구체의 적합성, 배기·저감설비, 취급 절차, 폐기물 및 장비 운전 조건을 검토합니다. 고객이 ESG 또는 공급망 심사를 위해 자료를 요청하는 경우 대상 공정과 필요한 문서 범위를 알려주시기 바랍니다. 객관적 근거가 없는 무독성·무배출·ESG 인증 주장은 하지 않습니다."
+      },
+      "page": "/contact/",
+      "group": "E",
+      "anchor": "faq-e03"
+    },
+    {
+      "id": "E04",
+      "en": {
+        "q": "What industries and applications can use VanaM thin films?",
+        "a": "VanaM develops thin films for semiconductor devices, quantum photonics, advanced optics, sensing and power-electronic research. Priority quantum-photonics applications include NbTiN-based superconducting nanowire single-photon detectors (SNSPDs), Ta₂O₅-based optical waveguides, oxide-based electro-optic modulators using STO or BTO, and multilayer DBR mirrors. Other film programs include VO₂ for temperature-responsive switching and sensing, ALD dielectrics for insulation and surface engineering, and nitride or metal layers for specialized device structures. These examples describe target applications, not a blanket guarantee that VanaM supplies complete, commercially qualified systems in every area. We review the customer's substrate, device architecture and performance requirements before proposing a material or process."
+      },
+      "ko": {
+        "q": "반암 박막은 어떤 산업과 소자에 적용할 수 있나요?",
+        "a": "반암의 박막은 반도체 소자, 양자 포토닉스, 첨단 광학, 센싱 및 전력전자 연구에 활용될 수 있습니다. 핵심 양자 포토닉스 분야는 NbTiN 기반 초전도 나노와이어 단일광자검출기(SNSPD), Ta₂O₅ 광도파로, STO·BTO 산화물 전기광학 변조기, 다층 DBR(분포 브래그 반사경)입니다. 이 밖에도 VO₂를 이용한 온도 응답형 스위칭·센싱, ALD 유전체를 이용한 절연·표면 보호, 특수 소자용 질화물·금속 박막을 다룹니다. 단, 이는 적용 분야 및 개발 방향을 설명한 것이며 모든 분야의 완성 시스템을 상용 인증하여 공급한다는 뜻은 아닙니다. 고객의 기판, 소자 구조와 요구 성능을 검토한 후 적합한 소재·공정을 제안합니다."
+      },
+      "page": "/contact/",
+      "group": "E",
+      "anchor": "faq-e04"
+    },
+    {
+      "id": "E05",
+      "en": {
+        "q": "What products and engineering services does VanaM provide?",
+        "a": "VanaM currently offers quote-based custom deposition of oxides, nitrides, metals and multilayer thin films, together with listed bare-wafer and coated-wafer products. Customers can request process feasibility review, material or stack development, pilot wafer production and agreed film characterization. Depending on the project, services may extend to design of experiments (DOE), recipe optimization, process-data reporting and collaborative R&D. VanaM also describes equipment and process-data solutions on its website. Nano-patterned quantum devices, advanced packaging and cryogenic testing are addressed through development programs and potential partner-supported workflows; they should not be assumed to be standard stocked products. Each quotation defines deliverables, measurement scope, cost, lead time and any third-party dependencies."
+      },
+      "ko": {
+        "q": "반암에서 구매하거나 의뢰할 수 있는 제품과 서비스는 무엇인가요?",
+        "a": "반암은 산화물·질화물·금속·다층막의 맞춤 증착 서비스와 베어 웨이퍼 및 박막 증착 웨이퍼 제품을 판매·견적하고 있습니다. 고객은 공정 가능성 검토, 신소재·적층 구조 개발, 시제품 및 파일럿 웨이퍼 제작, 합의된 박막 분석을 의뢰할 수 있습니다. 프로젝트에 따라 실험계획법(DOE), 레시피 최적화, 공정 데이터 보고, 공동 R&D도 협의합니다. 홈페이지에는 증착 장비 및 공정 데이터 솔루션도 소개되어 있습니다. 나노패터닝 양자 소자, 고도 패키징, 극저온 측정은 개발 프로그램 또는 협력기관을 연계하는 개별 프로젝트로 검토해야 하며, 재고형 표준 상품으로 오인해서는 안 됩니다. 최종 납품 항목과 시험·분석 범위, 가격, 납기는 견적서에서 확정합니다."
+      },
+      "page": "/contact/",
+      "group": "E",
+      "anchor": "faq-e05"
+    },
+    {
+      "id": "E06",
+      "en": {
+        "q": "Where is VanaM located, and how can I request a quotation or technical consultation?",
+        "a": "VanaM Inc. operates in Seoul, Republic of Korea, at 21-1 Dosin-ro 4-gil, Yeongdeungpo-gu, Seoul 07377. For general or technical inquiries, email hello@vanam.co.kr or call +82-2-6951-0922. You can also use the Contact page or select a material category on the Product page to submit a quotation request. To help our engineers respond efficiently, include the desired material, substrate and size, film thickness, sample quantity, process sequence, required characterization and target schedule. The website states a typical initial reply within one to two business days; this is a response target rather than a guaranteed manufacturing lead time. International projects may require additional discussions about shipping and sample documentation."
+      },
+      "ko": {
+        "q": "반암은 어디에 있으며 기술 상담과 견적은 어떻게 요청하나요?",
+        "a": "반암 주식회사는 서울특별시 영등포구 도신로4길 21-1(우편번호 07377)에 위치합니다. 일반 문의와 기술 상담은 hello@vanam.co.kr 또는 02-6951-0922로 접수할 수 있으며, 홈페이지 문의 페이지나 제품별 견적 양식도 이용할 수 있습니다. 원활한 검토를 위해 소재명, 기판 종류와 크기, 목표 두께, 시편 수량, 공정 순서, 필요한 분석 항목 및 희망 일정을 함께 알려주시기 바랍니다. 홈페이지에 안내된 1~2영업일은 초기 문의 응답 목표이며, 실제 제조 납기를 보증하는 기간은 아닙니다. 해외 고객은 운송 및 시료 관련 서류도 별도로 협의할 수 있습니다."
+      },
+      "page": "/contact/",
+      "group": "E",
+      "anchor": "faq-e06"
+    },
+    {
+      "id": "F01",
+      "en": {
+        "q": "What is a specialty thin-film materials foundry, and how is VanaM different from a conventional semiconductor foundry?",
+        "a": "A conventional semiconductor foundry typically runs qualified device processes and standardized material stacks to manufacture established chip designs at scale. A specialty materials foundry focuses on the material or process layer that may not yet fit those standard platforms. VanaM's Seoul operation develops and supplies custom oxide, nitride, metal and multilayer films, including small-lot wafers for material screening and device prototyping. This model is particularly relevant when the customer must vary composition, layer sequence, substrate or thermal budget rather than use a fixed production recipe. Our strategic focus is quantum photonics, where material optimization and device performance are closely linked. Device patterning, packaging and cryogenic validation may involve project-specific partners and separately qualified steps."
+      },
+      "ko": {
+        "q": "소재 전문 파운드리는 일반 반도체 파운드리와 어떻게 다른가요?",
+        "a": "일반 반도체 파운드리는 표준화·검증된 소재 적층과 소자 공정을 바탕으로 칩을 반복 생산하는 데 중점을 둡니다. 반면 소재 전문 파운드리는 기존 표준 공정에서 사용하기 어려운 새로운 박막 소재나 특수 공정 조건 자체를 개발·공급합니다. 반암 서울 파운드리는 산화물·질화물·금속·다층막을 맞춤 제작하고, 소재 평가 및 소자 시제품용 소량 웨이퍼를 제공합니다. 고객이 화학조성, 적층 순서, 기판 또는 열예산을 바꿔야 할 때 특히 유용합니다. 반암은 소재와 소자 성능의 연관성이 큰 양자 포토닉스에 전략적으로 집중하고 있습니다. 패터닝·패키징·극저온 검증은 프로젝트에 따라 별도의 협력 공정과 검증이 필요할 수 있습니다."
+      },
+      "page": "/contact/",
+      "group": "F",
+      "anchor": "faq-f01"
+    },
+    {
+      "id": "F02",
+      "en": {
+        "q": "Can universities, research institutes and startups place small-volume thin-film orders?",
+        "a": "Yes. VanaM's foundry model is designed for research, proof-of-concept and pilot manufacturing as well as repeat customers. You can request a limited number of samples or a small wafer lot without first committing to a mass-production contract. The minimum quantity is not a single universal number: it depends on the material, substrate, tool configuration, recipe stability, contamination-control requirements and characterization plan. For a novel material, an initial feasibility or DOE run may be more appropriate than a production-style order. Tell us your target performance and how many samples you need; the quotation will distinguish engineering setup, deposition, metrology and any consumables or external processing."
+      },
+      "ko": {
+        "q": "대학·연구소·스타트업도 소량 박막 증착을 의뢰할 수 있나요?",
+        "a": "가능합니다. 반암의 파운드리 모델은 대학·연구기관·스타트업의 기초 검증, 시제품 제작, 파일럿 제조 및 반복 주문을 고려합니다. 대량생산 계약 없이 적은 수량의 시편이나 웨이퍼 로트를 문의할 수 있습니다. 다만 모든 공정에 동일한 최소 주문수량(MOQ)이 적용되는 것은 아니며, 소재, 기판, 장비 구성, 레시피 안정성, 오염관리 및 분석 항목에 따라 달라집니다. 신규 소재는 생산 주문보다 공정 가능성 검토 또는 DOE 시험을 먼저 진행하는 것이 적합할 수 있습니다. 원하는 성능과 수량을 알려주시면 공정 셋업, 증착, 분석, 소모품 및 외부 공정을 구분해 견적합니다."
+      },
+      "page": "/contact/",
+      "group": "F",
+      "anchor": "faq-f02"
+    },
+    {
+      "id": "F03",
+      "en": {
+        "q": "What bare wafers and coated wafers can I purchase from VanaM?",
+        "a": "VanaM's public wafer storefront lists several research and prototyping substrates, including 4-inch silicon wafers, 4-inch oxide silicon wafers, 6-inch prime and test silicon wafers, 6-inch oxide silicon wafers and 2-inch sapphire wafers. The exact grade, surface specification, orientation, oxide thickness, inventory and price should be confirmed on the selected product page or in the current quotation. Beyond bare wafers, VanaM accepts inquiries for deposited wafers with a specified functional, dielectric, metal or multilayer thin film. A coated wafer is priced against the actual film composition, thickness, substrate and quantity; it should not be assumed to be an off-the-shelf standard item unless the listing explicitly says so."
+      },
+      "ko": {
+        "q": "반암에서 어떤 베어 웨이퍼와 박막 증착 웨이퍼를 구매할 수 있나요?",
+        "a": "반암의 공개 웨이퍼 판매 페이지에는 4인치 Si 웨이퍼, 4인치 산화막 Si 웨이퍼, 6인치 Prime/Test Si 웨이퍼, 6인치 산화막 Si 웨이퍼, 2인치 사파이어 웨이퍼 등이 등록되어 있습니다. 등급, 결정방향, 표면 사양, 산화막 두께, 재고 및 가격은 개별 상품 페이지 또는 최신 견적에서 확인해야 합니다. 별도로 특정 기능성 박막, 유전체, 금속 또는 다층막이 증착된 웨이퍼도 맞춤 견적을 요청할 수 있습니다. 박막 증착 웨이퍼의 가격은 소재 조성, 두께, 기판, 수량에 따라 달라지며, 개별 상품에 표준 재고품으로 명시되지 않은 경우 기성품으로 단정하지 않습니다."
+      },
+      "page": "/contact/",
+      "group": "F",
+      "anchor": "faq-f03"
+    },
+    {
+      "id": "F04",
+      "en": {
+        "q": "Can VanaM deposit films on customer-supplied wafers or small substrate coupons?",
+        "a": "Customer-supplied substrates can be considered as part of a custom-deposition quotation. The request form explicitly asks how the substrate will be provided, but acceptance is not automatic. Please specify the substrate material, size, thickness, orientation, coatings or prior processing, surface condition and any restrictions on heating, vacuum exposure or cleaning. Unusual geometries, fragile samples, organic layers and contamination-sensitive devices may require fixture design or additional review. VanaM will confirm whether the requested substrate can be handled on a particular tool and whether any pre-clean, reference sample or limited trial is required. The customer should also clarify handling and return-shipping requirements for valuable substrates."
+      },
+      "ko": {
+        "q": "고객이 보내는 웨이퍼 또는 작은 기판 시편에도 증착할 수 있나요?",
+        "a": "고객이 제공하는 기판에 대한 증착도 맞춤 견적 단계에서 검토할 수 있습니다. 실제 견적 양식에도 기판 조달 방법을 선택하는 항목이 있으나, 모든 기판의 투입이 자동 승인되는 것은 아닙니다. 기판 소재·크기·두께·결정방향, 기존 코팅 및 가공 이력, 표면 상태, 허용 온도, 진공·세정 제한 조건을 알려주시기 바랍니다. 비정형 기판, 취약한 시편, 유기막이 포함된 샘플 또는 오염에 민감한 소자는 지그 제작이나 추가 검토가 필요할 수 있습니다. 반암은 해당 장비에서의 취급 가능 여부와 전처리·시험증착 필요성을 확인한 후 진행합니다. 고가 기판의 취급 및 반송 조건도 사전에 협의해야 합니다."
+      },
+      "page": "/contact/",
+      "group": "F",
+      "anchor": "faq-f04"
+    },
+    {
+      "id": "F05",
+      "en": {
+        "q": "What information should I provide to request an accurate thin-film deposition quotation?",
+        "a": "For an efficient quotation, provide (1) the film material and target stoichiometry, (2) the substrate material, size and whether you will supply it, (3) the desired thickness and number of layers, (4) sample quantity, and (5) the required process sequence. Include any critical properties, such as roughness, uniformity, optical constants, sheet resistance, crystallinity, dielectric behavior or superconducting transition temperature. If relevant, specify the deposition temperature limit, post-anneal restrictions, desired characterization methods and acceptance tolerances. A drawing or layer-stack table is especially helpful for DBRs and multi-material devices. You can send a complete specification or the information currently available; missing items may be resolved during VanaM's technical feasibility review."
+      },
+      "ko": {
+        "q": "정확한 박막 증착 견적을 받으려면 어떤 사양을 제공해야 하나요?",
+        "a": "정확한 견적을 위해 ① 박막 소재와 목표 조성, ② 기판 소재·크기·고객 제공 여부, ③ 목표 두께와 층수, ④ 시편 수량, ⑤ 공정 순서를 알려주시기 바랍니다. 중요 물성으로는 거칠기, 면내 균일도, 광학상수, 면저항, 결정성, 유전 특성, 초전도 전이온도 등이 있습니다. 허용 증착온도, 후열처리 제한, 희망 분석방법 및 합격 기준도 있으면 함께 기재해 주세요. DBR이나 복합 소자 구조라면 적층 순서표 또는 단면 도면을 보내는 것이 효과적입니다. 모든 값을 처음부터 확정할 필요는 없으며, 현재 확보된 정보로 문의하면 기술 검토 과정에서 미정 항목을 구체화할 수 있습니다."
+      },
+      "page": "/contact/",
+      "group": "F",
+      "anchor": "faq-f05"
+    },
+    {
+      "id": "F06",
+      "en": {
+        "q": "How are custom thin-film prices, minimum order quantities and lead times determined?",
+        "a": "Custom deposition is generally quoted project by project rather than using one published price for every material. Cost drivers can include the substrate and target materials, thickness, deposition rate, chamber preparation, recipe development, number of process steps, lot size and requested characterization. Timing likewise depends on equipment availability, material procurement, process qualification and any external analysis or patterning. The VanaM Product page describes a workflow of request, expert review, quotation, deposition, quality check and shipping. The product form states that lead time is agreed after specification confirmation. Any initial response target shown on the Contact page should not be interpreted as a production turnaround guarantee."
+      },
+      "ko": {
+        "q": "맞춤 박막의 가격·최소 수량·납기는 어떻게 정해지나요?",
+        "a": "맞춤 박막의 가격은 모든 소재에 동일한 정가를 적용하기보다 개별 공정 사양에 따라 산정합니다. 주요 영향 요소는 기판·타깃 소재, 목표 두께, 증착 속도, 챔버 준비, 신규 레시피 개발, 공정 단계 수, 로트 규모 및 분석 항목입니다. 납기도 장비 일정, 소재 조달, 공정 검증, 외부 분석·패터닝 여부에 따라 달라집니다. 홈페이지의 주문 절차는 의뢰 접수→기술 검토→견적→증착→품질 검사→출하 순서입니다. 상품 페이지에는 사양 확정 후 납기를 협의한다고 안내되어 있습니다. 문의 회신 목표일과 실제 제조 납기는 서로 다르므로 최종 견적서에서 확정된 일정을 기준으로 판단해야 합니다."
+      },
+      "page": "/contact/",
+      "group": "F",
+      "anchor": "faq-f06"
+    },
+    {
+      "id": "F07",
+      "en": {
+        "q": "Can VanaM support repeat wafer lots and process reproducibility after the first prototype?",
+        "a": "VanaM supports the progression from material screening to repeat small-batch fabrication, subject to a qualified process window. A repeat order can reference an agreed substrate specification, layer sequence, target thickness, key process settings and measurement criteria. VanaM's public technology description also presents process-data collection, statistical monitoring and recipe standardization as part of its development platform. For a customer-critical film, an agreed acceptance plan may include control samples and selected thickness, electrical or structural measurements. Actual reproducibility, uniformity and yield targets must be specified and demonstrated for the particular material, tool and lot; a successful laboratory sample is not automatically equivalent to a fully qualified manufacturing process."
+      },
+      "ko": {
+        "q": "첫 시제품 이후 반복 웨이퍼 로트와 공정 재현성 관리도 가능한가요?",
+        "a": "반암은 검증된 공정 범위 안에서 소재 탐색 단계에서 반복 소량 제조 단계로 발전시키는 업무를 지원합니다. 반복 주문 시에는 합의된 기판 사양, 적층 구조, 목표 두께, 주요 공정 조건 및 측정 기준을 기준점으로 사용할 수 있습니다. 홈페이지에서는 공정 데이터 수집, 통계적 상태 모니터링 및 레시피 표준화 체계를 소개하고 있습니다. 중요한 박막은 기준 시편과 두께·전기·구조 분석을 포함한 합격 기준을 사전에 정할 수 있습니다. 다만 재현성, 균일도 및 수율은 소재·장비·로트별로 실제 검증해야 하며, 연구실 수준 시편의 성공이 곧바로 양산 공정 인증을 의미하지는 않습니다."
+      },
+      "page": "/contact/",
+      "group": "F",
+      "anchor": "faq-f07"
+    },
+    {
+      "id": "F08",
+      "en": {
+        "q": "Does VanaM ship thin-film wafers to customers outside South Korea?",
+        "a": "VanaM accepts international inquiries and its custom-coating product pages state that international shipping is quoted separately, with carriers such as DHL given as an example. The feasibility and cost of a shipment depend on the destination, substrate fragility, packaging, customs classification and any restrictions associated with the material. Domestic and international shipping terms should be confirmed in the quotation; do not assume that all destinations or all materials have identical logistics arrangements. For overseas projects, provide the delivery country, consignee details, required paperwork and any laboratory import requirements when requesting a quote. Fragile coated wafers may require agreed protective packaging and handling instructions."
+      },
+      "ko": {
+        "q": "반암은 해외 고객에게 박막 웨이퍼와 시편을 배송하나요?",
+        "a": "반암은 해외 고객의 문의를 접수하며, 맞춤 코팅 상품 페이지에는 해외 배송비를 별도 견적하고 DHL 등의 운송사를 활용할 수 있다고 안내되어 있습니다. 실제 운송 가능 여부와 비용은 도착 국가, 기판 파손 위험, 포장 방식, 통관 품목 분류 및 소재별 규제에 따라 달라집니다. 국내와 해외의 운송 조건은 견적서에서 확인해야 하며, 모든 목적지와 소재에 동일한 조건이 적용되는 것은 아닙니다. 해외 견적 요청 시 수취 국가·기관, 필요 서류, 연구용 시료의 수입 요건을 알려주시기 바랍니다. 취약한 박막 웨이퍼는 보호 포장과 취급 조건을 미리 협의하는 것이 좋습니다."
+      },
+      "page": "/contact/",
+      "group": "F",
+      "anchor": "faq-f08"
+    },
+    {
+      "id": "F09",
+      "en": {
+        "q": "How are customer data, proprietary recipes and intellectual property handled in joint development?",
+        "a": "Custom materials development can involve the customer's device design, confidential specifications and VanaM's pre-existing process know-how. Ownership and use of background IP, newly developed results, samples, data, publication rights and exclusivity should therefore be addressed in a project-specific agreement before sensitive information is exchanged. VanaM can discuss an NDA and appropriate contractual terms, but no single default IP-ownership rule should be inferred from this FAQ. The scope of data delivered to the customer, including deposition logs, metrology and engineering reports, must also be agreed. Customers with regulated or security-sensitive designs should communicate any handling constraints before materials or files are transferred."
+      },
+      "ko": {
+        "q": "공동개발 시 고객 데이터와 공정 레시피·지식재산권은 어떻게 관리하나요?",
+        "a": "맞춤 소재 공동개발에는 고객의 소자 설계·비공개 사양과 반암이 보유한 기존 공정 노하우가 함께 활용될 수 있습니다. 따라서 기존 지식재산권(Background IP), 신규 성과, 시편, 데이터, 논문 공개 권한 및 독점 조건은 민감 정보를 제공하기 전에 프로젝트별 계약에서 정하는 것이 적절합니다. 반암과 비밀유지계약(NDA) 및 계약 조건을 협의할 수 있지만, 이 FAQ만으로 일률적인 IP 소유 규칙이 적용된다고 해석해서는 안 됩니다. 고객에게 제공되는 공정 로그·계측 데이터·기술 보고서의 범위도 합의해야 합니다. 보안 또는 규제 대상 설계라면 파일이나 시편 전달 전에 관련 취급 조건을 알려주시기 바랍니다."
+      },
+      "page": "/contact/",
+      "group": "F",
+      "anchor": "faq-f09"
+    },
+    {
+      "id": "F10",
+      "en": {
+        "q": "Can one project include deposition, heat treatment, measurement and multiple layer steps?",
+        "a": "Yes, a quotation can cover a sequence of process steps when the requested stack and materials are compatible with the available tools. VanaM's online request form allows the customer to describe the process sequence and select optional measurements. Typical project planning may address the deposition order, vacuum breaks, interfacial contamination, thermal budget, target thickness per layer and any post-deposition treatments. The precise sequence should be reviewed before a run, because a previously qualified standalone film does not guarantee that a multi-material stack will retain the same properties. If external nanofabrication or specialized analysis is needed, that work is identified as a separate project component with its own feasibility and schedule."
+      },
+      "ko": {
+        "q": "하나의 주문에 다층 증착·열처리·분석을 함께 포함할 수 있나요?",
+        "a": "공정 단계와 소재가 장비 및 공정 조건에 적합하다면 다층 증착, 열처리, 계측 등을 하나의 프로젝트 범위로 협의할 수 있습니다. 온라인 견적 양식에도 공정 순서를 단계별로 기재하고 선택 분석을 추가하는 기능이 있습니다. 실무 검토에서는 적층 순서, 진공 브레이크, 계면 오염, 공정 온도, 층별 두께 및 증착 후 처리 조건을 확인합니다. 개별 단일막 레시피가 검증되어 있어도 서로 다른 소재를 적층하면 물성이 동일하게 유지된다고 보장할 수는 없습니다. 나노패터닝이나 특수 분석을 외부에 의뢰해야 하는 경우에는 수행 주체, 가능 여부, 일정과 비용을 별도 항목으로 명시합니다."
+      },
+      "page": "/contact/",
+      "group": "F",
+      "anchor": "faq-f10"
+    },
+    {
+      "id": "Q01",
+      "en": {
+        "q": "Where can I source NbTiN superconducting thin films for SNSPD research?",
+        "a": "VanaM develops NbTiN (niobium titanium nitride) thin films as a priority material for superconducting nanowire single-photon detectors (SNSPDs) and related quantum-photonics research. Its Materials Library lists NbTiN under PVD-deposited nitrides, and the company accepts custom-deposition inquiries. A suitable wafer requires more than a nominal material name: thickness, Nb/Ti/N composition, substrate, surface condition, electrical properties and subsequent patterning steps all influence device feasibility. For an SNSPD project, provide the intended optical wavelength, substrate or DBR structure, target film thickness and any cryogenic or device-performance constraints. VanaM can then propose a material-deposition or development scope. Availability of a deposited film does not by itself establish the system detection efficiency or yield of a finished detector."
+      },
+      "ko": {
+        "q": "SNSPD 연구용 NbTiN 초전도 박막은 어디에서 공급받을 수 있나요?",
+        "a": "반암은 초전도 나노와이어 단일광자검출기(SNSPD) 및 양자 포토닉스 연구의 핵심 소재로 NbTiN(나이오븀-티타늄 질화물) 박막을 개발하고 있습니다. 홈페이지 소재 라이브러리에는 NbTiN이 PVD 질화물로 등록되어 있으며 맞춤 증착 문의를 받고 있습니다. SNSPD용 웨이퍼는 소재명만으로 정의되지 않고 두께, Nb/Ti/N 조성, 기판, 표면 상태, 전기적 특성 및 후속 나노패터닝 조건까지 고려해야 합니다. 적용 광파장, 기판 또는 DBR 구조, 목표 박막 두께, 극저온 또는 소자 성능 요구사항을 알려주시면 소재 공급과 추가 개발 범위를 검토합니다. 박막 공급 가능성이 완성 검출기의 시스템 검출효율이나 수율을 입증하는 것은 아닙니다."
+      },
+      "page": "/technology/",
+      "group": "Q",
+      "anchor": "faq-q01"
+    },
+    {
+      "id": "Q02",
+      "en": {
+        "q": "Can VanaM produce ultrathin NbTiN films below 10 nm for superconducting nanowires?",
+        "a": "Sub-10-nm NbTiN is an important development target for SNSPD fabrication, but ultrathin films require device-specific qualification. At these thicknesses, continuity, composition, surface roughness, thickness uniformity and superconducting properties can change significantly with substrate and deposition conditions. VanaM can review a request for an ultrathin NbTiN film and propose a suitable development or sample-evaluation run. Relevant characterization can include thickness, sheet resistance, resistance-versus-temperature behavior and superconducting transition characteristics, depending on the agreed scope and available test route. A nominal thickness below 10 nm is not a guarantee of a particular critical temperature, critical current, nanowire yield or photon-detection efficiency. Final specifications must be supported by measurements on the requested substrate and stack."
+      },
+      "ko": {
+        "q": "10 nm 미만의 초박막 NbTiN을 SNSPD 나노와이어용으로 증착할 수 있나요?",
+        "a": "10 nm 미만 NbTiN은 SNSPD 제작에서 중요한 개발 목표이지만, 초박막일수록 적용 소자에 맞춘 공정 검증이 필요합니다. 이 두께 영역에서는 막의 연속성, 화학조성, 표면 거칠기, 면내 두께 균일도와 초전도 특성이 기판 및 증착 조건에 민감하게 달라질 수 있습니다. 반암은 초박막 NbTiN 의뢰 사양을 검토하고 시험증착 또는 추가 레시피 개발 범위를 제안할 수 있습니다. 합의된 범위에 따라 두께, 면저항, 온도-저항 특성, 초전도 전이 특성 등을 평가합니다. 목표 두께를 달성했다는 이유만으로 특정 임계온도, 임계전류, 나노와이어 수율 또는 광자 검출효율을 보장하지는 않습니다. 최종 사양은 실제 요청 기판·적층 구조에서의 측정으로 확인해야 합니다."
+      },
+      "page": "/technology/",
+      "group": "Q",
+      "anchor": "faq-q02"
+    },
+    {
+      "id": "Q03",
+      "en": {
+        "q": "Does VanaM sell complete SNSPD detectors or only superconducting thin-film wafers?",
+        "a": "The clearest currently documented offering is custom superconducting thin-film development and deposition, including NbTiN and related quantum-device materials. A complete SNSPD adds nanoscale patterning, contacts, optical coupling, packaging, cryogenic operation and detector-level testing. VanaM's public Technology page describes SNSPD devices as part of its quantum-photonics development program; progression from coated wafers to patterned dies and packaged detectors requires separately defined development and validation. Therefore, customers should not assume that a fully packaged, performance-certified SNSPD is a standard stocked product. If you need a detector rather than a coated wafer, specify the wavelength, operating temperature, required system detection efficiency, dark-count rate, timing jitter and package interface so that the project and partner requirements can be assessed."
+      },
+      "ko": {
+        "q": "반암은 완성형 SNSPD 검출기를 판매하나요, 아니면 초전도 박막 웨이퍼를 공급하나요?",
+        "a": "현재 공개 자료에서 가장 명확하게 확인되는 제공 범위는 NbTiN 등 초전도 박막의 맞춤 개발과 증착 서비스입니다. 완성형 SNSPD에는 나노패터닝, 전극 형성, 광 결합, 패키징, 극저온 구동 및 검출기 수준의 성능 평가가 추가로 필요합니다. 반암의 기술 페이지는 SNSPD를 양자 포토닉스 개발 프로그램으로 소개하고 있으며, 코팅 웨이퍼에서 패턴 다이·패키지 검출기로 발전시키려면 별도 공정 개발과 검증이 필요합니다. 따라서 성능이 인증된 완성형 SNSPD가 항상 주문 가능한 재고 상품이라고 해석해서는 안 됩니다. 검출기 자체가 필요하다면 파장, 동작온도, 시스템 검출효율, 다크카운트, 타이밍 지터 및 패키지 인터페이스를 알려주시면 수행 범위와 협력 공정을 검토할 수 있습니다."
+      },
+      "page": "/technology/",
+      "group": "Q",
+      "anchor": "faq-q03"
+    },
+    {
+      "id": "Q04",
+      "en": {
+        "q": "Which superconducting and detector metrics matter when evaluating NbTiN for SNSPDs?",
+        "a": "Material-level characterization and detector-level characterization should be distinguished. For NbTiN films, useful indicators can include film thickness, sheet resistance, critical temperature (Tc), transition width, structural quality and the effect of subsequent processing. After nanowire fabrication, device evaluation may additionally require critical current (Ic), dark-count rate (DCR), system detection efficiency (SDE), timing jitter and recovery behavior at a stated operating temperature and wavelength. For example, reporting Tc for a continuous film does not establish that a packaged SNSPD achieves a specified SDE at 1550 nm. VanaM can discuss an evaluation matrix that separates film acceptance measurements from tests requiring patterned devices, optical alignment and cryogenic instrumentation. Specific targets and available test responsibilities must be agreed before the project."
+      },
+      "ko": {
+        "q": "SNSPD용 NbTiN 평가에서 어떤 초전도·검출 성능 지표가 중요한가요?",
+        "a": "NbTiN 박막 수준의 분석과 완성 검출기 수준의 성능 평가는 구분해야 합니다. 박막 단계에서는 두께, 면저항, 임계온도(Tc), 초전도 전이폭, 구조적 품질 및 후속 공정 영향이 중요할 수 있습니다. 나노와이어를 제작한 이후에는 특정 동작온도·광파장 조건에서 임계전류(Ic), 다크카운트(DCR), 시스템 검출효율(SDE), 타이밍 지터, 복구 특성 등을 추가로 평가합니다. 예를 들어 연속 박막의 Tc를 측정했다는 사실만으로 1550 nm에서 패키징된 SNSPD가 특정 SDE를 달성했다고 말할 수는 없습니다. 반암은 박막 합격 기준과 패터닝·광정렬·극저온 장비가 필요한 소자 성능 시험을 구분한 평가 계획을 협의할 수 있습니다. 목표값과 시험 수행 주체는 프로젝트 시작 전에 확정해야 합니다."
+      },
+      "page": "/technology/",
+      "group": "Q",
+      "anchor": "faq-q04"
+    },
+    {
+      "id": "Q05",
+      "en": {
+        "q": "Can VanaM fabricate custom DBR mirrors for 1550 nm quantum-photonics applications?",
+        "a": "VanaM offers quotation-based multilayer deposition and identifies distributed Bragg reflectors (DBRs) as a priority quantum-photonics film stack. A DBR is designed by arranging layers with different refractive indices so that their optical interference produces high reflectance in a target wavelength range. A 1550 nm request should specify the incidence angle, polarization, bandwidth, substrate, permissible temperature, layer materials and target reflectance, not only the center wavelength. VanaM can review a design using materials such as Ta₂O₅, TiO₂ and SiO₂, then evaluate the deposition sequence and optical characterization required. The achievable reflectance must be verified for the as-fabricated stack; a general material listing or modeled spectrum is not a guarantee of a finished mirror specification."
+      },
+      "ko": {
+        "q": "1550 nm 양자 포토닉스용 맞춤형 DBR 미러를 제작할 수 있나요?",
+        "a": "반암은 맞춤 다층막 증착을 견적하고 있으며, DBR(분포 브래그 반사경)을 양자 포토닉스 핵심 적층 구조로 개발하고 있습니다. DBR은 서로 다른 굴절률의 박막을 교대로 적층해 간섭 효과로 특정 파장대의 높은 반사율을 구현하는 구조입니다. 1550 nm용 의뢰에는 중심 파장뿐 아니라 입사각, 편광, 반사 대역폭, 기판, 허용 공정온도, 층별 소재 및 목표 반사율을 함께 정해야 합니다. Ta₂O₅·TiO₂·SiO₂ 등의 조합을 검토하고 적층 공정과 광학 평가 범위를 제안할 수 있습니다. 실제 반사율은 제작한 적층 구조에서 측정해 확인해야 하며, 소재 목록이나 시뮬레이션 결과만으로 완제품 성능을 보장하지 않습니다."
+      },
+      "page": "/technology/",
+      "group": "Q",
+      "anchor": "faq-q05"
+    },
+    {
+      "id": "Q06",
+      "en": {
+        "q": "Which dielectric materials can be used for custom DBR multilayer stacks?",
+        "a": "Material choices for a DBR depend on the target wavelength and optical contrast between the layers. VanaM's public materials and technology pages list SiO₂, Ta₂O₅ and TiO₂ among relevant optical films; proposed high-/low-index combinations can include Ta₂O₅/SiO₂ or TiO₂/SiO₂, subject to process qualification. The appropriate pair also depends on absorption, stress, interface roughness, thermal stability and compatibility with any superconducting or photonic layer above it. A stack with many layers requires control of cumulative thickness error, optical constants and interfacial quality. If the customer's application is an SNSPD optical cavity, the absorber thickness and DBR phase response should be co-designed rather than specifying the mirror independently. Optical targets and test methodology are set in the statement of work."
+      },
+      "ko": {
+        "q": "반암의 DBR 다층막에는 어떤 유전체 소재를 사용할 수 있나요?",
+        "a": "DBR의 소재 선택은 목표 파장과 층 사이의 굴절률 대비에 따라 달라집니다. 반암의 공개 소재·기술 페이지에는 SiO₂, Ta₂O₅, TiO₂ 등 광학 박막이 등록되어 있으며, Ta₂O₅/SiO₂ 또는 TiO₂/SiO₂ 등의 고·저굴절률 조합을 검토할 수 있습니다. 다만 조합별 공정 검증이 필요하고, 흡수 손실, 잔류응력, 계면 거칠기, 열안정성, 상부 초전도막·광도파로와의 적합성도 고려해야 합니다. 다층수가 증가하면 층별 두께 오차, 광학상수와 계면 품질이 누적 성능을 좌우합니다. SNSPD 광공진 구조라면 DBR을 별개 제품으로 설계하기보다 흡수막 두께와 광학 위상을 함께 최적화하는 것이 적절합니다. 목표 반사율과 측정 방법은 사전에 합의합니다."
+      },
+      "page": "/technology/",
+      "group": "Q",
+      "anchor": "faq-q06"
+    },
+    {
+      "id": "Q07",
+      "en": {
+        "q": "Can VanaM supply Ta₂O₅ films for low-loss photonic waveguides?",
+        "a": "VanaM develops Ta₂O₅ (tantalum pentoxide) optical films and identifies Ta₂O₅-based waveguides as a quantum-photonics focus area. Its Materials Library publishes representative Ta₂O₅ thin-film characterization, including optical-index data, as a starting point for technical evaluation. For a waveguide project, film deposition and patterned-device performance must be evaluated separately: optical propagation loss also depends on etch damage, sidewall roughness, scattering, film absorption, top cladding and waveguide geometry. Please supply the wavelength, substrate, target thickness, permitted roughness, optical design and any planned lithography or etch process. VanaM can review the film specification and, where appropriate, the pathway to device fabrication. A deposition result alone does not certify a particular waveguide loss in dB/cm."
+      },
+      "ko": {
+        "q": "저손실 광도파로 제작용 Ta₂O₅ 박막을 공급할 수 있나요?",
+        "a": "반암은 Ta₂O₅(산화탄탈럼) 광학 박막을 개발하고 있으며, Ta₂O₅ 기반 광도파로를 양자 포토닉스 핵심 분야로 제시하고 있습니다. 공개 소재 라이브러리에는 Ta₂O₅ 박막의 광학상수 등 대표 분석 자료가 있어 초기 기술 검토에 활용할 수 있습니다. 다만 박막 증착 품질과 패터닝된 광도파로의 전파 손실은 별도 검증 대상입니다. 도파로 손실은 식각 손상, 측벽 거칠기, 산란, 박막 흡수, 상부 클래딩 및 도파로 형상에도 영향을 받습니다. 사용 파장, 기판, 목표 두께, 허용 거칠기, 도파로 설계와 계획된 리소그래피·식각 공정을 알려주시면 박막 사양과 소자 제작 연계 가능성을 검토합니다. 박막 분석 결과만으로 특정 dB/cm 손실을 보증하지 않습니다."
+      },
+      "page": "/technology/",
+      "group": "Q",
+      "anchor": "faq-q07"
+    },
+    {
+      "id": "Q08",
+      "en": {
+        "q": "Can VanaM develop STO or BTO oxide thin films for electro-optic modulators?",
+        "a": "VanaM lists SrTiO₃ (STO) and BaTiO₃ (BTO) in its oxide-material portfolio and describes them as development materials for electro-optic modulators, including cryogenic photonics. For these oxides, the desired function can be strongly influenced by crystal phase, orientation, strain, stoichiometry, film/substrate interfaces, electrodes and post-deposition processing. A customer should describe whether the target is a thin-film test coupon, a capacitor-style structure, an optical waveguide-compatible film or an integrated modulator. VanaM can evaluate the substrate, deposition route and characterization plan, including whether a seed or buffer layer is necessary. A film being available for R&D does not establish that a finished modulator has achieved a stated Pockels coefficient, insertion loss or speed at cryogenic temperature."
+      },
+      "ko": {
+        "q": "전기광학 변조기용 STO 또는 BTO 박막을 개발·공급할 수 있나요?",
+        "a": "반암은 SrTiO₃(STO)와 BaTiO₃(BTO)를 산화물 소재 포트폴리오에 포함하고, 극저온 포토닉스를 포함한 전기광학 변조기용 개발 소재로 소개합니다. 이들 산화물의 기능은 결정상·배향, 변형률, 화학양론, 박막-기판 계면, 전극 및 후열처리에 크게 영향을 받을 수 있습니다. 고객은 박막 시험시편, 커패시터형 구조, 광도파로와 결합할 막 또는 집적 변조기 중 어떤 단계가 목표인지 알려주셔야 합니다. 반암은 기판, 증착 경로, 분석 계획과 시드·버퍼층 필요성을 검토할 수 있습니다. R&D용 박막 제공 가능성이 곧 특정 극저온 포켈스 계수, 삽입 손실 또는 변조 속도를 달성한 완성 소자의 공급을 뜻하지는 않습니다."
+      },
+      "page": "/technology/",
+      "group": "Q",
+      "anchor": "faq-q08"
+    },
+    {
+      "id": "Q09",
+      "en": {
+        "q": "Can VanaM arrange nanofabrication, fiber coupling, packaging or cryogenic testing?",
+        "a": "VanaM's strategic quantum-photonics workflow extends beyond deposition to device patterning, dicing, packaging and cryogenic evaluation. However, individual capabilities should be separated into in-house work and steps performed through research or service partners. A project involving SNSPD nanowires, photonic waveguides or modulators may require electron-beam lithography, etching, optical alignment and low-temperature instrumentation that are not included in a standard coating quotation. Customers should provide a device drawing, critical dimensions, operating wavelength and desired test metrics. VanaM can review what is technically feasible and identify which activities require a partner, separate quotation, schedule or qualification step. No specific partner access, delivery time or packaged-device yield is guaranteed by this FAQ."
+      },
+      "ko": {
+        "q": "나노패터닝·광섬유 결합·패키징·극저온 측정도 연계할 수 있나요?",
+        "a": "반암의 양자 포토닉스 사업 전략은 박막 증착에서 소자 패터닝, 다이싱, 패키징 및 극저온 평가까지 이어지는 제조 흐름을 지향합니다. 다만 각 공정을 반암 내부에서 수행하는지, 연구기관·서비스 파트너를 통해 진행하는지 명확히 구분해야 합니다. SNSPD 나노와이어, 광도파로, 변조기에는 전자빔 리소그래피, 식각, 광정렬, 저온 측정 장비가 필요할 수 있으며 이들 항목은 표준 코팅 견적에 포함되지 않습니다. 소자 도면, 핵심 선폭, 사용 파장 및 필요한 시험 지표를 보내주시면 수행 가능성을 검토하고 외부 협력·별도 견적·일정·검증이 필요한 범위를 식별합니다. 특정 파트너 이용 가능성, 납기 또는 패키지 수율을 이 FAQ에서 보증하지 않습니다."
+      },
+      "page": "/technology/",
+      "group": "Q",
+      "anchor": "faq-q09"
+    },
+    {
+      "id": "Q10",
+      "en": {
+        "q": "Does VanaM currently offer a fully integrated quantum photonic integrated circuit (PIC)?",
+        "a": "Integrated quantum photonic integrated circuits (PICs) form part of VanaM's longer-term product roadmap, not a product that should be assumed to be routinely stocked or fully qualified today. The company's present materials-foundry work supports individual building blocks, including superconducting films, optical waveguide materials, electro-optic oxides and DBR stacks. Integrating those elements into a functional PIC additionally requires compatible nanofabrication, optical and electrical packaging, and device-level testing. VanaM's development roadmap follows a staged progression from materials wafers toward patterned devices and integrated systems, with separate qualification requirements at each step. Customers seeking a PIC should begin with a technical feasibility discussion covering the architecture, target functions, wafer size, coupling approach, test environment and prototype milestones."
+      },
+      "ko": {
+        "q": "반암은 현재 완전히 집적된 양자 포토닉스 PIC를 판매하고 있나요?",
+        "a": "통합 양자 포토닉스 PIC(Photonic Integrated Circuit)는 반암의 중·장기 제품 로드맵에 포함되지만, 현재 항상 재고로 판매되는 표준 인증 제품으로 이해해서는 안 됩니다. 현재 소재 파운드리의 핵심 제공 범위는 초전도막, 광도파로용 소재, 전기광학 산화물, DBR 적층 등 개별 구성 요소를 가능하게 하는 박막입니다. 이를 기능성 PIC로 통합하려면 공정 호환성, 나노패터닝, 광·전기 패키징, 소자 시험이 추가로 필요합니다. 반암의 개발 로드맵은 소재 웨이퍼에서 패턴 소자와 집적 시스템으로 단계적으로 확장하는 방향이며 각 단계마다 별도 공정 검증이 필요합니다. PIC 의뢰 고객은 회로 구조, 목표 기능, 웨이퍼 크기, 광결합 방식, 시험 환경 및 시제품 마일스톤을 바탕으로 우선 기술 가능성부터 협의하는 것이 적절합니다."
+      },
+      "page": "/technology/",
+      "group": "Q",
+      "anchor": "faq-q10"
+    },
+    {
+      "id": "M01",
+      "en": {
+        "q": "Which ALD dielectric materials does VanaM support for semiconductor research?",
+        "a": "VanaM's Materials Library lists ALD options including Al₂O₃, HfO₂, TiO₂, SiO₂, ZrO₂, HZO and other oxide materials. The public pages contain example process and film data for certain materials, while others are explicitly marked as having detailed data in preparation. ALD is often chosen for precise thickness control and conformal coating of suitable surfaces, but precursor chemistry, temperature window and film properties differ by material. A request should specify the substrate, maximum allowable process temperature, thickness, coverage requirement and electrical or optical target, such as dielectric constant, leakage or refractive index. We will distinguish an established recipe from process development and identify whether the requested material is feasible on the relevant ALD system. Not all listed ALD materials are automatically validated on every wafer size."
+      },
+      "ko": {
+        "q": "반암은 반도체 연구용 어떤 ALD 유전체를 제공하나요?",
+        "a": "반암 소재 라이브러리에는 ALD 공정 소재로 Al₂O₃, HfO₂, TiO₂, SiO₂, ZrO₂, HZO 및 기타 산화물이 등록되어 있습니다. 일부 소재는 대표 공정·박막 데이터를 공개하고 있지만, 일부는 상세 자료를 준비 중이라고 표시되어 있습니다. ALD는 적합한 표면에서 정밀한 두께 제어와 높은 피복성이 필요할 때 활용되지만, 소재에 따라 전구체 화학, 공정 온도 및 박막 특성이 다릅니다. 고객은 기판, 허용 최대 공정온도, 목표 두께, 피복성 요구사항과 유전율·누설전류·굴절률 등 목표 물성을 알려주시기 바랍니다. 반암은 기확립 레시피와 신규 개발 과제를 구분하고 해당 ALD 장비에서의 가능 여부를 검토합니다. 등재된 모든 소재가 모든 웨이퍼 크기에서 검증되었다는 뜻은 아닙니다."
+      },
+      "page": "/materials/",
+      "group": "M",
+      "anchor": "faq-m01"
+    },
+    {
+      "id": "M02",
+      "en": {
+        "q": "Can VanaM provide ALD coatings on 6-inch and 12-inch wafers?",
+        "a": "VanaM publicly describes ALD equipment for 6-inch and 12-inch substrates. For example, its Al₂O₃ and HfO₂ Materials Library entries list process capability for these wafer sizes, together with material-specific process information. Actual availability depends on the ALD recipe, wafer material, carrier configuration, thermal budget and contamination restrictions. Customers should not assume that a process qualified on a 6-inch Si wafer is automatically qualified on a 12-inch or non-silicon substrate. To request a quotation, provide the wafer size, thickness, orientation, existing layers, sample count and required film uniformity or conformality. VanaM can confirm the applicable tool, process conditions and measurement approach before accepting the order."
+      },
+      "ko": {
+        "q": "6인치 또는 12인치 웨이퍼에 ALD 박막을 증착할 수 있나요?",
+        "a": "반암은 6인치와 12인치 기판을 지원하는 ALD 설비를 홈페이지에 소개하고 있습니다. 소재 라이브러리의 Al₂O₃ 및 HfO₂ 항목에는 해당 웨이퍼 크기의 공정 대응 정보와 소재별 조건이 기재되어 있습니다. 그러나 실제 가능 여부는 ALD 레시피, 기판 소재, 캐리어 구성, 허용 온도 및 오염관리 요건에 따라 달라집니다. 6인치 Si 웨이퍼에서 검증된 공정이 12인치 또는 비실리콘 기판에서도 자동으로 검증되었다고 볼 수는 없습니다. 견적 시 웨이퍼 크기·두께·결정방향·기존 박막·수량과 목표 균일도·피복성을 알려주시면 적용 장비와 공정·측정 방법을 확인합니다."
+      },
+      "page": "/materials/",
+      "group": "M",
+      "anchor": "faq-m02"
+    },
+    {
+      "id": "M03",
+      "en": {
+        "q": "Does VanaM supply VO₂ thin films with a temperature-driven resistance transition?",
+        "a": "VanaM develops and offers custom-deposition inquiries for VO₂ (vanadium dioxide), an oxide associated with a temperature-dependent insulator-to-metal transition. The company publishes representative film characterization on its Materials Library page, including a sample's thickness, resistance ON/OFF behavior and transition-related data under specified preparation conditions. These values describe example samples rather than universal guarantees for all substrates or orders. A VO₂ film's switching response can depend on crystallinity, stoichiometry, stress, thickness, substrate, thermal history and measurement method. For an inquiry, specify the substrate and size, target thickness, desired transition-temperature range, resistance change, hysteresis and intended sensing or optical use. VanaM can then assess whether a listed process or a new optimization run is appropriate."
+      },
+      "ko": {
+        "q": "온도에 따라 저항이 변하는 VO₂ 박막을 공급하나요?",
+        "a": "반암은 온도에 따른 절연체-금속 전이 특성이 알려진 VO₂(이산화바나듐) 박막을 개발하고 맞춤 증착 문의를 받고 있습니다. 소재 라이브러리에는 특정 증착 조건에서 제작한 대표 시료의 두께, 저항 ON/OFF 변화 및 전이 관련 측정 결과가 공개되어 있습니다. 이러한 수치는 모든 기판·주문에 동일하게 적용되는 성능 보증값이 아니라 개별 시료의 예시입니다. VO₂의 스위칭 특성은 결정성, 화학양론, 응력, 두께, 기판, 열이력 및 측정 방식에 영향을 받을 수 있습니다. 견적 시 기판과 크기, 목표 두께, 희망 전이온도 범위, 저항 변화, 히스테리시스 및 센싱·광학 용도를 알려주시면 기존 공정 적용 또는 추가 최적화 필요성을 검토합니다."
+      },
+      "page": "/materials/m01/",
+      "group": "M",
+      "anchor": "faq-m03"
+    },
+    {
+      "id": "M04",
+      "en": {
+        "q": "Can the transition temperature of VO₂ be adjusted by tungsten doping?",
+        "a": "Tungsten doping is one materials-engineering approach investigated for tuning VO₂ phase-transition behavior. However, the relationship between nominal W content and measured transition temperature depends on the deposition route, incorporated dopant concentration, crystallinity, substrate and thermal treatment. A custom W-doped VO₂ request should therefore be treated as a materials-development and qualification project, not as a guarantee of a particular switching point. Useful requirements include the target transition-temperature interval, acceptable hysteresis width, optical or electrical measurement method, thickness and substrate. VanaM can review the doping and characterization concept as part of its VO₂ development program. Any promised transition temperature, repeatability or long-term stability must follow actual measurement and agreed acceptance criteria."
+      },
+      "ko": {
+        "q": "W(텅스텐) 도핑으로 VO₂ 박막의 상전이 온도를 조절할 수 있나요?",
+        "a": "W(텅스텐) 도핑은 VO₂의 상전이 거동을 조정하기 위해 연구되는 소재 설계 방법 중 하나입니다. 다만 명목 도핑량과 실제 측정 전이온도 사이의 관계는 증착 방식, 실제 도핑 농도, 결정성, 기판 및 후열처리에 따라 달라집니다. 따라서 W 도핑 VO₂ 의뢰는 특정 스위칭 온도를 보장하는 재고품 주문보다 소재 개발·검증 과제로 다루는 것이 정확합니다. 목표 전이온도 범위, 허용 히스테리시스 폭, 광학·전기 측정 방법, 두께 및 기판 조건을 제시해 주세요. 반암은 VO₂ 개발 프로그램의 범위에서 도핑과 특성평가 방안을 검토할 수 있습니다. 전이온도·반복성·장기 안정성에 대한 보증은 실제 측정과 사전 합의된 합격 기준이 확보된 경우에만 가능합니다."
+      },
+      "page": "/materials/m01/",
+      "group": "M",
+      "anchor": "faq-m04"
+    },
+    {
+      "id": "M05",
+      "en": {
+        "q": "Can VanaM deposit AlN or AlScN films for piezoelectric, ferroelectric or GaN-related devices?",
+        "a": "VanaM's Materials Library lists AlN and AlScN among its PVD nitride materials and publishes representative AlScN ferroelectric characterization. These materials may be relevant to piezoelectric transducers, resonators and device research, but an application-specific film requires more than confirming the chemical formula. Important parameters include the Al/Sc composition, thickness, crystal texture, substrate and underlying electrode or barrier, stress, leakage current and thermal budget. For an AlScN-on-GaN or AlGaN/GaN request, please provide the complete starting stack and explain whether the target is polarization, piezoelectric response, ferroelectric switching or another electrical effect. Compatibility with a specific heterostructure and changes in 2DEG density must be experimentally verified; no improvement is guaranteed from material choice alone."
+      },
+      "ko": {
+        "q": "압전·강유전 또는 GaN 소자용 AlN·AlScN 박막도 증착하나요?",
+        "a": "반암 소재 라이브러리에는 AlN과 AlScN이 PVD 질화물로 등록되어 있고, AlScN의 대표 강유전 특성 측정 자료가 공개되어 있습니다. 이 소재는 압전 트랜스듀서, 공진기 및 관련 소자 연구에 활용될 수 있지만, 실제 적용 여부는 화학식만으로 판단할 수 없습니다. Al/Sc 조성, 두께, 결정 배향, 기판과 하부 전극·장벽층, 응력, 누설전류 및 허용 공정온도가 중요합니다. 특히 GaN 또는 AlGaN/GaN 위 AlScN을 의뢰하는 경우 전체 적층 구조와 목표가 분극, 압전, 강유전 스위칭 또는 다른 전기적 효과인지 알려주셔야 합니다. 특정 이종접합에서의 공정 호환성이나 2DEG 밀도 변화는 실험으로 검증해야 하며, 소재 선택만으로 개선을 보장하지 않습니다."
+      },
+      "page": "/materials/m11/",
+      "group": "M",
+      "anchor": "faq-m05"
+    },
+    {
+      "id": "M06",
+      "en": {
+        "q": "Can VanaM deposit metal thin films such as Pt, Au, Pd or Ti?",
+        "a": "Yes. VanaM's public Materials Library includes PVD metal films such as platinum (Pt), gold (Au), palladium (Pd), titanium (Ti), nickel (Ni) and other metals. A metal-coating request can be evaluated for use as an electrode, contact, reflective layer or component of a multilayer structure. Relevant specifications include thickness, sheet resistance, continuity, adhesion, surface roughness, film stress, composition and compatibility with the substrate. A thick metal film may require special consideration of deposition time, heating, stress and thickness measurement; it should not be treated as equivalent to a thin adhesion layer. Please state whether the primary objective is conductivity, optical response, density, adhesion or another property. VanaM will propose a feasible process and agreed acceptance measurements."
+      },
+      "ko": {
+        "q": "Pt·Au·Pd·Ti 같은 금속 박막도 맞춤 증착할 수 있나요?",
+        "a": "가능합니다. 반암의 공개 소재 라이브러리에는 Pt(백금), Au(금), Pd(팔라듐), Ti(티타늄), Ni(니켈) 등 여러 PVD 금속 박막이 등록되어 있습니다. 금속 코팅은 전극, 접촉층, 반사층 또는 다층 구조의 구성막으로 검토할 수 있습니다. 주요 사양은 두께, 면저항, 연속성, 접착력, 거칠기, 잔류응력, 조성 및 기판과의 적합성입니다. 두꺼운 금속막은 증착 시간, 기판 가열, 응력, 두께 측정 조건 등을 별도로 검토해야 하며 얇은 접착층과 동일한 공정으로 취급할 수 없습니다. 전도성, 광학 특성, 밀도, 접착력 등 무엇이 핵심 목표인지 알려주시면 공정 가능성과 합격 기준을 협의합니다."
+      },
+      "page": "/materials/",
+      "group": "M",
+      "anchor": "faq-m06"
+    },
+    {
+      "id": "M07",
+      "en": {
+        "q": "Does VanaM work with HfO₂, IGZO and other functional oxide semiconductors?",
+        "a": "VanaM lists a range of functional oxides in its public catalog, including HfO₂, IGZO (InGaZnO), TiO₂, ZnO and other dielectric or semiconductor-related materials. The appropriate fabrication method and evaluation plan differ across materials; HfO₂ may be requested as an insulating or high-k dielectric film, while IGZO may be investigated as an oxide-semiconductor layer. For the same nominal chemical composition, electrical behavior can vary with deposition technique, oxygen content, thermal treatment and underlying layers. The catalog includes materials with public characterization data as well as entries for which detailed data is being prepared. Customers should specify the device context, thickness, composition, substrate and target electrical characteristics. A public listing alone does not imply process-of-record qualification for a customer's specific CMOS or display production line."
+      },
+      "ko": {
+        "q": "HfO₂·IGZO 등 기능성 산화물 반도체도 다루나요?",
+        "a": "반암은 HfO₂, IGZO(InGaZnO), TiO₂, ZnO 등 유전체 또는 산화물 반도체와 관련된 다양한 기능성 산화물을 공개 소재 목록에 등록하고 있습니다. 소재마다 적합한 제조 방식과 평가 기준이 다르며, HfO₂는 절연·고유전율 박막으로, IGZO는 산화물 반도체층으로 검토할 수 있습니다. 같은 명목 조성이라도 증착 방식, 산소 함량, 후열처리와 하부층에 따라 전기적 특성이 달라질 수 있습니다. 목록에는 실제 특성 자료를 공개한 소재와 상세 데이터 준비 중인 소재가 함께 포함됩니다. 소자 용도, 두께, 조성, 기판과 목표 전기 특성을 알려주시기 바랍니다. 소재 등재 사실만으로 특정 CMOS·디스플레이 양산라인에서 공정 인증이 끝났다고 해석해서는 안 됩니다."
+      },
+      "page": "/materials/",
+      "group": "M",
+      "anchor": "faq-m07"
+    },
+    {
+      "id": "M08",
+      "en": {
+        "q": "Can VanaM coat glass, sapphire and other optical or non-silicon substrates?",
+        "a": "VanaM supports inquiries for coating non-silicon substrates, with sapphire among the wafer products listed on its website. Compatibility for glass, fused silica, sapphire, germanium or other optical substrates must be evaluated against the requested material, tool fixtures, heat tolerance, surface quality and contamination controls. Optical coatings may require specifications such as wavelength-dependent refractive index, extinction coefficient, reflectance, transmittance, surface roughness and stress. The substrate's geometry and optical finish can also affect handling and measurement. Please provide a substrate drawing and material specification, including any coating already present. VanaM will assess whether an existing recipe can be used or whether a preliminary trial and specialized optical measurement are required."
+      },
+      "ko": {
+        "q": "유리·사파이어 등 실리콘 이외의 광학 기판에도 코팅할 수 있나요?",
+        "a": "반암은 실리콘 이외 기판의 코팅 문의도 검토하며, 홈페이지 웨이퍼 판매 목록에는 사파이어 기판이 포함되어 있습니다. 유리, 합성석영, 사파이어, 게르마늄 등 광학 기판의 적용 가능성은 소재, 장비 지그, 내열성, 표면 품질 및 오염관리 조건에 따라 판단해야 합니다. 광학 코팅의 경우 파장별 굴절률·소광계수, 반사율·투과율, 표면 거칠기 및 잔류응력 등의 사양이 중요할 수 있습니다. 기판의 형상과 광학 연마 수준도 취급과 측정에 영향을 줍니다. 기존 코팅 여부를 포함한 기판 도면과 재료 사양을 보내주시면 기확립 공정 사용 가능성 또는 시험 증착·특수 광학 측정 필요성을 검토합니다."
+      },
+      "page": "/materials/",
+      "group": "M",
+      "anchor": "faq-m08"
+    },
+    {
+      "id": "T01",
+      "en": {
+        "q": "What thin-film characterization and device-analysis services can be requested?",
+        "a": "VanaM's Product & Solution page lists analytical options including SEM/EDS, TEM/EDS, XRD, XPS, UPS, AFM and Raman spectroscopy, as well as electrical measurements such as I–V, C–V, Hall, ferroelectric and piezoelectric response, and PPMS-related testing. The online quotation form also lets customers select optional measurements. Not every instrument or test is necessarily performed in-house; for specialized analysis, the practical arrangement may include external facilities. The useful test depends on the acceptance requirement: ellipsometry can evaluate suitable optical film thickness and optical constants, XRD can examine crystalline structure, and electrical measurements can assess device behavior. Please state the material, substrate, measurement condition and desired report format. Confirm availability, sample preparation, calibration, turnaround and data ownership in the final quotation."
+      },
+      "ko": {
+        "q": "어떤 박막 분석 및 소자 특성평가를 의뢰할 수 있나요?",
+        "a": "반암 제품·솔루션 페이지에는 SEM/EDS, TEM/EDS, XRD, XPS, UPS, AFM, Raman 등 소재 분석과 I–V, C–V, Hall, 강유전·압전 응답, PPMS 관련 평가 등이 안내되어 있습니다. 온라인 견적 양식에서도 선택 분석 항목을 지정할 수 있습니다. 다만 모든 장비와 시험을 반암 내부에서 직접 수행한다는 의미는 아니며, 특수 분석은 외부 시설을 이용할 수 있습니다. 적합한 시험은 합격 기준에 따라 달라집니다. 예를 들어 타원편광분석은 적용 가능한 광학 박막의 두께·광학상수 측정에, XRD는 결정 구조 평가에, 전기 측정은 소자 특성 확인에 활용합니다. 소재·기판·측정 조건과 보고서 형식을 알려주시면 가능 여부, 전처리, 교정, 납기 및 데이터 제공 범위를 견적에서 확인합니다."
+      },
+      "page": "/product/",
+      "group": "T",
+      "anchor": "faq-t01"
+    },
+    {
+      "id": "T02",
+      "en": {
+        "q": "How does VanaM use process data and AI to optimize thin-film deposition?",
+        "a": "VanaM describes a process-data platform combining deposition-tool signals, selected in-situ sensing and post-deposition metrology. Its public technology and equipment pages illustrate data collection, quality validation, multivariate monitoring, root-cause analysis and recipe standardization. Examples of the sensing concepts shown include optical emission spectroscopy (OES) and residual gas analysis (RGA) on relevant equipment. The practical purpose is to compare runs, detect process drift and guide more efficient design of experiments rather than relying only on operator experience. However, the improvement achieved by statistical models or machine learning depends on the dataset, film system and validation protocol. A customer can discuss whether process logs, agreed metrology results or a recipe-development report should be included in the work package; proprietary algorithm and recipe disclosures are subject to agreement."
+      },
+      "ko": {
+        "q": "반암은 공정 데이터와 AI를 박막 증착 최적화에 어떻게 활용하나요?",
+        "a": "반암은 증착 장비 신호, 일부 인시투 센싱 및 증착 후 계측 데이터를 연계하는 공정 데이터 플랫폼을 소개하고 있습니다. 홈페이지에는 데이터 수집·품질 검증·다변량 모니터링·원인 분석·레시피 표준화의 흐름이 설명되어 있습니다. 관련 장비의 센싱 예시로 광학 발광분광(OES)과 잔류가스 분석(RGA) 등이 제시됩니다. 이러한 시스템의 목적은 작업자의 경험에만 의존하지 않고 공정 간 비교, 조건 드리프트 감지 및 DOE 효율화를 지원하는 것입니다. 다만 통계 모델이나 머신러닝이 얻는 개선 정도는 데이터의 양과 품질, 박막 소재, 검증 절차에 따라 달라집니다. 프로젝트별로 공정 로그, 합의된 분석 결과 또는 레시피 개발 보고서를 납품 범위에 포함할지 협의할 수 있으며 알고리즘·레시피 공개는 별도 계약 대상입니다."
+      },
+      "page": "/technology/",
+      "group": "T",
+      "anchor": "faq-t02"
+    },
+    {
+      "id": "T03",
+      "en": {
+        "q": "Does VanaM provide sputtering or ALD equipment and foundry-engineering solutions?",
+        "a": "In addition to thin-film services, VanaM's Product & Solution page presents an Equipment Solution category covering sputtering systems, in-line sputtering, thermal evaporation and 6-inch/12-inch ALD equipment, together with process-data collection concepts. These pages describe the company's engineering platform; they should not be interpreted as a complete catalog of immediately deliverable machines with fixed prices, certifications or installation commitments. A customer interested in equipment, process modules or a specialty-foundry setup should request a separate technical discussion specifying the application, wafer size, chamber configuration, power and utility requirements, safety infrastructure, controls and acceptance testing. VanaM can review the requested engineering scope and clarify which elements are currently supportable, custom-developed or dependent on external suppliers."
+      },
+      "ko": {
+        "q": "반암은 스퍼터링·ALD 장비 또는 파운드리 구축 관련 솔루션도 제공하나요?",
+        "a": "반암은 박막 증착 서비스 외에도 홈페이지 제품·솔루션에서 스퍼터링, 인라인 스퍼터링, 열증발 증착기, 6인치·12인치 ALD 장비 및 공정 데이터 수집 개념을 장비 솔루션으로 소개하고 있습니다. 다만 해당 소개가 고정 가격과 인증·설치 조건을 갖춘 장비 전 모델의 즉시 납품을 의미하지는 않습니다. 장비, 공정 모듈 또는 특수 파운드리 구축에 관심이 있다면 사용 목적, 웨이퍼 크기, 챔버 구성, 전력·유틸리티, 안전설비, 제어 시스템과 인수시험 기준을 포함한 별도 기술 상담을 요청하시기 바랍니다. 반암은 현재 지원 가능한 항목, 맞춤 개발이 필요한 항목 및 외부 공급사 의존 항목을 구분해 수행 범위를 검토할 수 있습니다."
+      },
+      "page": "/product/",
+      "group": "T",
+      "anchor": "faq-t03"
+    },
+    {
+      "id": "T04",
+      "en": {
+        "q": "Can VanaM collaborate on new materials, custom process development or joint device R&D?",
+        "a": "Yes. VanaM's business model includes custom materials development, process feasibility work, design of experiments (DOE), pilot wafers and joint development discussions. A collaboration can begin with a defined technical objective—for example, a film composition, low-temperature property, optical stack or an interface compatible with subsequent nanofabrication—followed by milestones and agreed test methods. Depending on the scope, parties may discuss engineering setup fees, material supply, characterization, project reporting and later repeat production. For research that requires patterning, packaging or cryogenic testing, VanaM will distinguish its deposition responsibilities from partner-supported steps. Before a project starts, both sides should agree on confidentiality, background IP, ownership of new results, publication, data delivery and any exclusivity terms. No unqualified device-performance guarantee is implied by a research collaboration."
+      },
+      "ko": {
+        "q": "신소재·맞춤 공정 개발이나 양자 소자 공동연구도 협력할 수 있나요?",
+        "a": "반암의 사업 모델에는 맞춤 소재 개발, 공정 가능성 검토, 실험계획법(DOE), 파일럿 웨이퍼 및 공동개발 협의가 포함됩니다. 예를 들어 특정 박막 조성, 극저온 물성, 광학 적층 구조 또는 후속 나노패터닝과 호환되는 계면 등 기술 목표를 먼저 정한 뒤 마일스톤과 측정 방법을 합의할 수 있습니다. 과제 범위에 따라 공정 셋업 비용, 소재 공급, 특성평가, 기술 보고 및 이후 반복 생산을 구분해 협의합니다. 패터닝·패키징·극저온 시험이 필요하다면 반암의 증착 책임과 파트너를 통한 공정 범위를 명확히 해야 합니다. 착수 전에는 기밀 유지, 기존 IP, 신규 성과의 권리, 논문 공개, 데이터 제공과 독점 조건을 계약으로 정하는 것이 바람직합니다. 공동연구 자체가 검증되지 않은 소자 성능을 보증하는 것은 아닙니다."
+      },
+      "page": "/technology/",
+      "group": "T",
+      "anchor": "faq-t04"
+    }
+  ],
+  "related": {
+    "/materials/m44/": [
+      "Q01",
+      "Q02",
+      "Q03",
+      "Q04"
+    ],
+    "/materials/m04/": [
+      "Q07",
+      "Q05",
+      "Q06"
+    ],
+    "/materials/m52/": [
+      "Q08"
+    ],
+    "/materials/m51/": [
+      "Q08"
+    ]
+  }
+}

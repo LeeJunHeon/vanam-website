@@ -115,9 +115,9 @@ const popupHref = popup.linkUrl
 const popupAlt = popup.alt || (isKo ? 'VanaM 공지' : 'VanaM notice');
 const fl = isKo
   ? { ceo: '대표', bizNo: '사업자등록번호', mailOrder: '통신판매업 신고번호', hosting: '호스팅 제공자',
-      privacy: '개인정보처리방침', terms: '이용약관', refund: '환불·교환 정책' }
+      privacy: '개인정보처리방침', terms: '이용약관', refund: '환불·교환 정책', faq: '자주 묻는 질문' }
   : { ceo: 'CEO', bizNo: 'Business Reg. No.', mailOrder: 'E-Commerce Reg. No.', hosting: 'Hosting',
-      privacy: 'Privacy Policy', terms: 'Terms of Service', refund: 'Refund & Exchange' };
+      privacy: 'Privacy Policy', terms: 'Terms of Service', refund: 'Refund & Exchange', faq: 'FAQ' };
 
 const nav = [
   {
@@ -549,6 +549,7 @@ const childHref = (path) => {
           <a href={localizedHref('/privacy')} class="font-medium text-ink/60 transition hover:text-accent">{fl.privacy}</a>
           <a href={localizedHref('/terms')} class="text-ink/60 transition hover:text-accent">{fl.terms}</a>
           <a href={localizedHref('/refund')} class="text-ink/60 transition hover:text-accent">{fl.refund}</a>
+          <a href={localizedHref('/faq')} class="text-ink/60 transition hover:text-accent">{fl.faq}</a>
         </nav>
 
         </div>

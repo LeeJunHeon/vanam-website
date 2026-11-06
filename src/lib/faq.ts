@@ -1,95 +1,112 @@
-// 문의 페이지 FAQ — 화면(Contact.astro)과 FAQPage 구조화 데이터(FaqSchema.astro)가 함께 쓰는 단일 원본.
+// FAQ — 대표님 확정 FAQ 38개(src/data/faq.json)를 읽는 유일한 지점.
 //
-// 원본 데이터는 src/content/faq/*.json (Keystatic 'FAQ' 컬렉션) 하나다. Keystatic 설정은 그대로다 —
-// 분류와 링크를 기존 칸(표시 순서 · 답변)에 담아서, Keystatic 에서 고쳐도 값이 사라지지 않는다.
-//   · 파일 ID · question/answer(KO) · question_en/answer_en(EN) · published · order
-//   · 분류 = 표시 순서(order)의 백 단위:  0~99 일반 · 100~ 공정 · 200~ 소재 · 300~ 기판·시료 · 400~ 주문·배송 · 500~ 분석 · 600~ 웨이퍼
-//     같은 분류 안에서는 order 가 작은 것부터 나온다. (Keystatic 기본값 99 = 일반)
-//   · 답 안의 내부 링크(선택) = 답 문장 안에 [어구](/경로/) 로 적는다. 경로는 언어 접두사 없는 사이트 내부 경로.
-//     화면에서는 그 어구가 같은 언어 경로의 링크가 되고, 구조화 데이터에는 표기를 뺀 같은 문장이 일반 텍스트로 들어간다.
-//   · 자리표시 {materialCount} · {materialList}: 소재 라이브러리(src/content/materials)에서 빌드 때 채운다.
-//     소재를 추가하면 답도 따라온다. 분류·순서·표기는 소재 라이브러리 화면과 같다(lib/material-lists.ts).
-//   published:false 이거나 answer 가 빈 항목은 화면·구조화 데이터 양쪽에서 빠진다.
-// 화면은 parts(문장 조각 + 링크)를 그리고, 구조화 데이터는 answer 를 쓴다 — parts 를 이어 붙인 글자가 answer 다.
-import { getCollection } from 'astro:content';
+// 화면의 FAQ 영역(FaqSection.astro) · FAQPage 구조화 데이터 · 관련 질문 링크(FaqRelated.astro) ·
+// 색인 페이지(/faq/, pages/Faq.astro) · 검색 JSON(/faq-search.json)이 모두 여기서 받는다.
+// (llms 의 FAQ 목록과 게이트는 node 스크립트라 같은 데이터 파일을 직접 읽는다 — scripts/lib/faq-data.mjs)
+//
+// ⚠️ 질문·답 문구는 확정본이다. 여기서도, 데이터 파일에서도 한 글자도 고치지 않는다.
+//    데이터 파일은 scripts/extract-faq-docx.py 가 원본 docx 에서 만든다(손으로 고치지 않는다).
+// ⚠️ 각 질문의 답은 사이트에서 한 곳(item.page)에만 있다. 다른 곳에서는 링크로만 연결한다.
 import { getRelativeLocaleUrl } from 'astro:i18n';
-import { allMaterialsSorted, groupBySystem, joinFormulas, SYSTEM_LABEL, CATEGORY_LABEL } from './material-lists';
+import data from '../data/faq.json';
 
-/** 분류와 화면 순서. 'general'(일반)은 소제목 없이 맨 위에 나온다. 배열 순서 = order 의 백 단위(0, 100, 200, …). */
-export const FAQ_CATEGORIES = [
-  { key: 'general', ko: '일반', en: 'General' },
-  { key: 'process', ko: '공정', en: 'Process' },
-  { key: 'materials', ko: '소재', en: 'Materials' },
-  { key: 'substrates', ko: '기판·시료', en: 'Substrates & samples' },
-  { key: 'ordering', ko: '주문·배송', en: 'Ordering & shipping' },
-  { key: 'analysis', ko: '분석', en: 'Analysis' },
-  { key: 'wafers', ko: '웨이퍼', en: 'Wafers' },
+export type Loc = 'ko' | 'en';
+export const toLoc = (locale: string | undefined): Loc => (locale === 'ko' ? 'ko' : 'en');
+
+/** 분류(id 첫 글자)와 이름. 배열 순서 = 색인 페이지의 분류 순서. */
+export const FAQ_GROUPS = [
+  { key: 'E', ko: '일반', en: 'General' },
+  { key: 'F', ko: '파운드리·주문·품질', en: 'Foundry, ordering & quality' },
+  { key: 'Q', ko: '양자 포토닉스·SNSPD·PIC', en: 'Quantum photonics, SNSPD & PIC' },
+  { key: 'M', ko: '산화물·ALD·금속·응용', en: 'Oxides, ALD, metals & applications' },
+  { key: 'T', ko: '분석·공정개발·장비', en: 'Analysis, process development & equipment' },
 ] as const;
 
-/** 분류 한 칸의 order 폭 */
-const ORDER_BAND = 100;
-const categoryOf = (order: number) =>
-  FAQ_CATEGORIES[Math.min(FAQ_CATEGORIES.length - 1, Math.max(0, Math.floor(order / ORDER_BAND)))].key;
-/** 답 안의 내부 링크 표기: [어구](/경로/) */
-const LINK_RE = /\[([^\]]+)\]\((\/[^)\s]*)\)/g;
+/** 답이 있는 페이지와 색인 페이지의 위치 표시. */
+export const FAQ_PAGES: { page: string; ko: string; en: string }[] = [
+  { page: '/contact/', ko: '문의', en: 'Contact' },
+  { page: '/technology/', ko: '기술', en: 'Technology' },
+  { page: '/product/', ko: '제품', en: 'Product' },
+  { page: '/materials/', ko: '소재 라이브러리', en: 'Materials' },
+  { page: '/materials/m01/', ko: 'VO₂', en: 'VO₂' },
+  { page: '/materials/m11/', ko: 'AlScN', en: 'AlScN' },
+];
 
-export type FaqPart = { text: string; href?: string };
-export type FaqItem = {
+/** 화면 문구(FAQ 영역 제목은 site.json contact.faqEyebrow · faqHeading 을 그대로 쓴다). */
+export const FAQ_UI = {
+  ko: {
+    seeAll: '전체 질문 보기 →',
+    related: '관련 질문',
+    indexTitle: '자주 묻는 질문 | 반암(VanaM)',
+    indexDescription: '반암의 박막 증착 서비스, 소재, 양자 포토닉스, 분석·장비에 관한 자주 묻는 질문을 한곳에서 찾아볼 수 있습니다.',
+    searchLabel: '질문 검색',
+    searchPlaceholder: '질문·답에서 검색',
+    noResult: '검색 결과가 없습니다.',
+    home: '홈',
+    crumb: '자주 묻는 질문',
+  },
+  en: {
+    seeAll: 'See all FAQs →',
+    related: 'Related questions',
+    indexTitle: 'FAQ | VanaM',
+    indexDescription: "Find VanaM's frequently asked questions on thin-film deposition services, materials, quantum photonics, analysis and equipment in one place.",
+    searchLabel: 'Search questions',
+    searchPlaceholder: 'Search questions and answers',
+    noResult: 'No matching questions.',
+    home: 'Home',
+    crumb: 'FAQ',
+  },
+} as const;
+
+export type FaqEntry = {
   id: string;
-  question: string;
-  /** 답 전체 문장(일반 텍스트) — 구조화 데이터용 */
-  answer: string;
-  /** 같은 문장을 링크 앞·링크·링크 뒤로 나눈 조각 — 화면용. 이어 붙이면 answer 와 같다. */
-  parts: FaqPart[];
+  group: string;
+  /** 답이 있는 페이지(언어 접두사 없는 경로) */
+  page: string;
+  /** 그 페이지 안의 앵커 id (faq-e01) */
+  anchor: string;
+  q: string;
+  a: string;
+  /** 같은 언어의 답 위치 주소 (/ko/contact/#faq-e01) */
+  href: string;
+  /** 색인 페이지의 위치 표시 */
+  where: string;
 };
-export type FaqGroup = { key: string; label: string; items: FaqItem[] };
+export type FaqGroup = { key: string; label: string; items: FaqEntry[] };
 
-/** 소재 라이브러리 화면과 같은 묶음·순서·표기의 소재 목록 문장. 예: "[ALD] 산화물: Al₂O₃, …. 금속: Pt, Ru." */
-async function materialList(loc: 'ko' | 'en'): Promise<{ count: number; list: string }> {
-  const all = await allMaterialsSorted();
-  const segs: string[] = [];
-  for (const system of ['sputter', 'ald']) {
-    const groups = Object.entries(groupBySystem(all, system));
-    if (!groups.length) continue;
-    const cats = groups.map(([cat, items]) => `${CATEGORY_LABEL[loc][cat] ?? cat}: ${joinFormulas(items.map((i) => i.formula))}.`);
-    segs.push(`[${SYSTEM_LABEL[system] ?? system}] ${cats.join(' ')}`);
-  }
-  return { count: all.length, list: segs.join(' ') };
+const entry = (it: (typeof data.items)[number], loc: Loc): FaqEntry => ({
+  id: it.id,
+  group: it.group,
+  page: it.page,
+  anchor: it.anchor,
+  q: it[loc].q,
+  a: it[loc].a,
+  href: `${getRelativeLocaleUrl(loc, it.page)}#${it.anchor}`,
+  where: FAQ_PAGES.find((p) => p.page === it.page)?.[loc] ?? it.page,
+});
+
+const grouped = (items: FaqEntry[], loc: Loc): FaqGroup[] =>
+  FAQ_GROUPS.map((g) => ({ key: g.key, label: g[loc], items: items.filter((x) => x.group === g.key) })).filter((g) => g.items.length);
+
+/** 38개 전체 — 원본 순서(E, F, Q, M, T). */
+export const faqAll = (loc: Loc): FaqEntry[] => data.items.map((it) => entry(it, loc));
+
+/** 색인 페이지용 — 분류별 전체. */
+export const faqIndexGroups = (loc: Loc): FaqGroup[] => grouped(faqAll(loc), loc);
+
+/** 한 페이지에 답이 있는 항목 — 분류별(그 페이지에 처음 나오는 순서). page 는 '/contact/' 같은 언어 접두사 없는 경로. */
+export function faqGroupsFor(page: string, loc: Loc): FaqGroup[] {
+  const items = faqAll(loc).filter((x) => x.page === page);
+  const order = [...new Set(items.map((x) => x.group))];
+  return grouped(items, loc).sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
 }
 
-/** 분류별 FAQ. 화면 순서 그대로(분류 순서 → 분류 안에서는 order). 항목이 없는 분류는 빠진다. */
-export async function faqGroups(locale: string): Promise<FaqGroup[]> {
-  const loc: 'ko' | 'en' = locale === 'ko' ? 'ko' : 'en';
-  const entries = (await getCollection('faq'))
-    .filter((x) => x.data.published && x.data.answer.trim() !== '')
-    .sort((a, b) => a.data.order - b.data.order);
-  let mat: { count: number; list: string } | null = null;
-
-  const items = new Map<string, FaqItem[]>();
-  for (const x of entries) {
-    const d = x.data;
-    const question = loc === 'en' ? (d.question_en ?? d.question) : d.question;
-    let answer = loc === 'en' ? (d.answer_en ?? d.answer) : d.answer;
-    if (answer.includes('{materialCount}') || answer.includes('{materialList}')) {
-      mat ??= await materialList(loc);
-      answer = answer.replaceAll('{materialCount}', String(mat.count)).replaceAll('{materialList}', mat.list);
-    }
-    // 답 안의 내부 링크 — [어구](/경로/) 를 링크 조각으로 나눈다. answer 는 표기를 뺀 일반 텍스트.
-    const parts: FaqPart[] = [];
-    let last = 0;
-    for (const m of answer.matchAll(LINK_RE)) {
-      if (m.index! > last) parts.push({ text: answer.slice(last, m.index) });
-      parts.push({ text: m[1], href: getRelativeLocaleUrl(loc, m[2]) });
-      last = m.index! + m[0].length;
-    }
-    if (last < answer.length) parts.push({ text: answer.slice(last) });
-    answer = parts.map((p) => p.text).join('');
-    const category = categoryOf(d.order);
-    const list = items.get(category) ?? [];
-    list.push({ id: x.id, question, answer, parts });
-    items.set(category, list);
-  }
-  return FAQ_CATEGORIES
-    .filter((c) => items.has(c.key))
-    .map((c) => ({ key: c.key, label: c[loc], items: items.get(c.key)! }));
+/** 관련 질문 링크 — 이 페이지에 질문 문구만 링크로 보여줄 항목(답은 다른 페이지에 있다). 데이터에 적힌 순서 그대로. */
+export function faqRelatedFor(page: string, loc: Loc): FaqEntry[] {
+  const ids = (data.related as Record<string, string[]>)[page] ?? [];
+  const all = faqAll(loc);
+  return ids.map((id) => all.find((x) => x.id === id)).filter((x): x is FaqEntry => !!x);
 }
+
+/** 색인 페이지 주소(같은 언어). */
+export const faqIndexHref = (loc: Loc) => getRelativeLocaleUrl(loc, '/faq/');

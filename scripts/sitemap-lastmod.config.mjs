@@ -30,6 +30,6 @@ export default {
   ],
 
   // 사이트맵에는 있지만 dist/client 에 정적 HTML 이 없는 URL(SSR 등). 여기 적힌 URL 만 lastmod 없이 내보낼 수 있다.
-  // (현재 없음 — 사이트맵 URL 262개가 모두 정적 HTML 과 1:1 대응)
+  // (현재 없음 — 사이트맵 URL 이 모두 정적 HTML 과 1:1 대응)
   noHtmlUrls: [],
 };

@@ -3,6 +3,7 @@
 // 구 Technology 의 소재 섹션(배지 그리드)과 모달 패널 콘텐츠를 원문 이식해
 // "상단 인덱스 → 하단 전체 상세 카드" 로 재구성. 배지 클릭 = 해당 카드로 스크롤(+하이라이트).
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import FaqSection from '../FaqSection.astro';
 import { allMaterialsSorted, groupBySystem } from '../../lib/material-lists';
 import { metaDescriptionFor } from '../../lib/meta-descriptions';
 import { materialImage } from '../../lib/material-image';
@@ -216,6 +217,9 @@ const materialsLd = {
     </div>
   </section>
 
+
+  {/* FAQ — 확정 FAQ 중 이 페이지에 답이 있는 항목. 목록 아래(CTA 앞). 아래 모달에는 넣지 않는다. */}
+  <FaqSection page="/materials/" band />
 
   <section>
     <div class="v-wrap py-24 text-center">

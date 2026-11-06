@@ -1,0 +1,21 @@
+---
+// 관련 질문 — 답 없이 질문 문구만 링크로 나열한다. 답은 그 질문의 페이지 한 곳에만 있다(같은 언어의 앵커로 간다).
+//   <FaqRelated page="/materials/m44/" />
+// 어느 페이지에 어떤 질문을 걸지는 src/data/faq.json 의 related 가 정한다. 대상이 아닌 페이지에서는 아무것도 그리지 않는다.
+import { toLoc, faqRelatedFor, FAQ_UI } from '../lib/faq';
+
+interface Props { page: string }
+const { page } = Astro.props;
+const loc = toLoc(Astro.currentLocale);
+const items = faqRelatedFor(page, loc);
+---
+{items.length > 0 && (
+  <section data-faq-related class="v-wrap pb-28">
+    <h2 class="text-lg font-bold text-ink">{FAQ_UI[loc].related}</h2>
+    <ul class="mt-4 space-y-2 text-sm">
+      {items.map((x) => (
+        <li><a href={x.href} class="text-accent underline underline-offset-4 transition hover:text-accent/80">{x.q}</a></li>
+      ))}
+    </ul>
+  </section>
+)}
