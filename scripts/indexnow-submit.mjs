@@ -2,6 +2,8 @@
 //
 //   ⚠️ 어떤 경우에도 종료 코드는 0 이다. 전송 실패·네트워크 오류·형식 오류는 로그만 남긴다 — 배포를 실패시키지 않는다.
 //
+//   로그 순서: ① 실행 환경 판단 한 줄(WORKERS_CI · WORKERS_CI_BRANCH · --all → 보내는지) ② 대상 개수·목록 ③ 라이브 확인 ④ 전송 결과.
+//
 //   인자 없음 (npm run deploy 의 wrangler deploy 다음):
 //     · 실제 사이트 배포(WORKERS_CI=1 이고 WORKERS_CI_BRANCH 가 프로덕션 브랜치)일 때만 보낸다. 로컬·미리보기 빌드는 로그만 남기고 끝.
 //     · 대상은 빌드가 남긴 dist/indexnow-targets.json (scripts/indexnow-targets.mjs).
@@ -79,7 +81,22 @@ async function liveIsThisBuild() {
   return false;
 }
 
+/** 실행 환경 판단 — 대상 파일을 읽기 전에 한 줄로 남긴다(Cloudflare 빌드 로그에서 이 줄을 본다). */
+function decideEnv() {
+  const ci = process.env.WORKERS_CI; const br = process.env.WORKERS_CI_BRANCH;
+  const env = `WORKERS_CI=${JSON.stringify(ci ?? '')} · WORKERS_CI_BRANCH=${JSON.stringify(br ?? '')} · --all ${ALL ? '있음' : '없음'}${DRY ? ' · --dry' : ''}`;
+  let send; let why;
+  if (DRY) { send = false; why = '--dry 라 보내지 않는다'; }
+  else if (ALL) { send = true; why = '수동 --all 이라 보낸다(라이브 키 파일 확인 뒤)'; }
+  else if (ci !== '1') { send = false; why = 'WORKERS_CI=1 이 아니다(로컬 빌드) — 보내지 않는다'; }
+  else if (br !== config.productionBranch) { send = false; why = `WORKERS_CI_BRANCH ≠ ${config.productionBranch}(프로덕션) — 미리보기 배포라 보내지 않는다`; }
+  else { send = true; why = `프로덕션 배포(WORKERS_CI=1 · ${config.productionBranch}) — 라이브 확인 뒤 보낸다`; }
+  log(`실행 환경: ${env} → ${why}`);
+  return send;
+}
+
 async function main() {
+  const send = decideEnv();
   // 1) 대상
   let urls;
   if (ALL) {
@@ -94,15 +111,8 @@ async function main() {
     for (const u of urls) console.log(`  ${u}${t.reasons?.[u] ? `  [${t.reasons[u]}]` : ''}`);
   }
   if (ALL) for (const u of urls) console.log(`  ${u}`);
-  if (DRY) { log('--dry — 보내지 않는다'); return; }
-  if (!urls.length) { log('보낼 주소가 없다'); return; }
-
-  // 2) 실제 배포인지
-  if (!ALL) {
-    const ci = process.env.WORKERS_CI === '1'; const br = process.env.WORKERS_CI_BRANCH;
-    if (!ci) { log('WORKERS_CI=1 이 아니다(로컬 빌드) — 보내지 않는다'); return; }
-    if (br !== config.productionBranch) { log(`WORKERS_CI_BRANCH=${JSON.stringify(br ?? '')} ≠ ${config.productionBranch}(프로덕션) — 미리보기 배포라 보내지 않는다`); return; }
-  }
+  if (!send) { log('보내지 않는다 (위 실행 환경 판단대로)'); return; }
+  if (!urls.length) { log('보낼 주소가 없다 — 바뀐 페이지가 없는 빌드. 보내지 않는다'); return; }
 
   // 3) 라이브 확인
   if (!(await keyFileOk())) return;

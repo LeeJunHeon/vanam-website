@@ -5,7 +5,8 @@
 //   ② 알림 대상 계산(computeTargets) 테스트 — 지난 기록 대비 제목만 바뀜(head) · 본문만 바뀜(main) · 새 주소 · 빠진 주소 · llms 파일 변경은 모두 잡히고,
 //      안 바뀐 주소는 잡히지 않는다. head 지문 없는 옛 기록이면 전체가 대상. 기록을 못 받았어도 전체.
 //   ③ 대상 목록 파일이 dist/client 안에 없다(공개되지 않는다) — 설정 경로도, 실제 파일도. 빌드가 남긴 대상 파일이 있고 형식이 맞다.
-//   ④ WORKERS_CI 가 없을 때 indexnow-submit(인자 없음)은 아무것도 보내지 않는다 — 전송 주소를 막힌 주소로 바꾸고 실제로 실행해 확인.
+//   ④ 보내지 않아야 하는 환경(WORKERS_CI 없음 · WORKERS_CI=1 이지만 브랜치가 main 아님 · 브랜치 변수 없음)에서 indexnow-submit 이 요청을 한 건도 보내지 않는다 —
+//      임시 대상 파일(1개)과 로컬 모의 서버로 실제 실행해 요청 수 0 을 확인. 프로덕션 조건에서는 1건 보내지는 것도 확인(양성 대조). 실제 dist 대상 파일은 쓰지 않는다(대상 0개 빌드에서도 통과).
 //   ⑤ 이번 빌드의 공개 기록에 head 지문·llms 파일 항목이 들어 있다(형식은 check-sitemap-lastmod 가 본다).
 //
 // 사용: node scripts/check-indexnow.mjs [--dist <dir>]
@@ -118,16 +119,64 @@ if (strays.length) fail('public/ 옛 키 파일', `설정과 다른 키 파일�
   }
 }
 
-// ④ WORKERS_CI 없이 실행 → 보내지 않음
+// ④ 보내지 않아야 하는 환경에서 indexnow-submit 이 실제로 아무것도 보내지 않는다
+//    실제 dist 대상 파일 대신 임시 대상 파일(1개)을 쓴다 — 바뀐 페이지가 0개인 빌드에서도 검사가 성립해야 한다.
+//    모의 서버 하나가 라이브(키 파일·공개 기록)와 전송 주소를 함께 맡아 POST 요청 수를 센다.
+//    양성 대조: WORKERS_CI=1 · main 이면 같은 모의 서버로 1건 보내진다(모의 서버가 요청을 제대로 세는지 확인).
 {
-  const env = { ...process.env, INDEXNOW_ENDPOINT: 'http://127.0.0.1:9/indexnow', INDEXNOW_LIVE_BASE: 'http://127.0.0.1:9' };
-  delete env.WORKERS_CI; delete env.WORKERS_CI_BRANCH;
-  const r = spawnSync(process.execPath, [path.join(ROOT, 'scripts/indexnow-submit.mjs'), '--dist', DIST], { env, encoding: 'utf8', cwd: ROOT, timeout: 60000 });
-  const out = (r.stdout ?? '') + (r.stderr ?? '');
-  if (r.status !== 0) fail('indexnow-submit(WORKERS_CI 없음)', `종료 코드 ${r.status} — 항상 0 이어야 한다`);
-  if (/POST /.test(out) || /키 파일 확인/.test(out)) fail('indexnow-submit(WORKERS_CI 없음)', '라이브 확인·전송 단계로 넘어갔다 — 로컬 빌드에서는 보내면 안 된다');
-  if (!/보내지 않는다/.test(out)) fail('indexnow-submit(WORKERS_CI 없음)', `"보내지 않는다" 로그가 없다:\n${out}`);
-  else ok('indexnow-submit — WORKERS_CI 없으면 보내지 않음(종료 코드 0)');
+  const os = await import('node:os');
+  const { spawn } = await import('node:child_process');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'indexnow-gate-'));
+  const targets = path.join(tmp, 'targets.json');
+  fs.writeFileSync(targets, JSON.stringify({ mode: 'diff', urls: [`https://${config.host}/`], reasons: {} }));
+  const pubFile = path.join(DIST, 'sitemap-lastmod.json');
+  const hits = path.join(tmp, 'posts.log'); // POST 1건당 한 줄
+  // 모의 서버는 별도 프로세스 — 아래 spawnSync 가 이 프로세스를 막는 동안에도 응답해야 한다
+  const serverSrc = `
+    const http = require('node:http'); const fs = require('node:fs');
+    const [keyPath, key, pubFile, hits] = process.argv.slice(1);
+    const pub = fs.existsSync(pubFile) ? fs.readFileSync(pubFile, 'utf8') : '{}';
+    http.createServer((req, res) => {
+      if (req.method === 'POST') { req.resume(); req.on('end', () => { fs.appendFileSync(hits, req.url + '\\n'); res.writeHead(200); res.end(); }); return; }
+      if (req.url === keyPath) { res.writeHead(200, { 'content-type': 'text/plain' }); res.end(key); return; }
+      if (req.url === '/sitemap-lastmod.json') { res.writeHead(200, { 'content-type': 'application/json' }); res.end(pub); return; }
+      res.writeHead(404); res.end();
+    }).listen(0, '127.0.0.1', function () { console.log(this.address().port); });`;
+  const server = spawn(process.execPath, ['-e', serverSrc, '--', keyPath(), config.key, pubFile, hits], { stdio: ['ignore', 'pipe', 'inherit'] });
+  const port = await new Promise((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error('모의 서버가 뜨지 않았다')), 10000);
+    server.stdout.once('data', (d) => { clearTimeout(t); resolve(String(d).trim()); });
+    server.once('exit', (c) => { clearTimeout(t); reject(new Error(`모의 서버 종료 ${c}`)); });
+  }).catch((e) => { fail('모의 서버', e.message); return null; });
+  const base = `http://127.0.0.1:${port}`;
+  const countPosts = () => (fs.existsSync(hits) ? fs.readFileSync(hits, 'utf8').split('\n').filter(Boolean).length : 0);
+  const run = (envPatch) => {
+    const env = { ...process.env, INDEXNOW_ENDPOINT: `${base}/indexnow`, INDEXNOW_LIVE_BASE: base, INDEXNOW_WAIT_MS: '100' };
+    delete env.WORKERS_CI; delete env.WORKERS_CI_BRANCH;
+    Object.assign(env, envPatch);
+    const before = countPosts();
+    const r = spawnSync(process.execPath, [path.join(ROOT, 'scripts/indexnow-submit.mjs'), '--targets', targets, '--dist', DIST], { env, encoding: 'utf8', cwd: ROOT, timeout: 60000 });
+    return { status: r.status, out: (r.stdout ?? '') + (r.stderr ?? ''), posts: countPosts() - before };
+  };
+  const cases = port ? [
+    ['WORKERS_CI 없음', {}],
+    ['WORKERS_CI=1 · 브랜치 feature', { WORKERS_CI: '1', WORKERS_CI_BRANCH: 'feature' }],
+    ['WORKERS_CI=1 · 브랜치 변수 없음', { WORKERS_CI: '1' }],
+  ] : [];
+  for (const [name, patch] of cases) {
+    const r = run(patch);
+    if (r.status !== 0) fail(`indexnow-submit(${name})`, `종료 코드 ${r.status} — 항상 0 이어야 한다`);
+    if (!/실행 환경: .*보내지 않는다/.test(r.out)) fail(`indexnow-submit(${name})`, `실행 환경 판단 줄에 "보내지 않는다" 가 없다:\n${r.out}`);
+    if (/POST |키 파일 확인/.test(r.out)) fail(`indexnow-submit(${name})`, '라이브 확인·전송 단계로 넘어갔다');
+    if (r.posts !== 0) fail(`indexnow-submit(${name})`, `모의 전송 주소로 요청 ${r.posts}건이 나갔다 — 0건이어야 한다`);
+  }
+  // 양성 대조 — 모의 서버가 요청을 세는지
+  const pos = port ? run({ WORKERS_CI: '1', WORKERS_CI_BRANCH: config.productionBranch }) : { status: 0, posts: 1, out: '✓ 1개 → HTTP 200' };
+  if (pos.status !== 0) fail('indexnow-submit(양성 대조)', `종료 코드 ${pos.status}`);
+  if (pos.posts !== 1 || !/✓ 1개 → HTTP 200/.test(pos.out)) fail('indexnow-submit(양성 대조)', `WORKERS_CI=1 · ${config.productionBranch} 에서 모의 서버로 1건 보내져야 한다(받은 요청 ${pos.posts}건):\n${pos.out}`);
+  server.kill();
+  fs.rmSync(tmp, { recursive: true, force: true });
+  if (!bad) ok('indexnow-submit — WORKERS_CI 없음 · 비프로덕션 브랜치 · 브랜치 변수 없음 모두 요청 0건(종료 코드 0) · 프로덕션 조건에서는 1건 전송(양성 대조)');
 }
 
 // ⑤ 공개 기록에 head·파일 항목
