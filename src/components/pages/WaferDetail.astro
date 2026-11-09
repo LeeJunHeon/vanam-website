@@ -10,6 +10,7 @@ import { localePath } from '../../lib/site-path.js';
 import company from '../../data/company.json';
 import { formatUsd } from '../../lib/price';
 import { breadcrumbNode, NAV } from '../../lib/structured-data';
+import { brandSuffix } from '../../lib/page-titles.js';
 
 const { wafer } = Astro.props;
 const locale = Astro.currentLocale ?? 'en';
@@ -97,7 +98,7 @@ const productLd = {
 };
 ---
 
-<BaseLayout title={`${name} | VanaM`} description={metaDesc}>
+<BaseLayout title={`${name}${brandSuffix(locale)}`} description={metaDesc}>
   <section class="relative v-wrap py-28 md:py-32">
     <a href={lhref('/wafers')} class="text-sm text-ink/50 transition hover:text-accent">← {s.catWafer}</a>
 

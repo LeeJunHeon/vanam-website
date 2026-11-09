@@ -11,6 +11,7 @@ import type { ImageMetadata } from 'astro';
 // 견적 폼으로 넘길 ?material= 문자열은 이 함수 하나로만 만든다 (폼 옵션 파생과 같은 규칙)
 import { quoteParams, CATEGORY_TO_PRODUCT } from '../../lib/material-value.js';
 import { materialNodes, abs } from '../../lib/structured-data';
+import { materialTitle } from '../../lib/page-titles.js';
 
 const { material } = Astro.props;
 // FAQ · 관련 질문 — 대상 소재에서만 나온다(src/data/faq.json 의 page · related). 그 밖의 소재 페이지에는 아무것도 그리지 않는다.
@@ -38,7 +39,8 @@ const sysLabel = d.system === 'ald' ? 'ALD' : 'PVD — Sputter & Evaporator';
 // 본문은 사양이 완전히 다르지만 제목·설명이 똑같으면 검색엔진이 중복 문서로 본다.
 // → 제목과 기본 설명에 증착 방식을 넣어 구분한다. (실제로 9쌍 18페이지가 겹쳐 있었다)
 const sysShort = d.system === 'ald' ? 'ALD' : 'PVD';
-const metaTitle = `${displayName} (${sysShort}) | ${locale === 'ko' ? '반암(VanaM)' : 'VanaM'}`;
+// 제목 규칙은 src/lib/page-titles.js 한 곳 — h1(displayName)·화학식 배지(d.formula)와 같은 값으로 만든다.
+const metaTitle = materialTitle({ name: displayName, formula: d.formula, system: d.system, category: d.category }, locale);
 const metaDesc = (desc && aka.length ? desc.replace(`(${d.formula})`, `(${withAka})`) : desc) ?? (isKo
   ? `${sysShort} 방식으로 증착하는 ${displayName}(${withAka}) 박막 — VanaM 소재 라이브러리의 사양·측정 데이터.`
   : `${displayName} (${withAka}) thin film deposited by ${sysShort} — specifications and measured data from the VanaM materials library.`);

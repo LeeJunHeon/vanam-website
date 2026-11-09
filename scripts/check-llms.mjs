@@ -11,6 +11,8 @@
 //      llms.txt 의 FAQ 섹션 첫 줄에 답 원문이 llms-full.txt 에 있다는 안내가 있다.
 //   ④ 사이트맵의 모든 소재 상세 주소(/materials/mNN/ · /ko/materials/mNN/)가 llms-full.txt 에 있고,
 //      "## Materials library" 섹션이 소재 데이터에서 만든 것과 같다(사양 줄에 구분자 ';' 가 없어야 한다 — 생성 형식의 전제).
+//   ⑤ (2차) 두 파일에 옛 LinkedIn 주소 조각 vanam-inc-62395132b 가 없다. "## History" 의 연도·항목이 홈 화면 연혁 데이터(src/content/history)와 같다
+//      (HISTORY_EXTRA 에 적힌 항목만 데이터에 없어도 허용 — 현재 없음).
 //
 // 사용: node scripts/check-llms.mjs [--dist <dir>]
 import fs from 'node:fs';
@@ -18,6 +20,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadFaq, faqUrl, faqSectionRange, sectionRange, parseFullFaqSection, LLMS_FULL_URL, SITE } from './lib/faq-data.mjs';
 import { loadMaterials, llmsMaterialsSection, materialUrl, visibleSpecs, MATERIALS_HEADING } from './lib/materials-data.mjs';
+import { loadHistory, llmsHistorySection, parseHistorySection, HISTORY_HEADING } from './lib/history-data.mjs';
+
+/** 사이트 연혁 데이터에 없지만 llms 에 남겨 두기로 한 항목 — "연도 — 항목" 글자 그대로. (2차 대조 결과 그런 항목이 없어 비어 있다) */
+const HISTORY_EXTRA = [];
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const argDist = process.argv.indexOf('--dist');
@@ -112,5 +118,25 @@ const MATS = loadMaterials();
   } catch (e) { fail('llms-full.txt', '소재 섹션', '', e.message); }
 }
 
+// ⑤ LinkedIn · 연혁
+const HIST = loadHistory();
+for (const [name, text] of Object.entries(texts)) {
+  if (text.includes('vanam-inc-62395132b')) fail(name, 'LinkedIn', 'vanam-inc-62395132b', '옛 개인 프로필 주소 — 사이트 푸터·구조화 데이터와 같은 https://www.linkedin.com/company/vanaminc/ 를 쓴다');
+  if (!text.includes('https://www.linkedin.com/company/vanaminc/')) fail(name, 'LinkedIn', '(없음)', 'https://www.linkedin.com/company/vanaminc/ 가 있어야 한다');
+  try {
+    const { start, end } = sectionRange(text, HISTORY_HEADING);
+    const got = parseHistorySection(text.slice(start, end));
+    const want = HIST.flatMap((y) => y.items.map((item) => `${y.year} — ${item}`));
+    const gotKeys = got.map((g) => `${g.year} — ${g.item}`);
+    const extra = gotKeys.filter((k) => !want.includes(k) && !HISTORY_EXTRA.includes(k));
+    const missing = want.filter((k) => !gotKeys.includes(k));
+    for (const k of extra) fail(name, '연혁 항목', k, '사이트 연혁 데이터(src/content/history)에 없는 항목');
+    for (const k of missing) fail(name, '연혁 항목', k, '사이트 연혁 데이터에는 있는데 llms 에 없다 — npm run build 로 다시 만든다');
+    const kind = name === 'llms-full.txt' ? 'full' : 'llms';
+    const wantText = llmsHistorySection(kind, HIST);
+    if (!extra.length && !missing.length && text.slice(start, end).replace(/\n+$/, '\n') !== wantText.replace(/\n+$/, '\n')) fail(name, '연혁 섹션', text.slice(start, end).split('\n')[1], '연혁 데이터에서 만든 섹션과 다름(순서·한국어 항목 포함) — npm run build 로 다시 만든다');
+  } catch (e) { fail(name, '연혁 섹션', '', e.message); }
+}
+
 if (bad) { console.error(`\n✗ check-llms 실패 — ${bad}건`); process.exit(1); }
-console.log(`check-llms OK — PLD·MOCVD 없음 · 주소 ${urlCount}건 모두 정식 주소 · FAQ ${FAQ.items.length}개 EN·KO 답 원문 일치 · 소재 ${MATS.length}종 주소·사양 일치`);
+console.log(`check-llms OK — PLD·MOCVD 없음 · 주소 ${urlCount}건 모두 정식 주소 · FAQ ${FAQ.items.length}개 EN·KO 답 원문 일치 · 소재 ${MATS.length}종 주소·사양 일치 · LinkedIn 회사 페이지 · 연혁 ${HIST.length}년 ${HIST.reduce((n, y) => n + y.items.length, 0)}항목 일치`);

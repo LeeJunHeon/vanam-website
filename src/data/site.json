@@ -84,7 +84,8 @@
       "keyAdvantages": "Key advantages",
       "coreTechHeading": "AI-assisted vacuum deposition process",
       "materialsHeading": "Materials Library",
-      "metaTitle": "Technology | VanaM",
+      "materialsMetaTitle": "Thin-Film Materials Library — Specs & Data | VanaM",
+      "metaTitle": "Technology — AI Deposition, Quantum Photonics & VO₂ | VanaM",
       "metaDescription": "VanaM's thin-film technology: energy-responsive films, PVD/ALD deposition, an oxide-nitride-metal library, plus R&D, analysis and foundry services.",
       "processHeading": "How a deposition order works",
       "processSub": "From your specifications to a film in your hands.",
@@ -685,11 +686,11 @@
       "heroTitle": "In the press",
       "heroSubtitleHtml": "Coverage of VanaM's thin-film materials, products, and milestones.",
       "eyebrow": "Insight",
-      "metaTitle": "Insight | VanaM",
+      "metaTitle": "Insight — News, Press & Blog | VanaM",
       "metaDescription": "News, press coverage and blog posts from VanaM (반암) — semiconductor thin-film materials, products, exhibitions and milestones."
     },
     "contact": {
-      "metaTitle": "Contact | VanaM",
+      "metaTitle": "Contact — Thin-Film Deposition Quotes & Consultation | VanaM",
       "metaDescription": "Get in touch with VanaM (반암) — technical collaboration, supply inquiries and partnerships.",
       "eyebrow": "Contact",
       "heroTitle": {
@@ -865,7 +866,7 @@
       }
     },
     "shop": {
-      "metaTitle": "Product & Solution | VanaM",
+      "metaTitle": "Product & Solution — Thin Films, Wafers, Analysis & Equipment | VanaM",
       "metaDescription": "VanaM thin-film samples, wafers, coating and analysis services, plus equipment solutions — order online or request a quote.",
       "eyebrow": "Products",
       "heroTitle": {
@@ -905,10 +906,10 @@
       "catWafer": "Wafers",
       "waferPageTitle1": "Wafers",
       "waferPageTitle2": "built to spec",
-      "waferIntro": "Choose a wafer type below. Every item is quote-based — request pricing for the exact specification you need.",
+      "waferIntro": "Choose a wafer type below. Listed wafers can be ordered online at the price shown; for custom specifications, coatings or bulk orders, request a quote.",
       "waferEmpty": "Wafer lineup is being prepared. Please check back soon.",
       "waferBack": "Back to Products",
-      "waferMetaTitle": "Wafers — VanaM",
+      "waferMetaTitle": "Wafers — Silicon, Oxide & Sapphire, Buy Online | VanaM",
       "waferMetaDescription": "Silicon and specialty wafers from VanaM. Quote-based; request pricing for your exact specification.",
       "viewList": "View lineup",
       "refundLabel": "Refund Policy",
@@ -1016,7 +1017,8 @@
       "keyAdvantages": "핵심 강점",
       "coreTechHeading": "AI 기반 진공 증착 공정",
       "materialsHeading": "소재 라이브러리",
-      "metaTitle": "기술 | 반암(VanaM)",
+      "materialsMetaTitle": "박막 소재 라이브러리 — 사양·측정 데이터 | 반암(VanaM)",
+      "metaTitle": "기술 — AI 증착 공정·양자 포토닉스·VO₂ | 반암(VanaM)",
       "metaDescription": "반암의 박막 기술: 에너지 감응형 박막, PVD/ALD 증착, 산화물·질화물·금속 소재 라이브러리, R&D·분석·파운드리 서비스.",
       "processHeading": "증착 의뢰는 이렇게 진행됩니다",
       "processSub": "원하시는 사양에서 완성된 박막까지.",
@@ -1617,11 +1619,11 @@
       "eyebrow": "인사이트",
       "heroTitle": "언론 속 반암",
       "heroSubtitleHtml": "반암의 박막 소재, 제품, 주요 성과에 대한 보도입니다.",
-      "metaTitle": "인사이트 | 반암(VanaM)",
+      "metaTitle": "인사이트 — 뉴스·보도자료·블로그 | 반암(VanaM)",
       "metaDescription": "반암(VanaM)의 보도자료와 블로그 — 반도체 박막 소재, 제품, 전시회 및 주요 성과 소식."
     },
     "contact": {
-      "metaTitle": "문의 | 반암(VanaM)",
+      "metaTitle": "문의 — 박막 증착 견적·기술 상담 | 반암(VanaM)",
       "metaDescription": "반암(VanaM)에 기술 협력·소재 공급·파트너십을 문의하세요.",
       "eyebrow": "문의",
       "heroTitle": {
@@ -1797,7 +1799,7 @@
       }
     },
     "shop": {
-      "metaTitle": "제품 · 솔루션 | 반암(VanaM)",
+      "metaTitle": "제품 · 솔루션 — 박막·웨이퍼·분석·장비 | 반암(VanaM)",
       "metaDescription": "반암(VanaM)의 박막 시편·웨이퍼·코팅·분석 서비스와 장비 솔루션 — 온라인 주문 또는 견적 요청.",
       "eyebrow": "제품",
       "heroTitle": {
@@ -1837,10 +1839,10 @@
       "catWafer": "웨이퍼",
       "waferPageTitle1": "웨이퍼",
       "waferPageTitle2": "사양에 맞춰 제공",
-      "waferIntro": "아래에서 웨이퍼를 선택하세요. 모든 품목은 견적 방식이며, 필요하신 사양으로 가격을 문의해 주세요.",
+      "waferIntro": "아래에서 웨이퍼를 선택하세요. 표시된 웨이퍼는 표시 가격으로 바로 주문할 수 있고, 맞춤 사양·박막 코팅·대량 주문은 견적을 문의해 주세요.",
       "waferEmpty": "웨이퍼 라인업을 준비 중입니다. 곧 업데이트될 예정입니다.",
       "waferBack": "제품으로 돌아가기",
-      "waferMetaTitle": "웨이퍼 — 반암",
+      "waferMetaTitle": "웨이퍼 — 실리콘·산화막·사파이어 온라인 구매 | 반암(VanaM)",
       "waferMetaDescription": "반암의 실리콘·특수 웨이퍼. 견적 방식으로, 필요하신 사양에 맞춰 가격을 문의해 주세요.",
       "viewList": "목록 보기",
       "refundLabel": "환불 규정",

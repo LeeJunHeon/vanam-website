@@ -5,19 +5,22 @@
 //   "## FAQ"              llms.txt      — 답 원문이 llms-full.txt 에 있다는 안내 + 색인 주소 + EN 질문 38개와 답 위치 주소
 //                         llms-full.txt — 38개 항목의 ID · 답 위치(EN·KO) · EN 질문·답 · KO 질문·답 원문 (src/data/faq.json, 한 글자도 바꾸지 않는다)
 //   "## Materials library" llms-full.txt — 소재 57종의 이름·화학식·분류·증착 방식·EN·KO 주소와 상세 페이지에 보이는 사양 줄 (src/content/materials/*.json)
+//   "## History"          두 파일      — 홈 화면 연혁과 같은 데이터(src/content/history/*.json)의 연도·항목 (full 은 한국어 항목 포함)
 // 섹션 밖의 내용은 한 글자도 건드리지 않는다. 결과가 데이터와 같은지는 scripts/check-llms.mjs · scripts/check-structured-data.mjs 가 검사한다.
 import fs from 'node:fs';
 import path from 'node:path';
 import { loadFaq, llmsFaqSection, replaceSection, FAQ_HEADING } from './lib/faq-data.mjs';
 import { loadMaterials, llmsMaterialsSection, MATERIALS_HEADING } from './lib/materials-data.mjs';
+import { loadHistory, llmsHistorySection, HISTORY_HEADING } from './lib/history-data.mjs';
 
 const i = process.argv.indexOf('--dist');
 const dist = i >= 0 ? process.argv[i + 1] : 'dist/client';
 const faq = loadFaq();
 const mats = loadMaterials();
+const hist = loadHistory();
 const jobs = [
-  ['llms.txt', [[FAQ_HEADING, llmsFaqSection('llms', faq)]]],
-  ['llms-full.txt', [[FAQ_HEADING, llmsFaqSection('full', faq)], [MATERIALS_HEADING, llmsMaterialsSection(mats)]]],
+  ['llms.txt', [[FAQ_HEADING, llmsFaqSection('llms', faq)], [HISTORY_HEADING, llmsHistorySection('llms', hist)]]],
+  ['llms-full.txt', [[FAQ_HEADING, llmsFaqSection('full', faq)], [MATERIALS_HEADING, llmsMaterialsSection(mats)], [HISTORY_HEADING, llmsHistorySection('full', hist)]]],
 ];
 for (const [file, sections] of jobs) {
   const f = path.join(dist, file);
@@ -29,4 +32,4 @@ for (const [file, sections] of jobs) {
   }
   fs.writeFileSync(f, text);
 }
-console.log(`llms-sections: llms.txt(FAQ EN ${faq.items.length}개) · llms-full.txt(FAQ EN·KO ${faq.items.length}개 답 포함 · 소재 ${mats.length}종)`);
+console.log(`llms-sections: llms.txt(FAQ EN ${faq.items.length}개 · 연혁 ${hist.length}년) · llms-full.txt(FAQ EN·KO ${faq.items.length}개 답 포함 · 소재 ${mats.length}종 · 연혁 ${hist.length}년)`);

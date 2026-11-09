@@ -27,7 +27,12 @@ const TEMPLATES: Record<string, Record<Loc, string>> = {
     ko: '다층 박막 맞춤 증착 서비스 — 산화물·질화물·금속·반도체 {count}종을 원하는 순서로 적층합니다. DBR 고반사 미러(Si/SiO₂/TiO₂), 전극-절연막-전극 커패시터, 초전도·광도파로 적층 등 공정 시퀀스를 직접 구성하고 열처리·분석까지 지정해 온라인 견적을 요청하세요.',
     en: 'Custom multilayer deposition — stack any of {count} oxide, nitride, metal and semiconductor films in your own order. DBR high-reflectance mirrors (Si/SiO₂/TiO₂), electrode–dielectric–electrode capacitors, superconducting and waveguide stacks. Build the process sequence, add annealing and analysis, and request a quote online.',
   },
-  // /product/wafers 와 /wafers 가 같은 문장을 쓴다(둘 다 웨이퍼 판매 안내).
+  // /product/wafers — 베어·박막 증착 웨이퍼 안내(맞춤 박막 코팅은 견적). /wafers 목록의 'wafers' 와 다른 문장.
+  'product/wafers': {
+    ko: '베어 웨이퍼와 박막 증착 웨이퍼 — 실리콘 4인치(Test)·6인치(Prime/Test, P형 보론), 산화막(SiO₂ 300nm) 실리콘 4·6인치, 사파이어 2인치 웨이퍼를 25장 1박스 단위로 판매합니다. 가격 확인 후 온라인 즉시 주문, 실리콘·산화막 웨이퍼는 다이싱 옵션 제공. 맞춤 박막을 올린 웨이퍼는 견적을 요청하세요.',
+    en: 'Bare and thin-film-deposited wafers — 4-inch (Test) and 6-inch (Prime/Test) p-type boron silicon, oxide-coated silicon (300 nm SiO₂) in 4 and 6 inch, and 2-inch sapphire, sold per box of 25. Check prices and order online; dicing available for the silicon and oxide wafers. Request a quote for wafers with a custom thin-film coating.',
+  },
+  // /wafers 목록 페이지.
   // ⚠️ 사양은 src/content/wafers 실데이터와 대조해 적었다 —
   //    Prime 등급은 6인치에만 있고(4인치는 Test), 다이싱은 사파이어를 뺀 5종 전부 제공한다.
   wafers: {

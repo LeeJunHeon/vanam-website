@@ -37,7 +37,7 @@ export const FAQ_UI = {
   ko: {
     seeAll: '전체 질문 보기 →',
     related: '관련 질문',
-    indexTitle: '자주 묻는 질문 | 반암(VanaM)',
+    indexTitle: '자주 묻는 질문 — 박막 증착·소재·주문 | 반암(VanaM)',
     indexDescription: '반암의 박막 증착 서비스, 소재, 양자 포토닉스, 분석·장비에 관한 자주 묻는 질문을 한곳에서 찾아볼 수 있습니다.',
     searchLabel: '질문 검색',
     searchPlaceholder: '질문·답에서 검색',
@@ -48,7 +48,7 @@ export const FAQ_UI = {
   en: {
     seeAll: 'See all FAQs →',
     related: 'Related questions',
-    indexTitle: 'FAQ | VanaM',
+    indexTitle: 'FAQ — Thin-Film Deposition, Materials & Ordering | VanaM',
     indexDescription: "Find VanaM's frequently asked questions on thin-film deposition services, materials, quantum photonics, analysis and equipment in one place.",
     searchLabel: 'Search questions',
     searchPlaceholder: 'Search questions and answers',
