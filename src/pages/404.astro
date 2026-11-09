@@ -1,10 +1,12 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+// canonical={false}: 없는 주소마다 이 페이지가 뜨므로 https://vanam.co.kr/404/ 를 정식 주소로 내면 안 된다. 응답 코드 404 는 그대로.
 ---
 
 <BaseLayout
   title="404 — Page not found | VanaM"
   description="The page you are looking for could not be found. 요청하신 페이지를 찾을 수 없습니다."
+  canonical={false}
 >
   <section class="relative flex min-h-[72vh] items-center justify-center overflow-hidden px-6 py-24">
     <!-- 배경 글로우 (자체 완결형) -->

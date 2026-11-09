@@ -6,6 +6,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import { Image, getImage } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
 import siteData from '../../data/site.json';
+import { localePath } from '../../lib/site-path.js';
 import company from '../../data/company.json';
 import { formatUsd } from '../../lib/price';
 import { breadcrumbNode, NAV } from '../../lib/structured-data';
@@ -16,6 +17,8 @@ const site = siteData[locale] ?? siteData.en;
 const s = site.shop;
 const isKo = locale === 'ko';
 const base = isKo ? '/ko' : '';
+// 내부 링크는 정식 주소(끝 슬래시)로 — 규칙은 src/lib/site-path.js 한 곳. 서버 경로(/checkout·/order/…)는 그 함수가 알아서 그대로 둔다.
+const lhref = (p: string) => localePath(locale, p);
 const usdRate = company.usdRate || 1380;   // 달러 환산 환율 (Keystatic '사업자 정보')
 
 const waferImages = import.meta.glob<{ default: ImageMetadata }>(
@@ -96,7 +99,7 @@ const productLd = {
 
 <BaseLayout title={`${name} | VanaM`} description={metaDesc}>
   <section class="relative v-wrap py-28 md:py-32">
-    <a href={`${base}/wafers`} class="text-sm text-ink/50 transition hover:text-accent">← {s.catWafer}</a>
+    <a href={lhref('/wafers')} class="text-sm text-ink/50 transition hover:text-accent">← {s.catWafer}</a>
 
     <div class="mt-8 grid gap-12 lg:grid-cols-2">
       {/* 이미지.
@@ -152,7 +155,7 @@ const productLd = {
                     class="h-12 w-14 border-x border-ink/15 bg-transparent text-center text-sm font-semibold text-ink outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
                   <button type="button" data-qty="1" class="grid h-12 w-10 place-items-center text-lg text-ink/60 transition hover:text-accent" aria-label={s.qtyInc}>＋</button>
                 </div>
-                <button type="button" id="add-cart" data-sku={`wafer:${wafer.id}`} data-cart-url={`${base}/cart`}
+                <button type="button" id="add-cart" data-sku={`wafer:${wafer.id}`} data-cart-url={lhref('/cart')}
                   class="v-btn min-w-0 justify-center sm:flex-1">
                   {s.addToCart}
                 </button>
@@ -194,7 +197,7 @@ const productLd = {
                 </div>
               )}
               <p id="added-msg" class="mt-3 hidden text-sm font-medium text-ok">
-                {s.addedToCart} <a href={`${base}/cart`} class="underline">{s.goCart}</a>
+                {s.addedToCart} <a href={lhref('/cart')} class="underline">{s.goCart}</a>
               </p>
               {/* 문의 링크는 클릭 시점의 상품·수량·다이싱 상태를 쿼리로 넘긴다(아래 스크립트가 href 를 갱신).
                   JS 가 죽어도 파라미터 없는 문의 페이지로 가므로 기존 동작이 유지된다.
@@ -203,7 +206,7 @@ const productLd = {
                 {/* ⚠️ inline-flex 로 두면 문구가 두 줄로 접히는 좁은 화면(390px EN)에서
                        화살표만 첫 줄 오른쪽 끝으로 떨어져 나간다. 인라인 흐름에 그대로 실어
                        마지막 낱말 뒤를 따라가게 한다. */}
-                <a id="bulk-link" href={`${base}/contact`} data-contact-url={`${base}/contact`} data-product={wafer.id}
+                <a id="bulk-link" href={lhref('/contact')} data-contact-url={lhref('/contact')} data-product={wafer.id}
                   class="text-base font-semibold text-accent underline-offset-4 transition hover:underline">
                   {s.bulkQuoteLink}
                   <svg class="ml-1 inline align-[-0.08em]" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
@@ -211,7 +214,7 @@ const productLd = {
               </p>
             </div>
           ) : (
-            <a href={`${base}/contact`}
+            <a href={lhref('/contact')}
               class="v-btn">
               {s.requestQuote} →
             </a>
@@ -288,7 +291,7 @@ const productLd = {
         '$' + (krw / RATE).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
     if (bulkEl) {
-      const url = bulkEl.dataset.contactUrl ?? '/contact';
+      const url = bulkEl.dataset.contactUrl ?? '/contact/';
       const q = new URLSearchParams({
         product: bulkEl.dataset.product ?? '',
         qty: String(qty()),

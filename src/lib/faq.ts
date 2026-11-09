@@ -2,7 +2,7 @@
 //
 // 화면의 FAQ 영역(FaqSection.astro) · FAQPage 구조화 데이터 · 관련 질문 링크(FaqRelated.astro) ·
 // 색인 페이지(/faq/, pages/Faq.astro) · 검색 JSON(/faq-search.json)이 모두 여기서 받는다.
-// (llms 의 FAQ 목록과 게이트는 node 스크립트라 같은 데이터 파일을 직접 읽는다 — scripts/lib/faq-data.mjs)
+// (llms 의 FAQ 목록·답 원문과 게이트는 node 스크립트라 같은 데이터 파일을 직접 읽는다 — scripts/lib/faq-data.mjs)
 //
 // ⚠️ 질문·답 문구는 확정본이다. 여기서도, 데이터 파일에서도 한 글자도 고치지 않는다.
 //    데이터 파일은 scripts/extract-faq-docx.py 가 원본 docx 에서 만든다(손으로 고치지 않는다).

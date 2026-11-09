@@ -2,6 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getCollection } from 'astro:content';
 import siteData from '../../data/site.json';
+import { localePath } from '../../lib/site-path.js';
 import company from '../../data/company.json';
 const locale = Astro.currentLocale ?? 'en';
 const site = siteData[locale] ?? siteData.en;
@@ -9,6 +10,8 @@ const c = site.cartPage;
 const s = site.shop;
 const isKo = locale === 'ko';
 const base = isKo ? '/ko' : '';
+// 내부 링크는 정식 주소(끝 슬래시)로 — 규칙은 src/lib/site-path.js 한 곳. 서버 경로(/checkout·/order/…)는 그 함수가 알아서 그대로 둔다.
+const lhref = (p: string) => localePath(locale, p);
 
 // 장바구니는 브라우저에 {sku, qty}만 저장한다. 이름·가격은 항상 이 카탈로그에서 조회한다.
 // (가격을 브라우저에 저장하면 조작될 수 있고, 관리자가 가격을 바꿔도 반영되지 않는다)
@@ -19,7 +22,7 @@ const catalog = (await getCollection('products'))
     name: isKo ? p.data.name : (p.data.name_en ?? p.data.name),
     price: p.data.price,
     dicingFee: 0,
-    url: `${base}/product/${p.id}`,
+    url: lhref(`/product/${p.id}`),
   }));
 
 // 웨이퍼(공정가) — sku 'wafer:{id}' (서버 /api/order 와 동일 규칙)
@@ -31,7 +34,7 @@ const waferCatalog = (await getCollection('wafers'))
     name: isKo ? w.data.name : ((w.data as Record<string, unknown>).name_en as string ?? w.data.name),
     price: w.data.priceKrw as number,
     dicingFee: typeof w.data.dicingFeeKrw === 'number' && w.data.dicingFeeKrw > 0 ? w.data.dicingFeeKrw : 0,
-    url: `${base}/wafers/${w.id}`,
+    url: lhref(`/wafers/${w.id}`),
   }));
 
 ---
@@ -52,7 +55,7 @@ const waferCatalog = (await getCollection('wafers'))
       data-checkout={c.checkout}
       data-checkout-url={`${base}/checkout`}
       data-continue={c.continueShopping}
-      data-shop-url={`${base}/product`}
+      data-shop-url={lhref('/product')}
       data-local-note={s.cartLocalNote}
       data-dicing-option={s.dicingOption}
       data-dicing-per-box={s.dicingPerBoxShort}

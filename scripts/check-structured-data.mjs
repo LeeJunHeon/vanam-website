@@ -329,7 +329,7 @@ function checkFaqSite() {
       const { start, end } = faqSectionRange(text);
       const want = llmsFaqSection(kind, FAQ);
       const got = text.slice(start, end);
-      if (ws(got) !== ws(want) || got.split('\n').filter((l) => l.startsWith('- [')).length !== want.split('\n').filter((l) => l.startsWith('- [')).length) fail(`/${file}`, 'llms FAQ 목록', got.slice(0, 80), '데이터에서 만든 목록과 다름 — npm run build 로 빌드한다(scripts/llms-faq.mjs)');
+      if (ws(got) !== ws(want) || got.split('\n').filter((l) => l.startsWith('- [')).length !== want.split('\n').filter((l) => l.startsWith('- [')).length) fail(`/${file}`, 'llms FAQ 목록', got.slice(0, 80), '데이터에서 만든 목록과 다름 — npm run build 로 빌드한다(scripts/llms-sections.mjs)');
     } catch (e) { fail(`/${file}`, 'llms FAQ 섹션', file, e.message); }
   }
 }

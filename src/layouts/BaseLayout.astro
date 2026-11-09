@@ -9,11 +9,14 @@ import logo from '../assets/brand/logo.png';
 import logoLight from '../assets/brand/logo-light.png';
 import company from '../data/company.json';
 import { isNoindexPath } from '../lib/seo-noindex';
+import { localePath } from '../lib/site-path.js';
 import { websiteNode } from '../lib/structured-data';
 import { ogDescriptionFrom } from '../lib/meta-descriptions';
 import banner from '../data/banner.json';
 import popup from '../data/popup.json';
-const { title = 'VANAM — 차세대 반도체 박막 소재', description = 'VANA Materials LAB. 친환경 진공 증착 기반 차세대 반도체 박막 소재·공정 기술 기업.', zebra = false, ogType = 'website', ogImage, ogDescription } = Astro.props;
+const { title = 'VANAM — 차세대 반도체 박막 소재', description = 'VANA Materials LAB. 친환경 진공 증착 기반 차세대 반도체 박막 소재·공정 기술 기업.', zebra = false, ogType = 'website', ogImage, ogDescription, canonical = true } = Astro.props;
+// canonical={false}: 404 페이지처럼 "존재하지 않는 주소"로 열리는 페이지는 canonical 을 내지 않는다.
+//   (404 가 https://vanam.co.kr/404/ 를 정식 주소라고 주장하면 없는 주소를 색인하라는 신호가 된다)
 // 공유 카드 이미지 — 지정 없으면 종전과 동일한 사이트 기본(og.png 1200×630)
 const ogImg = ogImage ?? { url: new URL('/og.png', Astro.site).href, width: 1200, height: 630, alt: 'VanaM INC. — Thin Films, All Around' };
 // 검색 비노출 대상 여부 — 목록은 seo-noindex.ts 한 곳(사이트맵 filter 와 동일 출처)
@@ -170,14 +173,10 @@ const nav = [
 const navLabel = (item) => currentLocale === 'ko' ? item.labelKo : item.label;
 const childLabel = (item) => currentLocale === 'ko' ? item.labelKo : item.label;
 // 앵커(#) 포함 링크용: getRelativeLocaleUrl 은 경로 끝에 '/'를 붙여 '#vision/' 처럼
-// 앵커를 깨뜨린다. 경로와 앵커를 분리해 경로만 지역화하고 앵커를 뒤에 붙인다.
-const childHref = (path) => {
-  const [p, hash] = path.split('#');
-  const base = localizedHref(p);
-  const stripped = base.replace(/\/$/, '');
-  // 루트('/')를 strip 하면 빈 문자열이 되어 '#team' 같은 페이지 상대 앵커가 된다 → '/' 복원 (0165)
-  return hash ? `${stripped || '/'}#${hash}` : base;
-};
+// 앵커를 깨뜨린다. 경로와 앵커를 분리해 경로만 정식 주소(끝 슬래시)로 만들고 앵커를 뒤에 붙인다.
+//   '/contact#inquiry' → '/ko/contact/#inquiry', '/#team' → '/ko/#team' (규칙은 src/lib/site-path.js 한 곳)
+//   ⚠️ 예전처럼 '/ko/contact#inquiry' 로 슬래시를 떼면 Cloudflare 가 매번 301 로 '/ko/contact/#inquiry' 에 보낸다.
+const childHref = (path) => localePath(currentLocale, path);
 ---
 <!doctype html>
 <html lang={currentLocale}>
@@ -245,7 +244,7 @@ const childHref = (path) => {
     <meta name="description" content={description} />
     {/* 장바구니·결제·완료·조회: 검색 색인 금지 (링크 추적은 기본값 follow 유지) */}
     {noindex && <meta name="robots" content="noindex" />}
-    <link rel="canonical" href={canonicalURL} />
+    {canonical && <link rel="canonical" href={canonicalURL} />}
 
     {/* 네이버 서치어드바이저 사이트 소유확인.
         ⚠️ 지우지 말 것 — 네이버가 주기적으로 재확인하며, 사라지면 소유확인이 풀린다.
@@ -793,10 +792,11 @@ const childHref = (path) => {
         // 홈 해시는 아래 공통 scrollIntoView 가 처리한다.
         // Technology 에서 Product 로 옮겨간 섹션 → 새 위치로 (2026-07 개편)
         //   #analysis / #equipment 는 /product 의 같은 앵커, #fs(서비스, 삭제됨)는 /product 상단
+        //   이동 주소는 정식 주소(끝 슬래시)로 — 슬래시가 없으면 Cloudflare 가 한 번 더 301 을 낸다.
         if (p === base + '/technology') {
-          if (h === 'analysis' || h === 'equipment') { location.replace(base + '/product#' + h); return; }
-          if (h === 'fs') { location.replace(base + '/product'); return; }
-          if (h === 'materials') { location.replace(base + '/materials'); return; } // 0169: 전용 페이지로 분리
+          if (h === 'analysis' || h === 'equipment') { location.replace(base + '/product/#' + h); return; }
+          if (h === 'fs') { location.replace(base + '/product/'); return; }
+          if (h === 'materials') { location.replace(base + '/materials/'); return; } // 0169: 전용 페이지로 분리
         }
         // 이미 목적지 페이지인데 해당 요소가 있으면 스크롤만 맞춘다
         var el = document.getElementById(h);

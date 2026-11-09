@@ -1184,7 +1184,7 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
         try { sessionStorage.setItem("vanam_quote_done", JSON.stringify(doneData)); } catch (err2) { /* 세션 불가 — 완료 페이지가 접수번호만 표시 */ }
         const base = document.documentElement.lang === "ko" ? "/ko" : "";
         leaving = true;
-        location.replace(`${base}/quote/done?id=${encodeURIComponent(j.id)}`);
+        location.replace(`${base}/quote/done/?id=${encodeURIComponent(j.id)}`); // 정식 주소(끝 슬래시) — 없으면 301 한 번 더
         return;
       }
       // 구버전 응답(id 없음) 폴백 — 인라인 성공 안내({days} = 회신 기한)

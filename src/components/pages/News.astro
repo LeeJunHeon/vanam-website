@@ -78,6 +78,8 @@ const bt = {
   emptyTitle: isKo ? '준비 중입니다' : 'Coming soon',
   emptyBody: isKo ? '곧 새로운 글로 찾아뵙겠습니다.' : 'New posts will be published here soon.',
   openNote: isKo ? '카드를 누르면 원문이 새 탭으로 열립니다.' : 'Cards open the original post in a new tab.',
+  // 화면 낭독기용 숨은 보조 문구 — 페이지 언어를 따른다(영문 페이지에 한글이 들어가 있었다)
+  newTabNote: isKo ? '(새 창에서 열림)' : '(opens in a new tab)',
 };
 const fmtDate = (d) =>
   d.toLocaleDateString(locale === 'ko' ? 'ko-KR' : 'en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' });
@@ -110,7 +112,7 @@ const fmtDate = (d) =>
             )}
           </span>
           <svg class="mt-1 h-5 w-5 shrink-0 text-ink/30 transition group-hover:text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg>
-          <span class="sr-only">(새 창에서 열림)</span>
+          <span class="sr-only">{bt.newTabNote}</span>
         </a>
       ))}
     </div>

@@ -1,6 +1,6 @@
 # VanaM Inc. — Full Context (VanaM / VANAM / 반암)
 
-This file consolidates the core content of https://vanam.co.kr for AI answer engines.
+This file consolidates the core content of https://vanam.co.kr/ for AI answer engines.
 Languages: English (default, no prefix) and Korean (한국어, under /ko/). Brand slogan kept in English on both: "Thin Films, All Around."
 
 ## Company overview
@@ -18,22 +18,13 @@ Team: Ph.D.-level semiconductor researchers, IP & patent attorneys, and facility
 - VanaM builds special deposition instruments that capture process data (e.g., plasma wavelength, residual gas) for machine-learning-based performance prediction and process optimization.
 
 ## Deposition methods
-PVD (Sputter, Evaporator), ALD, PLD, MOCVD. Process big-data collection is also available.
+PVD — magnetron sputtering and thermal evaporation, including an in-line sputter tool — and ALD with 6-inch and 12-inch ALD systems (the scope published in FAQ E01). Process big-data collection is also available.
 
 ## Materials library
-Special thin films and process conditions unavailable in conventional fabs — across oxides, nitrides, metals, semiconductors, and multilayers (산화물·질화물·금속·반도체·다층막).
-- PVD / Sputter & Evaporator:
-  - Oxide: VO2, V2O5, TiO2, Ta2O5, HfO2, ZnO, ITO, InGaZnO (IGZO), Al2O3, Ga2O3, In2O3, NiO, SiO2, SnO2, CeO2, BaTiO3, SrTiO3
-  - Nitride: TiN, AlN, AlScN, SiN (SiNx), NbN, NbTiN
-  - Metal: Au, Pt, Ag, Al, Ti, Cr, Ni, Bi, Mo, Hf, Sc, Pd, Rh, Te, α-W, β-W, Ta, Nb, V
-  - Semiconductor: Si
-  - Multilayer: OMO
-- ALD:
-  - Oxide: Al2O3, HfO2, ZrO2, HZO, ZnO, TiO2, In2O3, Ga2O3, SnO2, SnO, SiO2
-  - Metal: Pt, Ru
+(generated at build by scripts/llms-sections.mjs from src/content/materials/*.json — placeholder; the published file lists every material with its page URLs and the specification values shown on its detail page)
 
 ## Services
-1. Deposition Service (증착 서비스): customized thin-film deposition across PVD (Sputter, Evaporator), ALD, PLD, and MOCVD.
+1. Deposition Service (증착 서비스): customized thin-film deposition by PVD (magnetron sputtering, thermal evaporation, in-line sputter) and ALD (6-inch and 12-inch systems).
 2. Material Analysis (소재 분석): characterization and measurement of material properties and structure with advanced equipment.
 3. R&D Service (R&D 서비스): thin-film simulation, commercial viability testing, and ML-based process prediction.
 4. IP / Patent Package (IP·특허 패키지): core IP analysis, IP portfolio construction, and technology transfer mediation.
@@ -62,7 +53,7 @@ KIST, Seoul National University, Korea University, Hanyang University, Inha Univ
 - "[Seeing the future of semiconductors ⑧] VanaM."
 
 ## FAQ
-- [FAQ index](https://vanam.co.kr/faq/) · [한국어](https://vanam.co.kr/ko/faq/)
+(generated at build by scripts/llms-sections.mjs from src/data/faq.json — placeholder; the published file carries every question and answer, EN and KO)
 
 ## Contact
 - Email: hello@vanam.co.kr
@@ -70,4 +61,4 @@ KIST, Seoul National University, Korea University, Hanyang University, Inha Univ
 - Address: (07377) 21-1 Dosin-ro 4-gil, Yeongdeungpo-gu, Seoul, Korea
 - LinkedIn: https://www.linkedin.com/in/vanam-inc-62395132b/
 - YouTube: https://www.youtube.com/@VanaMaterials
-- Website: https://vanam.co.kr (English) / https://vanam.co.kr/ko (한국어)
+- Website: https://vanam.co.kr/ (English) / https://vanam.co.kr/ko/ (한국어)

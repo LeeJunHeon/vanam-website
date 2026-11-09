@@ -9,7 +9,9 @@ import company from '../../data/company.json';
 import FaqSection from '../FaqSection.astro';
 import ProcessPicker from '../ProcessPicker.astro';
 import { metaDescriptionFor } from '../../lib/meta-descriptions';
+import { canonicalPath } from '../../lib/site-path.js';
 const locale = Astro.currentLocale ?? 'en';
+// 데이터(site.json)에 적힌 내부 주소는 정식 주소(끝 슬래시)로 바로잡아 건다 — 규칙은 src/lib/site-path.js 한 곳
 const site = siteData[locale] ?? siteData.en;
 const c = site.contact;
 const f = c.form;
@@ -78,7 +80,7 @@ declare const __VANAM_TURNSTILE_SITEKEY__: string;
       <p class="mt-6 max-w-xl text-base leading-relaxed text-ink/60">{c.intro}</p>
       {c.introCta && (
         <p class="mt-3 text-base leading-relaxed text-ink/60">
-          <a href={c.introCtaHref} class="text-accent underline underline-offset-4 transition hover:text-accent/80" data-process-open aria-haspopup="dialog" aria-controls="process-picker">{c.introCta}</a>
+          <a href={canonicalPath(c.introCtaHref)} class="text-accent underline underline-offset-4 transition hover:text-accent/80" data-process-open aria-haspopup="dialog" aria-controls="process-picker">{c.introCta}</a>
         </p>
       )}
     </div>

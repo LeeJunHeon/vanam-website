@@ -11,7 +11,7 @@ Site languages: English (default) and Korean (한국어, under /ko). Full-contex
 - Process data (plasma wavelength, residual gas) captured for machine-learning-based performance prediction and process optimization.
 
 ## Deposition & materials capability
-- Methods: PVD (Sputter, Evaporator), ALD, PLD, MOCVD.
+- Methods: PVD (magnetron sputtering, thermal evaporation; in-line sputter tool) and ALD (6-inch and 12-inch ALD systems). See FAQ E01 for the published scope.
 - Sputter oxides: VO2, V2O5, TiO2, Ta2O5, HfO2, ZnO, ITO, InGaZnO (IGZO), Al2O3, Ga2O3, In2O3, NiO, SiO2, SnO2, CeO2, BaTiO3, SrTiO3. Nitrides: TiN, AlN, AlScN, SiN (SiNx), NbN, NbTiN. Metals: Au, Pt, Ag, Al, Ti, Cr, Ni, Bi, Mo, Hf, Sc, Pd, Rh, Te, α-W, β-W, Ta, Nb, V. Semiconductor: Si. Multilayer: OMO.
 - ALD oxides: Al2O3, HfO2, ZrO2, HZO, ZnO, TiO2, In2O3, Ga2O3, SnO2, SnO, SiO2. Metals: Pt, Ru.
 
@@ -38,13 +38,18 @@ CES 2024, CES 2025, AWS Startup Growth Program, KIEEME Summer Conference, NANO K
 KIST, Seoul National University, Korea University, Hanyang University, Inha University, University of Cambridge, IBK, KIBO, Amazon (AWS), RayVac.
 
 ## Pages
-- [About](https://vanam.co.kr/about) · [한국어](https://vanam.co.kr/ko/about): Company, vision, team, history, achievements, collaboration.
-- [Technology](https://vanam.co.kr/technology) · [한국어](https://vanam.co.kr/ko/technology): Core technology, materials, services, applications.
-- [News](https://vanam.co.kr/news) · [한국어](https://vanam.co.kr/ko/news): Press coverage and announcements.
-- [Contact](https://vanam.co.kr/contact) · [한국어](https://vanam.co.kr/ko/contact): Partnership, supply, and technical inquiries; FAQ.
+All URLs below are canonical (trailing slash), matching the sitemap at https://vanam.co.kr/sitemap-index.xml.
+- [Home](https://vanam.co.kr/) · [한국어](https://vanam.co.kr/ko/): Vision, core capabilities, team, history, global activity, patents & certifications, collaboration.
+- [Product & Solution](https://vanam.co.kr/product/) · [한국어](https://vanam.co.kr/ko/product/): Deposition products by category (oxides, nitrides, metals, multilayers, wafers), how a deposition order works, analysis & measurement solution, equipment solution, FAQ.
+- [Materials Library](https://vanam.co.kr/materials/) · [한국어](https://vanam.co.kr/ko/materials/): Thin-film materials grouped by deposition method (PVD — Sputter & Evaporator, ALD) and category, each with a detail page; FAQ.
+- [Wafers](https://vanam.co.kr/wafers/) · [한국어](https://vanam.co.kr/ko/wafers/): Silicon, oxide-silicon and sapphire wafer listings with detail/quote pages.
+- [Technology](https://vanam.co.kr/technology/) · [한국어](https://vanam.co.kr/ko/technology/): AI-assisted vacuum deposition process, thin films for PICs and quantum systems, multifunctional VO₂ thin films, process automation, FAQ.
+- [News (Insight)](https://vanam.co.kr/news/) · [한국어](https://vanam.co.kr/ko/news/): Press coverage and blog posts.
+- [FAQ](https://vanam.co.kr/faq/) · [한국어](https://vanam.co.kr/ko/faq/): Index of all 38 questions with search; each links to the page section that holds its answer.
+- [Contact](https://vanam.co.kr/contact/) · [한국어](https://vanam.co.kr/ko/contact/): Inquiry form, location, FAQ.
 
 ## FAQ
-- [FAQ index](https://vanam.co.kr/faq/) · [한국어](https://vanam.co.kr/ko/faq/)
+(generated at build by scripts/llms-sections.mjs from src/data/faq.json — placeholder; the published file lists all questions)
 
 ## Contact
 - Email: hello@vanam.co.kr

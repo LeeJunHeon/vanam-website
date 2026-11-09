@@ -202,8 +202,17 @@ for (const loc of ['', 'ko/']) {
 }
 if (ldOk) ok(`웨이퍼 Product/Offer ${ldOk}개 페이지 필수 필드 충족`);
 
+// ── ⑤ 404 페이지에는 canonical 이 없어야 한다 (GEO 정리 1차) ──────────
+// 없는 주소마다 404 페이지가 뜬다. 거기에 canonical https://vanam.co.kr/404/ 가 있으면 없는 주소를 정식 주소라고 알리는 셈이다.
+// BaseLayout 의 canonical={false} 로 뺀다. 응답 코드 404 는 Cloudflare 가 그대로 준다.
+{
+  const h = html('404.html');
+  if (/<link rel="canonical"/.test(h)) fail('404.html: canonical 이 있다 — src/pages/404.astro 가 BaseLayout 에 canonical={false} 를 넘겨야 한다');
+  else ok('404.html: canonical 없음');
+}
+
 if (bad) {
   console.error(`\n✗ 검색 노출 마크업 게이트 실패 — ${bad}건`);
   process.exit(1);
 }
-console.log('✓ 검색 노출 마크업 게이트 통과 — 소재 내부 링크 · 사이트맵 URL 구성 · 웨이퍼 Product/Offer');
+console.log('✓ 검색 노출 마크업 게이트 통과 — 소재 내부 링크 · 사이트맵 URL 구성 · 웨이퍼 Product/Offer · 404 canonical 없음');
