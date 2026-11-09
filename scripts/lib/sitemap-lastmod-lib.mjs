@@ -5,7 +5,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import config from '../sitemap-lastmod.config.mjs';
-import { fingerprintFile } from './page-text.mjs';
+import { fingerprintFile, headFingerprintFile, fileHash } from './page-text.mjs';
 
 export { config };
 export const FP_OPTS = { exclude: config.exclude, textFromAttr: config.textFromAttr };
@@ -46,9 +46,27 @@ export function loadRecord(file) {
   if (!fs.existsSync(file)) return {};
   return JSON.parse(fs.readFileSync(file, 'utf8'));
 }
+/** 항목은 hash · date · head 순서로 한 줄씩 쓴다(없는 필드는 뺀다). 저장소 기록은 hash·date, 공개 기록은 head·파일 항목까지. */
 export function saveRecord(file, rec) {
-  const lines = Object.keys(rec).sort().map((k) => `  ${JSON.stringify(k)}: { "hash": ${JSON.stringify(rec[k].hash)}, "date": ${JSON.stringify(rec[k].date)} }`);
+  const field = (k, v) => `"${k}": ${JSON.stringify(v)}`;
+  const lines = Object.keys(rec).sort().map((k) => {
+    const v = rec[k]; const parts = [field('hash', v.hash)];
+    if (v.date !== undefined) parts.push(field('date', v.date));
+    if (v.head !== undefined) parts.push(field('head', v.head));
+    return `  ${JSON.stringify(k)}: { ${parts.join(', ')} }`;
+  });
   fs.writeFileSync(file, `{\n${lines.join(',\n')}\n}\n`);
+}
+/** 공개 기록의 파일 항목 키(사이트맵에 없는 파일 — config.publicRecord.files). */
+export const isFileKey = (k) => config.publicRecord.files.includes(k);
+/** 공개 기록에 넣을 파일 항목 — dist 에 있는 파일만. */
+export function fileEntries(dist) {
+  const out = {};
+  for (const p of config.publicRecord.files) {
+    const f = path.join(dist, p.replace(/^\/+/, ''));
+    if (fs.existsSync(f) && fs.statSync(f).isFile()) out[p] = { hash: fileHash(f) };
+  }
+  return out;
 }
 
 // ── 사이트맵 XML ──
@@ -153,9 +171,10 @@ export function evaluate(dist, record) {
       seen.add(u.path);
       const file = htmlFileFor(dist, u.path);
       const hash = file ? (fingerprintFile(file, FP_OPTS)?.hash ?? null) : null;
+      const head = file ? headFingerprintFile(file).hash : null; // IndexNow 판단용 — lastmod 에는 안 쓴다
       const rec = record[u.path] ?? null;
       const status = !file ? 'no-html' : hash == null ? 'no-main' : !rec ? 'new' : rec.hash !== hash ? 'changed' : 'same';
-      rows.push({ child: child.name, loc: u.loc, path: u.path, lastmod: u.lastmod, hreflang: u.hreflang, file, hash, rec, status });
+      rows.push({ child: child.name, loc: u.loc, path: u.path, lastmod: u.lastmod, hreflang: u.hreflang, file, hash, head, rec, status });
     }
   }
   const stale = Object.keys(record).filter((k) => !seen.has(k)).sort();

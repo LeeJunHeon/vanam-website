@@ -77,7 +77,9 @@ const BD_POINTS = [
 ];
 const bdAsset = (pth: string) => equipImages[`/src/assets/equipment/bigdata/${pth}`]?.default;
 
-// 웨이퍼 카드 가격: 등록된 웨이퍼 최저가를 "From $X"/"$X 부터" 로 표시 (환율=사업자 정보 usdRate)
+// 웨이퍼 카드 가격: 등록된 웨이퍼 최저가를 "From $X"/"$X 부터" 로 표시 (환율=사업자 정보 usdRate),
+//   그 아래 웨이퍼 전용 문구 s.waferPriceNote(목록 웨이퍼 고정가 · 맞춤은 견적). 가격이 없을 때도 "Price on request" 대신 이 문구다.
+//   다른 견적 상품 카드는 s.priceOnRequest 그대로. 게이트: scripts/check-price-labels.mjs
 const usdRate = company.usdRate || 1380;
 const waferKrws = allWafers
   .filter((w) => w.data.published && typeof w.data.priceKrw === 'number' && w.data.priceKrw > 0)
@@ -210,12 +212,17 @@ const crumbLd = breadcrumbNode([
                   </a>
                   <p class="mt-2 line-clamp-2 text-sm leading-relaxed text-ink/50">{summary(p)}</p>
                   <div class="mt-5 flex items-end justify-between gap-3 pt-1">
-                    {p.data.category === 'wafer' && waferFromLabel ? (
-                      <p class="text-lg font-bold text-ink">
-                        {isKo
-                          ? (<><span data-krw={waferMinKrw}>{formatUsd(waferMinKrw, usdRate)}</span> 부터</>)
-                          : (<>From <span data-krw={waferMinKrw}>{formatUsd(waferMinKrw, usdRate)}</span></>)}
-                      </p>
+                    {p.data.category === 'wafer' ? (
+                      <div>
+                        {waferFromLabel && (
+                          <p class="text-lg font-bold text-ink">
+                            {isKo
+                              ? (<><span data-krw={waferMinKrw}>{formatUsd(waferMinKrw, usdRate)}</span> 부터</>)
+                              : (<>From <span data-krw={waferMinKrw}>{formatUsd(waferMinKrw, usdRate)}</span></>)}
+                          </p>
+                        )}
+                        <p class:list={["text-sm font-semibold text-accent", waferFromLabel && "mt-1"]}>{s.waferPriceNote}</p>
+                      </div>
                     ) : p.data.pricingType === 'fixed' && p.data.price ? (
                       <p class="text-xl font-bold text-ink"><span data-krw={p.data.price}>{formatUsd(p.data.price, usdRate)}</span><span class="ml-1.5 text-xs font-normal text-ink/40">USD</span></p>
                     ) : (

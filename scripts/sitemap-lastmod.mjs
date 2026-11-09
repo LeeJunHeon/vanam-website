@@ -14,6 +14,7 @@
 //                 빌드는 실패시키지 않는다 — Keystatic 에서 직접 고친 커밋이 이 경우다.
 //        sitemap-index.xml 의 <lastmod> 는 그 자식 sitemap 에서 가장 최근 날짜다.
 //        이번 빌드가 사이트맵에 실제로 쓴 { 지문, 날짜 } 를 dist/client/sitemap-lastmod.json 으로 함께 내보낸다(다음 빌드의 b 단계가 읽는다).
+//        (3차) 공개 기록에는 head 지문과 llms 파일 지문도 함께 둔다 — IndexNow 알림 대상 판단(scripts/indexnow-targets.mjs)에만 쓰고 lastmod 에는 쓰지 않는다.
 //      배포일, 코드·스타일·구조화 데이터(JSON-LD)만 바뀐 날은 지문이 그대로라 날짜가 바뀌지 않는다.
 //      날짜 출처는 기록 파일 · 이전 배포의 공개 기록 · HEAD 커밋 날짜 · 오늘(로컬) 네 가지뿐이다.
 //
@@ -37,7 +38,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   config, parseArgs, kstDate, isCloudflareBuild, headCommitDateKST, isValidDate, loadRecord, saveRecord,
-  evaluate, summarize, setUrlLastmod, setIndexLastmod, xmlError, reportFile,
+  evaluate, summarize, setUrlLastmod, setIndexLastmod, xmlError, reportFile, isFileKey, fileEntries,
 } from './lib/sitemap-lastmod-lib.mjs';
 
 const PUB = config.publicRecord;
@@ -47,14 +48,22 @@ const listSome = (items, n = 40) => { for (const s of items.slice(0, n)) console
 /** 이번 빌드가 내보내는 공개 기록 파일 위치. */
 export const publicRecordFile = (dist) => path.join(dist, PUB.file);
 
-/** 공개 기록 형식 검사 — { "<URL 경로>": { hash, date } }, 날짜는 YYYY-MM-DD 이고 오늘(KST) 이후가 아니다. 문제없으면 null. */
+/**
+ * 공개 기록 형식 검사. 문제없으면 null.
+ *   페이지 항목 { "<URL 경로>": { hash, date, head? } } — 날짜는 YYYY-MM-DD 이고 오늘(KST) 이후가 아니다. head(3차 추가)는 있으면 SHA-256.
+ *   파일 항목 { "/llms.txt": { hash } } — config.publicRecord.files 의 키만. date 없음.
+ *   옛 형식(head·파일 항목 없음)도 통과한다 — 하위 호환.
+ */
+const SHA_RE = /^[0-9a-f]{64}$/;
 export function publicRecordError(obj, today = kstDate()) {
   if (obj === null || typeof obj !== 'object' || Array.isArray(obj)) return 'JSON 객체가 아니다';
   for (const [k, v] of Object.entries(obj)) {
     if (v === null || typeof v !== 'object' || Array.isArray(v)) return `${k}: 항목이 객체가 아니다`;
-    if (typeof v.hash !== 'string' || !/^[0-9a-f]{64}$/.test(v.hash)) return `${k}: hash 가 SHA-256(16진수 64자)이 아니다`;
+    if (typeof v.hash !== 'string' || !SHA_RE.test(v.hash)) return `${k}: hash 가 SHA-256(16진수 64자)이 아니다`;
+    if (isFileKey(k)) { if (v.date !== undefined) return `${k}: 파일 항목에는 date 가 없어야 한다`; continue; }
     if (typeof v.date !== 'string' || !isValidDate(v.date)) return `${k}: date 가 YYYY-MM-DD 가 아니다 (${JSON.stringify(v.date)})`;
     if (v.date > today) return `${k}: 오늘(${today} KST) 이후 날짜 ${v.date}`;
+    if (v.head !== undefined && (typeof v.head !== 'string' || !SHA_RE.test(v.head))) return `${k}: head 가 SHA-256(16진수 64자)이 아니다`;
   }
   return null;
 }
@@ -76,10 +85,10 @@ async function httpGetText(url) {
   throw last;
 }
 
-/** 이전 배포의 공개 기록을 받는다. 빌드당 한 번(지문이 안 맞는 URL 이 있을 때만). 실패해도 던지지 않는다. */
-let livePromise = null;
-const loadLive = (today) => (livePromise ??= (async () => {
-  const src = process.env.SITEMAP_LASTMOD_LIVE_URL || PUB.liveUrl;
+/** 이전 배포의 공개 기록 주소(환경변수 SITEMAP_LASTMOD_LIVE_URL 로 바꿀 수 있다 — 파일 경로도 허용). */
+export const liveRecordSource = () => process.env.SITEMAP_LASTMOD_LIVE_URL || PUB.liveUrl;
+/** 공개 기록을 받아 형식까지 확인한다. 실패해도 던지지 않는다 — { ok, src, record?, entries?, error? }. (scripts/indexnow-targets.mjs 도 쓴다) */
+export async function fetchPublicRecord(src = liveRecordSource(), today = kstDate()) {
   let text;
   try {
     if (/^https?:\/\//i.test(src)) text = await httpGetText(src);
@@ -92,7 +101,10 @@ const loadLive = (today) => (livePromise ??= (async () => {
   const err = publicRecordError(obj, today);
   if (err) return { ok: false, src, error: `형식이 잘못됐다 — ${err}` };
   return { ok: true, src, record: obj, entries: Object.keys(obj).length };
-})());
+}
+/** 이전 배포의 공개 기록을 받는다. 빌드당 한 번(지문이 안 맞는 URL 이 있을 때만). */
+let livePromise = null;
+const loadLive = (today) => (livePromise ??= fetchPublicRecord(liveRecordSource(), today));
 /** 공개 기록에 그 URL 이 같은 지문으로 있으면 그 항목. */
 const liveMatch = (live, r) => (live?.ok && Object.hasOwn(live.record, r.path) && live.record[r.path].hash === r.hash ? live.record[r.path] : null);
 const liveLine = (live) => (!live ? '받지 않음 — 지문이 기록과 다른 URL 이 없다'
@@ -144,7 +156,7 @@ async function apply(args, today) {
   const decided = []; const dateByLoc = new Map(); const mismatch = []; const noDate = [];
   const stages = { a: 0, b: 0, c: 0 }; const pub = {};
   const set = (r, stage, date, source) => {
-    stages[stage]++; dateByLoc.set(r.loc, date); pub[r.path] = { hash: r.hash, date };
+    stages[stage]++; dateByLoc.set(r.loc, date); pub[r.path] = { hash: r.hash, date, head: r.head };
     decided.push({ path: r.path, date, stage, source, ...(stage === 'a' ? {} : { status: r.status }) });
     if (stage !== 'a') mismatch.push(`${r.path}  ${r.status === 'new' ? '기록 없음' : `지문 다름(기록 ${r.rec.date})`} → ${date}  [${stage} · ${source}]`);
   };
@@ -167,7 +179,8 @@ async function apply(args, today) {
   outputs.push([sm.indexFile, setIndexLastmod(sm.indexXml, indexDates)]);
   for (const [file, xml] of outputs) { const e = xmlError(xml); if (e) throw new Error(`sitemap-lastmod: 결과 XML 형식 오류 ${file}: ${e}`); }
   for (const [file, xml] of outputs) fs.writeFileSync(file, xml);
-  saveRecord(publicRecordFile(args.dist), pub); // 이번 빌드가 사이트맵에 실제로 쓴 값
+  Object.assign(pub, fileEntries(args.dist)); // llms 파일 내용 지문(IndexNow 판단용)
+  saveRecord(publicRecordFile(args.dist), pub); // 이번 빌드가 사이트맵에 실제로 쓴 값 + head·파일 지문
   const noDateCount = decided.filter((d) => !d.date).length;
   fs.writeFileSync(reportFile(args.dist), JSON.stringify({
     mode: cf ? 'cloudflare' : 'local', today, generated: base, stages,

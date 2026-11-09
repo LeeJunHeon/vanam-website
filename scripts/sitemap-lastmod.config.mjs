@@ -14,6 +14,11 @@ export default {
     liveUrl: 'https://vanam.co.kr/sitemap-lastmod.json', // 이전 배포의 공개 기록. 환경변수 SITEMAP_LASTMOD_LIVE_URL 로 바꿀 수 있다(파일 경로도 허용 — 테스트용)
     timeoutMs: 10000, // 빌드당 한 번만 받는다
     retries: 1,
+    // (GEO 정리 3차) 공개 기록에 IndexNow 알림 판단용 지문을 함께 둔다 — lastmod 계산에는 쓰지 않는다.
+    //   페이지 항목: { hash(<main> 지문), date, head(<title>·description·canonical·robots·hreflang 지문) }
+    //   아래 파일 항목: { hash(파일 내용 SHA-256) } — 사이트맵에 없는 파일이라 date 가 없다.
+    //   옛 형식(head·파일 항목 없음)도 그대로 읽힌다 — lastmod 이월(b 단계)은 hash·date 만 본다.
+    files: ['/llms.txt', '/llms-full.txt'],
   },
 
   // 지문에서 통째로 빼는 요소 (지원 선택자: tag, .class, #id, [attr], [attr="값"] 과 그 조합)

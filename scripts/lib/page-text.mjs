@@ -144,3 +144,49 @@ export function fingerprintHtml(html, opts = {}) {
 }
 
 export const fingerprintFile = (file, opts = {}) => fingerprintHtml(fs.readFileSync(file, 'utf8'), opts);
+
+// ── head 지문 (IndexNow 알림 대상 판단 전용 — 사이트맵 lastmod 에는 쓰지 않는다) ──
+//   대상: <head> 의 <title> · meta description · canonical · meta robots · hreflang 대체 주소(hreflang 값 순으로 정렬).
+//   각 값을 위와 같은 정규화(엔티티 해독 → NFKC → 공백 접기)로 정리한 뒤 "이름: 값" 줄로 이어 붙여 SHA-256.
+//   og:* 등 다른 메타는 넣지 않는다(검색 결과·색인에 쓰이는 값만).
+export function headFields(html) {
+  const endIdx = html.search(/<\/head\s*>/i);
+  const head = html.slice(0, endIdx < 0 ? html.length : endIdx);
+  const f = { title: '', description: '', canonical: '', robots: '', hreflang: [] };
+  let i = 0; const n = head.length;
+  while (i < n) {
+    const lt = head.indexOf('<', i);
+    if (lt < 0) break;
+    if (head.startsWith('<!--', lt)) { const e = head.indexOf('-->', lt + 4); i = e < 0 ? n : e + 3; continue; }
+    if (!/[a-zA-Z/]/.test(head[lt + 1] ?? '')) { i = lt + 1; continue; }
+    const t = readTag(head, lt); i = t.end;
+    if (t.closing) continue;
+    if (t.name === 'title') {
+      const e = head.toLowerCase().indexOf('</title', i);
+      f.title = decodeEntities(head.slice(i, e < 0 ? n : e)); i = e < 0 ? n : e;
+    } else if (t.name === 'meta') {
+      const name = (t.attrs.name ?? '').toLowerCase();
+      if (name === 'description') f.description = t.attrs.content ?? '';
+      else if (name === 'robots') f.robots = t.attrs.content ?? '';
+    } else if (t.name === 'link') {
+      const rel = (t.attrs.rel ?? '').toLowerCase().split(/\s+/);
+      if (rel.includes('canonical')) f.canonical = t.attrs.href ?? '';
+      else if (rel.includes('alternate') && t.attrs.hreflang) f.hreflang.push(`${t.attrs.hreflang}=${t.attrs.href ?? ''}`);
+    } else if (RAW.has(t.name) && !t.selfClose) { // script·style 안의 '<' 는 태그가 아니다
+      const e = head.toLowerCase().indexOf('</' + t.name, i);
+      i = e < 0 ? n : e;
+    }
+  }
+  f.hreflang.sort();
+  return f;
+}
+export function headFingerprintHtml(html) {
+  const f = headFields(html);
+  const text = ['title', 'description', 'canonical', 'robots'].map((k) => `${k}: ${normalizeText(f[k])}`)
+    .concat([`hreflang: ${f.hreflang.map(normalizeText).join('; ')}`]).join('\n');
+  return { text, hash: crypto.createHash('sha256').update(text, 'utf8').digest('hex') };
+}
+export const headFingerprintFile = (file) => headFingerprintHtml(fs.readFileSync(file, 'utf8'));
+
+/** 파일 내용 지문(llms.txt 등 HTML 이 아닌 파일) — 바이트 그대로 SHA-256. */
+export const fileHash = (file) => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
