@@ -24,9 +24,7 @@
     "Diameter : 2”, 3”"
   ],
   "figs": [
-    "fig-1.webp",
-    "fig-2.webp",
-    "fig-3.webp"
+    "fig-1.webp"
   ],
   "targetImg": "target.webp"
 }
