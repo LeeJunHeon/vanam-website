@@ -11,6 +11,7 @@
   "name_ko": "인듐 갈륨 아연 산화물",
   "description": "Indium gallium zinc oxide (InGaZnO) thin films by RF magnetron sputtering (vacuum < 1.0 × 10⁻⁶ Torr, Si (100)). A 36.2 nm film is prepared for display TFT channels, transparent electronics and thin-film sensors.",
   "description_ko": "RF 마그네트론 스퍼터링(1.0 × 10⁻⁶ Torr 이하, Si (100))으로 증착하는 인듐 갈륨 아연 산화물(InGaZnO) 박막입니다. 36.2 nm 막을 기준으로 디스플레이 TFT 채널·투명 전자소자·박막 센서에 활용됩니다.",
+  "metaDescription": "Indium gallium zinc oxide (InGaZnO, IGZO) thin films by RF magnetron sputtering for display TFT channels, transparent electronics and thin-film sensors.",
   "filmSpecs": [
     "Film-coated by RF magnetron sputtering under vacuum < 1.0 × 10⁻⁶ Torr",
     "Substrate: Si (100)",

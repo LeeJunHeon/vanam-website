@@ -34,6 +34,7 @@ const vars: Record<string, string> = {
   withdrawDays: String(company.withdrawDays),
   refundDays: String(company.refundDays),
 };
+// 검색 설명: 문서에 metaDescription(160자 이하)이 있으면 그것을, 없으면 지금처럼 머리말(intro)을 쓴다. 본문은 그대로.
 const fill = (s: string) => s.replace(/\{(\w+)\}/g, (m, k) => vars[k] ?? m);
 
 const t = isKo
@@ -41,7 +42,7 @@ const t = isKo
   : { updated: 'Effective', notFound: 'This document is being prepared.' };
 ---
 
-<BaseLayout title={`${doc?.data.title ?? ''} | ${locale === 'ko' ? '반암(VanaM)' : 'VanaM'}`} description={doc?.data.intro ?? ''}>
+<BaseLayout title={`${doc?.data.title ?? ''} | ${locale === 'ko' ? '반암(VanaM)' : 'VanaM'}`} description={doc?.data.metaDescription?.trim() || (doc?.data.intro ?? '')}>
   <section class="mx-auto max-w-3xl px-6 py-28 md:py-32">
     {doc ? (
       <>

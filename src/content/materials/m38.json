@@ -7,6 +7,8 @@
   "name_ko": "산화 갈륨",
   "description": "Gallium oxide (Ga₂O₃) thin films by RF magnetron sputtering (vacuum < 1.0 × 10⁻⁶ Torr, Si (100) and Pt substrates). A 35.51 nm film shows n = 1.79 @ 587 nm with extinction below 1E-6 — a wide-bandgap oxide for high-voltage power electronics, solar-blind UV photodetectors and gas sensors. Targets: 99.99 %, 2–3 in.",
   "description_ko": "RF 마그네트론 스퍼터링(1.0 × 10⁻⁶ Torr 이하, Si (100)·Pt 기판)으로 증착하는 산화 갈륨(Ga₂O₃) 박막입니다. 35.51 nm 막 기준 굴절률 1.79 @ 587 nm, 소광계수 1E-6 미만이며 고전압 전력 전자·태양광 차단(solar-blind) UV 광검출기·가스 센서에 쓰이는 광대역 산화물입니다. 타깃: 순도 99.99 %, 2–3인치.",
+  "metaDescription": "Gallium oxide (Ga₂O₃) thin films by RF magnetron sputtering — n = 1.79 @ 587 nm, for power electronics, solar-blind UV photodetectors and gas sensors.",
+  "metaDescription_ko": "RF 마그네트론 스퍼터링으로 증착하는 산화 갈륨(Ga₂O₃) 박막입니다. 굴절률 1.79 @ 587 nm, 소광계수 1E-6 미만이며 고전압 전력 전자·solar-blind UV 광검출기·가스 센서에 쓰이는 광대역 산화물입니다.",
   "figs": [
     "fig-1.webp",
     "fig-2.webp",

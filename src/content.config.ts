@@ -95,6 +95,10 @@ const materials = defineCollection({
     image: opt(z.string()),        // 상세 이미지 경로 (※ 사박사님 제공 예정 — 현재 비움)
     description: opt(z.string()),      // 상세 설명 EN
     description_ko: opt(z.string()),   // 상세 설명 KO
+    // 검색 설명(meta description) 전용 — 160자 이하. 비우면 소개 문단을 쓴다(160자 넘으면 문장 경계에서 자름).
+    //   화면 본문·JSON-LD 는 여전히 description 전체를 쓴다. 숫자는 화면에 있는 것만(check-meta-descriptions 게이트).
+    metaDescription: opt(z.string()),      // 검색 설명 EN
+    metaDescription_ko: opt(z.string()),   // 검색 설명 KO
     // ── A4 사양 레이아웃 (Material_Portfolio PPT 이식) ──
     filmSpecs: opt(z.array(z.string())),   // Thin-Film Specifications 라인들
     band2Title: opt(z.string()),           // 'Target Specifications' | 'Process Specifications'
@@ -230,6 +234,7 @@ const policies = defineCollection({
     title: z.string(),
     updated: z.string(),
     intro: opt(z.string()),
+    metaDescription: opt(z.string()),   // 검색 설명(160자 이하) — 비우면 머리말(intro)을 쓴다. 화면에는 나오지 않는다.
     sections: z.array(z.object({ heading: z.string(), body: z.string() })),
     order: z.number().default(0),
   }),

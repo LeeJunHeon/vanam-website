@@ -12,6 +12,7 @@ import type { ImageMetadata } from 'astro';
 import { quoteParams, CATEGORY_TO_PRODUCT } from '../../lib/material-value.js';
 import { materialNodes, abs } from '../../lib/structured-data';
 import { materialTitle } from '../../lib/page-titles.js';
+import { clipMetaDescription } from '../../lib/meta-descriptions';
 
 const { material } = Astro.props;
 // FAQ · 관련 질문 — 대상 소재에서만 나온다(src/data/faq.json 의 page · related). 그 밖의 소재 페이지에는 아무것도 그리지 않는다.
@@ -41,9 +42,16 @@ const sysLabel = d.system === 'ald' ? 'ALD' : 'PVD — Sputter & Evaporator';
 const sysShort = d.system === 'ald' ? 'ALD' : 'PVD';
 // 제목 규칙은 src/lib/page-titles.js 한 곳 — h1(displayName)·화학식 배지(d.formula)와 같은 값으로 만든다.
 const metaTitle = materialTitle({ name: displayName, formula: d.formula, system: d.system, category: d.category }, locale);
-const metaDesc = (desc && aka.length ? desc.replace(`(${d.formula})`, `(${withAka})`) : desc) ?? (isKo
+// 검색 설명(meta description) — 160자 이하(Bing 기준).
+//   ① 해당 언어의 검색 설명 필드(metaDescription / metaDescription_ko)가 있으면 **그대로** 쓴다.
+//      다른 이름(aka) 치환도 하지 않는다 — 필요한 문구에는 이미 들어 있다.
+//   ② 없으면 소개 문단(+aka 치환)으로 만들고, 160자를 넘으면 문장 경계 → 단어 경계 순으로 자른다.
+//   ⚠️ 화면 본문과 JSON-LD description 은 여전히 소개 문단 전체(desc)다. 여기서 바꾸는 건 <head> 뿐.
+const ownMetaDesc = (isKo ? d.metaDescription_ko : d.metaDescription)?.trim();
+const autoMetaDesc = (desc && aka.length ? desc.replace(`(${d.formula})`, `(${withAka})`) : desc) ?? (isKo
   ? `${sysShort} 방식으로 증착하는 ${displayName}(${withAka}) 박막 — VanaM 소재 라이브러리의 사양·측정 데이터.`
   : `${displayName} (${withAka}) thin film deposited by ${sysShort} — specifications and measured data from the VanaM materials library.`);
+const metaDesc = ownMetaDesc || clipMetaDescription(autoMetaDesc);
 
 // 상세 이미지: 파일이 실제로 있을 때만 최적화 생성. 없으면 null → placeholder 표시.
 const matImages = import.meta.glob<{ default: ImageMetadata }>(

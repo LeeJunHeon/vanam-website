@@ -5,6 +5,7 @@
 //   SEO 정공법의 골격: 본문·사진이 우리 도메인의 실제 HTML 로 렌더되어 색인된다.
 //   마크다운 → HTML 변환은 빌드 타임(marked)이라 클라이언트 비용 0.
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import { clipMetaDescription } from '../../lib/meta-descriptions';
 import { localePath } from '../../lib/site-path.js';
 import { Image } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
@@ -114,7 +115,7 @@ const clip = (text: string, limit: number) => {
   const sp = cut.lastIndexOf(' ');
   return (sp > limit * 0.6 ? cut.slice(0, sp) : cut).replace(/[\s,.;:·—-]+$/, '').trim();
 };
-const autoDesc = (() => {
+const rawDesc = (() => {
   const base = (excerpt ?? '').trim();
   if (base.length >= MIN_DESC) return base;
   const plain = plainFromMarkdown(bodyMd ?? '');
@@ -126,6 +127,10 @@ const autoDesc = (() => {
   }
   return lead;
 })();
+// 최종 길이 보장 — excerpt 를 그대로 내보내는 경로(60자 이상)는 길이 제한이 없어 161자("…" 포함)짜리가 나갔다.
+//   160자를 넘으면 단어 경계에서 자르고 "…" 로 끝낸다(이미 "…" 로 끝나면 겹쳐 붙이지 않는다).
+//   ⚠️ 화면에 보이는 excerpt 문단은 건드리지 않는다 — 여기는 <head> 의 설명만.
+const autoDesc = clipMetaDescription(rawDesc, { ellipsis: true });
 
 const CAT_LABEL: Record<string, string> = { linkedin: 'LinkedIn', agent: 'Agent' };
 const cat = d.category ?? 'linkedin';

@@ -189,6 +189,7 @@ export default config({
         }),
         updated: fields.text({ label: '시행일', description: '예: 2026-07-13', validation: { isRequired: true } }),
         intro: fields.text({ label: '머리말', multiline: true }),
+        metaDescription: fields.text({ label: '검색 설명 (160자 이하)', description: '비우면 머리말을 씁니다. 검색 결과에만 보이고 화면에는 나오지 않습니다.', multiline: true }),
         sections: fields.array(
           fields.object({
             heading: fields.text({ label: '조항 제목', validation: { isRequired: true } }),
@@ -594,6 +595,8 @@ export default config({
         }),
         description: fields.text({ label: '상세 설명 (영문, 선택)', multiline: true }),
         description_ko: fields.text({ label: '상세 설명 (한글, 선택)', multiline: true }),
+        metaDescription: fields.text({ label: '검색 설명 (영문, 160자 이하)', description: '비우면 소개 문단을 씁니다. 검색 결과에만 보이고 화면에는 나오지 않습니다.', multiline: true }),
+        metaDescription_ko: fields.text({ label: '검색 설명 (한글, 160자 이하)', description: '비우면 소개 문단을 씁니다. 검색 결과에만 보이고 화면에는 나오지 않습니다.', multiline: true }),
         order: fields.integer({ label: 'Technology 페이지 표시 순서', defaultValue: 99, validation: { isRequired: true } }),
         home: fields.integer({ label: '홈 화면 노출 순서 (비우면 미노출)' }),
       },

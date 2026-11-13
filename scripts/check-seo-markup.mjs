@@ -125,7 +125,11 @@ if (!existsSync(smPath)) {
   if (noOg.length) fail(`og:description 없음: ${noOg.join(', ')}`);
   else ok(`주요 페이지 og:description 전부 존재`);
 
-  // 산화물 제품 설명에 라이브러리의 산화물이 전부 들어 있는지 (소재를 추가했는데 설명이 안 따라온 경우 탐지)
+  // 산화물 제품 설명의 물질 나열이 라이브러리에서 채워지는지 (소재를 추가했는데 설명이 안 따라온 경우 탐지)
+  //   설명은 160자 이하라(check-meta-descriptions.mjs) 전부 싣지 못한다 — 템플릿이 {oxides:N} 으로 앞 N종만 싣고
+  //   잘렸을 때 " and more" / " 등" 을 붙인다(src/lib/meta-descriptions.ts). 그래서 규칙은:
+  //   라이브러리 산화물을 전부 싣거나, MIN_OXIDES 종 이상 싣고 "더 있음" 표시가 있어야 한다.
+  const MIN_OXIDES = 5;
   const oxides = readdirSync(join(ROOT, 'src/content/materials'))
     .filter((f) => f.endsWith('.json'))
     .map((f) => JSON.parse(readFileSync(join(ROOT, 'src/content/materials', f), 'utf8')))
@@ -134,9 +138,12 @@ if (!existsSync(smPath)) {
   const uniqOxides = [...new Set(oxides)];
   for (const rel of ['product/oxides/index.html', 'ko/product/oxides/index.html']) {
     const { d } = descOf(rel);
-    const missing = uniqOxides.filter((f) => !d.includes(f));
-    if (missing.length) fail(`${rel}: 설명에 빠진 산화물 ${missing.length}종 — ${missing.join(', ')}`);
-    else ok(`${rel}: 라이브러리 산화물 ${uniqOxides.length}종 전부 포함`);
+    const listed = uniqOxides.filter((f) => d.includes(f));
+    const more = rel.startsWith('ko/') ? / 등(?=\s)/ : / and more\b/;
+    if (listed.length === uniqOxides.length) ok(`${rel}: 라이브러리 산화물 ${uniqOxides.length}종 전부 포함`);
+    else if (listed.length < MIN_OXIDES) fail(`${rel}: 설명에 실린 라이브러리 산화물이 ${listed.length}종뿐이다(${MIN_OXIDES}종 이상이어야 한다)`);
+    else if (!more.test(d)) fail(`${rel}: 산화물 ${uniqOxides.length}종 중 ${listed.length}종만 실렸는데 "더 있음" 표시(and more / 등)가 없다`);
+    else ok(`${rel}: 라이브러리 산화물 ${uniqOxides.length}종 중 ${listed.length}종 + "더 있음" 표시`);
   }
 
   // 블로그 글 — 한 줄짜리 제목 복붙이 많아 자동 보강한 결과를 검사

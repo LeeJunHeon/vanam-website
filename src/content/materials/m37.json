@@ -7,6 +7,8 @@
   "name_ko": "산화 알루미늄",
   "description": "Aluminium oxide (Al₂O₃) thin films by RF magnetron sputtering (vacuum < 1.0 × 10⁻⁶ Torr, Si (100) and Pt substrates). A 57.39 nm film shows n = 1.66 @ 587 nm with extinction below 1E-6 — suited to gate dielectrics, surface passivation, optical coatings and diffusion barriers. Targets: 99.9 %, 2 in.",
   "description_ko": "RF 마그네트론 스퍼터링(1.0 × 10⁻⁶ Torr 이하, Si (100)·Pt 기판)으로 증착하는 산화 알루미늄(Al₂O₃) 박막입니다. 57.39 nm 막 기준 굴절률 1.66 @ 587 nm, 소광계수 1E-6 미만으로 게이트 절연막·표면 패시베이션·광학 코팅·확산 방지막에 적합합니다. 타깃: 순도 99.9 %, 2인치.",
+  "metaDescription": "Aluminium oxide (Al₂O₃) films by RF magnetron sputtering — n = 1.66 @ 587 nm, extinction below 1E-6, for gate dielectrics, passivation and optical coatings.",
+  "metaDescription_ko": "RF 마그네트론 스퍼터링으로 증착하는 산화 알루미늄(Al₂O₃) 박막입니다. 굴절률 1.66 @ 587 nm, 소광계수 1E-6 미만으로 게이트 절연막·표면 패시베이션·광학 코팅·확산 방지막에 적합합니다.",
   "figs": [
     "fig-1.webp",
     "fig-2.webp",
