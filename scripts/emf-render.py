@@ -257,6 +257,8 @@ class Renderer:
     # ── 글자 ──
     def text(self, ref, s, dx, opts, rcl):
         f = self.st['font']
+        if s and f.get('width'):  # 정의만 되고 글자를 그리지 않는 글꼴은 경고하지 않는다
+            warn(f"글꼴 너비 지정 {f['width']} — 무시(글자 간격은 Dx 로 맞춤)")
         face = f['face']
         if face.lower() == 'symbol' or f['charset'] == 2:
             s = ''.join(SYMBOL.get(chr(ord(ch) - 0xF000) if 0xF000 <= ord(ch) <= 0xF0FF else ch, ch) for ch in s)
@@ -435,9 +437,8 @@ class Renderer:
             it, ul, so, cs = struct.unpack_from('<BBBB', d, 24)
             face = d[32:96].decode('utf-16le', 'ignore').split('\0')[0]
             if esc != ori: warn(f'글꼴 escapement {esc} ≠ orientation {ori}')
-            if wid: warn(f'글꼴 너비 지정 {wid} — 무시(글자 간격은 Dx 로 맞춤)')
             if ul or so: warn('밑줄/취소선 글꼴 — 선은 그리지 않음')
-            self.objs[ih] = ('font', dict(height=hgt, esc=esc, weight=wt, italic=it, face=face, charset=cs)); return
+            self.objs[ih] = ('font', dict(height=hgt, width=wid, esc=esc, weight=wt, italic=it, face=face, charset=cs)); return
         if t == 37:       # SELECTOBJECT
             ih = struct.unpack_from('<I', d, 0)[0]
             if ih & 0x80000000:
