@@ -13,7 +13,7 @@ import { Image } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
 import { getRelativeLocaleUrl } from 'astro:i18n';
 import siteData from '../data/site.json';
-import { CATEGORY_TO_PRODUCT } from '../lib/material-value.js';
+import { CATEGORY_TO_PRODUCT, PRODUCT_MAT_FILTER } from '../lib/material-value.js';
 
 const locale = Astro.currentLocale ?? 'en';
 const isKo = locale === 'ko';
@@ -37,10 +37,14 @@ const productImages = import.meta.glob<{ default: ImageMetadata }>(
   { eager: true },
 );
 // 카드 둘째 줄 — 그 제품 페이지에서 고를 수 있는 라이브러리 소재(소재 CTA 가 그 제품으로 보내는 분류) 앞 3개 + 나머지 수.
-// 라이브러리 order 순, 같은 화학식(Sputter·ALD 중복)은 하나로. 대응 소재가 없는 제품(다층)은 한 줄 소개를 쓴다.
+// 라이브러리 order 순, 같은 화학식(Sputter·ALD 중복)은 하나로. 대응 소재가 없는 제품은 한 줄 소개를 쓴다.
+// 모든 소재를 조합하는 제품(PRODUCT_MAT_FILTER 가 null — 다층)은 소재 목록 대신 한 줄 소개를 쓴다.
+// 해당 분류 소재(OMO 등)만 나열하면 그것만 가능한 것처럼 읽히기 때문이다.
+// 엄격 비교(=== null)다 — 표에 없는 제품(undefined)은 아래 소재 목록 규칙을 그대로 따른다.
 const library = (await getCollection('materials')).sort((a, b) => a.data.order - b.data.order);
 const SHOW = 3;
 function materialHint(productId: string): string | null {
+  if (PRODUCT_MAT_FILTER[productId] === null) return null;
   const formulas = [...new Set(library.filter((m) => CATEGORY_TO_PRODUCT[m.data.category] === productId).map((m) => m.data.formula))];
   if (!formulas.length) return null;
   const rest = formulas.length - SHOW;
