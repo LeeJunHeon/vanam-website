@@ -9,6 +9,7 @@ import { chatModeAtBuild } from '../src/lib/chat-mode.js';
 import { checkSource, scanDist, judgeDist, ALERT_KEY } from './check-chat-guard.mjs';
 import { chatChannelOf, chatTargets, chatShouldFallback, chatDeliver } from '../src/lib/chat-channel.js';
 import { readFileSync } from 'node:fs';
+import { chatTestMessage, chatTestOutcome, chatTestLabel, chatTestResponseLabel, CHAT_TEST_TAG } from '../src/lib/chat-test.js';
 
 let total = 0, failed = 0;
 function eq(label, got, want) {
@@ -154,8 +155,61 @@ eq('통로: 설정 여부만 내보낸다(boolean)', /export function alertChann
 eq('통로: fetch 는 한 곳', (sendSrc.match(/\bfetch\s*\(/g) ?? []).length, 1);
 const channelTests = total - guardTests;
 
+// ── 오류 알림 테스트 보내기(chat-test.js) — sendChat 결과 → 결과 구분 → 화면 문구 ─────────
+const beforeChatTest = total;
+eq('시험 메시지 본문', chatTestMessage('2099-12-31 16:15'), '🔔 오류 알림 테스트 — 관리자 화면에서 보낸 시험 메시지입니다. (2099-12-31 16:15 · 한국 시간)');
+eq('시험 메시지: 시각 없으면 괄호 없음', chatTestMessage(''), '🔔 오류 알림 테스트 — 관리자 화면에서 보낸 시험 메시지입니다.');
+const viaSend = (r) => chatTestOutcome(r);
+eq('결과 구분: 별도 채팅방으로 보냄', viaSend({ sent: true, reason: 'ok', status: 200, channel: 'alert', fallback: false }), { ok: true, code: 'alert', reason: null, status: 200 });
+eq('결과 구분: 별도 설정 없어 기존 채팅방', viaSend({ sent: true, reason: 'ok', status: 200, channel: 'main', fallback: false }), { ok: true, code: 'main_unset', reason: null, status: 200 });
+eq('결과 구분: 별도 채팅방 실패 → 기존 채팅방', viaSend({ sent: true, reason: 'ok', status: 200, channel: 'main', fallback: true }), { ok: true, code: 'main_fallback', reason: null, status: 200 });
+eq('결과 구분: 실패(거절)', viaSend({ sent: false, reason: 'http_error', status: 404, channel: 'main', fallback: true }), { ok: false, code: 'failed', reason: 'http_error', status: 404 });
+eq('결과 구분: 실패(연결)', viaSend({ sent: false, reason: 'fetch_error', channel: 'main', fallback: false }), { ok: false, code: 'failed', reason: 'fetch_error', status: null });
+eq('결과 구분: 웹훅 미설정', viaSend({ sent: false, reason: 'no_webhook' }), { ok: false, code: 'failed', reason: 'no_webhook', status: null });
+eq('결과 구분: 테스트 빌드', viaSend({ sent: false, reason: 'blocked_build' }), { ok: false, code: 'blocked_build', reason: null, status: null });
+eq('결과 구분: 이상한 값 → 실패(error)', [viaSend(null), viaSend({})].map((o) => `${o.ok}:${o.code}:${o.reason}`), ['false:failed:error', 'false:failed:error']);
+// chatDeliver 가 실제로 내는 결과를 그대로 넣어도 같은 구분이 나온다(통로 → 구분이 이어지는지)
+{
+  const bad = { sent: false, reason: 'http_error', status: 500 };
+  const a = (await deliver('alert', { main: M, alert: A }, { alert: OK, main: OK })).r;
+  const b = (await deliver('alert', { main: M, alert: '' }, { main: OK })).r;
+  const c = (await deliver('alert', { main: M, alert: A }, { alert: bad, main: OK })).r;
+  const d = (await deliver('alert', { main: M, alert: A }, { alert: bad, main: bad })).r;
+  eq('통로 결과 → 구분(4가지)', [a, b, c, d].map((r) => chatTestOutcome(r).code), ['alert', 'main_unset', 'main_fallback', 'failed']);
+}
+eq('화면 문구: 5가지 구분', ['alert', 'main_unset', 'main_fallback', 'blocked_build'].map((code) => chatTestLabel({ code })), [
+  { tone: 'ok', text: '별도 채팅방으로 보냈습니다.' },
+  { tone: 'warn', text: '별도 설정이 없어 기존 채팅방으로 보냈습니다.' },
+  { tone: 'warn', text: '별도 채팅방 전송이 실패해 기존 채팅방으로 보냈습니다.' },
+  { tone: 'warn', text: '테스트 빌드라 보내지 않았습니다.' },
+]);
+eq('화면 문구: 실패 사유', [
+  chatTestLabel({ code: 'failed', reason: 'http_error', status: 404 }), chatTestLabel({ code: 'failed', reason: 'fetch_error', status: null }),
+  chatTestLabel({ code: 'failed', reason: 'no_webhook' }), chatTestLabel({ code: 'failed', reason: 'weird' }), chatTestLabel(null),
+].map((l) => `${l.tone}|${l.text}`), [
+  'bad|실패 — 구글챗이 요청을 거절했습니다 (HTTP 404)', 'bad|실패 — 구글챗 연결 오류', 'bad|실패 — 구글챗 웹훅이 설정돼 있지 않습니다', 'bad|실패 — weird', 'bad|실패 — 처리 중 오류',
+]);
+eq('응답 → 화면: 결과가 있으면 그 문구', chatTestResponseLabel(200, { ok: true, result: { code: 'alert' } }).text, '별도 채팅방으로 보냈습니다.');
+eq('응답 → 화면: 로그인 만료 · 횟수 제한 · 그 밖', [
+  chatTestResponseLabel(401, { ok: false, error: 'unauthorized' }).text, chatTestResponseLabel(429, { ok: false, error: 'rate_limited', retryAfterSec: 41.2 }).text,
+  chatTestResponseLabel(429, {}).text, chatTestResponseLabel(500, {}).text, chatTestResponseLabel(503, { error: 'no_db' }).text,
+], ['로그인이 만료되었습니다. 새로고침한 뒤 다시 로그인하세요.', '너무 자주 눌렀습니다 — 42초 뒤 다시 시도하세요.', '너무 자주 눌렀습니다 — 잠시 뒤 다시 시도하세요.', '실패 — 500', '실패 — no_db']);
+// 원문 검사 — API 는 관리자 확인 뒤 alert 채널로 한 번 · 횟수 제한 버킷은 RATE_RULES 의 키와 글자 그대로 · 웹훅을 읽지 않는다
+const testApi = read('src/pages/api/admin/chat-test.ts');
+const rules = read('src/lib/rate-limit.ts');
+const bucket = testApi.match(/rateLimit\([^,]+,\s*'([A-Za-z]+)'/)?.[1] ?? '';
+eq('API: 버킷 이름이 RATE_RULES 의 키와 같다(1분 3회)', [bucket, new RegExp(`\\n  ${bucket}: \\{ limit: 3, windowSec: 60 \\},`).test(rules)], ['chatTest', true]);
+eq('API: 관리자 확인이 먼저 · alert 채널 한 번 · 직접 전송 없음', [
+  testApi.indexOf('isAdmin(request)') > 0 && testApi.indexOf('isAdmin(request)') < testApi.indexOf('rateLimit(') && testApi.indexOf('rateLimit(') < testApi.indexOf('sendChat('),
+  (testApi.match(/sendChat\(/g) ?? []).length, alertCalls('src/pages/api/admin/chat-test.ts'), /\bfetch\s*\(/.test(testApi), testApi.includes(CHAT_TEST_TAG) || testApi.includes('CHAT_TEST_TAG'),
+], [true, 1, 1, false, true]);
+eq('통로: 대체 전송 여부를 결과에 싣는다', /fallback: r\.fallback/.test(sendSrc), true);
+eq('순수 파일(chat-test.js): import 없음', /^\s*import\s/m.test(read('src/lib/chat-test.js')), false);
+eq('실제 저장소 src → 구글챗 소스 게이트 통과', checkSource('src'), []);
+const chatTestTests = total - beforeChatTest;
+
 if (failed) {
   console.error(`\n구글챗 게이트 단위 테스트 실패 — ${failed}/${total}건.`);
   process.exit(1);
 }
-console.log(`✓ 구글챗 게이트 단위 테스트 — ${total}건 통과 · 채널 선택·대체(alert 있음/없음/실패 시 main) ${channelTests}건`);
+console.log(`✓ 구글챗 게이트 단위 테스트 — ${total}건 통과 · 채널 선택·대체(alert 있음/없음/실패 시 main) ${channelTests}건 · 오류 알림 테스트 보내기 ${chatTestTests}건`);

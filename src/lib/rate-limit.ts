@@ -46,6 +46,8 @@ export const RATE_RULES = {
   paypalCreate: { limit: 10, windowSec: 10 * 60 },
   paypalCapture: { limit: 10, windowSec: 10 * 60 },
   quoteEstimate: { limit: 60, windowSec: 600 }, // 견적 폼의 예상 견적 계산(자동 견적 스위치가 켜졌을 때만 호출됨)
+  // 관리자 [오류 알림 테스트 보내기](api/admin/chat-test.ts): 채팅방에 시험 메시지가 쏟아지지 않게 1분에 3회.
+  chatTest: { limit: 3, windowSec: 60 },
 } satisfies Record<string, RateRule>;
 
 // 청소 기준: 가장 긴 창(현재 order = 1시간)의 2배를 지난 행은 어떤 규칙 판정에도 관여할 수 없다.

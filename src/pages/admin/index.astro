@@ -114,6 +114,8 @@ const mailLine = (MAIL_LIVE ? '확인 메일: 운영 — 고객에게 발송' : 
   (!mailReady ? ' · Gmail 설정 없음(보내지 않음)'
     : !ackPdfOn ? ' · PDF 첨부 꺼짐(조회 링크만)'
     : !pdfConfigured() ? ' · PDF 설정 없음(조회 링크만)' : '');
+const chatLine = (CHAT_ENABLED ? '구글챗 알림: 켜짐' : '구글챗 알림: 꺼짐 — 로컬/테스트 빌드') +
+  ' · ' + (alertRoom ? '오류 알림: 별도 채팅방' : '오류 알림: 기존 채팅방(별도 설정 없음)');
 // 담당자 알림 메일 — 받는 주소 값은 화면에 내지 않는다(설정 여부만). 테스트 빌드는 주소가 있어도 보내지 않는다.
 const staffLine = (staffReady ? '담당자 메일: 받는 주소 설정됨' : '담당자 메일: 받는 주소 없음(보내지 않음)') +
   (staffReady && !MAIL_LIVE ? ' · 테스트 빌드라 보내지 않음' : staffReady && !mailReady ? ' · Gmail 설정 없음(보내지 않음)' : '');
@@ -276,10 +278,15 @@ const spec = (r: Row) =>
           <div>
             <h1 class="text-2xl font-bold">VanaM 관리자</h1>
             <p class="mt-1 text-sm text-ink/45">주문 {orders.length}건 · 견적 {quotes.length}건 · 문의 {generals.length}건</p>
-            <p class:list={['chat-state mt-1 text-sm', CHAT_ENABLED ? 'is-on' : 'is-off']}>
-              {CHAT_ENABLED ? '구글챗 알림: 켜짐' : '구글챗 알림: 꺼짐 — 로컬/테스트 빌드'}
-              {' · '}{alertRoom ? '오류 알림: 별도 채팅방' : '오류 알림: 기존 채팅방(별도 설정 없음)'}
-            </p>
+            {/* 오류 알림(메일 실패)이 실제로 어느 채팅방으로 가는지 — [테스트 보내기]로 시험 메시지를 한 번 보내 확인한다 */}
+            <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+              <p class:list={['chat-state', CHAT_ENABLED ? 'is-on' : 'is-off']}>{chatLine}</p>
+              <button type="button" data-chat-test
+                class="rounded-lg border border-ink/15 px-3 py-2 text-sm text-ink/60 transition hover:border-ink/40 hover:text-ink">
+                테스트 보내기
+              </button>
+              <span data-chat-test-msg role="status" aria-live="polite"></span>
+            </div>
             <p class:list={['chat-state mt-1 text-sm', MAIL_LIVE && mailReady ? 'is-on' : 'is-off']}>{mailLine}</p>
             <p class:list={['chat-state mt-1 text-sm', MAIL_LIVE && mailReady && staffReady ? 'is-on' : 'is-off']}>{staffLine}</p>
           </div>
@@ -952,6 +959,9 @@ const spec = (r: Row) =>
     </style>
 
     <script>
+      // 오류 알림 테스트 결과 → 화면 한 줄(서버·node 테스트와 같은 순수 함수) — 클라이언트 import 는 이 <script> 안에 둔다
+      import { chatTestResponseLabel } from '../../lib/chat-test.js';
+
       // ── 탭 ────────────────────────────────────────────
       // 데이터는 이미 서버에서 모두 받아왔으므로 표시만 전환한다.
       (() => {
@@ -1525,6 +1535,32 @@ const spec = (r: Row) =>
             say(`실패: ${j.error ?? res.status}`, false);
           } catch (e) {
             say('처리 중 오류가 발생했습니다.', false);
+          } finally {
+            btn.disabled = false;
+          }
+        });
+      });
+
+      // 오류 알림 테스트 보내기 — 오류 알림 채팅방(없으면 기존 채팅방)으로 시험 메시지를 한 번 보내고 결과를 한 줄로 보여 준다.
+      document.querySelectorAll<HTMLButtonElement>('[data-chat-test]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          if (!confirm('오류 알림 채팅방으로 시험 메시지를 한 번 보냅니다. 진행하시겠습니까?')) return;
+          const msg = document.querySelector('[data-chat-test-msg]') as HTMLElement | null;
+          const TONE = { ok: 'var(--color-ok)', warn: 'var(--color-warn)', bad: 'var(--color-danger)' } as const;
+          const say = (t: string, color: string) => {
+            if (!msg) return;
+            msg.textContent = t;
+            msg.style.color = color;
+          };
+          btn.disabled = true;
+          say('보내는 중…', 'var(--color-accent)');
+          try {
+            const res = await fetch('/api/admin/chat-test', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+            const j = await res.json().catch(() => ({}));
+            const label = chatTestResponseLabel(res.status, j);
+            say(label.text, TONE[label.tone]);
+          } catch (e) {
+            say('처리 중 오류가 발생했습니다.', TONE.bad);
           } finally {
             btn.disabled = false;
           }

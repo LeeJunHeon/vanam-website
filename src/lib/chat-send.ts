@@ -33,6 +33,8 @@ export type ChatResult = {
   status?: number;
   /** 실제로 (마지막에) 보낸 채널 — 오류 방 미설정·전송 실패로 기존 방에 갔으면 'main' */
   channel?: ChatChannel;
+  /** 오류 방 전송이 실패해 기존 방으로 한 번 더 보낸 결과인가(오류 방 미설정으로 기존 방에 간 것은 false) */
+  fallback?: boolean;
 };
 
 function secret(name: 'GOOGLE_CHAT_WEBHOOK' | 'GOOGLE_CHAT_WEBHOOK_ALERT'): string {
@@ -94,5 +96,5 @@ export async function sendChat(text: string, opts: { tag: string; ref?: string; 
   if (channel === 'alert' && r.channel !== 'alert') {
     console.warn(`[${tag}] alert → main ${r.fallback ? '(대체 전송)' : '(별도 채팅방 미설정)'}`, ref ?? '', r.reason);
   }
-  return { sent: r.sent, reason: r.reason, status: r.status, channel: r.channel };
+  return { sent: r.sent, reason: r.reason, status: r.status, channel: r.channel, fallback: r.fallback };
 }
