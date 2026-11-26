@@ -8,7 +8,8 @@ import '../../styles/global.css';
 import { isAdmin, adminConfigured } from '../../lib/admin-auth';
 import { db } from '../../lib/db';
 // 이 빌드의 구글챗 알림 켜짐/꺼짐 — 꺼진 빌드(맥미니 빌드 등)가 운영에 올라가면 여기서 바로 보인다.
-import { CHAT_ENABLED } from '../../lib/chat-send';
+// 오류 알림(메일 실패)용 별도 채팅방 — 설정 여부만 본다(웹훅 값은 어디에도 내지 않는다)
+import { CHAT_ENABLED, alertChannelConfigured } from '../../lib/chat-send';
 // 견적 카드의 개정 요약(접수 시 자동 견적 · 현재 견적)
 import { listRevisionSummariesForRecent } from '../../lib/quote-store';
 import { summarizeRevisions } from '../../lib/quote-admin.js';
@@ -37,6 +38,7 @@ const loginMsg = authed ? '' : (LOGIN_MSG[Astro.url.searchParams.get('login') ??
 const configured = adminConfigured();
 const mailReady = gmailConfigured();
 const staffReady = staffNotifyConfigured();
+const alertRoom = alertChannelConfigured();
 // PDF 첨부 스위치 — 로그인했고 DB 가 있으면 아래에서 읽는다(읽기 실패는 readSiteSettings 가 기본값 = 끔)
 let ackPdfOn = settingDefaults().ack_pdf_attach === 1;
 
@@ -276,6 +278,7 @@ const spec = (r: Row) =>
             <p class="mt-1 text-sm text-ink/45">주문 {orders.length}건 · 견적 {quotes.length}건 · 문의 {generals.length}건</p>
             <p class:list={['chat-state mt-1 text-sm', CHAT_ENABLED ? 'is-on' : 'is-off']}>
               {CHAT_ENABLED ? '구글챗 알림: 켜짐' : '구글챗 알림: 꺼짐 — 로컬/테스트 빌드'}
+              {' · '}{alertRoom ? '오류 알림: 별도 채팅방' : '오류 알림: 기존 채팅방(별도 설정 없음)'}
             </p>
             <p class:list={['chat-state mt-1 text-sm', MAIL_LIVE && mailReady ? 'is-on' : 'is-off']}>{mailLine}</p>
             <p class:list={['chat-state mt-1 text-sm', MAIL_LIVE && mailReady && staffReady ? 'is-on' : 'is-off']}>{staffLine}</p>

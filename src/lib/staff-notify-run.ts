@@ -4,7 +4,7 @@
 //            ② 관리자 [담당자 메일 (다시) 보내기](api/admin/staff-mail.ts) — 저장된 접수 행으로 같은 내용을 다시 만든다
 // 판정 순서와 제목·본문은 staff-notify.js(순수 함수)가 정한다 — 여기서는 실제 값과 통로만 넘긴다.
 //   운영 빌드(MAIL_LIVE)만 보낸다. 테스트 빌드는 받는 주소도 읽지 않는다(시험 접수가 담당자 메일함으로 가지 않게).
-//   발송은 mail-send.ts 의 sendMail 하나로만(호스트·주소 검사 그대로) · 실패 알림은 chat-send.ts 의 sendChat 으로만.
+//   발송은 mail-send.ts 의 sendMail 하나로만(호스트·주소 검사 그대로) · 실패 알림은 chat-send.ts 의 sendChat 으로만(오류 알림 채널 'alert').
 // 결과는 inquiries.staff_mail 에 남긴다(기록 모양·순서는 staff-notify-record.js — '보내는 중' → 결과).
 //   접수 행이 DB 에 저장되지 않은 접수(opts.d 없음)는 기록을 생략한다. 기록 실패는 삼키고 접수번호만 로그에 남긴다.
 //   구글챗 실패 알림은 접수 직후 자동 발송에만 보낸다 — 관리자가 누른 발송은 화면에 결과가 나온다.
@@ -72,7 +72,8 @@ export async function runStaffNotify(p: StaffNotifyInput, opts: StaffNotifyOpts 
           { tag: TAG, ref: p.id, origin: p.origin },
         );
       },
-      alert: (text: string) => sendChat(text, { tag: TAG, ref: p.id }),
+      // 메일 오류 알림은 별도 채팅방(alert 채널)으로 — 없거나 실패하면 기존 채팅방(chat-send.ts)
+      alert: (text: string) => sendChat(text, { tag: TAG, ref: p.id, channel: 'alert' }),
     });
   } catch {
     r = { sent: false, reason: 'error', status: 'failed' };

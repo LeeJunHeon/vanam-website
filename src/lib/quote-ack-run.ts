@@ -168,7 +168,7 @@ export async function runQuoteAck(d: D1, id: string, opts: AckOpts): Promise<Ack
     if (block) {
       if (block.capAlert) {
         await sendChat(`⚠️ 접수 확인 메일 — 오늘 자동 발송 전체 상한(운영 설정)에 닿아 멈췄습니다.\n접수번호 ${id}\n남용인지 확인하고, 필요하면 관리자 견적 탭에서 직접 보내세요.`,
-          { tag: 'ack-mail', ref: id }).catch(() => undefined);
+          { tag: 'ack-mail', ref: id, channel: 'alert' }).catch(() => undefined);
       }
       return finish(d, id, q, opts.by, { status: 'skipped', reason: block.reason, pdf: null });
     }
@@ -180,11 +180,12 @@ export async function runQuoteAck(d: D1, id: string, opts: AckOpts): Promise<Ack
   }
 }
 
-/** 실패 알림 — 운영 빌드만 나간다(chat-send.ts 가 그 밖의 빌드는 막는다). 개인정보는 넣지 않는다. */
+/** 실패 알림 — 운영 빌드만 나간다(chat-send.ts 가 그 밖의 빌드는 막는다). 개인정보는 넣지 않는다.
+ *  메일 오류 알림(이 알림 · 하루 상한 알림)은 별도 채팅방(alert 채널)으로 — 없거나 실패하면 기존 채팅방. */
 async function alertFailure(id: string, result: AckResult): Promise<void> {
   const why = ACK_REASON_KO[result.reason as keyof typeof ACK_REASON_KO] ?? result.reason ?? '';
   await sendChat(`⚠️ 접수 확인 메일 실패\n접수번호 ${id}\n사유: ${why}${result.code ? ` (HTTP ${result.code})` : ''}\n관리자 견적 탭에서 [확인 메일 다시 보내기]로 다시 보낼 수 있습니다.`,
-    { tag: 'ack-mail', ref: id }).catch(() => undefined);
+    { tag: 'ack-mail', ref: id, channel: 'alert' }).catch(() => undefined);
 }
 
 /** 결과 기록 + 실패면 구글챗 + 한 줄 로그 */

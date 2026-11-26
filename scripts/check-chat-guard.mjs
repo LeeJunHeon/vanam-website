@@ -5,7 +5,9 @@
 // 이제 켜짐/꺼짐은 빌드 종류가 정한다(src/lib/chat-mode.js). 이 게이트는 그 약속이 지켜졌는지 본다.
 //
 //   (a) 소스: GOOGLE_CHAT_WEBHOOK 은 chat-send.ts 에만 · 구글챗 웹훅 도메인은 어디에도 없음 ·
-//       켜짐 표식 문자열은 chat-mode.js 에만
+//       켜짐 표식 문자열은 chat-mode.js 에만 ·
+//       오류 알림 채팅방 웹훅(GOOGLE_CHAT_WEBHOOK_ALERT — 11-26)도 chat-send.ts 에만 ·
+//       채널 판정 순수 함수(chat-channel.js)는 런타임 env 를 읽지 않는다(값은 인자로만 받는다)
 //   (b) 번들: dist/server 안의 표식이 정확히 하나이고, 이 환경에서 기대하는 값과 같다
 //       → Cloudflare main 빌드가 알림 꺼진 채 배포되는 것도, 로컬 빌드가 켜지는 것도 막는다.
 //   (c) 번들: dist/server 에 구글챗 웹훅 도메인 0건 (웹훅은 런타임 비밀값으로만)
@@ -23,6 +25,10 @@ const MARKER_RE = /CHAT_MODE_(?:ON|OFF)/g;
 export const WEBHOOK_HOST = ['chat', 'googleapis', 'com'].join('.');
 const ON = ['CHAT', 'MODE', 'ON'].join('_'); // 이 파일도 src 밖이지만, 표식 문자열을 그대로 적지 않는다
 const DEV_VARS = '.dev.vars';
+// 오류 알림 채팅방 웹훅 이름 — 기존 이름을 앞부분으로 품고 있어 위 규칙에도 걸리지만, 이름이 바뀌어도 놓치지 않게 따로 본다.
+export const ALERT_KEY = ['GOOGLE', 'CHAT', 'WEBHOOK', 'ALERT'].join('_');
+const CHANNEL_FILE = 'lib/chat-channel.js';
+const WORKERS_ENV = ['cloudflare', 'workers'].join(':');
 
 function walk(dir, out = []) {
   for (const n of readdirSync(dir)) {
@@ -41,6 +47,10 @@ export function checkSource(srcDir) {
     const text = readFileSync(f, 'utf8');
     if (text.includes('GOOGLE_CHAT_WEBHOOK') && rel !== 'lib/chat-send.ts')
       errs.push(`src/${rel}: GOOGLE_CHAT_WEBHOOK 은 src/lib/chat-send.ts 에서만 읽는다`);
+    if (text.includes(ALERT_KEY) && rel !== 'lib/chat-send.ts')
+      errs.push(`src/${rel}: ${ALERT_KEY} 는 src/lib/chat-send.ts 에서만 읽는다`);
+    if (rel === CHANNEL_FILE && (text.includes(WORKERS_ENV) || text.includes('process.env')))
+      errs.push(`src/${rel}: 채널 판정 파일은 런타임 env 를 읽지 않는다 — 웹훅 값은 chat-send.ts 가 읽어 인자로 넘긴다`);
     if (text.includes(WEBHOOK_HOST))
       errs.push(`src/${rel}: ${WEBHOOK_HOST} 주소가 소스에 있다 — 웹훅은 런타임 비밀값으로만`);
     if (text.includes(ON) && rel !== 'lib/chat-mode.js')

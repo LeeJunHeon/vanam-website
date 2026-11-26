@@ -6,7 +6,9 @@ import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { chatModeAtBuild } from '../src/lib/chat-mode.js';
-import { checkSource, scanDist, judgeDist } from './check-chat-guard.mjs';
+import { checkSource, scanDist, judgeDist, ALERT_KEY } from './check-chat-guard.mjs';
+import { chatChannelOf, chatTargets, chatShouldFallback, chatDeliver } from '../src/lib/chat-channel.js';
+import { readFileSync } from 'node:fs';
 
 let total = 0, failed = 0;
 function eq(label, got, want) {
@@ -81,12 +83,79 @@ try {
   })).length, 1);
   eq('소스에 웹훅 주소', checkSource(src('src-host', { 'lib/a.ts': `"https://${HOST}/"` })).length, 1);
   eq('런타임 파일에 켜짐 표식', checkSource(src('src-on', { 'lib/chat-send.ts': `=== '${ON}'` })).length, 1);
+  // 오류 알림 채팅방 웹훅 이름(11-26)도 chat-send.ts 에서만
+  eq('오류 알림 웹훅 이름: chat-send.ts 에서 읽음 → 통과', checkSource(src('src-alert-ok', {
+    'lib/chat-send.ts': `env.GOOGLE_CHAT_WEBHOOK; env.${ALERT_KEY}`, 'lib/chat-channel.js': 'export const x = 1', 'lib/quote-ack-run.ts': "sendChat(t, { channel: 'alert' })",
+  })).length, 0);
+  eq('오류 알림 웹훅 이름: 다른 파일이 읽음 → 실패(규칙 2개에 걸림)', checkSource(src('src-alert-key', {
+    'lib/chat-send.ts': 'x', 'lib/staff-notify-run.ts': `cfEnv.${ALERT_KEY}`,
+  })).length, 2);
+  eq('오류 알림 웹훅 이름: 관리자 화면에 이름이 있어도 실패', checkSource(src('src-alert-admin', {
+    'lib/chat-send.ts': 'x', 'pages/admin/index.astro': `<p>${ALERT_KEY} 미설정</p>`,
+  })).length, 2);
+  eq('채널 판정 파일이 런타임 env 를 읽음 → 실패', checkSource(src('src-channel-env', {
+    'lib/chat-send.ts': 'x', 'lib/chat-channel.js': `import { env } from '${['cloudflare', 'workers'].join(':')}'`,
+  })).length, 1);
 } finally {
   rmSync(root, { recursive: true, force: true });
 }
+
+// ── 채널 선택·대체 판정(chat-channel.js — 순수 함수). 웹훅 값은 가짜 글자 ─────────────
+const guardTests = total;
+const M = 'hook-main', A = 'hook-alert';
+eq('채널 이름 정리', [chatChannelOf('alert'), chatChannelOf('main'), chatChannelOf(undefined), chatChannelOf('ALERT'), chatChannelOf(1)], ['alert', 'main', 'main', 'main', 'main']);
+eq('main 채널 → 기존 방만(오류 방 설정이 있어도)', chatTargets('main', { main: M, alert: A }), [{ channel: 'main', url: M }]);
+eq('채널 생략 → main', chatTargets(undefined, { main: M, alert: A }), [{ channel: 'main', url: M }]);
+eq('alert 설정 있음 → 오류 방 먼저, 기존 방이 대체', chatTargets('alert', { main: M, alert: A }), [{ channel: 'alert', url: A }, { channel: 'main', url: M }]);
+eq('alert 설정 없음 → 기존 방으로', chatTargets('alert', { main: M, alert: '' }), [{ channel: 'main', url: M }]);
+eq('alert 설정만 있음(기존 방 없음) → 오류 방만', chatTargets('alert', { main: '', alert: A }), [{ channel: 'alert', url: A }]);
+eq('둘 다 없음 → 빈 목록(웹훅 미설정)', [chatTargets('alert', { main: '', alert: '' }), chatTargets('main', {}), chatTargets('alert', undefined)], [[], [], []]);
+eq('두 값이 같으면 한 번만', chatTargets('alert', { main: M, alert: M }), [{ channel: 'alert', url: M }]);
+eq('main 채널은 오류 방으로 대체하지 않는다', chatTargets('main', { main: '', alert: A }), []);
+eq('대체 판정 — 전송 실패만', [{ sent: false, reason: 'http_error' }, { sent: false, reason: 'fetch_error' }, { sent: true, reason: 'ok' },
+  { sent: false, reason: 'no_webhook' }, { sent: false, reason: 'blocked_build' }, null].map(chatShouldFallback), [true, true, false, false, false, false]);
+async function deliver(channel, urls, results) {
+  const posted = [];
+  const r = await chatDeliver(chatTargets(channel, urls), async (t) => { posted.push(t.channel); return results[t.channel]; });
+  return { r, posted };
+}
+const OK = { sent: true, reason: 'ok', status: 200 };
+{
+  const { r, posted } = await deliver('alert', { main: M, alert: A }, { alert: OK, main: OK });
+  eq('alert 성공 → 오류 방 한 번만', [posted, r], [['alert'], { ...OK, channel: 'alert', fallback: false }]);
+}
+for (const bad of [{ sent: false, reason: 'http_error', status: 500 }, { sent: false, reason: 'fetch_error' }]) {
+  const { r, posted } = await deliver('alert', { main: M, alert: A }, { alert: bad, main: OK });
+  eq(`alert 실패(${bad.reason}) → 기존 방으로 한 번 더`, [posted, r], [['alert', 'main'], { ...OK, channel: 'main', fallback: true }]);
+}
+{
+  const bad = { sent: false, reason: 'http_error', status: 404 };
+  const { r, posted } = await deliver('alert', { main: M, alert: A }, { alert: bad, main: { sent: false, reason: 'fetch_error' } });
+  eq('alert·기존 방 모두 실패 → 마지막(기존 방) 결과 · 두 번만 시도', [posted, r], [['alert', 'main'], { sent: false, reason: 'fetch_error', channel: 'main', fallback: true }]);
+}
+{
+  const { r, posted } = await deliver('alert', { main: M, alert: '' }, { main: OK });
+  eq('alert 설정 없음 → 기존 방 한 번(대체 아님)', [posted, r], [['main'], { ...OK, channel: 'main', fallback: false }]);
+}
+{
+  const { r, posted } = await deliver('main', { main: M, alert: A }, { main: { sent: false, reason: 'http_error', status: 500 }, alert: OK });
+  eq('main 실패 → 오류 방으로 보내지 않는다', [posted, r?.sent, r?.channel], [['main'], false, 'main']);
+}
+eq('보낼 곳 없음 → null', (await deliver('alert', {}, {})).r, null);
+// 원문 검사 — 'alert' 채널로 보내는 곳은 메일 오류 알림 셋뿐 · 통로는 값·본문·응답을 로그에 남기지 않는다
+const read = (p) => readFileSync(p, 'utf8');
+const alertCalls = (p) => (read(p).match(/channel:\s*'alert'/g) ?? []).length;
+eq("'alert' 채널 호출 — 담당자 메일 실패 1 · 확인 메일 실패+하루 상한 2", [alertCalls('src/lib/staff-notify-run.ts'), alertCalls('src/lib/quote-ack-run.ts')], [1, 2]);
+eq('그 밖의 알림은 main 그대로', ['src/pages/api/inquiry.ts', 'src/pages/api/order.ts', 'src/lib/paypal.ts'].map(alertCalls), [0, 0, 0]);
+const sendSrc = read('src/lib/chat-send.ts');
+eq('통로: 빌드 차단이 채널 선택보다 먼저', sendSrc.indexOf('if (!CHAT_ENABLED)') > 0 && sendSrc.indexOf('if (!CHAT_ENABLED)') < sendSrc.indexOf('chatTargets(channel'), true);
+eq('통로: 응답 본문·오류 객체·웹훅 값을 로그에 넘기지 않는다', [/res\.text\(/.test(sendSrc), /console\.\w+\([^)]*\b(?:err|url|text)\b[^)]*\)/.test(sendSrc)], [false, false]);
+eq('통로: 설정 여부만 내보낸다(boolean)', /export function alertChannelConfigured\(\): boolean/.test(sendSrc), true);
+eq('통로: fetch 는 한 곳', (sendSrc.match(/\bfetch\s*\(/g) ?? []).length, 1);
+const channelTests = total - guardTests;
 
 if (failed) {
   console.error(`\n구글챗 게이트 단위 테스트 실패 — ${failed}/${total}건.`);
   process.exit(1);
 }
-console.log(`✓ 구글챗 게이트 단위 테스트 — ${total}건 통과`);
+console.log(`✓ 구글챗 게이트 단위 테스트 — ${total}건 통과 · 채널 선택·대체(alert 있음/없음/실패 시 main) ${channelTests}건`);

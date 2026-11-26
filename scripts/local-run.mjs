@@ -122,7 +122,7 @@ writeFileSync(DEV_VARS,
   '# npm run local 이 매번 새로 쓴다 — 로컬 전용 값만. (.env 값은 복사하지 않는다)\n' +
   Object.entries(vars).map(([k, v]) => `${k}="${v}"`).join('\n') + '\n', { mode: 0o600 });
 const check = readVars(DEV_VARS);
-for (const k of ['GOOGLE_CHAT_WEBHOOK', 'PAYPAL_CLIENT_ID', 'PAYPAL_SECRET']) {
+for (const k of ['GOOGLE_CHAT_WEBHOOK', 'GOOGLE_CHAT_WEBHOOK_ALERT', 'PAYPAL_CLIENT_ID', 'PAYPAL_SECRET']) {
   if (check[k] !== '') die(`${DEV_VARS} 의 ${k} 가 빈 값이 아닙니다.`);
 }
 if (readFileSync(DEV_VARS, 'utf8').includes(WEBHOOK_HOST)) die(`${DEV_VARS} 에 웹훅 주소가 남아 있습니다.`);
