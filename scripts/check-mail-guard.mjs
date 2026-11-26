@@ -39,7 +39,8 @@ export const SECRET_RES = [
 ];
 // 메일 경로 파일 — 빌드 환경 변수 문자열을 두지 않는다
 const MAIL_PATH_FILES = ['lib/mail-send.ts', 'lib/doc-pdf.ts', 'lib/quote-ack-run.ts', 'lib/mail-mime.js', 'lib/quote-ack.js',
-  'lib/mail-mode.js', 'pages/api/admin/quote-mail.ts', 'lib/staff-notify.js', 'lib/staff-notify-run.ts'];
+  'lib/mail-mode.js', 'pages/api/admin/quote-mail.ts', 'lib/staff-notify.js', 'lib/staff-notify-run.ts',
+  'lib/staff-notify-record.js', 'pages/api/admin/staff-mail.ts'];
 const IMPORT_META_ENV = ['import', 'meta', 'env'].join('.');
 const DEV_VARS = '.dev.vars';
 

@@ -162,6 +162,10 @@ const MIGRATIONS = [
   // 1001: 견적 요청 접수 확인 메일의 결과(JSON — 보냄/실패/안 보냄 · 사유 · PDF · 시각 · 횟수). src/lib/quote-ack-run.ts 가 쓴다.
   //   옛 접수 건은 NULL → 관리자 화면에 아무것도 표시하지 않는다.
   `ALTER TABLE inquiries ADD COLUMN ack_mail TEXT`,
+  // 1126: 담당자 알림 메일의 결과(JSON — 보냄/실패/안 보냄 · 사유 · 시각 · 횟수). src/lib/staff-notify-run.ts 가 쓴다.
+  //   접수 직후 자동 발송과 관리자 [담당자 메일 (다시) 보내기] 모두 여기에 남긴다(기록 모양은 ack_mail 과 같다 — staff-notify-record.js).
+  //   옛 접수 건은 NULL → 관리자 화면에 결과 줄 없이 [담당자 메일 보내기] 버튼만 나온다.
+  `ALTER TABLE inquiries ADD COLUMN staff_mail TEXT`,
   // 0829: 웨이퍼 다이싱 옵션. 주문 항목별로 '골랐는가'와 '그때의 박스당 금액'을 함께 굳힌다.
   //   금액을 같이 저장해야 나중에 단가표가 바뀌어도 그 주문의 청구 근거가 그대로 남는다.
   //   옛 주문에는 값이 없다 → DEFAULT 0 으로 '다이싱 아니오'가 된다.

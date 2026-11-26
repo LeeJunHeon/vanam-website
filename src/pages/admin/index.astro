@@ -16,6 +16,9 @@ import { summarizeRevisions } from '../../lib/quote-admin.js';
 import { MAIL_LIVE, gmailConfigured } from '../../lib/mail-send';
 import { pdfConfigured } from '../../lib/doc-pdf';
 import { ackLabel, isFreshPending } from '../../lib/quote-ack.js';
+// 담당자 알림 메일 — 받는 주소 설정 여부(값은 보지 않는다) · 견적·문의 카드의 발송 결과 한 줄과 [담당자 메일 (다시) 보내기]
+import { staffNotifyConfigured } from '../../lib/staff-notify-run';
+import { staffMailLabel, isStaffPending, staffSentBefore } from '../../lib/staff-notify-record.js';
 import { materialLabels } from '../../lib/material-value.js';
 // 운영 설정 'PDF 첨부'(ack_pdf_attach) — 맨 위 확인 메일 줄 · 다시 보내기 확인창 문구
 import { settingDefaults } from '../../lib/site-settings.js';
@@ -33,6 +36,7 @@ const LOGIN_MSG: Record<string, string> = {
 const loginMsg = authed ? '' : (LOGIN_MSG[Astro.url.searchParams.get('login') ?? ''] ?? '');
 const configured = adminConfigured();
 const mailReady = gmailConfigured();
+const staffReady = staffNotifyConfigured();
 // PDF 첨부 스위치 — 로그인했고 DB 가 있으면 아래에서 읽는다(읽기 실패는 readSiteSettings 가 기본값 = 끔)
 let ackPdfOn = settingDefaults().ack_pdf_attach === 1;
 
@@ -46,6 +50,7 @@ type Row = {
   details: string | null; details_json: string | null; quantity: string | null;
   quoted_amount: number | null; quote_currency: string | null; quote_note: string | null; quote_bank: string | null;
   ack_mail: string | null;
+  staff_mail: string | null;
   locale: string | null; created_at: string; updated_at: string | null;
 };
 
@@ -107,6 +112,9 @@ const mailLine = (MAIL_LIVE ? '확인 메일: 운영 — 고객에게 발송' : 
   (!mailReady ? ' · Gmail 설정 없음(보내지 않음)'
     : !ackPdfOn ? ' · PDF 첨부 꺼짐(조회 링크만)'
     : !pdfConfigured() ? ' · PDF 설정 없음(조회 링크만)' : '');
+// 담당자 알림 메일 — 받는 주소 값은 화면에 내지 않는다(설정 여부만). 테스트 빌드는 주소가 있어도 보내지 않는다.
+const staffLine = (staffReady ? '담당자 메일: 받는 주소 설정됨' : '담당자 메일: 받는 주소 없음(보내지 않음)') +
+  (staffReady && !MAIL_LIVE ? ' · 테스트 빌드라 보내지 않음' : staffReady && !mailReady ? ' · Gmail 설정 없음(보내지 않음)' : '');
 
 // 주문 상태 (결제 연동 전에는 관리자가 통장을 확인하고 '결제 완료'로 바꾼다)
 // 배지 표시용 전체 목록 (paid·refunded 는 결제/환불 경로가 기록하며 관리자가 고를 수 없다)
@@ -270,6 +278,7 @@ const spec = (r: Row) =>
               {CHAT_ENABLED ? '구글챗 알림: 켜짐' : '구글챗 알림: 꺼짐 — 로컬/테스트 빌드'}
             </p>
             <p class:list={['chat-state mt-1 text-sm', MAIL_LIVE && mailReady ? 'is-on' : 'is-off']}>{mailLine}</p>
+            <p class:list={['chat-state mt-1 text-sm', MAIL_LIVE && mailReady && staffReady ? 'is-on' : 'is-off']}>{staffLine}</p>
           </div>
           <div class="flex items-center gap-2">
             <button
@@ -758,6 +767,23 @@ const spec = (r: Row) =>
                       </div>
                     );
                   })()}
+                  {/* 담당자 알림 메일 — 결과 한 줄 + 보내기/다시 보내기(고객이 아니라 담당자 주소로 간다).
+                      접수 상태와 무관하게 표시하고, 기록이 없는 옛 접수 건에도 버튼을 둔다. 보내는 중(2분 안)에는 숨긴다 */}
+                  {(() => {
+                    const staff = staffMailLabel(r.staff_mail);
+                    return (
+                      <div class="mt-2 flex flex-wrap items-center gap-3 text-sm">
+                        {staff && <p class:list={[staff.tone === 'ok' ? 'text-ok' : staff.tone === 'bad' ? 'text-danger' : 'text-ink/40']}>{staff.text}</p>}
+                        {!isStaffPending(r.staff_mail) && (
+                          <button type="button" data-staff-resend={r.id}
+                            class="rounded-lg border border-ink/15 px-3 py-2 text-sm text-ink/60 transition hover:border-ink/40 hover:text-ink">
+                            {staffSentBefore(r.staff_mail) ? '담당자 메일 다시 보내기' : '담당자 메일 보내기'}
+                          </button>
+                        )}
+                        <span data-staff-msg={r.id} role="status" aria-live="polite"></span>
+                      </div>
+                    );
+                  })()}
                   {amountMismatch(r) && (
                     <p class="mt-2 text-sm font-semibold text-warn">확정 금액과 현재 견적 합계가 다릅니다 — 고객 견적서는 단순 양식으로 나갑니다</p>
                   )}
@@ -879,6 +905,23 @@ const spec = (r: Row) =>
                     );
                   })()}
                   <p class="mt-3 whitespace-pre-line text-sm leading-relaxed text-ink/70">{r.message}</p>
+                  {/* 담당자 알림 메일 — 결과 한 줄 + 보내기/다시 보내기(고객이 아니라 담당자 주소로 간다).
+                      접수 상태와 무관하게 표시하고, 기록이 없는 옛 접수 건에도 버튼을 둔다. 보내는 중(2분 안)에는 숨긴다 */}
+                  {(() => {
+                    const staff = staffMailLabel(r.staff_mail);
+                    return (
+                      <div class="mt-3 flex flex-wrap items-center gap-3 text-sm">
+                        {staff && <p class:list={[staff.tone === 'ok' ? 'text-ok' : staff.tone === 'bad' ? 'text-danger' : 'text-ink/40']}>{staff.text}</p>}
+                        {!isStaffPending(r.staff_mail) && (
+                          <button type="button" data-staff-resend={r.id}
+                            class="rounded-lg border border-ink/15 px-3 py-2 text-sm text-ink/60 transition hover:border-ink/40 hover:text-ink">
+                            {staffSentBefore(r.staff_mail) ? '담당자 메일 다시 보내기' : '담당자 메일 보내기'}
+                          </button>
+                        )}
+                        <span data-staff-msg={r.id} role="status" aria-live="polite"></span>
+                      </div>
+                    );
+                  })()}
                 </article>
               ))}
             </div>
@@ -1467,6 +1510,39 @@ const spec = (r: Row) =>
           say('보내는 중… (PDF 를 만드느라 10초쯤 걸릴 수 있습니다)');
           try {
             const res = await fetch('/api/admin/quote-mail', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id }),
+            });
+            const j = await res.json().catch(() => ({}));
+            if (res.status === 401) { say('로그인이 만료되었습니다. 새로고침한 뒤 다시 로그인하세요.', false); return; }
+            if (res.status === 409) { say('아직 보내는 중입니다. 잠시 뒤 새로고침해 결과를 확인하세요.', false); return; }
+            if (j.ok) { say('보냈습니다. 새로고침합니다.'); setTimeout(() => location.reload(), 900); return; }
+            if (j.result) { say('보내지 못했습니다 — 새로고침 뒤 이 줄에 사유가 나옵니다.', false); setTimeout(() => location.reload(), 1500); return; }
+            say(`실패: ${j.error ?? res.status}`, false);
+          } catch (e) {
+            say('처리 중 오류가 발생했습니다.', false);
+          } finally {
+            btn.disabled = false;
+          }
+        });
+      });
+
+      // 담당자 알림 메일 (다시) 보내기 — 고객이 아니라 담당자 주소로 가는 메일이다(확인창에 그렇게 적는다). 견적·문의 카드 공통.
+      document.querySelectorAll<HTMLButtonElement>('[data-staff-resend]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const id = btn.dataset.staffResend!;
+          if (!confirm(`${id}\n\n담당자 주소로 알림 메일을 보냅니다. 진행하시겠습니까?`)) return;
+          const msg = document.querySelector(`[data-staff-msg="${id}"]`) as HTMLElement | null;
+          const say = (t: string, ok = true) => {
+            if (!msg) return;
+            msg.textContent = t;
+            msg.style.color = ok ? 'var(--color-accent)' : 'var(--color-danger)';
+          };
+          btn.disabled = true;
+          say('보내는 중…');
+          try {
+            const res = await fetch('/api/admin/staff-mail', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ id }),

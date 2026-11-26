@@ -195,6 +195,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   //    DB가 없거나(dev) 실패해도 알림은 나가야 하므로 예외를 삼킨다.
   let saved: Awaited<ReturnType<typeof db>> = null; // 접수 행이 실제로 저장된 DB (자동 견적은 이때만)
   let rowSaved = false; // 접수 행이 어떤 경로로든 저장됐는가(알림 실패 때 성공 응답 판정 — 예비 저장 경로 포함)
+  let rowDb: Awaited<ReturnType<typeof db>> = null; // 접수 행이 저장된 DB(예비 저장 경로 포함) — 담당자 알림 메일 결과를 그 행에 남긴다
   try {
     const d = await db();
     if (d) {
@@ -221,6 +222,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
           .run();
         saved = d;
         rowSaved = true;
+        rowDb = d;
       } catch (colErr) {
         // ⚠️ 컬럼 추가(ALTER TABLE) 전에 배포되면 위 INSERT 가 실패한다.
         //    그때 그냥 던지면 **고객 견적이 통째로 사라진다.** 구조화 사본만 포기하고 접수는 반드시 남긴다.
@@ -230,6 +232,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
           .bind(...base)
           .run();
         rowSaved = true;
+        rowDb = d;
         // 구조화 사본이 저장되지 않았으니 자동 견적도 남기지 않는다(saved 는 null 로 둔다)
       }
     } else {
@@ -294,12 +297,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
   };
   // 5-3) 담당자 알림 메일 — 고객에게 성공으로 응답하는 모든 경로(scheduleAck 와 같은 자리)에서, 그보다 먼저 시작한다(첨부 없는 가벼운 쪽).
   //      502 경로에서는 보내지 않는다. 받는 주소·발송 판정은 staff-notify-run.ts — 응답·확인 메일·구글챗과 독립(예외를 던지지 않는다).
+  //      결과는 inquiries.staff_mail 에 남는다(접수 행이 저장된 경우만 — 관리자 화면에서 결과를 보고 다시 보낼 수 있다).
   const scheduleStaff = () => {
     const staff = runStaffNotify({
       type, id, receivedKst, locale, origin: ackOrigin,
       name, company, email, phone, productName, product, material: materialLabels(material), method, substrate, sampleCount,
       waferLine, details, estimateLine, message,
-    }).catch(() => undefined);
+    }, { d: rowDb, by: 'auto' }).catch(() => undefined);
     pickWaitUntil(locals)?.(staff);
   };
   // 응답의 ack — 확인 메일이 나갈 건인가(판정만). 완료 화면이 이때만 '접수 확인 메일을 보내드렸습니다'를 띄운다

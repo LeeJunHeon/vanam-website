@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS inquiries (
   paid_at       TEXT,
   paid_usd      REAL,
   ack_mail      TEXT,                          -- 접수 확인 메일 결과(JSON) — 보냄/실패/안 보냄·사유·PDF·시각 (1001)
+  staff_mail    TEXT,                          -- 담당자 알림 메일 결과(JSON) — 보냄/실패/안 보냄·사유·시각 (1126)
   locale        TEXT,
   created_at    TEXT NOT NULL,
   updated_at    TEXT
