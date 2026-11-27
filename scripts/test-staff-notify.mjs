@@ -134,6 +134,16 @@ for (const reason of ['auth_failed', 'http_error', 'fetch_error', 'error', 'no_c
   eq(`실패(${reason}) → 구글챗 한 줄`, [r.reason, calls.alert.length, calls.alert[0]?.includes(`(${reason})`)], [reason, 1, true]);
 }
 {
+  // 토큰 단계 실패(11-27) — 알림 목록에서 빠지면 구글 인증 서버가 응답하지 않아 실패해도 조용히 지나간다
+  const { r, calls } = await flow({ live: true, to: TO, result: { sent: false, reason: 'token_unreachable' } });
+  eq('실패(token_unreachable) → 구글챗 한 줄', [r.reason, calls.alert, STAFF_ALERT_REASONS.includes('token_unreachable')],
+    ['token_unreachable', ['⚠️ 담당자 알림 메일 발송 실패 — 접수번호 INQ-TEST-0009 (token_unreachable). 관리자 화면에서 확인해 주세요.'], true]);
+  eq('실패 알림: 실행 위치가 있으면 사유 뒤에 · 이상한 값은 빼고', [staffAlertText('INQ-TEST-0009', 'token_unreachable', 'HKG'), staffAlertText('INQ-TEST-0009', 'fetch_error', 'hkg x'), staffAlertText('INQ-TEST-0009', 'fetch_error')],
+    ['⚠️ 담당자 알림 메일 발송 실패 — 접수번호 INQ-TEST-0009 (token_unreachable · 실행 위치 HKG). 관리자 화면에서 확인해 주세요.',
+      '⚠️ 담당자 알림 메일 발송 실패 — 접수번호 INQ-TEST-0009 (fetch_error). 관리자 화면에서 확인해 주세요.',
+      '⚠️ 담당자 알림 메일 발송 실패 — 접수번호 INQ-TEST-0009 (fetch_error). 관리자 화면에서 확인해 주세요.']);
+}
+{
   const { r, calls } = await flow({ live: true, to: TO, result: { sent: false, reason: 'blocked_host' } });
   eq('blocked_host → 조용히', [r.reason, calls.alert.length], ['blocked_host', 0]);
 }
@@ -263,7 +273,7 @@ eq('상태 판정', [staffStatusOf({ sent: true, reason: 'ok' }), staffStatusOf(
   ['sent:null', 'failed:fetch_error', 'skipped:disabled', 'skipped:blocked_build', 'skipped:blocked_host', 'skipped:no_credentials', 'failed:bad_config', 'failed:error', 'failed:error']);
 const r1 = staffRecord(null, { status: 'failed', reason: 'fetch_error', by: 'auto', at: T1 });
 eq('기록: 자동 실패', JSON.parse(r1), { status: 'failed', reason: 'fetch_error', by: 'auto', at: T1, n: 1, sentAt: null, sentN: 0 });
-eq('라벨: 자동 실패', staffMailLabel(r1), { tone: 'bad', text: '담당자 메일: 실패 — Gmail 연결 오류 · 2099-12-31 16:15' });
+eq('라벨: 자동 실패', staffMailLabel(r1), { tone: 'bad', text: '담당자 메일: 실패 — Gmail 발송 단계 연결 오류 — 나갔는지 확실하지 않으니 hello@ 보낸편지함을 확인하세요 · 2099-12-31 16:15' });
 eq('버튼: 보낸 적 없음', [staffSentBefore(null), staffSentBefore(r1), staffSentBefore('깨짐')], [false, false, false]);
 const r1p = staffRecord(r1, { status: 'pending', by: 'admin', at: T2 });
 eq("기록: '보내는 중'은 횟수를 세지 않는다", JSON.parse(r1p), { status: 'pending', reason: null, by: 'admin', at: T2, n: 1, sentAt: null, sentN: 0 });
@@ -291,6 +301,22 @@ eq('사유 한글: 공통 사유는 확인 메일 것 그대로', [STAFF_REASON_
   [ACK_REASON_KO.fetch_error, ACK_REASON_KO.http_error, ACK_REASON_KO.no_credentials, ACK_REASON_KO.error]);
 eq('라벨: 모르는 사유는 그대로 · 기록 없음은 null', [staffMailLabel(staffRecord(null, { status: 'failed', reason: 'weird', by: 'auto', at: T1 })).text, staffMailLabel(null), staffMailLabel('{깨짐'), parseStaffMail('')],
   ['담당자 메일: 실패 — weird · 2099-12-31 16:15', null, null, null]);
+// 실행 위치(colo) · 토큰 단계 실패 사유(11-27)
+eq('상태 판정: token_unreachable 은 실패', staffStatusOf({ sent: false, reason: 'token_unreachable' }), { status: 'failed', reason: 'token_unreachable' });
+{
+  const rc = staffRecord(null, { status: 'failed', reason: 'token_unreachable', by: 'auto', at: T1, colo: 'HKG' });
+  eq('기록: 실패 기록에 실행 위치', JSON.parse(rc), { status: 'failed', reason: 'token_unreachable', by: 'auto', at: T1, n: 1, sentAt: null, sentN: 0, colo: 'HKG' });
+  eq('라벨: 실패 줄 끝에 실행 위치 · 새 사유 문구', staffMailLabel(rc),
+    { tone: 'bad', text: '담당자 메일: 실패 — 구글 인증 서버가 응답하지 않거나 오류를 냈습니다 — 메일은 나가지 않았습니다(다시 보내면 됩니다) · 2099-12-31 16:15 · 실행 위치 HKG' });
+  eq('기록: 실행 위치가 없거나 이상하면 키를 넣지 않는다(옛 기록과 같은 모양)', [null, undefined, '', 'hkg', 'HKG1'].map((colo) => 'colo' in JSON.parse(staffRecord(null, { status: 'failed', reason: 'error', by: 'auto', at: T1, colo }))), Array(5).fill(false));
+  eq('라벨: 실행 위치 없는 옛 기록은 그대로', staffMailLabel(JSON.stringify({ status: 'failed', reason: 'auth_failed', by: 'auto', at: T1, n: 1, sentAt: null, sentN: 0 })).text,
+    `담당자 메일: 실패 — ${ACK_REASON_KO.auth_failed} · 2099-12-31 16:15`);
+  const sentC = staffRecord(rc, { status: 'sent', by: 'admin', at: T2, colo: 'NRT' });
+  eq('라벨: 성공 줄에는 실행 위치를 붙이지 않는다(기록에는 남는다)', [JSON.parse(sentC).colo, staffMailLabel(sentC).text], ['NRT', '담당자 메일: 보냄 · 2099-12-31 16:50 · 다시 보냄']);
+  const later = staffRecord(sentC, { status: 'failed', reason: 'fetch_error', by: 'admin', at: T3, colo: 'HKG' });
+  eq('라벨: 앞서 보낸 사실 뒤 · 줄 맨 끝에 실행 위치', staffMailLabel(later).text,
+    `담당자 메일: 실패 — ${ACK_REASON_KO.fetch_error} · 2099-12-31 17:00 (앞서 2099-12-31 16:50 에 보냄) · 실행 위치 HKG`);
+}
 const recordTests = total - base1;
 
 // ⑩ 발송 + 기록 순서(staffNotifyRecorded) — 가짜 통로. 자동 실패는 구글챗 알림, 관리자 실패는 알림 없음
@@ -305,8 +331,20 @@ async function recorded(opts) {
     readTo: () => { calls.readTo++; return opts.to ?? TO; },
     send: async () => { calls.order.push('send'); calls.send++; if (opts.sendThrows) throw new Error('x'); return opts.result ?? { sent: true, reason: 'ok' }; },
     alert: async (t) => { calls.alert.push(t); },
+    ...(opts.colo === undefined ? {} : { colo: opts.colo }),
   });
   return { r, calls };
+}
+{
+  // 토큰 단계 실패(11-27) — 자동 발송이면 알림이 나가고, 기록·알림에 실행 위치가 붙는다
+  const { r, calls } = await recorded({ by: 'auto', result: { sent: false, reason: 'token_unreachable' }, colo: 'HKG' });
+  eq('자동 + token_unreachable → 알림 1번(실행 위치 포함)', [r, calls.alert],
+    [{ sent: false, reason: 'token_unreachable', status: 'failed' }, ['⚠️ 담당자 알림 메일 발송 실패 — 접수번호 INQ-20991231-TEST (token_unreachable · 실행 위치 HKG). 관리자 화면에서 확인해 주세요.']]);
+  eq("자동 + token_unreachable → '보내는 중'·결과 기록 모두 실행 위치", calls.writes.map((w) => `${w.status}:${w.reason}:${w.colo}`), ['pending:null:HKG', 'failed:token_unreachable:HKG']);
+  const admin = await recorded({ by: 'admin', result: { sent: false, reason: 'token_unreachable' }, colo: 'NRT' });
+  eq('관리자 + token_unreachable → 알림 없음 · 기록에 실행 위치', [admin.calls.alert.length, admin.calls.writes.at(-1)?.reason, admin.calls.writes.at(-1)?.colo], [0, 'token_unreachable', 'NRT']);
+  const none = await recorded({ by: 'auto', result: { sent: false, reason: 'token_unreachable' } });
+  eq('실행 위치를 못 읽어도 발송·기록·알림은 그대로(키 없음)', [none.r.reason, none.calls.alert.length, none.calls.writes.map((w) => 'colo' in w)], ['token_unreachable', 1, [false, false]]);
 }
 {
   const { r, calls } = await recorded({ by: 'auto', result: { sent: false, reason: 'fetch_error' } });
@@ -374,6 +412,9 @@ eq('API: 보내는 중이면 409', /isStaffPending\(row\.staff_mail\)\) return j
 eq('API: 없는 접수는 404 · 접수번호 형식 검사', [api.includes("error: 'not_found' }, 404"), api.includes('/^INQ-\\d{8}-[A-Z0-9]{4}$/')], [true, true]);
 eq('접수: 자동 발송은 저장된 DB 와 by auto 를 넘긴다', /\{ d: rowDb, by: 'auto' \}/.test(inq), true);
 eq('새 파일에 메일 주소 없음(기록·API)', [ADDR_RE.test(rec), ADDR_RE.test(api)], [false, false]);
+eq('접수·관리자: 실행 위치와 토큰 설정은 셋째 인자로', [/\{ d: rowDb, by: 'auto' \}, \{ colo, token: mailTokenOf\(siteSettings\) \}/.test(inq), /\{ colo: requestColo\(request\), token \}\)/.test(api)], [true, true]);
+eq('실행부: 실행 위치·토큰 설정을 발송 통로로 넘긴다', run.includes('{ tag: TAG, ref: p.id, origin: p.origin, colo: ctx.colo, token: ctx.token }'), true);
+eq('접수: 설정을 다시 읽지 않는다(readSiteSettings 한 번) · 관리자 담당자 메일은 한 번 읽는다', [(inq.match(/readSiteSettings\(/g) ?? []).length, (api.match(/readSiteSettings\(/g) ?? []).length], [1, 1]);
 const srcTests = total - base3;
 
 if (failed) {

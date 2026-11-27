@@ -12,7 +12,7 @@ import {
 } from '../src/lib/mail-mime.js';
 import {
   ackContent, estimateOf, attachmentName, pdfTitle, kstText, pageOf, mergeDocPages, fitScript,
-  ackRecord, parseAck, ackLabel, pdfKo, requestDocArgs, ACK_REASON_KO, hostAllowed, safeShort, isFreshPending, ACK_PENDING_MS, lookupLink, ackLang,
+  ackRecord, parseAck, ackLabel, pdfKo, requestDocArgs, ACK_REASON_KO, hostAllowed, safeShort, isFreshPending, ACK_PENDING_MS, lookupLink, ackLang, coloSuffix,
 } from '../src/lib/quote-ack.js';
 import { DELIVERY_METHODS } from '../src/lib/quote-fields.js';
 import { buildQuoteHtml, buildRequestHtml, requestDocFrom, fitCells, STYLE } from '../src/lib/doc-excel.js';
@@ -357,6 +357,29 @@ eq('defang(조회 화면 요청 내용): 줄바꿈·길이는 그대로 · 주�
   eq('사유 한글: 발송 통로의 모든 사유 + 실행부 사유', ['blocked_build', 'blocked_host', 'bad_recipient', 'no_credentials', 'unverified', 'recipient_cap', 'daily_cap', 'disabled_by_setting',
     'auth_failed', 'http_error', 'fetch_error', 'in_progress', 'no_inquiry', 'not_quote', 'error']
     .every((k) => typeof ACK_REASON_KO[k] === 'string' && ACK_REASON_KO[k]), true);
+  // 토큰 단계 실패 · 발송 단계 연결 오류 문구 · 실행 위치(11-27)
+  eq('사유 한글: 토큰 단계 실패 · 발송 단계 연결 오류', [ACK_REASON_KO.token_unreachable, ACK_REASON_KO.fetch_error],
+    ['구글 인증 서버가 응답하지 않거나 오류를 냈습니다 — 메일은 나가지 않았습니다(다시 보내면 됩니다)', 'Gmail 발송 단계 연결 오류 — 나갔는지 확실하지 않으니 hello@ 보낸편지함을 확인하세요']);
+  const c1 = ackRecord(null, { status: 'failed', reason: 'token_unreachable', pdf: 'none:off', by: 'auto', at: '2026-10-01T07:50:20.000Z', colo: 'HKG' });
+  eq('기록: 실패 기록에 실행 위치', JSON.parse(c1), { status: 'failed', reason: 'token_unreachable', pdf: 'none:off', code: null, by: 'auto', at: '2026-10-01T07:50:20.000Z', n: 1, sentAt: null, sentN: 0, colo: 'HKG' });
+  eq('관리자 줄: 실패 줄 끝에 실행 위치', ackLabel(c1),
+    { tone: 'bad', text: '확인 메일: 실패 — 구글 인증 서버가 응답하지 않거나 오류를 냈습니다 — 메일은 나가지 않았습니다(다시 보내면 됩니다) · 2026-10-01 16:50 · 실행 위치 HKG' });
+  eq('관리자 줄: 상태 코드 · 앞서 보낸 사실 뒤 맨 끝에 실행 위치', ackLabel(ackRecord(a1, { status: 'failed', reason: 'token_unreachable', code: 503, by: 'admin', at: '2026-10-01T08:00:00.000Z', colo: 'NRT' })).text,
+    '확인 메일: 실패 — 구글 인증 서버가 응답하지 않거나 오류를 냈습니다 — 메일은 나가지 않았습니다(다시 보내면 됩니다) (HTTP 503) · 2026-10-01 17:00 (앞서 2026-10-01 16:50 에 보냄) · 실행 위치 NRT');
+  eq('기록: 실행 위치가 없거나 이상하면 키 없음(옛 기록과 같은 모양)', [undefined, null, '', 'hkg', 'TOOLONG'].map((colo) => 'colo' in JSON.parse(ackRecord(null, { status: 'failed', reason: 'error', by: 'auto', at: '2026-10-01T07:50:20.000Z', colo }))), Array(5).fill(false));
+  eq('관리자 줄: 실행 위치 없는 옛 기록은 그대로', ackLabel(a2).text.includes('실행 위치'), false);
+  const s1 = ackRecord(null, { status: 'sent', pdf: 'none:off', by: 'auto', at: '2026-10-01T07:50:20.000Z', colo: 'ICN' });
+  eq('관리자 줄: 성공·안 보냄 줄에는 실행 위치를 붙이지 않는다', [JSON.parse(s1).colo, ackLabel(s1).text,
+    ackLabel(ackRecord(null, { status: 'skipped', reason: 'unverified', by: 'auto', at: '2026-10-01T07:50:20.000Z', colo: 'ICN' })).text.includes('실행 위치')],
+    ['ICN', '확인 메일: 보냄 · 2026-10-01 16:50 · PDF 첨부 꺼짐(설정)', false]);
+  eq('실행 위치 꼬리: 값이 있을 때만', [coloSuffix('HKG'), coloSuffix(''), coloSuffix(null), coloSuffix('x y')], [' · 실행 위치 HKG', '', '', '']);
+  // 실행부(quote-ack-run.ts) — 새 사유가 '실패'로 분류돼 알림이 나간다(원문 검사: cloudflare:workers 를 써서 node 에서 부를 수 없다)
+  const runSrc = readFileSync('src/lib/quote-ack-run.ts', 'utf8');
+  const skipLine = runSrc.split('\n').find((l) => l.includes('const skipped = sent.reason ===')) ?? '';
+  eq("실행부: '안 보냄' 사유 4개뿐 — token_unreachable 은 실패", [skipLine.includes('token_unreachable'), (skipLine.match(/sent\.reason === '/g) ?? []).length, runSrc.includes("status: skipped ? 'skipped' : 'failed'")], [false, 4, true]);
+  eq('실행부: 실패면 알림(실행 위치 포함) · 알림은 오류 알림 채널', [runSrc.includes("if (result.status === 'failed') await alertFailure(id, result, opts.colo);"), /사유: \$\{why\}.*\$\{coloSuffix\(colo\)\}/.test(runSrc), /coloSuffix\(colo\)[^\n]*\n\s*\{ tag: 'ack-mail', ref: id, channel: 'alert' \}/.test(runSrc)], [true, true, true]);
+  eq('실행부: 토큰 설정은 이미 읽은 운영 설정에서 · 실행 위치를 발송 통로로', runSrc.includes("{ tag: 'ack-mail', ref: id, origin, deadline, colo, token: mailTokenOf(settings) }"), true);
+  eq('실행부: 설정 읽기 호출 수는 그대로(판정 1 · 본문 1)', (runSrc.match(/await readSiteSettings\(d\)/g) ?? []).length, 2);
 }
 
 // ⑤ 홈페이지 문구 — PDF 첨부는 운영 설정 스위치(기본 끔)라 고객 화면에서 약속하지 않는다(10-23)

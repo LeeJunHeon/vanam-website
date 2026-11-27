@@ -6,6 +6,7 @@ import type { APIRoute } from 'astro';
 import { isAdmin } from '../../../lib/admin-auth';
 import { db } from '../../../lib/db';
 import { runQuoteAck } from '../../../lib/quote-ack-run';
+import { requestColo } from '../../../lib/cf-colo.js';
 
 export const prerender = false;
 
@@ -27,7 +28,7 @@ export const POST: APIRoute = async ({ request }) => {
   const id = typeof body.id === 'string' ? body.id : '';
   if (!/^INQ-\d{8}-[A-Z0-9]{4}$/.test(id)) return json({ ok: false, error: 'bad_id' }, 400);
 
-  const r = await runQuoteAck(d, id, { by: 'admin', origin: new URL(request.url).origin });
+  const r = await runQuoteAck(d, id, { by: 'admin', origin: new URL(request.url).origin, colo: requestColo(request) });
   if (r.reason === 'no_inquiry') return json({ ok: false, error: 'not_found' }, 404);
   if (r.reason === 'not_quote') return json({ ok: false, error: 'not_quote' }, 400);
   // 접수 직후 자동 발송이 아직 도는 중 — 두 번 보내지 않는다(2분 뒤에도 그대로면 '중단됨'으로 보이고 다시 보낼 수 있다)

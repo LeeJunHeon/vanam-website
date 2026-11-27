@@ -12,7 +12,7 @@ import { editSpec, rowFromInput, sameRow, changedCols, checkEdit, dataForValidat
 import { buildXlsx, crc32 } from '../src/lib/xlsx-write.js';
 import { zipEntries, openWorkbook } from '../src/lib/xlsx-core.js';
 import { readPriceWorkbook, validatePriceData, priceRowsForDb, priceFingerprint, REQUIRED_POLICY_KEYS, PRICE_TABLE_ORDER } from '../src/lib/price-sheet.js';
-import { SETTINGS, checkSetting, settingsFromRows, settingDefaults, settingSpec, quoteLimitsOf, fillDays } from '../src/lib/site-settings.js';
+import { SETTINGS, checkSetting, settingsFromRows, settingDefaults, settingSpec, quoteLimitsOf, mailTokenOf, fillDays } from '../src/lib/site-settings.js';
 import { ackContent } from '../src/lib/quote-ack.js';
 
 let total = 0, failed = 0;
@@ -122,8 +122,20 @@ eq('지금 가짜 DB 는 엑셀 올리기 검사를 통과(DB 1/0 → TRUE/FALSE
 }
 
 // ── ④ 운영 설정 ─────────────────────────────────────────────────────────────────
-eq('운영 설정 7개 · 키', SETTINGS.map((s) => s.key), ['reply_business_days', 'quote_sample_manual_min', 'quote_auto_max_nm', 'quote_auto_max_min', 'ack_recipient_daily_max', 'ack_global_daily_max', 'ack_pdf_attach']);
-eq('기본값 = 지금까지 코드 값 · PDF 첨부는 끔', settingDefaults(), { reply_business_days: 2, quote_sample_manual_min: 10, quote_auto_max_nm: 10000, quote_auto_max_min: 1440, ack_recipient_daily_max: 3, ack_global_daily_max: 50, ack_pdf_attach: 0 });
+eq('운영 설정 9개 · 키', SETTINGS.map((s) => s.key), ['reply_business_days', 'quote_sample_manual_min', 'quote_auto_max_nm', 'quote_auto_max_min', 'ack_recipient_daily_max', 'ack_global_daily_max', 'ack_pdf_attach', 'mail_token_tries', 'mail_token_wait_sec']);
+eq('기본값 = 지금까지 코드 값 · PDF 첨부는 끔 · 구글 인증 3번·3초', settingDefaults(), { reply_business_days: 2, quote_sample_manual_min: 10, quote_auto_max_nm: 10000, quote_auto_max_min: 1440, ack_recipient_daily_max: 3, ack_global_daily_max: 50, ack_pdf_attach: 0, mail_token_tries: 3, mail_token_wait_sec: 3 });
+// 메일 발송(11-27) — 구글 인증 시도 횟수(1~3번 · 기본 3) · 시도당 대기 시간(2~4초 · 기본 3)
+eq('메일 발송 묶음: 두 항목의 이름·단위·기본값·범위', ['mail_token_tries', 'mail_token_wait_sec'].map((k) => { const s = settingSpec(k); return [s.group, s.label, s.unit, s.def, s.min, s.max, s.kind ?? 'number']; }),
+  [['메일 발송', '구글 인증 시도 횟수', '번', 3, 1, 3, 'number'], ['메일 발송', '시도당 대기 시간', '초', 3, 2, 4, 'number']]);
+eq('구글 인증 시도 횟수 검사: 1~3 만', [1, 2, 3, '2', 0, 4, 1.5, 'x'].map((v) => { const c = checkSetting('mail_token_tries', v); return c.ok ? c.value : c.error; }),
+  [1, 2, 3, 2, 'out_of_range', 'out_of_range', 'not_integer', 'not_integer']);
+eq('시도당 대기 시간 검사: 2~4 만', [2, 3, 4, '4', 1, 5, 2.5, ''].map((v) => { const c = checkSetting('mail_token_wait_sec', v); return c.ok ? c.value : c.error; }),
+  [2, 3, 4, 4, 'out_of_range', 'out_of_range', 'not_integer', 'not_integer']);
+eq('메일 발송 DB 값: 없으면 기본값 · 범위 안은 그 값 · 범위 밖·이상값은 기본값', [
+  mailTokenOf(settingsFromRows([])), mailTokenOf(settingsFromRows([{ key: 'mail_token_tries', value: 1 }, { key: 'mail_token_wait_sec', value: '4' }])),
+  mailTokenOf(settingsFromRows([{ key: 'mail_token_tries', value: 0 }, { key: 'mail_token_wait_sec', value: 9 }])),
+  mailTokenOf(settingsFromRows([{ key: 'mail_token_tries', value: 'abc' }, { key: 'mail_token_wait_sec', value: 2.5 }])), mailTokenOf(null), mailTokenOf(undefined),
+], [{ tries: 3, waitSec: 3 }, { tries: 1, waitSec: 4 }, { tries: 3, waitSec: 3 }, { tries: 3, waitSec: 3 }, { tries: 3, waitSec: 3 }, { tries: 3, waitSec: 3 }]);
 eq('메일 상한은 낮추기만(최댓값 = 기본값)', SETTINGS.filter((s) => s.key.endsWith('_daily_max')).map((s) => s.max === s.def), [true, true]);
 // PDF 첨부 스위치 — '낮추기만'의 예외(켤 수 있다) · 켬/끔(kind toggle) · 0/1 만
 eq('PDF 첨부 스위치: 켬/끔 · 묶음 · 범위 0~1 · 다른 항목은 숫자', [settingSpec('ack_pdf_attach'), SETTINGS.filter((s) => s.kind === 'toggle').map((s) => s.key)],

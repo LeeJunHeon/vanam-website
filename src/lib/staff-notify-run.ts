@@ -41,9 +41,14 @@ export type StaffNotifyResult = { sent: boolean; reason: string; status: 'sent' 
  * prev = 이 접수의 이전 기록(inquiries.staff_mail — 방금 접수한 건은 없다)
  */
 export type StaffNotifyOpts = { d?: D1 | null; by?: 'auto' | 'admin'; prev?: unknown };
+/**
+ * 진단·운영 설정 — colo = 요청의 실행 위치(로그·기록·실패 알림에 붙는다 · 없어도 된다)
+ * token = 구글 인증 시도 횟수·시도당 대기(운영 설정 — site-settings.js 의 mailTokenOf · 없으면 기본값)
+ */
+export type StaffNotifyCtx = { colo?: string; token?: { tries?: number; waitSec?: number } };
 
 /** 담당자 알림 한 통(접수 한 건). 결과를 기록하고 사유를 돌려준다. 예외를 던지지 않는다. */
-export async function runStaffNotify(p: StaffNotifyInput, opts: StaffNotifyOpts = {}): Promise<StaffNotifyResult> {
+export async function runStaffNotify(p: StaffNotifyInput, opts: StaffNotifyOpts = {}, ctx: StaffNotifyCtx = {}): Promise<StaffNotifyResult> {
   const d = opts.d ?? null;
   const by = opts.by === 'admin' ? 'admin' : 'auto';
   let r: StaffNotifyResult;
@@ -63,13 +68,14 @@ export async function runStaffNotify(p: StaffNotifyInput, opts: StaffNotifyOpts 
         : null,
       live: MAIL_LIVE,
       id: p.id,
+      colo: ctx.colo,
       readTo: notifyTo,
       isSafeAddress,
       send: (to: string) => {
         const text = staffText(p);
         return sendMail(
           { to, fromName: STAFF_FROM_NAME, subject: staffSubject(p), text, html: staffHtml(text) },
-          { tag: TAG, ref: p.id, origin: p.origin },
+          { tag: TAG, ref: p.id, origin: p.origin, colo: ctx.colo, token: ctx.token },
         );
       },
       // 메일 오류 알림은 별도 채팅방(alert 채널)으로 — 없거나 실패하면 기존 채팅방(chat-send.ts)

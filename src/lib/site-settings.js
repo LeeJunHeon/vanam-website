@@ -66,6 +66,19 @@ export const SETTINGS = [
     help: '켜면 접수 확인 메일·다시 보내기에 견적 요청서 PDF(자동 견적이 켜져 있으면 예상 견적서도)를 붙입니다. 끄면 조회 링크만 보냅니다.',
     def: 0, min: 0, max: 1,
   },
+  {
+    // 구글 인증 서버가 응답하지 않을 때의 다시 시도(11-27) — 순서·시간 배분은 src/lib/mail-token.js
+    key: 'mail_token_tries', group: '메일 발송',
+    label: '구글 인증 시도 횟수', unit: '번',
+    help: '인증 서버가 응답하지 않을 때 다시 시도하는 횟수. 1 이면 다시 시도하지 않습니다.',
+    def: 3, min: 1, max: 3,
+  },
+  {
+    key: 'mail_token_wait_sec', group: '메일 발송',
+    label: '시도당 대기 시간', unit: '초',
+    help: '마지막 시도를 뺀 앞의 시도에서 기다리는 시간. 마지막 시도는 최대 8초까지 기다립니다.',
+    def: 3, min: 2, max: 4,
+  },
 ];
 
 /** 키 목록(고정 순서) */
@@ -118,6 +131,18 @@ export function quoteLimitsOf(s) {
     sampleManualMin: s?.quote_sample_manual_min ?? d.quote_sample_manual_min,
     maxNm: s?.quote_auto_max_nm ?? d.quote_auto_max_nm,
     maxMin: s?.quote_auto_max_min ?? d.quote_auto_max_min,
+  };
+}
+
+/**
+ * 메일 토큰 요청 설정(mail-send.ts 의 sendMail opts.token) — 구글 인증 시도 횟수 · 시도당 대기 시간(초).
+ * @param {Record<string, number> | null | undefined} s settingsFromRows 결과(없으면 기본값)
+ */
+export function mailTokenOf(s) {
+  const d = settingDefaults();
+  return {
+    tries: s?.mail_token_tries ?? d.mail_token_tries,
+    waitSec: s?.mail_token_wait_sec ?? d.mail_token_wait_sec,
   };
 }
 

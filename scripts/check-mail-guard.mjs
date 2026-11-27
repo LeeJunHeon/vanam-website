@@ -3,7 +3,7 @@
 // 왜 있는가: 맥미니에서 테스트하다 실제 고객에게 메일이 나가면 안 된다(구글챗 사고와 같은 길을 미리 막는다).
 // 운영/테스트는 빌드 종류가 정한다(src/lib/mail-mode.js). 이 게이트는 그 약속이 지켜졌는지 본다.
 //
-//   (a) 소스: Gmail 비밀값 이름·Gmail 주소는 mail-send.ts 에만 · PDF 비밀값·주소는 doc-pdf.ts 에만 ·
+//   (a) 소스: Gmail 비밀값 이름·Gmail 주소(접근 토큰의 기본·예비 주소 포함)는 mail-send.ts 에만 · PDF 비밀값·주소는 doc-pdf.ts 에만 ·
 //       원문 조립(buildMime)은 mail-send.ts 에서만 부른다(발송 통로 하나) ·
 //       빌드 표식 상수(__VANAM_MAIL_MODE__)는 mail-send.ts 에만 · 운영 표식 문자열은 mail-mode.js 에만 ·
 //       메일 경로 파일에는 빌드 환경 변수 문자열(import.meta + .env)을 주석으로도 두지 않는다
@@ -24,6 +24,8 @@ const MARKER_RE = /MAIL_MODE_(?:LIVE|TEST)/g;
 // 표식·주소·비밀값 이름도 조립해서 쓴다 — 이 파일 자체가 검사에 걸리지 않게(src 밖이지만 같은 규칙).
 const LIVE = ['MAIL', 'MODE', 'LIVE'].join('_');
 export const GMAIL_HOSTS = [['gmail', 'googleapis', 'com'].join('.'), ['oauth2', 'googleapis', 'com'].join('.')];
+// 접근 토큰 예비 주소(11-27 — 기본 주소가 응답하지 않을 때 쓴다) — 이것도 mail-send.ts 에만
+export const TOKEN_BACKUP_PATH = ['www', 'googleapis', 'com'].join('.') + '/oauth2/';
 export const PDF_PATHS = [['browser', 'rendering'].join('-') + '/pdf', ['browser', 'run'].join('-') + '/pdf'];
 const DEFINE = ['__VANAM', 'MAIL', 'MODE__'].join('_');
 const GMAIL_KEYS = ['GMAIL_CLIENT_ID', 'GMAIL_CLIENT_SECRET', 'GMAIL_REFRESH_TOKEN'];
@@ -40,7 +42,7 @@ export const SECRET_RES = [
 // 메일 경로 파일 — 빌드 환경 변수 문자열을 두지 않는다
 const MAIL_PATH_FILES = ['lib/mail-send.ts', 'lib/doc-pdf.ts', 'lib/quote-ack-run.ts', 'lib/mail-mime.js', 'lib/quote-ack.js',
   'lib/mail-mode.js', 'pages/api/admin/quote-mail.ts', 'lib/staff-notify.js', 'lib/staff-notify-run.ts',
-  'lib/staff-notify-record.js', 'pages/api/admin/staff-mail.ts'];
+  'lib/staff-notify-record.js', 'pages/api/admin/staff-mail.ts', 'lib/mail-token.js', 'lib/cf-colo.js'];
 const IMPORT_META_ENV = ['import', 'meta', 'env'].join('.');
 const DEV_VARS = '.dev.vars';
 
@@ -64,6 +66,9 @@ export function checkSource(srcDir) {
     }
     for (const h of GMAIL_HOSTS) {
       if (text.includes(h) && rel !== 'lib/mail-send.ts') errs.push(`src/${rel}: ${h} 주소는 src/lib/mail-send.ts 에만 — 메일은 그 통로로만 보낸다`);
+    }
+    if (text.includes(TOKEN_BACKUP_PATH) && rel !== 'lib/mail-send.ts') {
+      errs.push(`src/${rel}: 접근 토큰 예비 주소(${TOKEN_BACKUP_PATH})는 src/lib/mail-send.ts 에만 — 토큰 요청은 그 통로로만 한다`);
     }
     for (const k of PDF_KEYS) {
       if (text.includes(k) && rel !== 'lib/doc-pdf.ts') errs.push(`src/${rel}: ${k} 는 src/lib/doc-pdf.ts 에서만 읽는다`);

@@ -15,8 +15,9 @@ export const STAFF_FROM_NAME = 'VanaM 홈페이지';
 /** 제목에 싣는 회사·이름 최대 길이(글자) */
 export const STAFF_SUBJECT_NAME_MAX = 40;
 
-/** 이 사유로 끝나면 담당자 구글챗에 한 줄 알린다(실제 실패 · 설정 오류). blocked_host 등은 조용히 넘긴다. */
-export const STAFF_ALERT_REASONS = ['auth_failed', 'http_error', 'fetch_error', 'error', 'no_credentials', 'bad_recipient', 'bad_config'];
+/** 이 사유로 끝나면 담당자 구글챗에 한 줄 알린다(실제 실패 · 설정 오류). blocked_host 등은 조용히 넘긴다.
+ *  token_unreachable = 구글 인증 서버가 응답하지 않아 토큰을 못 받음(mail-send.ts · 11-27) — 빠지면 그 실패가 조용히 지나간다. */
+export const STAFF_ALERT_REASONS = ['auth_failed', 'token_unreachable', 'http_error', 'fetch_error', 'error', 'no_credentials', 'bad_recipient', 'bad_config'];
 
 const KIND_LABEL = { quote: '견적 요청', general: '일반 문의', wafer: '웨이퍼 문의' };
 const SUBJECT_TAG = { quote: '[홈페이지 견적요청]', general: '[홈페이지 문의]', wafer: '[홈페이지 웨이퍼 문의]' };
@@ -120,9 +121,10 @@ export function staffHtml(text) {
   return `<pre style="white-space:pre-wrap;font-family:inherit">${esc(text)}</pre>`;
 }
 
-/** 실패 알림 구글챗 한 줄 — 접수번호와 사유만(고객 정보 없음) */
-export function staffAlertText(id, reason) {
-  return `⚠️ 담당자 알림 메일 발송 실패 — 접수번호 ${oneLine(id)} (${oneLine(reason)}). 관리자 화면에서 확인해 주세요.`;
+/** 실패 알림 구글챗 한 줄 — 접수번호와 사유, 읽었으면 실행 위치(Cloudflare 위치 코드)만(고객 정보 없음) */
+export function staffAlertText(id, reason, colo) {
+  const where = typeof colo === 'string' && /^[A-Z]{3,4}$/.test(colo) ? ` · 실행 위치 ${colo}` : '';
+  return `⚠️ 담당자 알림 메일 발송 실패 — 접수번호 ${oneLine(id)} (${oneLine(reason)}${where}). 관리자 화면에서 확인해 주세요.`;
 }
 
 /**
@@ -134,7 +136,8 @@ export function staffAlertText(id, reason) {
  * @param {{
  *   live: boolean, id: string, readTo: () => string, isSafeAddress: (a: unknown) => boolean,
  *   send: (to: string) => Promise<{ sent: boolean, reason: string }>, alert: (text: string) => Promise<unknown>,
- * }} d
+ *   colo?: string,
+ * }} d colo = 요청의 실행 위치(실패 알림에 붙인다 — 없어도 된다)
  * @returns {Promise<{ sent: boolean, reason: string }>}
  */
 export async function staffNotifyFlow(d) {
@@ -149,7 +152,7 @@ export async function staffNotifyFlow(d) {
   }
   if (!r.sent && STAFF_ALERT_REASONS.includes(r.reason)) {
     try {
-      await d.alert(staffAlertText(d.id, r.reason));
+      await d.alert(staffAlertText(d.id, r.reason, d.colo));
     } catch {
       /* 알림 실패는 무시 — 로그는 호출부가 남긴다 */
     }

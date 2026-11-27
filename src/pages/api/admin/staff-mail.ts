@@ -9,6 +9,10 @@ import { isAdmin } from '../../../lib/admin-auth';
 import { db } from '../../../lib/db';
 import { runStaffNotify } from '../../../lib/staff-notify-run';
 import { staffInputFromRow, isStaffPending } from '../../../lib/staff-notify-record.js';
+// 구글 인증 시도 횟수·대기(운영 설정) — 이 경로는 설정을 읽지 않던 곳이라 여기서 한 번 읽는다(실패하면 기본값)
+import { readSiteSettings } from '../../../lib/site-settings-db';
+import { mailTokenOf } from '../../../lib/site-settings.js';
+import { requestColo } from '../../../lib/cf-colo.js';
 
 export const prerender = false;
 
@@ -57,6 +61,7 @@ export const POST: APIRoute = async ({ request }) => {
   }
 
   const input = staffInputFromRow(row, { origin: new URL(request.url).origin, revisions });
-  const r = await runStaffNotify(input, { d, by: 'admin', prev: row.staff_mail ?? null });
+  const token = mailTokenOf(await readSiteSettings(d));
+  const r = await runStaffNotify(input, { d, by: 'admin', prev: row.staff_mail ?? null }, { colo: requestColo(request), token });
   return json({ ok: r.sent, result: { status: r.status, reason: r.sent ? null : r.reason } });
 };

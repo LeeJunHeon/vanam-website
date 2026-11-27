@@ -15,11 +15,18 @@
 //      이 파일이 이름을 부르는 .env 키 값을 번들에 넣을 준비를 한다(scripts/check-mail-guard.mjs 가 막는다).
 //   새로고침 토큰은 hello@ 가 'gmail.send'(보내기 전용) 권한만 승인한 것 — 메일함을 읽을 수 없다.
 //   ⚠️ hello@ 의 비밀번호를 바꾸면 Google 이 이 토큰을 없앤다 → 'auth_failed'. 권한을 다시 승인해 새 토큰을 넣는다.
+// 접근 토큰 요청(11-27): 구글 인증 서버가 응답하지 않을 때를 대비해 주소 두 개(기본 · 예비)로 최대 3번 시도한다.
+//   순서·대기 시간·판정은 mail-token.js(순수 함수) — 여기서는 주소·비밀값과 실제 요청만 맡는다. 두 주소는 이 파일에만 둔다.
+//   모두 실패하면 'token_unreachable'(메일은 나가지 않았다 — 다시 보내면 된다). 발송 단계의 연결 오류는 'fetch_error'
+//   (나갔는지 확실하지 않다 — 그래서 발송은 자동으로 다시 하지 않는다).
+//   ⚠️ 진행 중인 토큰 요청(Promise)을 모듈 변수에 담아 요청끼리 공유하지 않는다 — 캐시는 값(토큰 문자열·만료 시각)만.
 // ⚠️ 로그에 받는 주소·본문을 남기지 않는다 — 접수번호와 결과만.
 import { env as cfEnv } from 'cloudflare:workers';
 import company from '../data/company.json';
 import { buildMime, isSafeAddress } from './mail-mime.js';
 import { mailAllowed, hostAllowed } from './quote-ack.js';
+import { tokenFlow, errorName } from './mail-token.js';
+import { coloText } from './cf-colo.js';
 
 declare const __VANAM_MAIL_MODE__: string;
 
@@ -31,12 +38,16 @@ export const MAIL_LIVE: boolean = __VANAM_MAIL_MODE__.endsWith('_LIVE');
 /** 보내는 주소 — company.json 의 대표 메일(= 권한을 승인한 Google 계정) */
 export const MAIL_FROM: string = String(company.email ?? '');
 
-const TOKEN_URL = 'https://oauth2.googleapis.com/token';
+// 접근 토큰 주소 — 기본(공식) · 예비(같은 구글 인증 서버의 다른 주소). label 은 로그용 이름표(주소 전체는 로그에 남기지 않는다)
+const TOKEN_ENDPOINTS = {
+  primary: { label: 'oauth2', url: 'https://oauth2.googleapis.com/token' },
+  backup: { label: 'www', url: 'https://www.googleapis.com/oauth2/v4/token' },
+};
 const SEND_URL = 'https://gmail.googleapis.com/upload/gmail/v1/users/me/messages/send?uploadType=media';
 
 export type MailReason =
   | 'ok' | 'blocked_build' | 'blocked_host' | 'bad_recipient' | 'no_credentials'
-  | 'auth_failed' | 'http_error' | 'fetch_error' | 'error';
+  | 'auth_failed' | 'token_unreachable' | 'http_error' | 'fetch_error' | 'error';
 export type MailResult = { sent: boolean; reason: MailReason; status?: number };
 
 export type MailMessage = {
@@ -65,36 +76,38 @@ const within = (cap: number, deadline: number) => Math.max(1000, Math.min(cap, d
 // 접근 토큰(1시간짜리) — 워커 인스턴스가 살아 있는 동안 다시 쓴다. 만료 1분 전에 새로 받는다.
 let cached: { token: string; until: number } | null = null;
 
-type TokenResult = { ok: true; token: string } | { ok: false; reason: 'auth_failed' | 'fetch_error'; status?: number };
+type TokenResult = { ok: true; token: string } | { ok: false; reason: 'auth_failed' | 'token_unreachable'; status?: number };
+/** 토큰 요청에 넘기는 것 — 시도 횟수·짧은 대기(운영 설정) · 실행 위치 · 접수번호(로그용) */
+type TokenCtx = { tries?: number; waitSec?: number; colo: string; ref?: string };
 
-async function accessToken(deadline: number, fresh = false): Promise<TokenResult> {
+async function accessToken(deadline: number, ctx: TokenCtx, fresh = false): Promise<TokenResult> {
   if (!fresh && cached && cached.until > Date.now()) return { ok: true, token: cached.token };
   cached = null;
-  try {
-    const res = await fetch(TOKEN_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        client_id: secret('GMAIL_CLIENT_ID'),
-        client_secret: secret('GMAIL_CLIENT_SECRET'),
-        refresh_token: secret('GMAIL_REFRESH_TOKEN'),
-        grant_type: 'refresh_token',
-      }),
-      signal: AbortSignal.timeout(within(8000, deadline)),
-    });
-    const j = (await res.json().catch(() => ({}))) as { access_token?: unknown; expires_in?: unknown; error?: unknown };
-    if (!res.ok || typeof j.access_token !== 'string' || !j.access_token) {
-      // 오류 코드(invalid_grant 등)만 남긴다 — 응답 본문 전체는 남기지 않는다.
-      console.error('[mail] 접근 토큰 실패:', res.status, typeof j.error === 'string' ? j.error : '');
-      return { ok: false, reason: 'auth_failed', status: res.status };
-    }
-    const life = Math.max(120, Math.min(3600, Number(j.expires_in) || 3600));
-    cached = { token: j.access_token, until: Date.now() + (life - 60) * 1000 };
-    return { ok: true, token: j.access_token };
-  } catch (e) {
-    console.error('[mail] 접근 토큰 연결 오류:', (e as Error)?.name ?? 'Error');
-    return { ok: false, reason: 'fetch_error' };
-  }
+  const r = await tokenFlow({
+    tries: ctx.tries, waitSec: ctx.waitSec, deadline, now: () => Date.now(),
+    endpoints: TOKEN_ENDPOINTS, colo: ctx.colo, ref: ctx.ref,
+    log: (line, level) => (level === 'error' ? console.error(line) : console.log(line)),
+    attempt: async (ep, timeoutMs) => {
+      const res = await fetch(ep.url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          client_id: secret('GMAIL_CLIENT_ID'),
+          client_secret: secret('GMAIL_CLIENT_SECRET'),
+          refresh_token: secret('GMAIL_REFRESH_TOKEN'),
+          grant_type: 'refresh_token',
+        }),
+        signal: AbortSignal.timeout(timeoutMs),
+      });
+      // 본문이 JSON 이 아니면(오류 페이지 등) 빈 값으로 — 판정은 상태 코드와 오류 코드로 한다
+      const j = (await res.json().catch(() => ({}))) as { access_token?: unknown; expires_in?: unknown; error?: unknown };
+      return { status: res.status, token: j?.access_token, expiresIn: j?.expires_in, error: j?.error };
+    },
+  });
+  if (!r.ok) return { ok: false, reason: r.reason, status: r.status };
+  const life = Math.max(120, Math.min(3600, Number(r.expiresIn) || 3600));
+  cached = { token: r.token, until: Date.now() + (life - 60) * 1000 };
+  return { ok: true, token: r.token };
 }
 
 /**
@@ -102,12 +115,15 @@ async function accessToken(deadline: number, fresh = false): Promise<TokenResult
  * @param m 받는 사람·제목·본문·첨부 — 원문(MIME)은 여기서 조립한다(받는 사람은 m.to 하나뿐)
  * @param opts.tag 로그 구분 · opts.ref 접수번호(진단용, PII 아님)
  *             opts.origin 요청이 들어온 주소(운영 빌드는 vanam.co.kr 만) · opts.deadline 이 시각(ms)까지 끝낸다
+ *             opts.colo 요청의 실행 위치(로그용 — 없어도 된다) · opts.token 토큰 요청 시도 횟수·짧은 대기(운영 설정 — 없으면 기본값)
  */
 export async function sendMail(
   m: MailMessage,
-  opts: { tag: string; ref?: string; origin: string; deadline?: number },
+  opts: { tag: string; ref?: string; origin: string; deadline?: number; colo?: string; token?: { tries?: number; waitSec?: number } },
 ): Promise<MailResult> {
   const { tag, ref } = opts;
+  const colo = coloText(opts.colo);
+  const tokenCtx: TokenCtx = { tries: opts.token?.tries, waitSec: opts.token?.waitSec, colo, ref };
   const deadline = opts.deadline ?? Date.now() + 20000;
   const allowed = mailAllowed(MAIL_LIVE, m.to, isSafeAddress);
   if (!allowed.ok) {
@@ -136,10 +152,13 @@ export async function sendMail(
     return { sent: false, reason: 'error' };
   }
 
-  // 접근 토큰이 중간에 무효가 되면(401) 새로 받아 한 번만 다시 보낸다(시간이 남았을 때만).
+  // 접근 토큰이 중간에 무효가 되면(401) 새로 받아 한 번만 다시 보낸다(시간이 남았을 때만 — 토큰 요청의 시간 배분은 처음과 같다).
+  // 발송 요청 자체는 실패해도 자동으로 다시 보내지 않는다(이미 나갔을 수 있다 — 중복 위험).
+  const where = `colo=${colo || '-'}`;
   for (let attempt = 0; attempt < 2; attempt++) {
-    const t = await accessToken(deadline, attempt > 0);
+    const t = await accessToken(deadline, tokenCtx, attempt > 0);
     if (!t.ok) return { sent: false, reason: t.reason, status: t.status };
+    const t0 = Date.now();
     try {
       const res = await fetch(SEND_URL, {
         method: 'POST',
@@ -153,13 +172,13 @@ export async function sendMail(
       }
       if (!res.ok) {
         const j = (await res.json().catch(() => ({}))) as { error?: { status?: unknown } };
-        console.error(`[${tag}] Gmail 발송 실패:`, res.status, typeof j.error?.status === 'string' ? j.error.status : '', ref ?? '');
+        console.error(`[${tag}] Gmail 발송 실패:`, res.status, typeof j.error?.status === 'string' ? j.error.status : '', `${Date.now() - t0}ms`, where, ref ?? '');
         // 403 은 'Gmail API 사용 안 함'·권한 범위 부족 등 여러 가지라 상태 코드와 함께 http_error 로 둔다.
         return { sent: false, reason: res.status === 401 ? 'auth_failed' : 'http_error', status: res.status };
       }
       return { sent: true, reason: 'ok', status: res.status };
     } catch (e) {
-      console.error(`[${tag}] Gmail 연결 오류:`, (e as Error)?.name ?? 'Error', ref ?? '');
+      console.error(`[${tag}] Gmail 발송 단계 연결 오류:`, errorName(e), `${Date.now() - t0}ms`, where, ref ?? '');
       return { sent: false, reason: 'fetch_error' };
     }
   }

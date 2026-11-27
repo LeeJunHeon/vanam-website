@@ -9,6 +9,7 @@
 import { fillDays } from './reply-days.js';
 import { safeShort } from './safe-text.js';
 import { materialLabels } from './material-value.js';
+import { coloText } from './cf-colo.js';
 
 const esc = (v) =>
   String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -308,19 +309,28 @@ export function parseAck(raw) {
  * 새 기록(JSON 문자열).
  *   n = 끝난 시도 횟수(다시 보내기 포함 · '보내는 중'은 세지 않음) · code = 실패한 HTTP 상태(있으면)
  *   sentAt·sentN = 마지막으로 보낸 시각·보낸 횟수 — 나중 시도가 실패해도 '이미 보냈다'는 사실을 잃지 않는다
+ *   colo = 이 시도가 실행된 Cloudflare 위치(11-27 · 읽었을 때만 넣는다 — 옛 기록에는 없다)
  * @param {unknown} prevRaw 이전 기록
- * @param {{status:'sent'|'failed'|'skipped'|'pending', reason?:string|null, pdf?:string|null, code?:number|null, by:'auto'|'admin', at:string}} r
+ * @param {{status:'sent'|'failed'|'skipped'|'pending', reason?:string|null, pdf?:string|null, code?:number|null, by:'auto'|'admin', at:string, colo?:string|null}} r
  */
 export function ackRecord(prevRaw, r) {
   const prev = parseAck(prevRaw);
   const sent = r.status === 'sent';
+  const colo = coloText(r.colo);
   return JSON.stringify({
     status: r.status, reason: r.reason ?? null, pdf: r.pdf ?? null, code: Number.isInteger(r.code) ? r.code : null,
     by: r.by, at: r.at,
     n: (Number(prev?.n) || 0) + (r.status === 'pending' ? 0 : 1),
     sentAt: sent ? r.at : (typeof prev?.sentAt === 'string' ? prev.sentAt : null),
     sentN: (Number(prev?.sentN) || 0) + (sent ? 1 : 0),
+    ...(colo ? { colo } : {}),
   });
+}
+
+/** 실패 줄·알림 끝에 붙이는 실행 위치(" · 실행 위치 HKG") — 값이 없으면(옛 기록) 빈 문자열. 관리자 화면·구글챗 알림 전용. @param {unknown} colo */
+export function coloSuffix(colo) {
+  const c = coloText(colo);
+  return c ? ` · 실행 위치 ${c}` : '';
 }
 
 /** '보내는 중' 기록이 아직 살아 있는가 — 2분이 지나면 중단된 것으로 본다(워커 백그라운드 작업은 30초 안에 끝나야 한다) */
@@ -343,8 +353,10 @@ export const ACK_REASON_KO = Object.freeze({
   daily_cap: '오늘 자동 발송 전체 상한(운영 설정)에 닿아 멈췄습니다',
   disabled_by_setting: '운영 설정에서 자동 발송 상한을 0 으로 두어 보내지 않았습니다 — 필요하면 보내기를 누르세요',
   auth_failed: 'Gmail 권한 확인 필요 — hello@ 비밀번호를 바꿨다면 권한을 다시 승인하세요',
+  // 토큰 단계 실패(메일은 나가지 않았다)와 발송 단계 연결 오류(나갔는지 모른다)는 뜻이 달라 문구를 나눈다(11-27)
+  token_unreachable: '구글 인증 서버가 응답하지 않거나 오류를 냈습니다 — 메일은 나가지 않았습니다(다시 보내면 됩니다)',
   http_error: 'Gmail 이 발송을 거절했습니다',
-  fetch_error: 'Gmail 연결 오류',
+  fetch_error: 'Gmail 발송 단계 연결 오류 — 나갔는지 확실하지 않으니 hello@ 보낸편지함을 확인하세요',
   in_progress: '이미 보내는 중입니다',
   no_inquiry: '접수 건을 찾지 못했습니다',
   not_quote: '공정 견적 요청이 아닙니다',
@@ -382,7 +394,7 @@ export function ackLabel(raw, now = Date.now()) {
       : { tone: 'bad', text: `확인 메일: 중단됨 — 처리 시간 안에 끝나지 못했습니다. 다시 보내 주세요${before}` };
   }
   const why = (ACK_REASON_KO[a.reason] ?? (str(a.reason) || ACK_REASON_KO.error)) + (Number.isInteger(a.code) ? ` (HTTP ${a.code})` : '');
-  if (a.status === 'failed') return { tone: 'bad', text: `확인 메일: 실패 — ${why}${when ? ` · ${when}` : ''}${before}` };
+  if (a.status === 'failed') return { tone: 'bad', text: `확인 메일: 실패 — ${why}${when ? ` · ${when}` : ''}${before}${coloSuffix(a.colo)}` };
   return { tone: 'muted', text: `확인 메일: 안 보냄 — ${why}${before}` };
 }
 

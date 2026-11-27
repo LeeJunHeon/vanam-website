@@ -15,7 +15,7 @@
 //
 // ⚠️ 웹훅은 cloudflare:workers 의 env(런타임 비밀값)에서만 읽는다 — 두 이름 모두 이 파일에서만.
 //    import.meta.env 로 읽으면 빌드 때 .env 값이 번들에 문자열로 박힌다.
-// ⚠️ 로그에는 태그·접수번호·결과·채널만 남긴다 — 본문(text: 이름·이메일·전화·문의 내용)·웹훅 주소·응답 본문은 남기지 않는다.
+// ⚠️ 로그에는 태그·접수번호·결과(연결 오류면 오류 이름 — TimeoutError 등)·채널만 남긴다 — 본문(text: 이름·이메일·전화·문의 내용)·웹훅 주소·응답 본문은 남기지 않는다.
 import { env as cfEnv } from 'cloudflare:workers';
 import { chatChannelOf, chatTargets, chatDeliver } from './chat-channel.js';
 
@@ -50,7 +50,8 @@ export function alertChannelConfigured(): boolean {
   return alertWebhookUrl() !== '';
 }
 
-type PostResult = { sent: boolean; reason: 'http_error' | 'fetch_error' | 'ok'; status?: number };
+/** error = 연결 오류일 때의 오류 이름(TimeoutError 등 — 로그용. 메시지·주소는 담지 않는다) */
+type PostResult = { sent: boolean; reason: 'http_error' | 'fetch_error' | 'ok'; status?: number; error?: string };
 
 /** 웹훅 한 곳으로 보낸다. 예외를 던지지 않는다. */
 async function post(url: string, text: string): Promise<PostResult> {
@@ -62,8 +63,9 @@ async function post(url: string, text: string): Promise<PostResult> {
     });
     if (!res.ok) return { sent: false, reason: 'http_error', status: res.status };
     return { sent: true, reason: 'ok', status: res.status };
-  } catch {
-    return { sent: false, reason: 'fetch_error' };
+  } catch (e) {
+    const name = (e as { name?: unknown } | null)?.name;
+    return { sent: false, reason: 'fetch_error', error: typeof name === 'string' && /^[A-Za-z]{1,40}$/.test(name) ? name : 'Error' };
   }
 }
 
@@ -88,7 +90,7 @@ export async function sendChat(text: string, opts: { tag: string; ref?: string; 
 
   const r = await chatDeliver(targets, async (t) => {
     const one = await post(t.url, text);
-    if (!one.sent) console.error(`[${tag}] webhook ${one.reason}`, ref ?? '', one.status ?? '', `channel=${t.channel}`);
+    if (!one.sent) console.error(`[${tag}] webhook ${one.reason}`, ref ?? '', one.status ?? one.error ?? '', `channel=${t.channel}`);
     return one;
   });
   if (!r) return { sent: false, reason: 'no_webhook' };

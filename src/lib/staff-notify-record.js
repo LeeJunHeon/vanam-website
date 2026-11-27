@@ -11,7 +11,8 @@
 //    제목·본문 조립과 발송 판정은 staff-notify.js 의 것을 그대로 쓴다(여기서 다시 만들지 않는다).
 // ⚠️ 받는 주소·본문·고객 정보를 기록에 넣지 않는다(결과와 사유만).
 import { staffNotifyFlow } from './staff-notify.js';
-import { parseAck, isFreshPending, kstText, ACK_REASON_KO } from './quote-ack.js';
+import { parseAck, isFreshPending, kstText, ACK_REASON_KO, coloSuffix } from './quote-ack.js';
+import { coloText } from './cf-colo.js';
 import { materialLabels } from './material-value.js';
 import { buildEstimateChatLine } from './chat-message.js';
 import { summarizeRevisions } from './quote-admin.js';
@@ -47,18 +48,21 @@ export const isStaffPending = isFreshPending;
  * 새 기록(JSON 문자열).
  *   n = 끝난 시도 횟수(다시 보내기 포함 · '보내는 중'은 세지 않음)
  *   sentAt·sentN = 마지막으로 보낸 시각·보낸 횟수 — 나중 시도가 실패해도 '이미 보냈다'는 사실을 잃지 않는다
+ *   colo = 이 시도가 실행된 Cloudflare 위치(11-27 · 읽었을 때만 넣는다 — 옛 기록에는 없다)
  * @param {unknown} prevRaw 이전 기록
- * @param {{ status: 'sent'|'failed'|'skipped'|'pending', reason?: string|null, by: 'auto'|'admin', at: string }} r
+ * @param {{ status: 'sent'|'failed'|'skipped'|'pending', reason?: string|null, by: 'auto'|'admin', at: string, colo?: string|null }} r
  */
 export function staffRecord(prevRaw, r) {
   const prev = parseStaffMail(prevRaw);
   const sent = r.status === 'sent';
+  const colo = coloText(r.colo);
   return JSON.stringify({
     status: r.status, reason: r.reason ?? null,
     by: r.by, at: r.at,
     n: (Number(prev?.n) || 0) + (r.status === 'pending' ? 0 : 1),
     sentAt: sent ? r.at : (typeof prev?.sentAt === 'string' ? prev.sentAt : null),
     sentN: (Number(prev?.sentN) || 0) + (sent ? 1 : 0),
+    ...(colo ? { colo } : {}),
   });
 }
 
@@ -92,7 +96,7 @@ export function staffMailLabel(raw, now = Date.now()) {
       : { tone: 'bad', text: `담당자 메일: 중단됨 — 처리 시간 안에 끝나지 못했습니다. 다시 보내 주세요${before}` };
   }
   const why = STAFF_REASON_KO[a.reason] ?? (str(a.reason) || STAFF_REASON_KO.error);
-  if (a.status === 'failed') return { tone: 'bad', text: `담당자 메일: 실패 — ${why}${when ? ` · ${when}` : ''}${before}` };
+  if (a.status === 'failed') return { tone: 'bad', text: `담당자 메일: 실패 — ${why}${when ? ` · ${when}` : ''}${before}${coloSuffix(a.colo)}` };
   return { tone: 'muted', text: `담당자 메일: 안 보냄 — ${why}${before}` };
 }
 
@@ -113,16 +117,18 @@ export function staffSentBefore(raw) {
  *   write?: ((json: string) => Promise<unknown>) | null,
  *   live: boolean, id: string, readTo: () => string, isSafeAddress: (a: unknown) => boolean,
  *   send: (to: string) => Promise<{ sent: boolean, reason: string }>, alert: (text: string) => Promise<unknown>,
- * }} d
+ *   colo?: string,
+ * }} d colo = 요청의 실행 위치(기록·실패 알림에 붙인다 — 없어도 된다)
  * @returns {Promise<{ sent: boolean, reason: string, status: 'sent' | 'failed' | 'skipped' }>}
  */
 export async function staffNotifyRecorded(d) {
   const by = d.by === 'admin' ? 'admin' : 'auto';
   const prev = d.prev ?? null;
+  const colo = coloText(d.colo);
   const put = async (r) => {
     if (typeof d.write !== 'function') return;
     try {
-      await d.write(staffRecord(prev, { ...r, by, at: d.now() }));
+      await d.write(staffRecord(prev, { ...r, by, at: d.now(), colo }));
     } catch {
       /* 기록 실패는 삼킨다 — 로그는 호출부(write)가 접수번호만 남긴다 */
     }
@@ -130,7 +136,7 @@ export async function staffNotifyRecorded(d) {
   let r;
   try {
     r = await staffNotifyFlow({
-      live: d.live, id: d.id, readTo: d.readTo, isSafeAddress: d.isSafeAddress,
+      live: d.live, id: d.id, readTo: d.readTo, isSafeAddress: d.isSafeAddress, colo,
       send: async (to) => {
         await put({ status: 'pending' });
         return d.send(to);

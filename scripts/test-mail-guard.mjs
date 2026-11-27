@@ -8,7 +8,7 @@ import { tmpdir } from 'node:os';
 import { mailModeAtBuild } from '../src/lib/mail-mode.js';
 import { mailAllowed } from '../src/lib/quote-ack.js';
 import { isSafeAddress } from '../src/lib/mail-mime.js';
-import { checkSource, scanDist, judgeDist, GMAIL_HOSTS, PDF_PATHS } from './check-mail-guard.mjs';
+import { checkSource, scanDist, judgeDist, GMAIL_HOSTS, PDF_PATHS, TOKEN_BACKUP_PATH } from './check-mail-guard.mjs';
 
 let total = 0, failed = 0;
 function eq(label, got, want) {
@@ -108,6 +108,11 @@ try {
     'lib/quote-ack-run.ts': `// ${IME} 를 주석에 적어도 걸린다`,
   });
   eq('규칙 어긴 소스 → 위반 9건(buildMime 다른 곳 · 메일 경로의 빌드 환경 변수 글자 포함)', checkSource(badSrc).length, 9);
+  // 접근 토큰 예비 주소(11-27) — mail-send.ts 에만
+  const backupOk = tree('src-backup-ok', { 'lib/mail-send.ts': `const B = 'https://${TOKEN_BACKUP_PATH}v4/token';` });
+  eq('토큰 예비 주소가 mail-send.ts 에 → 통과', checkSource(backupOk).length, 0);
+  const backupBad = tree('src-backup-bad', { 'lib/mail-token.js': `const B = 'https://${TOKEN_BACKUP_PATH}v4/token';`, 'pages/api/y.ts': `// ${TOKEN_BACKUP_PATH}v4/token` });
+  eq('토큰 예비 주소가 다른 파일에(주석 포함) → 위반 2건', checkSource(backupBad).length, 2);
   const cfSrc = tree('src-cf', { 'lib/x.ts': `const t = '${FAKE_CF_TOKEN}';` });
   eq('Cloudflare 토큰 모양이 소스에 → 위반 1건', checkSource(cfSrc).length, 1);
   eq('실제 저장소 src → 통과', checkSource('src'), []);

@@ -18,7 +18,9 @@ import { quoteAutoEnabled } from '../../lib/quote-auto';
 import { insertRevision } from '../../lib/quote-store';
 // 운영 설정 — 자동 견적 판정 한도 · 회신 기한(응답의 replyDays — 화면 안내 "영업일 기준 N일")
 import { readSiteSettings } from '../../lib/site-settings-db';
-import { quoteLimitsOf } from '../../lib/site-settings.js';
+import { quoteLimitsOf, mailTokenOf } from '../../lib/site-settings.js';
+// 요청의 실행 위치(Cloudflare 위치 코드) — 메일 실패 로그·기록에 남긴다(읽지 못하면 빈 값 · 접수에는 영향 없음)
+import { requestColo } from '../../lib/cf-colo.js';
 import companyInfo from '../../data/company.json';
 // 구글챗은 이 통로로만 보낸다 — Cloudflare main 빌드가 아니면 코드에서 차단된다.
 import { sendChat } from '../../lib/chat-send';
@@ -290,9 +292,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
   //      알림만 실패하고 저장은 된 경우는 성공 응답이라 보낸다(10-12). runQuoteAck 는 예외를 던지지 않고, 결과는 inquiries.ack_mail 에 남는다.
   const ackOrigin = new URL(request.url).origin;
   const ackVerified = ts.ok && !(ts as { skipped?: boolean }).skipped; // 보안 확인을 실제로 통과한 접수만(운영 빌드 자동 발송 조건)
+  const colo = requestColo(request);
   const scheduleAck = () => {
     if (type !== 'quote' || !saved) return;
-    const ack = runQuoteAck(saved, id, { by: 'auto', origin: ackOrigin, verified: ackVerified }).catch(() => undefined);
+    const ack = runQuoteAck(saved, id, { by: 'auto', origin: ackOrigin, verified: ackVerified, colo }).catch(() => undefined);
     pickWaitUntil(locals)?.(ack); // waitUntil 이 없는 환경(드묾)에서는 기다리지 않는다 — 고객 응답이 우선
   };
   // 5-3) 담당자 알림 메일 — 고객에게 성공으로 응답하는 모든 경로(scheduleAck 와 같은 자리)에서, 그보다 먼저 시작한다(첨부 없는 가벼운 쪽).
@@ -303,7 +306,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
       type, id, receivedKst, locale, origin: ackOrigin,
       name, company, email, phone, productName, product, material: materialLabels(material), method, substrate, sampleCount,
       waferLine, details, estimateLine, message,
-    }, { d: rowDb, by: 'auto' }).catch(() => undefined);
+      // 셋째 인자 — 실행 위치 · 구글 인증 시도 횟수·대기(위에서 이미 읽은 운영 설정 — D1 을 다시 읽지 않는다)
+    }, { d: rowDb, by: 'auto' }, { colo, token: mailTokenOf(siteSettings) }).catch(() => undefined);
     pickWaitUntil(locals)?.(staff);
   };
   // 응답의 ack — 확인 메일이 나갈 건인가(판정만). 완료 화면이 이때만 '접수 확인 메일을 보내드렸습니다'를 띄운다

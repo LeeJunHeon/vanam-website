@@ -25,7 +25,7 @@ import { isSafeAddress } from './mail-mime.js';
 import { materialLabels } from './material-value.js';
 import {
   mailAllowed, hostAllowed, isFreshPending, ackContent, estimateOf, attachmentName, pdfTitle, mergeDocPages, fitScript,
-  ackRecord, requestDocArgs, ACK_REASON_KO, kstText, lookupLink, ackLang,
+  ackRecord, requestDocArgs, ACK_REASON_KO, kstText, lookupLink, ackLang, coloSuffix,
 } from './quote-ack.js';
 import { buildQuoteHtml, buildRequestHtml, requestDocFrom, fitCells, STYLE, telKr } from './doc-excel.js';
 import { docOptions } from './quote-view-render.js';
@@ -37,6 +37,8 @@ import { SUBSTRATE_SIZES, DELIVERY_METHODS } from './processes';
 import { sendChat } from './chat-send';
 // 운영 설정 — 확인 메일 하루 상한 · 회신 기한(메일 본문 "영업일 기준 N일") · PDF 첨부 켬/끔
 import { readSiteSettings } from './site-settings-db';
+// 구글 인증 시도 횟수·대기(운영 설정) — compose 가 이미 읽은 설정값에서 꺼낸다(D1 호출을 늘리지 않는다)
+import { mailTokenOf } from './site-settings.js';
 import company from '../data/company.json';
 import siteData from '../data/site.json';
 import docLogo from '../assets/brand/logo-light.png';
@@ -95,7 +97,8 @@ async function capCheck(d: D1, id: string, email: string, caps: { recipient: num
   return null;
 }
 
-type AckOpts = { by: 'auto' | 'admin'; origin: string; verified?: boolean };
+/** colo = 요청의 실행 위치(Cloudflare 위치 코드 — 로그·기록·실패 알림용 · 없어도 된다) */
+type AckOpts = { by: 'auto' | 'admin'; origin: string; verified?: boolean; colo?: string };
 
 /**
  * 이 접수 건에 확인 메일을 보낼 수 있는가 — 주소·빌드·접속 주소·설정·(운영 빌드 자동 발송이면) 보안 확인·하루 상한.
@@ -152,7 +155,7 @@ export async function runQuoteAck(d: D1, id: string, opts: AckOpts): Promise<Ack
     // 행을 못 읽었으면 이전 기록을 모른다 — 덮어쓰지 않고 알림·로그만 남긴다
     console.error('[ack-mail] 접수 행 읽기 실패:', id, (e as Error)?.name ?? 'Error');
     const r: AckResult = { status: 'failed', reason: 'error', pdf: null };
-    await alertFailure(id, r);
+    await alertFailure(id, r, opts.colo);
     return r;
   }
   if (!q) return { status: 'skipped', reason: 'no_inquiry', pdf: null };
@@ -170,38 +173,38 @@ export async function runQuoteAck(d: D1, id: string, opts: AckOpts): Promise<Ack
         await sendChat(`⚠️ 접수 확인 메일 — 오늘 자동 발송 전체 상한(운영 설정)에 닿아 멈췄습니다.\n접수번호 ${id}\n남용인지 확인하고, 필요하면 관리자 견적 탭에서 직접 보내세요.`,
           { tag: 'ack-mail', ref: id, channel: 'alert' }).catch(() => undefined);
       }
-      return finish(d, id, q, opts.by, { status: 'skipped', reason: block.reason, pdf: null });
+      return finish(d, id, q, opts, { status: 'skipped', reason: block.reason, pdf: null });
     }
-    await record(d, id, q.ack_mail ?? null, { status: 'pending', by: opts.by, at: nowIso() });
-    return finish(d, id, q, opts.by, await compose(d, q, id, lang, to, opts.origin, deadline));
+    await record(d, id, q.ack_mail ?? null, { status: 'pending', by: opts.by, at: nowIso(), colo: opts.colo });
+    return finish(d, id, q, opts, await compose(d, q, id, lang, to, opts.origin, deadline, opts.colo));
   } catch (e) {
     console.error('[ack-mail] 처리 오류:', id, (e as Error)?.name ?? 'Error');
-    return finish(d, id, q, opts.by, { status: 'failed', reason: 'error', pdf: null });
+    return finish(d, id, q, opts, { status: 'failed', reason: 'error', pdf: null });
   }
 }
 
 /** 실패 알림 — 운영 빌드만 나간다(chat-send.ts 가 그 밖의 빌드는 막는다). 개인정보는 넣지 않는다.
  *  메일 오류 알림(이 알림 · 하루 상한 알림)은 별도 채팅방(alert 채널)으로 — 없거나 실패하면 기존 채팅방. */
-async function alertFailure(id: string, result: AckResult): Promise<void> {
+async function alertFailure(id: string, result: AckResult, colo?: string): Promise<void> {
   const why = ACK_REASON_KO[result.reason as keyof typeof ACK_REASON_KO] ?? result.reason ?? '';
-  await sendChat(`⚠️ 접수 확인 메일 실패\n접수번호 ${id}\n사유: ${why}${result.code ? ` (HTTP ${result.code})` : ''}\n관리자 견적 탭에서 [확인 메일 다시 보내기]로 다시 보낼 수 있습니다.`,
+  await sendChat(`⚠️ 접수 확인 메일 실패\n접수번호 ${id}\n사유: ${why}${result.code ? ` (HTTP ${result.code})` : ''}${coloSuffix(colo)}\n관리자 견적 탭에서 [확인 메일 다시 보내기]로 다시 보낼 수 있습니다.`,
     { tag: 'ack-mail', ref: id, channel: 'alert' }).catch(() => undefined);
 }
 
 /** 결과 기록 + 실패면 구글챗 + 한 줄 로그 */
-async function finish(d: D1, id: string, q: Record<string, unknown>, by: 'auto' | 'admin', result: AckResult): Promise<AckResult> {
+async function finish(d: D1, id: string, q: Record<string, unknown>, opts: AckOpts, result: AckResult): Promise<AckResult> {
   // 이전 기록 = 읽은 행의 값('보내는 중' 기록은 그 위에 잠깐 덮었다가 여기서 결과로 다시 덮는다)
-  await record(d, id, q.ack_mail ?? null, { ...result, by, at: nowIso() });
-  if (result.status === 'failed') await alertFailure(id, result);
+  await record(d, id, q.ack_mail ?? null, { ...result, by: opts.by, at: nowIso(), colo: opts.colo });
+  if (result.status === 'failed') await alertFailure(id, result, opts.colo);
   console.log(`[ack-mail] ${id} ${result.status}${result.reason ? ` ${result.reason}` : ''} pdf=${result.pdf ?? '-'}`);
   return result;
 }
 
 /** 서류 PDF + 본문을 만들어 보낸다(보낼 수 있는지 확인은 끝난 뒤) */
 async function compose(
-  d: D1, q: Record<string, unknown>, id: string, lang: 'ko' | 'en', to: string, origin: string, deadline: number,
+  d: D1, q: Record<string, unknown>, id: string, lang: 'ko' | 'en', to: string, origin: string, deadline: number, colo?: string,
 ): Promise<AckResult> {
-  // 운영 설정은 여기서 한 번만 읽는다 — 회신 기한·PDF 첨부 스위치에 같이 쓴다(읽기 실패면 기본값 = PDF 끔)
+  // 운영 설정은 여기서 한 번만 읽는다 — 회신 기한·PDF 첨부 스위치·구글 인증 시도 횟수에 같이 쓴다(읽기 실패면 기본값 = PDF 끔)
   const settings = await readSiteSettings(d);
   // 고객 견적 요약 — 조회 화면과 같은 함수. 실패하면 견적 없이(요청서만) 간다.
   let view: ReturnType<typeof customerQuoteView> = null;
@@ -262,10 +265,10 @@ async function compose(
   const sent = await sendMail({
     to, fromName: lang === 'en' ? 'VanaM Inc.' : '반암 VanaM',
     subject: c.subject, text: c.text, html: c.html, attachments: attachment ? [attachment] : [],
-  }, { tag: 'ack-mail', ref: id, origin, deadline });
+  }, { tag: 'ack-mail', ref: id, origin, deadline, colo, token: mailTokenOf(settings) });
 
   if (sent.sent) return { status: 'sent', reason: null, pdf };
-  // 보내기 직전 판정(주소·빌드·설정)으로 멈춘 것은 '안 보냄', 그 밖은 '실패'
+  // 보내기 직전 판정(주소·빌드·설정)으로 멈춘 것은 '안 보냄', 그 밖은 '실패'(토큰 단계 실패 token_unreachable 포함 → 구글챗 알림)
   const skipped = sent.reason === 'blocked_build' || sent.reason === 'blocked_host' || sent.reason === 'bad_recipient' || sent.reason === 'no_credentials';
   return { status: skipped ? 'skipped' : 'failed', reason: sent.reason, pdf, code: sent.status ?? null };
 }
